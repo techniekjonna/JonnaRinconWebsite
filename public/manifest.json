@@ -1,0 +1,42 @@
+{
+  "name": "Jonna Rincon - J18",
+  "short_name": "J18",
+  "description": "Premium beats and music production by Jonna Rincon",
+  "start_url": "/login",
+  "display": "standalone",
+  "background_color": "#111827",
+  "theme_color": "#9333ea",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/Logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/Logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["music", "entertainment", "shopping"],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Browse Beats",
+      "short_name": "Beats",
+      "description": "Browse premium beats",
+      "url": "/shop/beats",
+      "icons": [{ "src": "/Logo.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "My Orders",
+      "short_name": "Orders",
+      "description": "View your orders",
+      "url": "/customer/orders",
+      "icons": [{ "src": "/Logo.png", "sizes": "192x192" }]
+    }
+  ]
+}
