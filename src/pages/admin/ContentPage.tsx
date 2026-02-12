@@ -4,7 +4,7 @@ import { useContent } from '../../hooks/useContent';
 import { contentService } from '../../lib/firebase/services';
 import { Content, ContentType, ContentStatus, ContentBlock } from '../../lib/firebase/types';
 import { Plus, Edit, Trash2, Eye, Heart, Share2, Calendar, X, Image, FileText as FileTextIcon, Upload } from 'lucide-react';
-import { UploadPost } from 'upload-post';
+// Upload-Post API integration (browser-compatible)
 
 const ContentPage: React.FC = () => {
   const { content, loading } = useContent();
@@ -338,15 +338,31 @@ const ContentFormModal: React.FC<ContentFormModalProps> = ({ content, onClose, o
 
     setUploading(true);
     try {
-      const uploader = new UploadPost(API_KEY);
-      const result = await uploader.upload(file, {
-        title: formData.title || 'Content Image',
-        user: 'jonnarincon',
+      // Create FormData for browser upload
+      const uploadFormData = new FormData();
+      uploadFormData.append('file', file);
+      uploadFormData.append('user', 'jonnarincon');
+      uploadFormData.append('title', formData.title || 'Content Image');
+
+      // Upload directly to Upload-Post API
+      const response = await fetch('https://api.upload-post.com/api/upload', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Apikey ${API_KEY}`,
+        },
+        body: uploadFormData,
       });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Upload failed');
+      }
+
+      const result = await response.json();
 
       // Get URL from result and set it
       if (result && result.url) {
-        setFormData({ ...formData, featuredImage: result.url });
+        setFormData((prev) => ({ ...prev, featuredImage: result.url }));
         alert('Image uploaded successfully!');
       }
     } catch (error: any) {
