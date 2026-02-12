@@ -125,55 +125,60 @@ const CollaborationsPage: React.FC = () => {
           ) : (
             collaborations.map((collab) => (
               <div key={collab.id} className="bg-gray-800 border border-gray-700 rounded-xl overflow-hidden">
-                {/* Header - Clickable */}
+                {/* Header - Clickable - Compact View */}
                 <div
                   onClick={() => setExpandedCollabId(expandedCollabId === collab.id ? null : collab.id!)}
-                  className="p-6 cursor-pointer hover:bg-gray-750 transition-colors"
+                  className="p-4 cursor-pointer hover:bg-gray-750 transition-colors"
                 >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-xl font-bold text-white">{collab.title}</h3>
-                        <span className={`px-2 py-1 rounded text-xs ${getStatusColor(collab.status)}`}>
-                          {collab.status.replace('_', ' ')}
-                        </span>
-                      </div>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                        <div>
-                          <span className="text-gray-400">Client:</span>
-                          <p className="text-white font-medium">{collab.clientName}</p>
-                          <p className="text-gray-400 text-xs">{collab.clientEmail}</p>
-                        </div>
-                        <div>
-                          <span className="text-gray-400">Type:</span>
-                          <p className="text-white font-medium capitalize">{collab.type}</p>
-                        </div>
-                        <div>
-                          <span className="text-gray-400">Budget:</span>
-                          <p className="text-white font-medium">
-                            {collab.budget ? `€${collab.budget.toFixed(2)}` : 'N/A'}
-                          </p>
-                        </div>
-                        <div>
-                          <span className="text-gray-400">Payment:</span>
-                          <p className={`font-medium ${
-                            collab.paymentStatus === 'paid' ? 'text-green-400' :
-                            collab.paymentStatus === 'partial' ? 'text-yellow-400' : 'text-gray-400'
-                          }`}>
-                            €{collab.paidAmount.toFixed(2)} ({collab.paymentStatus})
-                          </p>
-                        </div>
-                      </div>
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <h3 className="text-lg font-bold text-white truncate">{collab.title}</h3>
+                      <span className={`px-2 py-1 rounded text-xs flex-shrink-0 ${getStatusColor(collab.status)}`}>
+                        {collab.status.replace('_', ' ')}
+                      </span>
                     </div>
-                    <button className="text-gray-400 hover:text-white transition ml-4">
-                      {expandedCollabId === collab.id ? <ChevronUp size={24} /> : <ChevronDown size={24} />}
-                    </button>
+                    <div className="flex items-center gap-4 flex-shrink-0">
+                      <div className="text-sm text-gray-400 hidden md:block">
+                        <span className="text-white font-medium">{collab.clientName}</span>
+                      </div>
+                      <button className="text-gray-400 hover:text-white transition">
+                        {expandedCollabId === collab.id ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                      </button>
+                    </div>
                   </div>
                 </div>
 
                 {/* Expanded Details */}
                 {expandedCollabId === collab.id && (
                   <div className="border-t border-gray-700 p-6 space-y-6">
+                    {/* Details Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                      <div>
+                        <span className="text-gray-400 text-sm">Client:</span>
+                        <p className="text-white font-medium">{collab.clientName}</p>
+                        <p className="text-gray-400 text-xs">{collab.clientEmail}</p>
+                      </div>
+                      <div>
+                        <span className="text-gray-400 text-sm">Type:</span>
+                        <p className="text-white font-medium capitalize">{collab.type}</p>
+                      </div>
+                      <div>
+                        <span className="text-gray-400 text-sm">Budget:</span>
+                        <p className="text-white font-medium">
+                          {collab.budget ? `€${collab.budget.toFixed(2)}` : 'N/A'}
+                        </p>
+                      </div>
+                      <div>
+                        <span className="text-gray-400 text-sm">Payment:</span>
+                        <p className={`font-medium ${
+                          collab.paymentStatus === 'paid' ? 'text-green-400' :
+                          collab.paymentStatus === 'partial' ? 'text-yellow-400' : 'text-gray-400'
+                        }`}>
+                          €{collab.paidAmount.toFixed(2)} ({collab.paymentStatus})
+                        </p>
+                      </div>
+                    </div>
+
                     {/* Description */}
                     <div>
                       <h4 className="text-sm font-semibold text-gray-300 mb-2">Description</h4>

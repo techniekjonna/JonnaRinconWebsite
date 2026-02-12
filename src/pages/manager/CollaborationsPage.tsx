@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import ManagerLayout from '../../components/manager/ManagerLayout';
 import { useCollaborations } from '../../hooks/useCollaborations';
 import { CollaborationStatus } from '../../lib/firebase/types';
-import { MessageSquare, Send, X, ChevronDown, ChevronUp } from 'lucide-react';
+import { MessageSquare, ChevronDown, ChevronUp } from 'lucide-react';
 import { db } from '../../lib/firebase/config';
-import { collection, addDoc, serverTimestamp, query, where, orderBy, onSnapshot, Timestamp } from 'firebase/firestore';
+import { collection, query, where, orderBy, onSnapshot, Timestamp } from 'firebase/firestore';
 import { useAuth } from '../../contexts/AuthContext';
 
 interface CollabMessage {
@@ -22,7 +22,6 @@ const CollaborationsPage: React.FC = () => {
   const { user } = useAuth();
   const [expandedCollabId, setExpandedCollabId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Record<string, CollabMessage[]>>({});
-  const [newMessage, setNewMessage] = useState('');
 
   const getStatusColor = (status: CollaborationStatus) => {
     const colors: Record<CollaborationStatus, string> = {
@@ -60,30 +59,13 @@ const CollaborationsPage: React.FC = () => {
     return () => unsubscribe();
   }, [expandedCollabId]);
 
-  const handleSendMessage = async (collaborationId: string) => {
-    if (!newMessage.trim() || !user) return;
-
-    try {
-      await addDoc(collection(db, 'collaborationMessages'), {
-        collaborationId,
-        senderId: user.uid,
-        senderName: user.displayName || 'Admin',
-        senderEmail: user.email,
-        message: newMessage.trim(),
-        createdAt: serverTimestamp(),
-      });
-      setNewMessage('');
-    } catch (error) {
-      console.error('Failed to send message:', error);
-    }
-  };
 
   return (
     <ManagerLayout>
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold text-white">Collaborations & Contracts</h1>
-          <p className="text-gray-400 mt-2">Manage partnerships and deals</p>
+          <p className="text-gray-400 mt-2">View partnerships and deals (Read-Only)</p>
         </div>
 
         {/* Stats */}
@@ -125,55 +107,60 @@ const CollaborationsPage: React.FC = () => {
           ) : (
             collaborations.map((collab) => (
               <div key={collab.id} className="bg-gray-800 border border-gray-700 rounded-xl overflow-hidden">
-                {/* Header - Clickable */}
+                {/* Header - Clickable - Compact View */}
                 <div
                   onClick={() => setExpandedCollabId(expandedCollabId === collab.id ? null : collab.id!)}
-                  className="p-6 cursor-pointer hover:bg-gray-750 transition-colors"
+                  className="p-4 cursor-pointer hover:bg-gray-750 transition-colors"
                 >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-xl font-bold text-white">{collab.title}</h3>
-                        <span className={`px-2 py-1 rounded text-xs ${getStatusColor(collab.status)}`}>
-                          {collab.status.replace('_', ' ')}
-                        </span>
-                      </div>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                        <div>
-                          <span className="text-gray-400">Client:</span>
-                          <p className="text-white font-medium">{collab.clientName}</p>
-                          <p className="text-gray-400 text-xs">{collab.clientEmail}</p>
-                        </div>
-                        <div>
-                          <span className="text-gray-400">Type:</span>
-                          <p className="text-white font-medium capitalize">{collab.type}</p>
-                        </div>
-                        <div>
-                          <span className="text-gray-400">Budget:</span>
-                          <p className="text-white font-medium">
-                            {collab.budget ? `€${collab.budget.toFixed(2)}` : 'N/A'}
-                          </p>
-                        </div>
-                        <div>
-                          <span className="text-gray-400">Payment:</span>
-                          <p className={`font-medium ${
-                            collab.paymentStatus === 'paid' ? 'text-green-400' :
-                            collab.paymentStatus === 'partial' ? 'text-yellow-400' : 'text-gray-400'
-                          }`}>
-                            €{collab.paidAmount.toFixed(2)} ({collab.paymentStatus})
-                          </p>
-                        </div>
-                      </div>
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <h3 className="text-lg font-bold text-white truncate">{collab.title}</h3>
+                      <span className={`px-2 py-1 rounded text-xs flex-shrink-0 ${getStatusColor(collab.status)}`}>
+                        {collab.status.replace('_', ' ')}
+                      </span>
                     </div>
-                    <button className="text-gray-400 hover:text-white transition ml-4">
-                      {expandedCollabId === collab.id ? <ChevronUp size={24} /> : <ChevronDown size={24} />}
-                    </button>
+                    <div className="flex items-center gap-4 flex-shrink-0">
+                      <div className="text-sm text-gray-400 hidden md:block">
+                        <span className="text-white font-medium">{collab.clientName}</span>
+                      </div>
+                      <button className="text-gray-400 hover:text-white transition">
+                        {expandedCollabId === collab.id ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                      </button>
+                    </div>
                   </div>
                 </div>
 
                 {/* Expanded Details */}
                 {expandedCollabId === collab.id && (
                   <div className="border-t border-gray-700 p-6 space-y-6">
+                    {/* Details Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                      <div>
+                        <span className="text-gray-400 text-sm">Client:</span>
+                        <p className="text-white font-medium">{collab.clientName}</p>
+                        <p className="text-gray-400 text-xs">{collab.clientEmail}</p>
+                      </div>
+                      <div>
+                        <span className="text-gray-400 text-sm">Type:</span>
+                        <p className="text-white font-medium capitalize">{collab.type}</p>
+                      </div>
+                      <div>
+                        <span className="text-gray-400 text-sm">Budget:</span>
+                        <p className="text-white font-medium">
+                          {collab.budget ? `€${collab.budget.toFixed(2)}` : 'N/A'}
+                        </p>
+                      </div>
+                      <div>
+                        <span className="text-gray-400 text-sm">Payment:</span>
+                        <p className={`font-medium ${
+                          collab.paymentStatus === 'paid' ? 'text-green-400' :
+                          collab.paymentStatus === 'partial' ? 'text-yellow-400' : 'text-gray-400'
+                        }`}>
+                          €{collab.paidAmount.toFixed(2)} ({collab.paymentStatus})
+                        </p>
+                      </div>
+                    </div>
+
                     {/* Description */}
                     <div>
                       <h4 className="text-sm font-semibold text-gray-300 mb-2">Description</h4>
@@ -187,12 +174,12 @@ const CollaborationsPage: React.FC = () => {
                         Messages
                       </h4>
 
-                      {/* Messages List */}
-                      <div className="bg-gray-800 rounded-lg p-4 max-h-80 overflow-y-auto space-y-3 mb-4">
+                      {/* Messages List (Read-Only) */}
+                      <div className="bg-gray-800 rounded-lg p-4 max-h-80 overflow-y-auto space-y-3">
                         {(!messages[collab.id!] || messages[collab.id!].length === 0) ? (
                           <div className="text-center text-gray-400 py-8">
                             <MessageSquare size={48} className="mx-auto mb-2 opacity-50" />
-                            <p>No messages yet. Start the conversation!</p>
+                            <p>No messages yet</p>
                           </div>
                         ) : (
                           messages[collab.id!]?.map((msg) => (
@@ -206,7 +193,7 @@ const CollaborationsPage: React.FC = () => {
                             >
                               <div className="flex justify-between items-start mb-1">
                                 <span className="font-semibold text-sm text-white">
-                                  {msg.senderId === user?.uid ? 'You (Admin)' : msg.senderName}
+                                  {msg.senderName}
                                 </span>
                                 <span className="text-xs text-gray-400">
                                   {msg.createdAt?.toDate?.()?.toLocaleString() || 'Just now'}
@@ -217,31 +204,6 @@ const CollaborationsPage: React.FC = () => {
                           ))
                         )}
                       </div>
-
-                      {/* Message Input */}
-                      <form
-                        onSubmit={(e) => {
-                          e.preventDefault();
-                          handleSendMessage(collab.id!);
-                        }}
-                        className="flex gap-2"
-                      >
-                        <input
-                          type="text"
-                          value={newMessage}
-                          onChange={(e) => setNewMessage(e.target.value)}
-                          placeholder="Type your message to the artist..."
-                          className="flex-1 bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500"
-                        />
-                        <button
-                          type="submit"
-                          disabled={!newMessage.trim()}
-                          className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 px-4 py-2 rounded-lg text-white font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                        >
-                          <Send size={18} />
-                          Send
-                        </button>
-                      </form>
                     </div>
                   </div>
                 )}
