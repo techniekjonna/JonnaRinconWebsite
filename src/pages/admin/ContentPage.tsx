@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import AdminLayout from '../../components/admin/AdminLayout';
 import { useContent } from '../../hooks/useContent';
 import { contentService } from '../../lib/firebase/services';
-import { Content, ContentType, ContentStatus } from '../../lib/firebase/types';
-import { Plus, Edit, Trash2, Eye, Heart, Share2, Calendar } from 'lucide-react';
+import { Content, ContentType, ContentStatus, ContentBlock } from '../../lib/firebase/types';
+import { Plus, Edit, Trash2, Eye, Heart, Share2, Calendar, X, Image, FileText as FileTextIcon } from 'lucide-react';
 
 const ContentPage: React.FC = () => {
   const { content, loading } = useContent();
@@ -289,37 +289,312 @@ const ContentPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Modal for Create/Edit (Placeholder) */}
+      {/* Content Form Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-gray-800 rounded-xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <h2 className="text-2xl font-bold text-white mb-4">
-              {editingContent ? 'Edit Content' : 'Create New Content'}
-            </h2>
-            <p className="text-gray-400 mb-6">
-              Content editor will be implemented here with a rich text editor for managing content blocks.
-            </p>
-            <div className="flex justify-end space-x-3">
-              <button
-                onClick={() => setShowModal(false)}
-                className="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors"
-              >
-                Close
-              </button>
-              <button
-                onClick={() => {
-                  alert('Content editor feature coming soon!');
-                  setShowModal(false);
-                }}
-                className="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:from-purple-700 hover:to-pink-700 transition-colors"
-              >
-                Save
-              </button>
-            </div>
-          </div>
-        </div>
+        <ContentFormModal
+          content={editingContent}
+          onClose={() => setShowModal(false)}
+          onSave={() => {
+            setShowModal(false);
+            setEditingContent(null);
+          }}
+        />
       )}
     </AdminLayout>
+  );
+};
+
+interface ContentFormModalProps {
+  content: Content | null;
+  onClose: () => void;
+  onSave: () => void;
+}
+
+const ContentFormModal: React.FC<ContentFormModalProps> = ({ content, onClose, onSave }) => {
+  const [formData, setFormData] = useState({
+    title: content?.title || '',
+    type: content?.type || 'blog' as ContentType,
+    slug: content?.slug || '',
+    excerpt: content?.excerpt || '',
+    category: content?.category || '',
+    tags: content?.tags?.join(', ') || '',
+    featuredImage: content?.featuredImage || '',
+    status: content?.status || 'draft' as ContentStatus,
+    featured: content?.featured || false,
+    metaTitle: content?.metaTitle || '',
+    metaDescription: content?.metaDescription || '',
+    metaKeywords: content?.metaKeywords?.join(', ') || '',
+    contentText: content?.blocks?.find(b => b.type === 'text')?.content || '',
+  });
+  const [saving, setSaving] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+
+    try {
+      // Create content blocks
+      const blocks: ContentBlock[] = [];
+
+      // Add text block if content exists
+      if (formData.contentText.trim()) {
+        blocks.push({
+          id: '1',
+          type: 'text',
+          content: formData.contentText,
+          order: 0,
+        });
+      }
+
+      const contentData: any = {
+        title: formData.title,
+        type: formData.type,
+        slug: formData.slug || formData.title.toLowerCase().replace(/\s+/g, '-'),
+        excerpt: formData.excerpt,
+        blocks: blocks,
+        category: formData.category,
+        tags: formData.tags.split(',').map((t) => t.trim()).filter(t => t),
+        featuredImage: formData.featuredImage,
+        status: formData.status,
+        featured: formData.featured,
+        metaTitle: formData.metaTitle,
+        metaDescription: formData.metaDescription,
+        metaKeywords: formData.metaKeywords.split(',').map((k) => k.trim()).filter(k => k),
+      };
+
+      if (content) {
+        await contentService.updateContent(content.id, contentData);
+        alert('Content updated successfully');
+      } else {
+        await contentService.createContent(contentData);
+        alert('Content created successfully');
+      }
+
+      onSave();
+    } catch (error: any) {
+      alert(error.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 overflow-y-auto">
+      <div className="bg-gray-800 rounded-xl max-w-4xl w-full my-8">
+        <div className="p-6 border-b border-gray-700 flex items-center justify-between">
+          <h2 className="text-2xl font-bold text-white">
+            {content ? 'Edit Content' : 'Create New Content'}
+          </h2>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-white transition-colors"
+          >
+            <X size={24} />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-6 space-y-6 max-h-[calc(100vh-200px)] overflow-y-auto">
+          {/* Basic Info */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-white">Basic Information</h3>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Title *</label>
+                <input
+                  type="text"
+                  value={formData.title}
+                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-purple-500"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Type *</label>
+                <select
+                  value={formData.type}
+                  onChange={(e) => setFormData({ ...formData, type: e.target.value as ContentType })}
+                  className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-purple-500"
+                  required
+                >
+                  <option value="blog">Blog</option>
+                  <option value="news">News</option>
+                  <option value="tutorial">Tutorial</option>
+                  <option value="press">Press</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Slug</label>
+                <input
+                  type="text"
+                  value={formData.slug}
+                  onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
+                  className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-purple-500"
+                  placeholder="auto-generated from title"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Category</label>
+                <input
+                  type="text"
+                  value={formData.category}
+                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                  className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-purple-500"
+                  placeholder="e.g., Music Production, Industry News"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Excerpt</label>
+              <textarea
+                value={formData.excerpt}
+                onChange={(e) => setFormData({ ...formData, excerpt: e.target.value })}
+                className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-purple-500"
+                rows={2}
+                placeholder="Short description of the content"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Tags (comma separated)</label>
+              <input
+                type="text"
+                value={formData.tags}
+                onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
+                className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-purple-500"
+                placeholder="production, beats, tutorial"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Featured Image URL</label>
+              <input
+                type="url"
+                value={formData.featuredImage}
+                onChange={(e) => setFormData({ ...formData, featuredImage: e.target.value })}
+                className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-purple-500"
+                placeholder="https://example.com/image.jpg"
+              />
+            </div>
+          </div>
+
+          {/* Content */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-white">Content</h3>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Main Content *</label>
+              <textarea
+                value={formData.contentText}
+                onChange={(e) => setFormData({ ...formData, contentText: e.target.value })}
+                className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-purple-500 font-mono text-sm"
+                rows={10}
+                placeholder="Write your content here..."
+                required
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Use markdown syntax for formatting. Rich text editor can be added later.
+              </p>
+            </div>
+          </div>
+
+          {/* SEO */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-white">SEO & Meta</h3>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Meta Title</label>
+              <input
+                type="text"
+                value={formData.metaTitle}
+                onChange={(e) => setFormData({ ...formData, metaTitle: e.target.value })}
+                className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-purple-500"
+                placeholder="Leave empty to use title"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Meta Description</label>
+              <textarea
+                value={formData.metaDescription}
+                onChange={(e) => setFormData({ ...formData, metaDescription: e.target.value })}
+                className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-purple-500"
+                rows={2}
+                placeholder="SEO description"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Meta Keywords (comma separated)</label>
+              <input
+                type="text"
+                value={formData.metaKeywords}
+                onChange={(e) => setFormData({ ...formData, metaKeywords: e.target.value })}
+                className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-purple-500"
+                placeholder="keyword1, keyword2, keyword3"
+              />
+            </div>
+          </div>
+
+          {/* Publishing */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-white">Publishing</h3>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Status *</label>
+                <select
+                  value={formData.status}
+                  onChange={(e) => setFormData({ ...formData, status: e.target.value as ContentStatus })}
+                  className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-purple-500"
+                >
+                  <option value="draft">Draft</option>
+                  <option value="published">Published</option>
+                  <option value="scheduled">Scheduled</option>
+                  <option value="archived">Archived</option>
+                </select>
+              </div>
+
+              <div className="flex items-end">
+                <label className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    checked={formData.featured}
+                    onChange={(e) => setFormData({ ...formData, featured: e.target.checked })}
+                    className="w-4 h-4 rounded"
+                  />
+                  <span className="text-sm text-gray-300">Featured Content</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div className="flex items-center justify-end space-x-4 pt-6 border-t border-gray-700">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-6 py-2 text-gray-400 hover:text-white transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={saving}
+              className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-2 rounded-lg font-semibold hover:from-purple-700 hover:to-pink-700 transition-all disabled:opacity-50"
+            >
+              {saving ? 'Saving...' : content ? 'Update Content' : 'Create Content'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
   );
 };
 
