@@ -34,6 +34,11 @@ import AdminAnalytics from './pages/admin/AnalyticsPage';
 import AdminCollaborations from './pages/admin/CollaborationsPage';
 import AdminSettings from './pages/admin/SettingsPage';
 
+// Manager pages (protected - manager role)
+import ManagerDashboard from './pages/manager/DashboardPage';
+import ManagerBeats from './pages/manager/BeatsPage';
+import ManagerChat from './pages/manager/ChatPage';
+
 const MainApp: React.FC = () => {
   return (
     <AuthProvider>
@@ -191,6 +196,35 @@ const MainApp: React.FC = () => {
 
           {/* Redirect /admin to dashboard */}
           <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
+
+          {/* Manager Routes (protected - manager role only) */}
+          <Route
+            path="/manager/dashboard"
+            element={
+              <ProtectedRoute allowedRoles={['manager']}>
+                <ManagerDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/manager/beats"
+            element={
+              <ProtectedRoute allowedRoles={['manager']}>
+                <ManagerBeats />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/manager/chat"
+            element={
+              <ProtectedRoute allowedRoles={['manager']}>
+                <ManagerChat />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Redirect /manager to dashboard */}
+          <Route path="/manager" element={<Navigate to="/manager/dashboard" replace />} />
 
           {/* 404 */}
           <Route path="*" element={<Navigate to="/" replace />} />

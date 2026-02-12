@@ -4,7 +4,7 @@ import { Timestamp } from 'firebase/firestore';
 // USER & AUTH TYPES
 // ============================================
 
-export type UserRole = 'admin' | 'user' | 'artist' | 'guest';
+export type UserRole = 'admin' | 'user' | 'artist' | 'manager' | 'guest';
 
 export interface User {
   uid: string;
@@ -20,6 +20,11 @@ export interface User {
 export interface AdminUser extends User {
   role: 'admin';
   permissions: AdminPermission[];
+}
+
+export interface ManagerUser extends User {
+  role: 'manager';
+  permissions: ManagerPermission[];
 }
 
 export type AdminPermission =
@@ -39,6 +44,12 @@ export type AdminPermission =
   | 'users.write'
   | 'analytics.read'
   | 'settings.write';
+
+export type ManagerPermission =
+  | 'beats.read'
+  | 'beats.write'
+  | 'chat.read'
+  | 'chat.write';
 
 // ============================================
 // BEAT / PRODUCT TYPES
