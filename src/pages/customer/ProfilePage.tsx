@@ -2,7 +2,9 @@ import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { authService } from '../../lib/firebase/services/authService';
 import CustomerLayout from '../../components/customer/CustomerLayout';
-import { User, Mail, Lock, Save, LogOut } from 'lucide-react';
+import { User, Mail, Lock, Save, LogOut, Music2, Instagram as InstagramIcon, Music } from 'lucide-react';
+import { db } from '../../lib/firebase/config';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 const CustomerProfile: React.FC = () => {
   const { user, signOut } = useAuth();
@@ -12,6 +14,24 @@ const CustomerProfile: React.FC = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  // Artist role request state
+  const [showArtistForm, setShowArtistForm] = useState(false);
+  const [artistRequest, setArtistRequest] = useState({
+    artistName: '',
+    region: '',
+    city: '',
+    roles: {
+      producer: false,
+      beatmaker: false,
+      engineer: false,
+      rapper: false,
+      vocalist: false,
+      songwriter: false,
+    },
+    instagram: '',
+    spotify: '',
+  });
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,6 +83,61 @@ const CustomerProfile: React.FC = () => {
       await signOut();
     } catch (error) {
       console.error('Sign out error:', error);
+    }
+  };
+
+  const handleArtistRoleRequest = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setMessage(null);
+
+    try {
+      // Check if at least one role is selected
+      const hasRole = Object.values(artistRequest.roles).some(role => role);
+      if (!hasRole) {
+        setMessage({ type: 'error', text: 'Please select at least one artist role' });
+        setLoading(false);
+        return;
+      }
+
+      // Submit artist role request to Firebase
+      await addDoc(collection(db, 'artistRoleRequests'), {
+        userId: user?.uid,
+        userEmail: user?.email,
+        artistName: artistRequest.artistName,
+        region: artistRequest.region,
+        city: artistRequest.city,
+        roles: Object.entries(artistRequest.roles)
+          .filter(([_, value]) => value)
+          .map(([key, _]) => key),
+        instagram: artistRequest.instagram,
+        spotify: artistRequest.spotify,
+        status: 'pending',
+        createdAt: serverTimestamp(),
+      });
+
+      setMessage({ type: 'success', text: 'Artist role request submitted successfully! We will review your request soon.' });
+      setShowArtistForm(false);
+      // Reset form
+      setArtistRequest({
+        artistName: '',
+        region: '',
+        city: '',
+        roles: {
+          producer: false,
+          beatmaker: false,
+          engineer: false,
+          rapper: false,
+          vocalist: false,
+          songwriter: false,
+        },
+        instagram: '',
+        spotify: '',
+      });
+    } catch (error: any) {
+      setMessage({ type: 'error', text: error.message || 'Failed to submit artist role request' });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -171,6 +246,157 @@ const CustomerProfile: React.FC = () => {
                   <Save size={16} /> {loading ? 'Updating...' : 'Update Password'}
                 </button>
               </form>
+            </div>
+
+            <div className="bg-gray-800 border border-gray-700 rounded-xl p-6">
+              <div className="flex justify-between items-center mb-6">
+                <div>
+                  <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                    <Music2 size={24} className="text-purple-400" />
+                    Request Artist Role
+                  </h2>
+                  <p className="text-sm text-gray-400 mt-1">Apply to become an artist on the platform</p>
+                </div>
+                {!showArtistForm && (
+                  <button
+                    onClick={() => setShowArtistForm(true)}
+                    className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 px-4 py-2 rounded-lg text-white font-medium transition-all text-sm"
+                  >
+                    Apply Now
+                  </button>
+                )}
+              </div>
+
+              {showArtistForm ? (
+                <form onSubmit={handleArtistRoleRequest} className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-300 mb-2">
+                        Artist Name *
+                      </label>
+                      <input
+                        type="text"
+                        value={artistRequest.artistName}
+                        onChange={(e) => setArtistRequest({ ...artistRequest, artistName: e.target.value })}
+                        className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-purple-500"
+                        placeholder="Your stage name"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-300 mb-2">
+                        Region *
+                      </label>
+                      <input
+                        type="text"
+                        value={artistRequest.region}
+                        onChange={(e) => setArtistRequest({ ...artistRequest, region: e.target.value })}
+                        className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-purple-500"
+                        placeholder="e.g., North Holland"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-300 mb-2">
+                        City *
+                      </label>
+                      <input
+                        type="text"
+                        value={artistRequest.city}
+                        onChange={(e) => setArtistRequest({ ...artistRequest, city: e.target.value })}
+                        className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-purple-500"
+                        placeholder="e.g., Amsterdam"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-300 mb-2">
+                        <InstagramIcon size={16} className="inline mr-1" /> Instagram
+                      </label>
+                      <input
+                        type="text"
+                        value={artistRequest.instagram}
+                        onChange={(e) => setArtistRequest({ ...artistRequest, instagram: e.target.value })}
+                        className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-purple-500"
+                        placeholder="@username or full URL"
+                      />
+                    </div>
+
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-semibold text-gray-300 mb-2">
+                        <Music size={16} className="inline mr-1" /> Spotify Link
+                      </label>
+                      <input
+                        type="url"
+                        value={artistRequest.spotify}
+                        onChange={(e) => setArtistRequest({ ...artistRequest, spotify: e.target.value })}
+                        className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-purple-500"
+                        placeholder="https://open.spotify.com/artist/..."
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-300 mb-3">
+                      Artist Roles * (Select all that apply)
+                    </label>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                      {[
+                        { key: 'producer', label: 'Producer' },
+                        { key: 'beatmaker', label: 'Beatmaker' },
+                        { key: 'engineer', label: 'Engineer' },
+                        { key: 'rapper', label: 'Rapper' },
+                        { key: 'vocalist', label: 'Vocalist/Singer' },
+                        { key: 'songwriter', label: 'Songwriter' },
+                      ].map((role) => (
+                        <label key={role.key} className="flex items-center space-x-2 p-3 bg-gray-700/50 rounded-lg cursor-pointer hover:bg-gray-700 transition-colors">
+                          <input
+                            type="checkbox"
+                            checked={artistRequest.roles[role.key as keyof typeof artistRequest.roles]}
+                            onChange={(e) =>
+                              setArtistRequest({
+                                ...artistRequest,
+                                roles: {
+                                  ...artistRequest.roles,
+                                  [role.key]: e.target.checked,
+                                },
+                              })
+                            }
+                            className="w-4 h-4 rounded border-gray-600 text-purple-600 focus:ring-purple-500"
+                          />
+                          <span className="text-sm text-gray-300">{role.label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="flex gap-4 pt-4">
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 px-6 py-2 rounded-lg text-white font-medium transition-all disabled:opacity-50 flex items-center gap-2"
+                    >
+                      <Save size={16} /> {loading ? 'Submitting...' : 'Submit Request'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowArtistForm(false)}
+                      className="bg-gray-700 hover:bg-gray-600 px-6 py-2 rounded-lg text-white font-medium transition-all"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                <div className="text-center py-8 text-gray-400">
+                  <Music2 size={48} className="mx-auto mb-4 text-purple-400 opacity-50" />
+                  <p>Become an artist and start collaborating with others!</p>
+                  <p className="text-sm mt-2">Click "Apply Now" to submit your artist application.</p>
+                </div>
+              )}
             </div>
 
             <div className="bg-gray-800 border border-gray-700 rounded-xl p-6">

@@ -86,7 +86,12 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
               <Link
                 key={item.name}
                 to={item.href}
-                onClick={() => setSidebarOpen(false)}
+                onClick={(e) => {
+                  // Only close sidebar on mobile (below lg breakpoint)
+                  if (window.innerWidth < 1024) {
+                    setSidebarOpen(false);
+                  }
+                }}
                 className={`flex items-center space-x-2 sm:space-x-3 px-3 sm:px-4 py-2 sm:py-3 rounded-lg transition-colors text-sm sm:text-base ${
                   isActive(item.href)
                     ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white'
