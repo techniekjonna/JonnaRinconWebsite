@@ -4,7 +4,7 @@ import { Store, Globe, Bell, Shield, Database, Save } from 'lucide-react';
 import { settingsService, ShopSettings, GeneralSettings, NotificationSettings, SecuritySettings } from '../../lib/firebase/services/settingsService';
 
 const AdminSettings: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'shop' | 'general' | 'notifications' | 'security'>('shop');
+  const [activeTab, setActiveTab] = useState<'shop' | 'notifications' | 'security'>('shop');
   const [loading, setLoading] = useState(true);
   const [shopSettings, setShopSettings] = useState<ShopSettings>({
     storeName: '',
@@ -18,14 +18,6 @@ const AdminSettings: React.FC = () => {
     taxRate: 21,
     enableDownloads: true,
     watermarkPreviews: true,
-  });
-
-  const [generalSettings, setGeneralSettings] = useState<GeneralSettings>({
-    platformName: '',
-    supportEmail: '',
-    websiteUrl: '',
-    timezone: 'Europe/Amsterdam',
-    language: 'en',
   });
 
   const [notificationSettings, setNotificationSettings] = useState<NotificationSettings>({
@@ -51,15 +43,13 @@ const AdminSettings: React.FC = () => {
     const loadSettings = async () => {
       try {
         setLoading(true);
-        const [shopData, generalData, notificationData, securityData] = await Promise.all([
+        const [shopData, notificationData, securityData] = await Promise.all([
           settingsService.getShopSettings(),
-          settingsService.getGeneralSettings(),
           settingsService.getNotificationSettings(),
           settingsService.getSecuritySettings(),
         ]);
 
         if (shopData) setShopSettings(shopData);
-        if (generalData) setGeneralSettings(generalData);
         if (notificationData) setNotificationSettings(notificationData);
         if (securityData) setSecuritySettings(securityData);
       } catch (error) {
@@ -79,17 +69,6 @@ const AdminSettings: React.FC = () => {
       setTimeout(() => setMessage(null), 3000);
     } catch (error) {
       console.error('Failed to save shop settings:', error);
-      setMessage({ type: 'error', text: 'Failed to save settings. Please try again.' });
-    }
-  };
-
-  const handleSaveGeneralSettings = async () => {
-    try {
-      await settingsService.saveGeneralSettings(generalSettings);
-      setMessage({ type: 'success', text: 'General settings saved successfully!' });
-      setTimeout(() => setMessage(null), 3000);
-    } catch (error) {
-      console.error('Failed to save general settings:', error);
       setMessage({ type: 'error', text: 'Failed to save settings. Please try again.' });
     }
   };
@@ -118,7 +97,6 @@ const AdminSettings: React.FC = () => {
 
   const tabs = [
     { id: 'shop' as const, name: 'Shop Settings', icon: Store },
-    { id: 'general' as const, name: 'General', icon: Globe },
     { id: 'notifications' as const, name: 'Notifications', icon: Bell },
     { id: 'security' as const, name: 'Security', icon: Shield },
   ];
@@ -177,73 +155,6 @@ const AdminSettings: React.FC = () => {
         {/* Shop Settings Tab */}
         {activeTab === 'shop' && (
           <div className="space-y-6">
-            {/* Store Information */}
-            <div className="bg-gray-800 border border-gray-700 rounded-xl p-6">
-              <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-                <Store size={24} className="text-purple-400" />
-                Store Information
-              </h2>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Store Name
-                  </label>
-                  <input
-                    type="text"
-                    value={shopSettings.storeName}
-                    onChange={(e) =>
-                      setShopSettings({ ...shopSettings, storeName: e.target.value })
-                    }
-                    className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-purple-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Store Description
-                  </label>
-                  <textarea
-                    value={shopSettings.storeDescription}
-                    onChange={(e) =>
-                      setShopSettings({ ...shopSettings, storeDescription: e.target.value })
-                    }
-                    rows={3}
-                    className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-purple-500"
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Hero Title
-                    </label>
-                    <input
-                      type="text"
-                      value={shopSettings.heroTitle}
-                      onChange={(e) =>
-                        setShopSettings({ ...shopSettings, heroTitle: e.target.value })
-                      }
-                      className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-purple-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Hero Subtitle
-                    </label>
-                    <input
-                      type="text"
-                      value={shopSettings.heroSubtitle}
-                      onChange={(e) =>
-                        setShopSettings({ ...shopSettings, heroSubtitle: e.target.value })
-                      }
-                      className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-purple-500"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-
             {/* Shop Features */}
             <div className="bg-gray-800 border border-gray-700 rounded-xl p-6">
               <h2 className="text-xl font-bold text-white mb-4">Shop Features</h2>
@@ -367,112 +278,6 @@ const AdminSettings: React.FC = () => {
               >
                 <Save size={20} />
                 Save Shop Settings
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* General Settings Tab */}
-        {activeTab === 'general' && (
-          <div className="space-y-6">
-            <div className="bg-gray-800 border border-gray-700 rounded-xl p-6">
-              <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-                <Globe size={24} className="text-blue-400" />
-                General Settings
-              </h2>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Platform Name
-                  </label>
-                  <input
-                    type="text"
-                    value={generalSettings.platformName}
-                    onChange={(e) =>
-                      setGeneralSettings({ ...generalSettings, platformName: e.target.value })
-                    }
-                    className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Support Email
-                  </label>
-                  <input
-                    type="email"
-                    value={generalSettings.supportEmail}
-                    onChange={(e) =>
-                      setGeneralSettings({ ...generalSettings, supportEmail: e.target.value })
-                    }
-                    className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Website URL
-                  </label>
-                  <input
-                    type="url"
-                    value={generalSettings.websiteUrl}
-                    onChange={(e) =>
-                      setGeneralSettings({ ...generalSettings, websiteUrl: e.target.value })
-                    }
-                    className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500"
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Timezone
-                    </label>
-                    <select
-                      value={generalSettings.timezone}
-                      onChange={(e) =>
-                        setGeneralSettings({ ...generalSettings, timezone: e.target.value })
-                      }
-                      className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500"
-                    >
-                      <option value="Europe/Amsterdam">Europe/Amsterdam</option>
-                      <option value="Europe/London">Europe/London</option>
-                      <option value="Europe/Paris">Europe/Paris</option>
-                      <option value="America/New_York">America/New_York</option>
-                      <option value="America/Los_Angeles">America/Los_Angeles</option>
-                      <option value="Asia/Tokyo">Asia/Tokyo</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Language
-                    </label>
-                    <select
-                      value={generalSettings.language}
-                      onChange={(e) =>
-                        setGeneralSettings({ ...generalSettings, language: e.target.value })
-                      }
-                      className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500"
-                    >
-                      <option value="en">English</option>
-                      <option value="nl">Dutch</option>
-                      <option value="de">German</option>
-                      <option value="fr">French</option>
-                      <option value="es">Spanish</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex justify-end">
-              <button
-                onClick={handleSaveGeneralSettings}
-                className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 px-6 py-3 rounded-lg text-white font-medium transition-all"
-              >
-                <Save size={20} />
-                Save General Settings
               </button>
             </div>
           </div>
