@@ -14,6 +14,7 @@ import {
   Menu,
   X,
   Clock,
+  UserPlus,
 } from 'lucide-react';
 
 interface AdminLayoutProps {
@@ -38,6 +39,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     { name: 'Content', href: '/admin/content', icon: FileText },
     { name: 'Collaborations', href: '/admin/collaborations', icon: Handshake },
     { name: 'Collab Requests', href: '/admin/collab-requests', icon: Clock },
+    { name: 'Artist Requests', href: '/admin/artist-role-requests', icon: UserPlus },
     { name: 'Analytics', href: '/admin/analytics', icon: BarChart3 },
     { name: 'Chat', href: '/admin/chat', icon: MessageSquare },
     { name: 'Settings', href: '/admin/settings', icon: Settings },

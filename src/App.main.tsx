@@ -39,6 +39,7 @@ import AdminContent from './pages/admin/ContentPage';
 import AdminAnalytics from './pages/admin/AnalyticsPage';
 import AdminCollaborations from './pages/admin/CollaborationsPage';
 import AdminCollabRequests from './pages/admin/CollabRequestsPage';
+import AdminArtistRoleRequests from './pages/admin/ArtistRoleRequestsPage';
 import AdminSettings from './pages/admin/SettingsPage';
 import AdminChat from './pages/admin/ChatPage';
 
@@ -247,6 +248,14 @@ const MainApp: React.FC = () => {
             element={
               <ProtectedRoute allowedRoles={['admin']}>
                 <AdminCollabRequests />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/artist-role-requests"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <AdminArtistRoleRequests />
               </ProtectedRoute>
             }
           />
