@@ -7,6 +7,7 @@ import {
   Download,
   User,
   Music,
+  MessageSquare,
   LogOut,
   Menu,
   X,
@@ -32,6 +33,7 @@ const CustomerLayout: React.FC<CustomerLayoutProps> = ({ children }) => {
     { name: 'Shop Beats', href: '/customer/shop', icon: Music },
     { name: 'My Orders', href: '/customer/orders', icon: ShoppingCart },
     { name: 'Downloads', href: '/customer/downloads', icon: Download },
+    { name: 'Chat', href: '/customer/chat', icon: MessageSquare },
     { name: 'Profile', href: '/customer/profile', icon: User },
   ];
 

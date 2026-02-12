@@ -4,22 +4,17 @@ import { useAuth } from '../../contexts/AuthContext';
 import {
   LayoutDashboard,
   Music,
-  ShoppingCart,
-  FileText,
-  Handshake,
-  BarChart3,
   MessageSquare,
-  Settings,
   LogOut,
   Menu,
   X,
 } from 'lucide-react';
 
-interface AdminLayoutProps {
+interface ManagerLayoutProps {
   children: React.ReactNode;
 }
 
-const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
+const ManagerLayout: React.FC<ManagerLayoutProps> = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const { user, signOut } = useAuth();
   const location = useLocation();
@@ -27,18 +22,13 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
 
   const handleSignOut = async () => {
     await signOut();
-    navigate('/admin/login');
+    navigate('/manager/login');
   };
 
   const navigation = [
-    { name: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
-    { name: 'Beats', href: '/admin/beats', icon: Music },
-    { name: 'Orders', href: '/admin/orders', icon: ShoppingCart },
-    { name: 'Content', href: '/admin/content', icon: FileText },
-    { name: 'Collaborations', href: '/admin/collaborations', icon: Handshake },
-    { name: 'Analytics', href: '/admin/analytics', icon: BarChart3 },
-    { name: 'Chat', href: '/admin/chat', icon: MessageSquare },
-    { name: 'Settings', href: '/admin/settings', icon: Settings },
+    { name: 'Dashboard', href: '/manager/dashboard', icon: LayoutDashboard },
+    { name: 'Beats', href: '/manager/beats', icon: Music },
+    { name: 'Chat', href: '/manager/chat', icon: MessageSquare },
   ];
 
   const isActive = (path: string) => location.pathname === path;
@@ -55,7 +45,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
         <div className="flex items-center justify-between px-3 py-3 sm:px-4 sm:py-4 border-b border-gray-700 flex-shrink-0">
           <div className="min-w-0">
             <h1 className="text-lg sm:text-xl font-bold text-white truncate">Jonna Rincon</h1>
-            <p className="text-xs text-gray-400">Admin</p>
+            <p className="text-xs text-gray-400">Manager</p>
           </div>
           <button
             onClick={() => setSidebarOpen(false)}
@@ -68,12 +58,12 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
         {/* User Info */}
         <div className="px-3 py-3 sm:px-4 sm:py-4 border-b border-gray-700 flex-shrink-0">
           <div className="flex items-center space-x-2 sm:space-x-3">
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
-              {user?.displayName?.[0] || user?.email?.[0] || 'A'}
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
+              {user?.displayName?.[0] || user?.email?.[0] || 'M'}
             </div>
             <div className="min-w-0">
               <p className="text-xs sm:text-sm font-medium text-white truncate">
-                {user?.displayName || 'Admin'}
+                {user?.displayName || 'Manager'}
               </p>
               <p className="text-xs text-gray-400 truncate">{user?.email}</p>
             </div>
@@ -96,7 +86,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                 }}
                 className={`flex items-center space-x-2 sm:space-x-3 px-3 sm:px-4 py-2 sm:py-3 rounded-lg transition-colors text-sm sm:text-base ${
                   isActive(item.href)
-                    ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white'
+                    ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white'
                     : 'text-gray-400 hover:bg-gray-700 hover:text-white'
                 }`}
               >
@@ -165,4 +155,4 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   );
 };
 
-export default AdminLayout;
+export default ManagerLayout;

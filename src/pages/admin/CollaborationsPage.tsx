@@ -1,10 +1,28 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import AdminLayout from '../../components/admin/AdminLayout';
 import { useCollaborations } from '../../hooks/useCollaborations';
 import { CollaborationStatus } from '../../lib/firebase/types';
+import { MessageSquare, Send, X, ChevronDown, ChevronUp } from 'lucide-react';
+import { db } from '../../lib/firebase/config';
+import { collection, addDoc, serverTimestamp, query, where, orderBy, onSnapshot, Timestamp } from 'firebase/firestore';
+import { useAuth } from '../../contexts/AuthContext';
+
+interface CollabMessage {
+  id?: string;
+  collaborationId: string;
+  senderId: string;
+  senderName: string;
+  senderEmail: string;
+  message: string;
+  createdAt: Timestamp;
+}
 
 const CollaborationsPage: React.FC = () => {
   const { collaborations, loading } = useCollaborations();
+  const { user } = useAuth();
+  const [expandedCollabId, setExpandedCollabId] = useState<string | null>(null);
+  const [messages, setMessages] = useState<Record<string, CollabMessage[]>>({});
+  const [newMessage, setNewMessage] = useState('');
 
   const getStatusColor = (status: CollaborationStatus) => {
     const colors: Record<CollaborationStatus, string> = {
@@ -18,6 +36,46 @@ const CollaborationsPage: React.FC = () => {
       cancelled: 'bg-red-500/20 text-red-400',
     };
     return colors[status];
+  };
+
+  // Load messages for expanded collaboration
+  useEffect(() => {
+    if (!expandedCollabId) return;
+
+    const messagesRef = collection(db, 'collaborationMessages');
+    const q = query(
+      messagesRef,
+      where('collaborationId', '==', expandedCollabId),
+      orderBy('createdAt', 'asc')
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const msgs: CollabMessage[] = [];
+      snapshot.forEach((doc) => {
+        msgs.push({ id: doc.id, ...doc.data() } as CollabMessage);
+      });
+      setMessages((prev) => ({ ...prev, [expandedCollabId]: msgs }));
+    });
+
+    return () => unsubscribe();
+  }, [expandedCollabId]);
+
+  const handleSendMessage = async (collaborationId: string) => {
+    if (!newMessage.trim() || !user) return;
+
+    try {
+      await addDoc(collection(db, 'collaborationMessages'), {
+        collaborationId,
+        senderId: user.uid,
+        senderName: user.displayName || 'Admin',
+        senderEmail: user.email,
+        message: newMessage.trim(),
+        createdAt: serverTimestamp(),
+      });
+      setNewMessage('');
+    } catch (error) {
+      console.error('Failed to send message:', error);
+    }
   };
 
   return (
@@ -55,69 +113,141 @@ const CollaborationsPage: React.FC = () => {
         </div>
 
         {/* Collaborations List */}
-        <div className="bg-gray-800 border border-gray-700 rounded-xl overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-700">
-                <tr>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">Title</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">Client</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">Type</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">Budget</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">Status</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">Payment</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-700">
-                {loading ? (
-                  <tr>
-                    <td colSpan={6} className="px-6 py-12 text-center text-gray-400">Loading...</td>
-                  </tr>
-                ) : collaborations.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="px-6 py-12 text-center text-gray-400">No collaborations yet</td>
-                  </tr>
-                ) : (
-                  collaborations.map((collab) => (
-                    <tr key={collab.id} className="hover:bg-gray-700/50">
-                      <td className="px-6 py-4">
-                        <p className="font-medium text-white">{collab.title}</p>
-                        <p className="text-sm text-gray-400">{collab.type}</p>
-                      </td>
-                      <td className="px-6 py-4">
-                        <p className="text-white">{collab.clientName}</p>
-                        <p className="text-sm text-gray-400">{collab.clientEmail}</p>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className="px-2 py-1 bg-purple-500/20 text-purple-400 rounded text-sm">
-                          {collab.type}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-white">
-                        {collab.budget ? `€${collab.budget.toFixed(2)}` : 'N/A'}
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className={`px-2 py-1 rounded text-sm ${getStatusColor(collab.status)}`}>
+        <div className="space-y-4">
+          {loading ? (
+            <div className="bg-gray-800 border border-gray-700 rounded-xl p-12 text-center text-gray-400">
+              Loading...
+            </div>
+          ) : collaborations.length === 0 ? (
+            <div className="bg-gray-800 border border-gray-700 rounded-xl p-12 text-center text-gray-400">
+              No collaborations yet
+            </div>
+          ) : (
+            collaborations.map((collab) => (
+              <div key={collab.id} className="bg-gray-800 border border-gray-700 rounded-xl overflow-hidden">
+                {/* Header - Clickable */}
+                <div
+                  onClick={() => setExpandedCollabId(expandedCollabId === collab.id ? null : collab.id!)}
+                  className="p-6 cursor-pointer hover:bg-gray-750 transition-colors"
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <h3 className="text-xl font-bold text-white">{collab.title}</h3>
+                        <span className={`px-2 py-1 rounded text-xs ${getStatusColor(collab.status)}`}>
                           {collab.status.replace('_', ' ')}
                         </span>
-                      </td>
-                      <td className="px-6 py-4">
+                      </div>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                         <div>
-                          <p className="text-white">€{collab.paidAmount.toFixed(2)}</p>
-                          <p className={`text-sm ${
+                          <span className="text-gray-400">Client:</span>
+                          <p className="text-white font-medium">{collab.clientName}</p>
+                          <p className="text-gray-400 text-xs">{collab.clientEmail}</p>
+                        </div>
+                        <div>
+                          <span className="text-gray-400">Type:</span>
+                          <p className="text-white font-medium capitalize">{collab.type}</p>
+                        </div>
+                        <div>
+                          <span className="text-gray-400">Budget:</span>
+                          <p className="text-white font-medium">
+                            {collab.budget ? `€${collab.budget.toFixed(2)}` : 'N/A'}
+                          </p>
+                        </div>
+                        <div>
+                          <span className="text-gray-400">Payment:</span>
+                          <p className={`font-medium ${
                             collab.paymentStatus === 'paid' ? 'text-green-400' :
                             collab.paymentStatus === 'partial' ? 'text-yellow-400' : 'text-gray-400'
                           }`}>
-                            {collab.paymentStatus}
+                            €{collab.paidAmount.toFixed(2)} ({collab.paymentStatus})
                           </p>
                         </div>
-                      </td>
-                    </tr>
-                  ))
+                      </div>
+                    </div>
+                    <button className="text-gray-400 hover:text-white transition ml-4">
+                      {expandedCollabId === collab.id ? <ChevronUp size={24} /> : <ChevronDown size={24} />}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Expanded Details */}
+                {expandedCollabId === collab.id && (
+                  <div className="border-t border-gray-700 p-6 space-y-6">
+                    {/* Description */}
+                    <div>
+                      <h4 className="text-sm font-semibold text-gray-300 mb-2">Description</h4>
+                      <p className="text-gray-200">{collab.description}</p>
+                    </div>
+
+                    {/* Messaging Section */}
+                    <div className="bg-gray-900 rounded-lg p-4">
+                      <h4 className="text-lg font-semibold text-white flex items-center gap-2 mb-4">
+                        <MessageSquare size={20} className="text-blue-400" />
+                        Messages
+                      </h4>
+
+                      {/* Messages List */}
+                      <div className="bg-gray-800 rounded-lg p-4 max-h-80 overflow-y-auto space-y-3 mb-4">
+                        {(!messages[collab.id!] || messages[collab.id!].length === 0) ? (
+                          <div className="text-center text-gray-400 py-8">
+                            <MessageSquare size={48} className="mx-auto mb-2 opacity-50" />
+                            <p>No messages yet. Start the conversation!</p>
+                          </div>
+                        ) : (
+                          messages[collab.id!]?.map((msg) => (
+                            <div
+                              key={msg.id}
+                              className={`p-3 rounded-lg ${
+                                msg.senderId === user?.uid
+                                  ? 'bg-purple-900/30 ml-8'
+                                  : 'bg-gray-700 mr-8'
+                              }`}
+                            >
+                              <div className="flex justify-between items-start mb-1">
+                                <span className="font-semibold text-sm text-white">
+                                  {msg.senderId === user?.uid ? 'You (Admin)' : msg.senderName}
+                                </span>
+                                <span className="text-xs text-gray-400">
+                                  {msg.createdAt?.toDate?.()?.toLocaleString() || 'Just now'}
+                                </span>
+                              </div>
+                              <p className="text-gray-300 text-sm">{msg.message}</p>
+                            </div>
+                          ))
+                        )}
+                      </div>
+
+                      {/* Message Input */}
+                      <form
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          handleSendMessage(collab.id!);
+                        }}
+                        className="flex gap-2"
+                      >
+                        <input
+                          type="text"
+                          value={newMessage}
+                          onChange={(e) => setNewMessage(e.target.value)}
+                          placeholder="Type your message to the artist..."
+                          className="flex-1 bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500"
+                        />
+                        <button
+                          type="submit"
+                          disabled={!newMessage.trim()}
+                          className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 px-4 py-2 rounded-lg text-white font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                        >
+                          <Send size={18} />
+                          Send
+                        </button>
+                      </form>
+                    </div>
+                  </div>
                 )}
-              </tbody>
-            </table>
-          </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
     </AdminLayout>

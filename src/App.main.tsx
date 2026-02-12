@@ -17,6 +17,7 @@ import CustomerOrders from './pages/customer/OrdersPage';
 import CustomerDownloads from './pages/customer/DownloadsPage';
 import CustomerProfile from './pages/customer/ProfilePage';
 import CustomerShop from './pages/customer/ShopPage';
+import CustomerChat from './pages/customer/ChatPage';
 
 // Artist pages (protected - artist role)
 import ArtistDashboard from './pages/artist/DashboardPage';
@@ -33,6 +34,12 @@ import AdminContent from './pages/admin/ContentPage';
 import AdminAnalytics from './pages/admin/AnalyticsPage';
 import AdminCollaborations from './pages/admin/CollaborationsPage';
 import AdminSettings from './pages/admin/SettingsPage';
+import AdminChat from './pages/admin/ChatPage';
+
+// Manager pages (protected - manager role)
+import ManagerDashboard from './pages/manager/DashboardPage';
+import ManagerBeats from './pages/manager/BeatsPage';
+import ManagerChat from './pages/manager/ChatPage';
 
 const MainApp: React.FC = () => {
   return (
@@ -85,6 +92,14 @@ const MainApp: React.FC = () => {
             element={
               <ProtectedRoute allowedRoles={['user']}>
                 <CustomerProfile />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/customer/chat"
+            element={
+              <ProtectedRoute allowedRoles={['user']}>
+                <CustomerChat />
               </ProtectedRoute>
             }
           />
@@ -188,9 +203,46 @@ const MainApp: React.FC = () => {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/admin/chat"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <AdminChat />
+              </ProtectedRoute>
+            }
+          />
 
           {/* Redirect /admin to dashboard */}
           <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
+
+          {/* Manager Routes (protected - manager role only) */}
+          <Route
+            path="/manager/dashboard"
+            element={
+              <ProtectedRoute allowedRoles={['manager']}>
+                <ManagerDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/manager/beats"
+            element={
+              <ProtectedRoute allowedRoles={['manager']}>
+                <ManagerBeats />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/manager/chat"
+            element={
+              <ProtectedRoute allowedRoles={['manager']}>
+                <ManagerChat />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Redirect /manager to dashboard */}
+          <Route path="/manager" element={<Navigate to="/manager/dashboard" replace />} />
 
           {/* 404 */}
           <Route path="*" element={<Navigate to="/" replace />} />

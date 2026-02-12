@@ -3,7 +3,8 @@ import AdminLayout from '../../components/admin/AdminLayout';
 import { useContent } from '../../hooks/useContent';
 import { contentService } from '../../lib/firebase/services';
 import { Content, ContentType, ContentStatus, ContentBlock } from '../../lib/firebase/types';
-import { Plus, Edit, Trash2, Eye, Heart, Share2, Calendar, X, Image, FileText as FileTextIcon } from 'lucide-react';
+import { Plus, Edit, Trash2, Eye, Heart, Share2, Calendar, X, Image, FileText as FileTextIcon, Upload } from 'lucide-react';
+import { UploadPost } from 'upload-post';
 
 const ContentPage: React.FC = () => {
   const { content, loading } = useContent();
@@ -327,6 +328,34 @@ const ContentFormModal: React.FC<ContentFormModalProps> = ({ content, onClose, o
     contentText: content?.blocks?.find(b => b.type === 'text')?.content || '',
   });
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+
+  const API_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InRlY2huaWVrQGpvbm5hcmluY29uLm5sIiwiZXhwIjo0OTI0NDk3Nzc0LCJqdGkiOiIwZjY2YjZmNS01OTg2LTRmMzYtYTVlMy01Yzc4MTFhYjJiOGUifQ.o_SjqVg7uIvu5TL9hsjkPD6_Io5CODTMi9XY7kM-f-0';
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    try {
+      const uploader = new UploadPost(API_KEY);
+      const result = await uploader.upload(file, {
+        title: formData.title || 'Content Image',
+        user: 'jonnarincon',
+      });
+
+      // Get URL from result and set it
+      if (result && result.url) {
+        setFormData({ ...formData, featuredImage: result.url });
+        alert('Image uploaded successfully!');
+      }
+    } catch (error: any) {
+      console.error('Upload failed:', error);
+      alert('Upload failed: ' + (error.message || 'Unknown error'));
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -473,14 +502,46 @@ const ContentFormModal: React.FC<ContentFormModalProps> = ({ content, onClose, o
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Featured Image URL</label>
-              <input
-                type="url"
-                value={formData.featuredImage}
-                onChange={(e) => setFormData({ ...formData, featuredImage: e.target.value })}
-                className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-purple-500"
-                placeholder="https://example.com/image.jpg"
-              />
+              <label className="block text-sm font-medium text-gray-300 mb-2">Featured Image</label>
+              <div className="space-y-2">
+                {/* Upload Button */}
+                <div className="flex gap-2">
+                  <label className="flex-1 cursor-pointer">
+                    <div className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-white font-medium transition-all">
+                      <Upload size={18} />
+                      {uploading ? 'Uploading...' : 'Upload Image'}
+                    </div>
+                    <input
+                      type="file"
+                      accept="image/*,video/*"
+                      onChange={handleFileUpload}
+                      className="hidden"
+                      disabled={uploading}
+                    />
+                  </label>
+                </div>
+                {/* Or Manual URL Input */}
+                <input
+                  type="url"
+                  value={formData.featuredImage}
+                  onChange={(e) => setFormData({ ...formData, featuredImage: e.target.value })}
+                  className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-purple-500"
+                  placeholder="Or paste URL manually"
+                />
+                {/* Preview */}
+                {formData.featuredImage && (
+                  <div className="mt-2">
+                    <img
+                      src={formData.featuredImage}
+                      alt="Preview"
+                      className="w-full h-48 object-cover rounded-lg"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none';
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 

@@ -4,13 +4,30 @@ import { useAuth } from '../../contexts/AuthContext';
 import { collaborationService } from '../../lib/firebase/services/collaborationService';
 import { Collaboration } from '../../lib/firebase/types';
 import ArtistLayout from '../../components/artist/ArtistLayout';
-import { Handshake, Mail } from 'lucide-react';
+import { Handshake, Mail, MessageSquare, Send, X } from 'lucide-react';
+import { db } from '../../lib/firebase/config';
+import { collection, addDoc, serverTimestamp, query, where, orderBy, onSnapshot, Timestamp } from 'firebase/firestore';
+
+interface CollabMessage {
+  id?: string;
+  collaborationId: string;
+  senderId: string;
+  senderName: string;
+  senderEmail: string;
+  message: string;
+  createdAt: Timestamp;
+}
 
 const ArtistCollaborations: React.FC = () => {
   const { user } = useAuth();
   const [collaborations, setCollaborations] = useState<Collaboration[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'in_progress' | 'completed' | 'inquiry'>('all');
+
+  // Messaging state
+  const [openChatCollabId, setOpenChatCollabId] = useState<string | null>(null);
+  const [messages, setMessages] = useState<Record<string, CollabMessage[]>>({});
+  const [newMessage, setNewMessage] = useState('');
 
   useEffect(() => {
     if (!user) return;
@@ -32,6 +49,46 @@ const ArtistCollaborations: React.FC = () => {
 
     loadCollaborations();
   }, [user]);
+
+  // Load messages for a specific collaboration
+  useEffect(() => {
+    if (!openChatCollabId) return;
+
+    const messagesRef = collection(db, 'collaborationMessages');
+    const q = query(
+      messagesRef,
+      where('collaborationId', '==', openChatCollabId),
+      orderBy('createdAt', 'asc')
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const msgs: CollabMessage[] = [];
+      snapshot.forEach((doc) => {
+        msgs.push({ id: doc.id, ...doc.data() } as CollabMessage);
+      });
+      setMessages((prev) => ({ ...prev, [openChatCollabId]: msgs }));
+    });
+
+    return () => unsubscribe();
+  }, [openChatCollabId]);
+
+  const handleSendMessage = async (collaborationId: string) => {
+    if (!newMessage.trim() || !user) return;
+
+    try {
+      await addDoc(collection(db, 'collaborationMessages'), {
+        collaborationId,
+        senderId: user.uid,
+        senderName: user.displayName || 'Artist',
+        senderEmail: user.email,
+        message: newMessage.trim(),
+        createdAt: serverTimestamp(),
+      });
+      setNewMessage('');
+    } catch (error) {
+      console.error('Failed to send message:', error);
+    }
+  };
 
   const filteredCollaborations = collaborations.filter((collab) => {
     if (filter === 'all') return true;
@@ -234,11 +291,95 @@ const ArtistCollaborations: React.FC = () => {
 
                   {/* Notes */}
                   {collab.notes && (
-                    <div>
+                    <div className="mb-4">
                       <div className="text-sm text-gray-400 mb-1">Notes</div>
                       <p className="text-sm text-gray-300">{collab.notes}</p>
                     </div>
                   )}
+
+                  {/* Messaging Section */}
+                  <div className="mt-4 pt-4 border-t border-gray-700">
+                    {openChatCollabId === collab.id ? (
+                      <div className="space-y-4">
+                        <div className="flex justify-between items-center">
+                          <h4 className="text-lg font-semibold text-white flex items-center gap-2">
+                            <MessageSquare size={20} className="text-blue-400" />
+                            Messages
+                          </h4>
+                          <button
+                            onClick={() => setOpenChatCollabId(null)}
+                            className="text-gray-400 hover:text-white transition"
+                          >
+                            <X size={20} />
+                          </button>
+                        </div>
+
+                        {/* Messages List */}
+                        <div className="bg-gray-900 rounded-lg p-4 max-h-96 overflow-y-auto space-y-3">
+                          {messages[collab.id]?.length === 0 ? (
+                            <div className="text-center text-gray-400 py-8">
+                              <MessageSquare size={48} className="mx-auto mb-2 opacity-50" />
+                              <p>No messages yet. Start the conversation!</p>
+                            </div>
+                          ) : (
+                            messages[collab.id]?.map((msg) => (
+                              <div
+                                key={msg.id}
+                                className={`p-3 rounded-lg ${
+                                  msg.senderId === user?.uid
+                                    ? 'bg-purple-900/30 ml-8'
+                                    : 'bg-gray-800 mr-8'
+                                }`}
+                              >
+                                <div className="flex justify-between items-start mb-1">
+                                  <span className="font-semibold text-sm text-white">
+                                    {msg.senderId === user?.uid ? 'You' : msg.senderName}
+                                  </span>
+                                  <span className="text-xs text-gray-400">
+                                    {msg.createdAt?.toDate?.()?.toLocaleString() || 'Just now'}
+                                  </span>
+                                </div>
+                                <p className="text-gray-300 text-sm">{msg.message}</p>
+                              </div>
+                            ))
+                          )}
+                        </div>
+
+                        {/* Message Input */}
+                        <form
+                          onSubmit={(e) => {
+                            e.preventDefault();
+                            handleSendMessage(collab.id!);
+                          }}
+                          className="flex gap-2"
+                        >
+                          <input
+                            type="text"
+                            value={newMessage}
+                            onChange={(e) => setNewMessage(e.target.value)}
+                            placeholder="Type your message..."
+                            className="flex-1 bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500"
+                          />
+                          <button
+                            type="submit"
+                            disabled={!newMessage.trim()}
+                            className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 px-4 py-2 rounded-lg text-white font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                          >
+                            <Send size={18} />
+                            Send
+                          </button>
+                        </form>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => setOpenChatCollabId(collab.id!)}
+                        className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 px-4 py-3 rounded-lg text-white font-medium transition-all flex items-center justify-center gap-2"
+                      >
+                        <MessageSquare size={20} />
+                        Open Messages
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             ))}
