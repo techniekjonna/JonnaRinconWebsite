@@ -142,11 +142,84 @@ export default function BeatStore({ onAddToCart }: BeatStoreProps) {
     }
   };
 
+  // Get featured beats
+  const featuredBeats = beats.filter(beat => beat.featured).slice(0, 6);
+
   return (
     <section id="beats" className="min-h-screen py-24 px-4 bg-transparent flex flex-col">
       <div className="max-w-7xl mx-auto w-full flex-1 flex flex-col">
         <div className="text-center mb-6 md:mb-12">
           <h2 className="text-3xl md:text-6xl font-bold neon-glow">Beat Store</h2>
+        </div>
+
+        {/* Featured Beats Section */}
+        {!loading && featuredBeats.length > 0 && (
+          <div className="mb-8 md:mb-12">
+            <div className="flex items-center gap-2 mb-4">
+              <span className="text-2xl">⭐</span>
+              <h3 className="text-2xl md:text-3xl font-bold text-purple-400">Featured Beats</h3>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4">
+              {featuredBeats.map((beat) => (
+                <div
+                  key={beat.id}
+                  className="glass rounded-xl overflow-hidden hover:scale-105 transition-all group flex flex-col relative neon-border"
+                >
+                  {/* Featured Badge */}
+                  <div className="absolute top-2 right-2 z-10 bg-gradient-to-r from-yellow-400 to-orange-500 text-black px-2 py-1 rounded-full text-xs font-bold shadow-lg">
+                    ⭐ FEATURED
+                  </div>
+
+                  <div className="relative aspect-square">
+                    <img
+                      src={beat.artwork_url}
+                      alt={beat.title}
+                      className="w-full h-full object-cover"
+                    />
+                    <button
+                      onClick={() => setPlayingId(playingId === beat.id ? null : beat.id)}
+                      className="absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      {playingId === beat.id ? (
+                        <Pause className="w-8 h-8 text-white" fill="currentColor" />
+                      ) : (
+                        <Play className="w-8 h-8 text-white ml-1" fill="currentColor" />
+                      )}
+                    </button>
+                  </div>
+
+                  <div className="p-3 flex-1 flex flex-col">
+                    <h3 className="text-sm md:text-base font-bold mb-1 truncate">{beat.title}</h3>
+                    <p className="text-xs text-gray-400 mb-2 truncate">{beat.artist}</p>
+
+                    <div className="flex gap-1 mb-2">
+                      <span className="px-2 py-0.5 bg-purple-900/30 rounded text-xs">{beat.bpm}</span>
+                      <span className="px-2 py-0.5 bg-purple-900/30 rounded text-xs">{beat.key}</span>
+                    </div>
+
+                    <div className="mt-auto flex items-center justify-between">
+                      <span className="text-base md:text-lg font-black text-purple-400">
+                        €{beat.price.toFixed(0)}
+                      </span>
+                      <button
+                        onClick={() => onAddToCart(beat, 'basic')}
+                        className="p-2 bg-purple-600 hover:bg-purple-700 rounded-full transition-all hover:scale-110"
+                      >
+                        <ShoppingCart className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Divider */}
+            <div className="my-8 border-t border-purple-900/50"></div>
+          </div>
+        )}
+
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-xl md:text-2xl font-bold text-white">All Beats</h3>
         </div>
 
         {/* Search + Filters */}
@@ -250,8 +323,15 @@ export default function BeatStore({ onAddToCart }: BeatStoreProps) {
                         )}
                       </button>
                     </div>
-                    <div className="min-w-0">
-                      <p className="text-white text-xs md:text-base font-semibold truncate">{beat.title}</p>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className="text-white text-xs md:text-base font-semibold truncate">{beat.title}</p>
+                        {beat.featured && (
+                          <span className="bg-gradient-to-r from-yellow-400 to-orange-500 text-black px-1.5 py-0.5 rounded-full text-xs font-bold whitespace-nowrap flex-shrink-0">
+                            ⭐ FEATURED
+                          </span>
+                        )}
+                      </div>
                       <p className="text-gray-400 text-xs md:text-sm truncate">{beat.artist}</p>
                     </div>
                   </div>
@@ -305,7 +385,7 @@ export default function BeatStore({ onAddToCart }: BeatStoreProps) {
                     )}
                   </button>
                   {beat.featured && (
-                    <div className="absolute top-0.5 right-0.5 md:top-2 md:right-2 bg-purple-600 text-white px-1 py-0.5 md:px-2 md:py-1 rounded text-xs font-bold">
+                    <div className="absolute top-0.5 right-0.5 md:top-2 md:right-2 bg-gradient-to-r from-yellow-400 to-orange-500 text-black px-1.5 py-0.5 md:px-2 md:py-1 rounded-full text-xs font-bold shadow-lg">
                       ⭐
                     </div>
                   )}
