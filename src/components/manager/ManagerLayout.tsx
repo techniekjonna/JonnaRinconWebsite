@@ -23,7 +23,7 @@ const ManagerLayout: React.FC<ManagerLayoutProps> = ({ children }) => {
 
   const handleSignOut = async () => {
     await signOut();
-    navigate('/manager/login');
+    navigate('/');
   };
 
   const navigation = [

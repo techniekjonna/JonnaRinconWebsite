@@ -12,6 +12,7 @@ import {
   X,
   Plus,
   Settings,
+  MessageSquare,
 } from 'lucide-react';
 
 interface ArtistLayoutProps {
@@ -35,6 +36,7 @@ const ArtistLayout: React.FC<ArtistLayoutProps> = ({ children }) => {
     { name: 'Request Collab', href: '/artist/request-collab', icon: Plus },
     { name: 'Shop Beats', href: '/artist/beats', icon: Music },
     { name: 'My Purchases', href: '/artist/orders', icon: ShoppingCart },
+    { name: 'Chat', href: '/artist/chat', icon: MessageSquare },
     { name: 'Profile', href: '/artist/profile', icon: User },
     { name: 'Settings', href: '/artist/settings', icon: Settings },
   ];

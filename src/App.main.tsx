@@ -28,6 +28,7 @@ import ArtistCollaborations from './pages/artist/CollaborationsPage';
 import ArtistRequestCollab from './pages/artist/RequestCollabPage';
 import ArtistShop from './pages/artist/ShopPage';
 import ArtistOrders from './pages/artist/OrdersPage';
+import ArtistChat from './pages/artist/ChatPage';
 import ArtistProfile from './pages/artist/ProfilePage';
 import ArtistSettings from './pages/artist/SettingsPage';
 
@@ -174,6 +175,14 @@ const MainApp: React.FC = () => {
             element={
               <ProtectedRoute allowedRoles={['artist']}>
                 <ArtistOrders />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/artist/chat"
+            element={
+              <ProtectedRoute allowedRoles={['artist']}>
+                <ArtistChat />
               </ProtectedRoute>
             }
           />
