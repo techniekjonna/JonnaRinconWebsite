@@ -8,6 +8,7 @@ import {
   FileText,
   Handshake,
   BarChart3,
+  MessageSquare,
   Settings,
   LogOut,
   Menu,
@@ -36,6 +37,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     { name: 'Content', href: '/admin/content', icon: FileText },
     { name: 'Collaborations', href: '/admin/collaborations', icon: Handshake },
     { name: 'Analytics', href: '/admin/analytics', icon: BarChart3 },
+    { name: 'Chat', href: '/admin/chat', icon: MessageSquare },
     { name: 'Settings', href: '/admin/settings', icon: Settings },
   ];
 
