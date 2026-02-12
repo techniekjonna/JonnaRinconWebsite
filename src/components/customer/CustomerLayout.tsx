@@ -11,6 +11,7 @@ import {
   LogOut,
   Menu,
   X,
+  Settings,
 } from 'lucide-react';
 
 interface CustomerLayoutProps {
@@ -35,6 +36,7 @@ const CustomerLayout: React.FC<CustomerLayoutProps> = ({ children }) => {
     { name: 'Downloads', href: '/customer/downloads', icon: Download },
     { name: 'Chat', href: '/customer/chat', icon: MessageSquare },
     { name: 'Profile', href: '/customer/profile', icon: User },
+    { name: 'Settings', href: '/customer/settings', icon: Settings },
   ];
 
   const isActive = (path: string) => location.pathname === path;

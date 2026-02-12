@@ -16,6 +16,7 @@ import CustomerDashboard from './pages/customer/DashboardPage';
 import CustomerOrders from './pages/customer/OrdersPage';
 import CustomerDownloads from './pages/customer/DownloadsPage';
 import CustomerProfile from './pages/customer/ProfilePage';
+import CustomerSettings from './pages/customer/SettingsPage';
 import CustomerShop from './pages/customer/ShopPage';
 import CustomerChat from './pages/customer/ChatPage';
 
@@ -26,6 +27,7 @@ import ArtistRequestCollab from './pages/artist/RequestCollabPage';
 import ArtistShop from './pages/artist/ShopPage';
 import ArtistOrders from './pages/artist/OrdersPage';
 import ArtistProfile from './pages/artist/ProfilePage';
+import ArtistSettings from './pages/artist/SettingsPage';
 
 // Admin pages (protected - admin role)
 import AdminDashboard from './pages/admin/DashboardPage';
@@ -105,6 +107,14 @@ const MainApp: React.FC = () => {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/customer/settings"
+            element={
+              <ProtectedRoute allowedRoles={['user']}>
+                <CustomerSettings />
+              </ProtectedRoute>
+            }
+          />
 
           {/* Artist Routes (protected - artist role only) */}
           <Route
@@ -152,6 +162,14 @@ const MainApp: React.FC = () => {
             element={
               <ProtectedRoute allowedRoles={['artist']}>
                 <ArtistProfile />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/artist/settings"
+            element={
+              <ProtectedRoute allowedRoles={['artist']}>
+                <ArtistSettings />
               </ProtectedRoute>
             }
           />

@@ -11,6 +11,7 @@ import {
   Menu,
   X,
   Plus,
+  Settings,
 } from 'lucide-react';
 
 interface ArtistLayoutProps {
@@ -35,6 +36,7 @@ const ArtistLayout: React.FC<ArtistLayoutProps> = ({ children }) => {
     { name: 'Shop Beats', href: '/artist/beats', icon: Music },
     { name: 'My Purchases', href: '/artist/orders', icon: ShoppingCart },
     { name: 'Profile', href: '/artist/profile', icon: User },
+    { name: 'Settings', href: '/artist/settings', icon: Settings },
   ];
 
   const isActive = (path: string) => location.pathname === path;
