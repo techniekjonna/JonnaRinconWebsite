@@ -5,7 +5,7 @@ import { collaborationService } from '../../lib/firebase/services/collaborationS
 import { orderService } from '../../lib/firebase/services/orderService';
 import { Collaboration, Order } from '../../lib/firebase/types';
 import ArtistLayout from '../../components/artist/ArtistLayout';
-import { Handshake, Music, DollarSign, TrendingUp } from 'lucide-react';
+import { Handshake, Music, DollarSign, TrendingUp, Home } from 'lucide-react';
 
 const ArtistDashboard: React.FC = () => {
   const { user } = useAuth();
@@ -101,9 +101,18 @@ const ArtistDashboard: React.FC = () => {
     <ArtistLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div>
-          <h1 className="text-3xl font-bold text-white">Artist Dashboard</h1>
-          <p className="text-gray-400 mt-2">Welcome back, {user?.displayName || 'Artist'}!</p>
+        <div className="flex items-start justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-white">Artist Dashboard</h1>
+            <p className="text-gray-400 mt-2">Welcome back, {user?.displayName || 'Artist'}!</p>
+          </div>
+          <Link
+            to="/"
+            className="bg-gray-800 hover:bg-gray-700 border border-gray-700 px-4 py-2 rounded-lg text-white font-medium transition-all flex items-center gap-2"
+          >
+            <Home size={18} />
+            Back to Home
+          </Link>
         </div>
 
         {/* Stats Grid */}

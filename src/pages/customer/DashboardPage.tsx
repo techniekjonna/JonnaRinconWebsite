@@ -4,7 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { orderService } from '../../lib/firebase/services/orderService';
 import { Order } from '../../lib/firebase/types';
 import CustomerLayout from '../../components/customer/CustomerLayout';
-import { TrendingUp, DollarSign, ShoppingBag, Download } from 'lucide-react';
+import { TrendingUp, DollarSign, ShoppingBag, Download, Home } from 'lucide-react';
 
 const CustomerDashboard: React.FC = () => {
   const { user } = useAuth();
@@ -86,9 +86,18 @@ const CustomerDashboard: React.FC = () => {
     <CustomerLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div>
-          <h1 className="text-3xl font-bold text-white">Dashboard</h1>
-          <p className="text-gray-400 mt-2">Welcome back, {user?.displayName || 'Customer'}!</p>
+        <div className="flex items-start justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-white">Dashboard</h1>
+            <p className="text-gray-400 mt-2">Welcome back, {user?.displayName || 'Customer'}!</p>
+          </div>
+          <Link
+            to="/"
+            className="bg-gray-800 hover:bg-gray-700 border border-gray-700 px-4 py-2 rounded-lg text-white font-medium transition-all flex items-center gap-2"
+          >
+            <Home size={18} />
+            Back to Home
+          </Link>
         </div>
 
         {/* Stats Grid */}

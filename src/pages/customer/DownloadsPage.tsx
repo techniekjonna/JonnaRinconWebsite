@@ -17,19 +17,24 @@ interface DownloadableItem extends OrderItem {
 const CustomerDownloads: React.FC = () => {
   const { user } = useAuth();
   const [downloads, setDownloads] = useState<DownloadableItem[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<'all' | 'orders' | 'completed'>('all');
 
   useEffect(() => {
     if (!user) return;
 
     const loadDownloads = async () => {
       try {
-        const orders = await orderService.getOrdersByCustomer(user.email);
+        const ordersData = await orderService.getOrdersByCustomer(user.email);
+
+        // Store all orders
+        setOrders(ordersData);
 
         // Extract all downloadable items from completed orders
         const downloadableItems: DownloadableItem[] = [];
 
-        orders
+        ordersData
           .filter((order) => order.status === 'completed')
           .forEach((order) => {
             order.items.forEach((item) => {
@@ -82,35 +87,128 @@ const CustomerDownloads: React.FC = () => {
           <p className="text-gray-400 mt-2">Access all your purchased beats and licenses</p>
         </div>
 
-        {/* Info Banner */}
-        <div className="bg-blue-900/30 border border-blue-700 rounded-lg p-4 mb-8">
-          <div className="flex items-start gap-3">
-            <div className="text-2xl">ℹ️</div>
-            <div>
-              <div className="font-semibold mb-1">Download Tips</div>
-              <ul className="text-sm text-gray-300 space-y-1">
-                <li>• All purchases include unlimited re-downloads</li>
-                <li>• Download your license agreement for legal protection</li>
-                <li>• Files are available in high-quality formats</li>
-              </ul>
-            </div>
-          </div>
+        {/* Tabs */}
+        <div className="flex gap-2 border-b border-gray-700 mb-6">
+          <button
+            onClick={() => setActiveTab('all')}
+            className={`px-4 py-2 font-medium transition-all ${
+              activeTab === 'all'
+                ? 'text-blue-400 border-b-2 border-blue-400'
+                : 'text-gray-400 hover:text-gray-300'
+            }`}
+          >
+            All Downloads
+          </button>
+          <button
+            onClick={() => setActiveTab('orders')}
+            className={`px-4 py-2 font-medium transition-all ${
+              activeTab === 'orders'
+                ? 'text-blue-400 border-b-2 border-blue-400'
+                : 'text-gray-400 hover:text-gray-300'
+            }`}
+          >
+            My Orders
+          </button>
+          <button
+            onClick={() => setActiveTab('completed')}
+            className={`px-4 py-2 font-medium transition-all ${
+              activeTab === 'completed'
+                ? 'text-blue-400 border-b-2 border-blue-400'
+                : 'text-gray-400 hover:text-gray-300'
+            }`}
+          >
+            Completed
+          </button>
         </div>
 
-        {/* Downloads Grid */}
-        {downloads.length === 0 ? (
-          <div className="text-center py-12 bg-gray-800 rounded-lg">
-            <div className="text-4xl mb-4">⬇️</div>
-            <p className="text-xl mb-2">No downloads available</p>
-            <p className="text-gray-400 mb-6">Purchase beats to access downloads</p>
-            <Link
-              to="/shop/beats"
-              className="inline-block bg-purple-600 hover:bg-purple-700 px-6 py-3 rounded-lg transition"
-            >
-              Browse Beats
-            </Link>
+        {/* Info Banner */}
+        {activeTab === 'all' && (
+          <div className="bg-blue-900/30 border border-blue-700 rounded-lg p-4 mb-8">
+            <div className="flex items-start gap-3">
+              <div className="text-2xl">ℹ️</div>
+              <div>
+                <div className="font-semibold mb-1">Download Tips</div>
+                <ul className="text-sm text-gray-300 space-y-1">
+                  <li>• All purchases include unlimited re-downloads</li>
+                  <li>• Download your license agreement for legal protection</li>
+                  <li>• Files are available in high-quality formats</li>
+                </ul>
+              </div>
+            </div>
           </div>
+        )}
+
+        {/* Content based on active tab */}
+        {activeTab === 'orders' ? (
+          /* My Orders View */
+          orders.length === 0 ? (
+            <div className="text-center py-12 bg-gray-800 rounded-lg">
+              <div className="text-4xl mb-4">📦</div>
+              <p className="text-xl mb-2">No orders yet</p>
+              <p className="text-gray-400 mb-6">Start shopping for beats</p>
+              <Link
+                to="/customer/shop"
+                className="inline-block bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-lg transition"
+              >
+                Browse Beats
+              </Link>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {orders.map((order) => (
+                <div key={order.id} className="bg-gray-800 border border-gray-700 rounded-xl p-6">
+                  <div className="flex items-start justify-between mb-4">
+                    <div>
+                      <h3 className="text-lg font-bold text-white">Order #{order.orderNumber}</h3>
+                      <p className="text-sm text-gray-400">
+                        {order.createdAt?.toDate?.()?.toLocaleDateString() || 'N/A'}
+                      </p>
+                    </div>
+                    <span
+                      className={`px-3 py-1 rounded text-sm font-medium ${
+                        order.status === 'completed'
+                          ? 'bg-green-600/20 text-green-400'
+                          : order.status === 'pending'
+                          ? 'bg-yellow-600/20 text-yellow-400'
+                          : 'bg-blue-600/20 text-blue-400'
+                      }`}
+                    >
+                      {order.status}
+                    </span>
+                  </div>
+                  <div className="space-y-2">
+                    {order.items.map((item, index) => (
+                      <div key={index} className="flex justify-between text-sm">
+                        <span className="text-gray-300">{item.beatTitle} ({item.licenseType})</span>
+                        <span className="text-white font-medium">€{item.price.toFixed(2)}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="border-t border-gray-700 mt-4 pt-4">
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-400">Total</span>
+                      <span className="text-xl font-bold text-white">€{order.totalAmount.toFixed(2)}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )
         ) : (
+          /* Downloads Grid */
+          downloads.length === 0 ? (
+            <div className="text-center py-12 bg-gray-800 rounded-lg">
+              <div className="text-4xl mb-4">⬇️</div>
+              <p className="text-xl mb-2">No downloads available</p>
+              <p className="text-gray-400 mb-6">Purchase beats to access downloads</p>
+              <Link
+                to="/customer/shop"
+                className="inline-block bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-lg transition"
+              >
+                Browse Beats
+              </Link>
+            </div>
+          ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {downloads.map((item, index) => (
               <div key={index} className="bg-gray-800 rounded-lg overflow-hidden hover:bg-gray-750 transition">
@@ -167,10 +265,11 @@ const CustomerDownloads: React.FC = () => {
               </div>
             ))}
           </div>
+          )
         )}
 
         {/* Support Section */}
-        {downloads.length > 0 && (
+        {activeTab !== 'orders' && downloads.length > 0 && (
           <div className="mt-12 bg-gray-800 rounded-lg p-6 text-center">
             <h3 className="font-bold mb-2">Need Help?</h3>
             <p className="text-gray-400 mb-4">
