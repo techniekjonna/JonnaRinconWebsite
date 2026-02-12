@@ -153,6 +153,77 @@ class CollaborationService {
       throw new Error(error.message || 'Failed to delete collaboration');
     }
   }
+
+  // Real-time subscription to collaborations
+  subscribeToCollaborations(
+    callback: (collaborations: Collaboration[]) => void,
+    filters?: {
+      status?: CollaborationStatus;
+      type?: CollaborationType;
+    }
+  ): Unsubscribe {
+    try {
+      const constraints: QueryConstraint[] = [orderBy('createdAt', 'desc')];
+
+      if (filters?.status) {
+        constraints.push(where('status', '==', filters.status));
+      }
+
+      if (filters?.type) {
+        constraints.push(where('type', '==', filters.type));
+      }
+
+      const q = query(collection(db, this.collectionName), ...constraints);
+
+      return onSnapshot(q, (snapshot) => {
+        const collaborations: Collaboration[] = [];
+        snapshot.forEach((doc) => {
+          collaborations.push({ id: doc.id, ...doc.data() } as Collaboration);
+        });
+        callback(collaborations);
+      });
+    } catch (error) {
+      console.error('Subscribe to collaborations error:', error);
+      return () => {};
+    }
+  }
+
+  // Get collaboration statistics
+  async getCollaborationStats(): Promise<{
+    total: number;
+    active: number;
+    completed: number;
+    totalRevenue: number;
+    pendingRevenue: number;
+  }> {
+    try {
+      const collaborations = await this.getAll();
+
+      const stats = {
+        total: collaborations.length,
+        active: collaborations.filter((c) =>
+          ['agreed', 'contract_sent', 'signed', 'in_progress'].includes(c.status)
+        ).length,
+        completed: collaborations.filter((c) => c.status === 'completed').length,
+        totalRevenue: collaborations.reduce((sum, c) => sum + c.paidAmount, 0),
+        pendingRevenue: collaborations.reduce(
+          (sum, c) => sum + (c.budget - c.paidAmount),
+          0
+        ),
+      };
+
+      return stats;
+    } catch (error) {
+      console.error('Get collaboration stats error:', error);
+      return {
+        total: 0,
+        active: 0,
+        completed: 0,
+        totalRevenue: 0,
+        pendingRevenue: 0,
+      };
+    }
+  }
 }
 
 export const collaborationService = new CollaborationService();

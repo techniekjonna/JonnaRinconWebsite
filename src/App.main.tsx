@@ -17,6 +17,7 @@ import CustomerOrders from './pages/customer/OrdersPage';
 import CustomerDownloads from './pages/customer/DownloadsPage';
 import CustomerProfile from './pages/customer/ProfilePage';
 import CustomerSettings from './pages/customer/SettingsPage';
+import CustomerCollaborations from './pages/customer/CollaborationsPage';
 import CustomerShop from './pages/customer/ShopPage';
 import CustomerChat from './pages/customer/ChatPage';
 
@@ -96,6 +97,14 @@ const MainApp: React.FC = () => {
             element={
               <ProtectedRoute allowedRoles={['user']}>
                 <CustomerProfile />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/customer/collaborations"
+            element={
+              <ProtectedRoute allowedRoles={['user']}>
+                <CustomerCollaborations />
               </ProtectedRoute>
             }
           />
