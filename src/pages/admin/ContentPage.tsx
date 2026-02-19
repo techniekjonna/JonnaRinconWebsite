@@ -6,8 +6,7 @@ import {
   Eye, RefreshCw, Image, Film, Type, Edit, CheckCircle, AlertCircle,
 } from 'lucide-react';
 
-// Upload-Post API configuration
-const API_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InRlY2huaWVrQGpvbm5hcmluY29uLm5sIiwiZXhwIjo0OTI0NDk3Nzc0LCJqdGkiOiIwZjY2YjZmNS01OTg2LTRmMzYtYTVlMy01Yzc4MTFhYjJiOGUifQ.o_SjqVg7uIvu5TL9hsjkPD6_Io5CODTMi9XY7kM-f-0';
+// Upload-Post API configuration (auth handled by Netlify Edge Function)
 const API_BASE = '/api/upload-post';
 const PROFILE_USER = 'jonnarincon';
 
@@ -41,12 +40,11 @@ interface CalendarDay {
   posts: (ScheduledPost | HistoryPost)[];
 }
 
-// API helper
+// API helper (auth header added server-side by Netlify Edge Function)
 const apiCall = async (endpoint: string, options?: RequestInit) => {
   const res = await fetch(`${API_BASE}${endpoint}`, {
     ...options,
     headers: {
-      'Authorization': `Apikey ${API_KEY}`,
       ...(options?.headers || {}),
     },
   });
@@ -631,9 +629,6 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ onClose, onSave, pres
 
       const res = await fetch(`${API_BASE}${endpoint}`, {
         method: 'POST',
-        headers: {
-          'Authorization': `Apikey ${API_KEY}`,
-        },
         body: formData,
       });
 
