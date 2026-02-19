@@ -4,12 +4,16 @@ import {
   Plus, ChevronLeft, ChevronRight, X, Upload, Clock,
   Instagram, Youtube, Calendar as CalendarIcon, Send, Trash2,
   Eye, RefreshCw, Image, Film, Type, Edit, CheckCircle, AlertCircle,
+  Settings,
 } from 'lucide-react';
 
 // Upload-Post API configuration
 const API_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InRlY2huaWVrQGpvbm5hcmluY29uLm5sIiwiZXhwIjo0OTI0NDk3Nzc0LCJqdGkiOiIwZjY2YjZmNS01OTg2LTRmMzYtYTVlMy01Yzc4MTFhYjJiOGUifQ.o_SjqVg7uIvu5TL9hsjkPD6_Io5CODTMi9XY7kM-f-0';
 const API_BASE = '/api/upload-post';
-const PROFILE_USER = 'jonnarincon';
+
+// Get username from localStorage or use default
+const getStoredUsername = () => localStorage.getItem('uploadpost_username') || '';
+const setStoredUsername = (username: string) => localStorage.setItem('uploadpost_username', username);
 
 // Types
 interface ScheduledPost {
@@ -65,8 +69,10 @@ const ContentPage: React.FC = () => {
   const [historyPosts, setHistoryPosts] = useState<HistoryPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [profileUsername, setProfileUsername] = useState(getStoredUsername());
 
   // Fetch data
   const fetchData = useCallback(async () => {
@@ -112,31 +118,35 @@ const ContentPage: React.FC = () => {
     fetchData();
   }, [fetchData]);
 
+  // Check if username is configured
+  useEffect(() => {
+    if (!profileUsername) {
+      setShowSettingsModal(true);
+    }
+  }, [profileUsername]);
+
   // Calendar helpers
   const getCalendarDays = (): CalendarDay[] => {
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
-    const startPad = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1; // Monday-start
+    const startPad = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
     const days: CalendarDay[] = [];
 
-    // Previous month padding
     for (let i = startPad - 1; i >= 0; i--) {
       const date = new Date(year, month, -i);
       days.push({ date, isCurrentMonth: false, isToday: false, posts: [] });
     }
 
-    // Current month days
     for (let d = 1; d <= lastDay.getDate(); d++) {
       const date = new Date(year, month, d);
       const dateStr = date.toISOString().split('T')[0];
       const isToday = date.getTime() === today.getTime();
 
-      // Match posts to this day
       const dayPosts: (ScheduledPost | HistoryPost)[] = [];
       scheduledPosts.forEach(p => {
         if (p.scheduledDate && p.scheduledDate.startsWith(dateStr)) dayPosts.push(p);
@@ -148,7 +158,6 @@ const ContentPage: React.FC = () => {
       days.push({ date, isCurrentMonth: true, isToday, posts: dayPosts });
     }
 
-    // Next month padding (fill to 42 = 6 weeks)
     const remaining = 42 - days.length;
     for (let i = 1; i <= remaining; i++) {
       const date = new Date(year, month + 1, i);
@@ -174,6 +183,10 @@ const ContentPage: React.FC = () => {
 
   const handleCalendarDayClick = (day: CalendarDay) => {
     if (!day.isCurrentMonth) return;
+    if (!profileUsername) {
+      setShowSettingsModal(true);
+      return;
+    }
     setSelectedDate(day.date);
     setShowCreateModal(true);
   };
@@ -212,9 +225,22 @@ const ContentPage: React.FC = () => {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-white">Social Media Planner</h1>
-            <p className="text-gray-400 mt-2">Schedule and manage posts for Instagram & YouTube</p>
+            <p className="text-gray-400 mt-2">
+              {profileUsername ? (
+                <>Schedule and manage posts for <span className="text-purple-400">@{profileUsername}</span></>
+              ) : (
+                <>Configure your username to get started</>
+              )}
+            </p>
           </div>
           <div className="flex items-center gap-3">
+            <button
+              onClick={() => setShowSettingsModal(true)}
+              className="p-2 bg-gray-800 border border-gray-700 rounded-lg text-gray-400 hover:text-white transition"
+              title="Settings"
+            >
+              <Settings size={20} />
+            </button>
             <button
               onClick={fetchData}
               disabled={refreshing}
@@ -224,7 +250,14 @@ const ContentPage: React.FC = () => {
               <RefreshCw size={20} className={refreshing ? 'animate-spin' : ''} />
             </button>
             <button
-              onClick={() => { setSelectedDate(null); setShowCreateModal(true); }}
+              onClick={() => {
+                if (!profileUsername) {
+                  setShowSettingsModal(true);
+                  return;
+                }
+                setSelectedDate(null);
+                setShowCreateModal(true);
+              }}
               className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-purple-700 hover:to-pink-700 transition-all flex items-center space-x-2"
             >
               <Plus size={20} />
@@ -232,6 +265,25 @@ const ContentPage: React.FC = () => {
             </button>
           </div>
         </div>
+
+        {/* Username Warning */}
+        {!profileUsername && (
+          <div className="bg-yellow-900/30 border border-yellow-700 rounded-xl p-4 flex items-center gap-3">
+            <AlertCircle size={24} className="text-yellow-400 flex-shrink-0" />
+            <div className="flex-1">
+              <h3 className="text-yellow-400 font-bold">Username Not Configured</h3>
+              <p className="text-yellow-300/80 text-sm mt-1">
+                Please configure your Upload-Post.com username in settings to start posting.
+              </p>
+            </div>
+            <button
+              onClick={() => setShowSettingsModal(true)}
+              className="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg font-semibold transition"
+            >
+              Configure
+            </button>
+          </div>
+        )}
 
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -249,14 +301,14 @@ const ContentPage: React.FC = () => {
             <Instagram size={24} className="text-pink-400" />
             <div>
               <p className="text-gray-400 text-sm">Instagram</p>
-              <p className="text-white font-bold">Connected</p>
+              <p className="text-white font-bold">{profileUsername ? 'Ready' : 'Not configured'}</p>
             </div>
           </div>
           <div className="bg-gray-800 border border-gray-700 rounded-xl p-4 flex items-center gap-3">
             <Youtube size={24} className="text-red-400" />
             <div>
               <p className="text-gray-400 text-sm">YouTube</p>
-              <p className="text-white font-bold">Connected</p>
+              <p className="text-white font-bold">{profileUsername ? 'Ready' : 'Not configured'}</p>
             </div>
           </div>
         </div>
@@ -298,7 +350,6 @@ const ContentPage: React.FC = () => {
         {/* Calendar View */}
         {activeTab === 'calendar' && (
           <div className="bg-gray-800 border border-gray-700 rounded-xl overflow-hidden">
-            {/* Calendar Header */}
             <div className="flex items-center justify-between p-4 border-b border-gray-700">
               <button onClick={prevMonth} className="p-2 hover:bg-gray-700 rounded-lg text-gray-400 hover:text-white transition">
                 <ChevronLeft size={20} />
@@ -314,7 +365,6 @@ const ContentPage: React.FC = () => {
               </button>
             </div>
 
-            {/* Day Headers */}
             <div className="grid grid-cols-7 bg-gray-700/50">
               {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => (
                 <div key={day} className="p-2 text-center text-xs font-semibold text-gray-400 uppercase">
@@ -323,7 +373,6 @@ const ContentPage: React.FC = () => {
               ))}
             </div>
 
-            {/* Calendar Grid */}
             <div className="grid grid-cols-7">
               {calendarDays.map((day, i) => (
                 <div
@@ -388,7 +437,13 @@ const ContentPage: React.FC = () => {
                 <h3 className="text-xl font-bold text-white mb-2">No scheduled posts</h3>
                 <p className="text-gray-400 mb-4">Create your first scheduled post to get started</p>
                 <button
-                  onClick={() => setShowCreateModal(true)}
+                  onClick={() => {
+                    if (!profileUsername) {
+                      setShowSettingsModal(true);
+                      return;
+                    }
+                    setShowCreateModal(true);
+                  }}
                   className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-3 rounded-lg font-semibold"
                 >
                   Schedule Post
@@ -399,7 +454,6 @@ const ContentPage: React.FC = () => {
                 <div key={post.id} className="bg-gray-800 border border-gray-700 rounded-xl p-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4 flex-1 min-w-0">
-                      {/* Media Type Icon */}
                       <div className="w-10 h-10 rounded-lg bg-gray-700 flex items-center justify-center flex-shrink-0">
                         {post.mediaType === 'video' ? <Film size={20} className="text-red-400" /> :
                          post.mediaType === 'photo' ? <Image size={20} className="text-blue-400" /> :
@@ -493,9 +547,23 @@ const ContentPage: React.FC = () => {
         )}
       </div>
 
+      {/* Settings Modal */}
+      {showSettingsModal && (
+        <SettingsModal
+          currentUsername={profileUsername}
+          onClose={() => setShowSettingsModal(false)}
+          onSave={(username) => {
+            setProfileUsername(username);
+            setStoredUsername(username);
+            setShowSettingsModal(false);
+          }}
+        />
+      )}
+
       {/* Create Post Modal */}
-      {showCreateModal && (
+      {showCreateModal && profileUsername && (
         <CreatePostModal
+          profileUsername={profileUsername}
           onClose={() => { setShowCreateModal(false); setSelectedDate(null); }}
           onSave={() => { setShowCreateModal(false); setSelectedDate(null); fetchData(); }}
           preselectedDate={selectedDate}
@@ -505,15 +573,91 @@ const ContentPage: React.FC = () => {
   );
 };
 
+// ======================= SETTINGS MODAL =======================
+
+interface SettingsModalProps {
+  currentUsername: string;
+  onClose: () => void;
+  onSave: (username: string) => void;
+}
+
+const SettingsModal: React.FC<SettingsModalProps> = ({ currentUsername, onClose, onSave }) => {
+  const [username, setUsername] = useState(currentUsername);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!username.trim()) {
+      alert('Please enter a username');
+      return;
+    }
+    onSave(username.trim());
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+      <div className="bg-gray-800 rounded-xl max-w-md w-full">
+        <div className="p-6 border-b border-gray-700 flex items-center justify-between">
+          <h2 className="text-2xl font-bold text-white">Settings</h2>
+          <button onClick={onClose} className="text-gray-400 hover:text-white transition">
+            <X size={24} />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Upload-Post.com Username *
+            </label>
+            <input
+              type="text"
+              value={username}
+              onChange={e => setUsername(e.target.value)}
+              className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-purple-500"
+              placeholder="your-username"
+              required
+            />
+            <p className="text-xs text-gray-400 mt-2">
+              This is your profile username on Upload-Post.com (not your email)
+            </p>
+          </div>
+
+          <div className="bg-blue-900/30 border border-blue-700 rounded-lg p-3">
+            <p className="text-xs text-blue-300">
+              <strong>Note:</strong> Make sure this username exists in your Upload-Post.com account and is properly connected to Instagram/YouTube.
+            </p>
+          </div>
+
+          <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-700">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-6 py-2 text-gray-400 hover:text-white transition"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-2 rounded-lg font-semibold hover:from-purple-700 hover:to-pink-700 transition-all"
+            >
+              Save Username
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
 // ======================= CREATE POST MODAL =======================
 
 interface CreatePostModalProps {
+  profileUsername: string;
   onClose: () => void;
   onSave: () => void;
   preselectedDate: Date | null;
 }
 
-const CreatePostModal: React.FC<CreatePostModalProps> = ({ onClose, onSave, preselectedDate }) => {
+const CreatePostModal: React.FC<CreatePostModalProps> = ({ profileUsername, onClose, onSave, preselectedDate }) => {
   const [postType, setPostType] = useState<'photo' | 'video' | 'text'>('photo');
   const [platforms, setPlatforms] = useState<string[]>(['instagram']);
   const [title, setTitle] = useState('');
@@ -530,9 +674,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ onClose, onSave, pres
   const [uploading, setUploading] = useState(false);
   const [uploadStatus, setUploadStatus] = useState<string>('');
 
-  // Instagram-specific
   const [igMediaType, setIgMediaType] = useState<'REELS' | 'STORIES' | 'IMAGE'>('IMAGE');
-  // YouTube-specific
   const [ytPrivacy, setYtPrivacy] = useState<'public' | 'unlisted' | 'private'>('public');
   const [ytTags, setYtTags] = useState('');
   const [ytCategoryId, setYtCategoryId] = useState('22');
@@ -551,7 +693,6 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ onClose, onSave, pres
     setMediaFile(file);
     setMediaPreview(URL.createObjectURL(file));
 
-    // Auto-detect post type
     if (file.type.startsWith('video/')) {
       setPostType('video');
     } else if (file.type.startsWith('image/')) {
@@ -561,7 +702,10 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ onClose, onSave, pres
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim()) return;
+    if (!title.trim()) {
+      alert('Please enter a caption/title');
+      return;
+    }
     if (postType !== 'text' && !mediaFile && !mediaUrl) {
       alert('Please upload a file or provide a media URL');
       return;
@@ -576,20 +720,18 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ onClose, onSave, pres
 
     try {
       const formData = new FormData();
-      formData.append('user', PROFILE_USER);
+      formData.append('user', profileUsername);
       formData.append('title', title);
       platforms.forEach(p => formData.append('platform[]', p));
 
       if (description) formData.append('description', description);
 
-      // Scheduling
       if (isScheduled && scheduledDate) {
         const isoDate = new Date(scheduledDate).toISOString();
         formData.append('scheduled_date', isoDate);
         formData.append('timezone', Intl.DateTimeFormat().resolvedOptions().timeZone);
       }
 
-      // Instagram options
       if (platforms.includes('instagram')) {
         if (postType === 'video') {
           formData.append('media_type', igMediaType === 'IMAGE' ? 'REELS' : igMediaType);
@@ -598,7 +740,6 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ onClose, onSave, pres
         }
       }
 
-      // YouTube options
       if (platforms.includes('youtube')) {
         formData.append('privacyStatus', ytPrivacy);
         if (ytTags) {
@@ -659,7 +800,6 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ onClose, onSave, pres
     }
   };
 
-  // Available video platforms
   const availablePlatforms = postType === 'text'
     ? [{ id: 'instagram', label: 'Instagram', icon: Instagram, color: 'pink' }]
     : [
@@ -667,7 +807,6 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ onClose, onSave, pres
         { id: 'youtube', label: 'YouTube', icon: Youtube, color: 'red' },
       ];
 
-  // YouTube only supports video
   const filteredPlatforms = postType === 'photo'
     ? availablePlatforms.filter(p => p.id !== 'youtube')
     : availablePlatforms;
@@ -675,7 +814,6 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ onClose, onSave, pres
   return (
     <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 overflow-y-auto">
       <div className="bg-gray-800 rounded-xl max-w-2xl w-full my-8">
-        {/* Modal Header */}
         <div className="p-6 border-b border-gray-700 flex items-center justify-between">
           <h2 className="text-2xl font-bold text-white">
             {isScheduled ? 'Schedule Post' : 'Create Post'}
@@ -686,7 +824,6 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ onClose, onSave, pres
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-5 max-h-[calc(100vh-200px)] overflow-y-auto">
-          {/* Post Type */}
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">Content Type</label>
             <div className="flex gap-2">
@@ -694,9 +831,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ onClose, onSave, pres
                 type="button"
                 onClick={() => setPostType('photo')}
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition ${
-                  postType === 'photo'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-700 text-gray-400 hover:bg-gray-600'
+                  postType === 'photo' ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-400 hover:bg-gray-600'
                 }`}
               >
                 <Image size={18} /> Photo
@@ -705,9 +840,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ onClose, onSave, pres
                 type="button"
                 onClick={() => setPostType('video')}
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition ${
-                  postType === 'video'
-                    ? 'bg-red-600 text-white'
-                    : 'bg-gray-700 text-gray-400 hover:bg-gray-600'
+                  postType === 'video' ? 'bg-red-600 text-white' : 'bg-gray-700 text-gray-400 hover:bg-gray-600'
                 }`}
               >
                 <Film size={18} /> Video
@@ -716,9 +849,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ onClose, onSave, pres
                 type="button"
                 onClick={() => setPostType('text')}
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition ${
-                  postType === 'text'
-                    ? 'bg-green-600 text-white'
-                    : 'bg-gray-700 text-gray-400 hover:bg-gray-600'
+                  postType === 'text' ? 'bg-green-600 text-white' : 'bg-gray-700 text-gray-400 hover:bg-gray-600'
                 }`}
               >
                 <Type size={18} /> Text
@@ -726,7 +857,6 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ onClose, onSave, pres
             </div>
           </div>
 
-          {/* Platforms */}
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">Post to Platforms</label>
             <div className="flex gap-2">
@@ -757,11 +887,8 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ onClose, onSave, pres
             </div>
           </div>
 
-          {/* Title/Caption */}
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Caption / Title *
-            </label>
+            <label className="block text-sm font-medium text-gray-300 mb-2">Caption / Title *</label>
             <textarea
               value={title}
               onChange={e => setTitle(e.target.value)}
@@ -773,12 +900,9 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ onClose, onSave, pres
             <p className="text-xs text-gray-500 mt-1">{title.length} characters</p>
           </div>
 
-          {/* Description (for YouTube) */}
           {platforms.includes('youtube') && (
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                YouTube Description
-              </label>
+              <label className="block text-sm font-medium text-gray-300 mb-2">YouTube Description</label>
               <textarea
                 value={description}
                 onChange={e => setDescription(e.target.value)}
@@ -789,7 +913,6 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ onClose, onSave, pres
             </div>
           )}
 
-          {/* Media Upload */}
           {postType !== 'text' && (
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -816,7 +939,6 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ onClose, onSave, pres
                   className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-purple-500"
                   placeholder="Paste media URL..."
                 />
-                {/* Preview */}
                 {mediaPreview && (
                   <div className="mt-2">
                     {postType === 'video' ? (
@@ -830,7 +952,6 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ onClose, onSave, pres
             </div>
           )}
 
-          {/* Platform-specific options */}
           {platforms.includes('instagram') && postType !== 'text' && (
             <div className="bg-gradient-to-r from-pink-900/20 to-purple-900/20 border border-pink-700/30 rounded-lg p-4">
               <h4 className="text-sm font-semibold text-pink-400 flex items-center gap-2 mb-3">
@@ -906,7 +1027,6 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ onClose, onSave, pres
             </div>
           )}
 
-          {/* Scheduling */}
           <div className="bg-gray-900/50 border border-gray-700 rounded-lg p-4">
             <div className="flex items-center justify-between mb-3">
               <h4 className="text-sm font-semibold text-white flex items-center gap-2">
@@ -933,7 +1053,6 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ onClose, onSave, pres
             )}
           </div>
 
-          {/* Upload Status */}
           {uploadStatus && (
             <div className="bg-blue-900/30 border border-blue-700 rounded-lg p-3 flex items-center gap-2">
               <RefreshCw size={16} className="animate-spin text-blue-400" />
@@ -941,7 +1060,6 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ onClose, onSave, pres
             </div>
           )}
 
-          {/* Actions */}
           <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-700">
             <button
               type="button"
