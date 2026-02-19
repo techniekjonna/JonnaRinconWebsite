@@ -1,1 +1,2 @@
+/api/upload-post/*  https://api.upload-post.com/api/:splat  200
 /*    /index.html   200

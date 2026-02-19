@@ -1,4 +1,4 @@
-const CACHE_NAME = 'jonna-rincon-v1.1';
+const CACHE_NAME = 'jonna-rincon-v1.2';
 const urlsToCache = [
   '/',
   '/logo.png',
@@ -36,6 +36,17 @@ self.addEventListener('activate', (event) => {
 
 // Fetch event - serve from cache, fallback to network
 self.addEventListener('fetch', (event) => {
+  // For navigation requests (page loads/refreshes), always serve index.html
+  // This is critical for SPA client-side routing to work
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request).catch(() => {
+        return caches.match('/');
+      })
+    );
+    return;
+  }
+
   event.respondWith(
     caches.match(event.request)
       .then((response) => {

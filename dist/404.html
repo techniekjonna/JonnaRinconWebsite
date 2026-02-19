@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/png" href="/Logo.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Jonna Rincon - J18</title>
+    <script>
+      // SPA redirect: preserve the route for client-side routing
+      var path = window.location.pathname + window.location.search + window.location.hash;
+      window.location.replace('/' + '?redirect=' + encodeURIComponent(path));
+    </script>
+  </head>
+  <body>
+    <div style="background:#111827;color:white;min-height:100vh;display:flex;align-items:center;justify-content:center;font-family:sans-serif;">
+      <p>Redirecting...</p>
+    </div>
+  </body>
+</html>
