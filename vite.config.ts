@@ -16,6 +16,9 @@ export default defineConfig({
         target: 'https://api.upload-post.com',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api\/upload-post/, '/api'),
+        headers: {
+          'Authorization': `Apikey ${process.env.UPLOAD_POST_API_KEY || ''}`,
+        },
       },
     },
   },
