@@ -1,72 +1,207 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import AdminLayout from '../../components/admin/AdminLayout';
-import { useContent } from '../../hooks/useContent';
-import { contentService } from '../../lib/firebase/services';
-import { Content, ContentType, ContentStatus, ContentBlock } from '../../lib/firebase/types';
-import { Plus, Edit, Trash2, Eye, Heart, Share2, Calendar, X, Image, FileText as FileTextIcon, Upload } from 'lucide-react';
-// Upload-Post API integration (browser-compatible)
+import {
+  Plus, ChevronLeft, ChevronRight, X, Upload, Clock,
+  Instagram, Youtube, Calendar as CalendarIcon, Send, Trash2,
+  Eye, RefreshCw, Image, Film, Type, Edit, CheckCircle, AlertCircle,
+} from 'lucide-react';
 
-const ContentPage: React.FC = () => {
-  const { content, loading } = useContent();
-  const [showModal, setShowModal] = useState(false);
-  const [editingContent, setEditingContent] = useState<Content | null>(null);
-  const [filterType, setFilterType] = useState<ContentType | 'all'>('all');
-  const [filterStatus, setFilterStatus] = useState<ContentStatus | 'all'>('all');
+// Upload-Post API configuration
+const API_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InRlY2huaWVrQGpvbm5hcmluY29uLm5sIiwiZXhwIjo0OTI0NDk3Nzc0LCJqdGkiOiIwZjY2YjZmNS01OTg2LTRmMzYtYTVlMy01Yzc4MTFhYjJiOGUifQ.o_SjqVg7uIvu5TL9hsjkPD6_Io5CODTMi9XY7kM-f-0';
+const API_BASE = 'https://api.upload-post.com/api';
+const PROFILE_USER = 'jonnarincon';
 
-  const handleCreate = () => {
-    setEditingContent(null);
-    setShowModal(true);
-  };
+// Types
+interface ScheduledPost {
+  id: string;
+  jobId?: string;
+  title: string;
+  platforms: string[];
+  scheduledDate: string;
+  status: string;
+  mediaType: 'video' | 'photo' | 'text';
+  mediaUrl?: string;
+  thumbnailUrl?: string;
+}
 
-  const handleEdit = (content: Content) => {
-    setEditingContent(content);
-    setShowModal(true);
-  };
+interface HistoryPost {
+  id: string;
+  title: string;
+  platforms: Array<{ name: string; url?: string; error?: string }>;
+  createdAt: string;
+  status: string;
+  mediaType?: string;
+  request_id?: string;
+}
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this content?')) return;
+interface CalendarDay {
+  date: Date;
+  isCurrentMonth: boolean;
+  isToday: boolean;
+  posts: (ScheduledPost | HistoryPost)[];
+}
 
-    try {
-      await contentService.deleteContent(id);
-      alert('Content deleted successfully');
-    } catch (error: any) {
-      alert(error.message);
-    }
-  };
-
-  const filteredContent = content.filter((item) => {
-    if (filterType !== 'all' && item.type !== filterType) return false;
-    if (filterStatus !== 'all' && item.status !== filterStatus) return false;
-    return true;
+// API helper
+const apiCall = async (endpoint: string, options?: RequestInit) => {
+  const res = await fetch(`${API_BASE}${endpoint}`, {
+    ...options,
+    headers: {
+      'Authorization': `Apikey ${API_KEY}`,
+      ...(options?.headers || {}),
+    },
   });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ message: 'Request failed' }));
+    throw new Error(err.message || `API error ${res.status}`);
+  }
+  return res.json();
+};
 
-  const getStatusColor = (status: ContentStatus) => {
-    switch (status) {
-      case 'published':
-        return 'bg-green-500/20 text-green-400';
-      case 'draft':
-        return 'bg-gray-500/20 text-gray-400';
-      case 'scheduled':
-        return 'bg-blue-500/20 text-blue-400';
-      case 'archived':
-        return 'bg-orange-500/20 text-orange-400';
-      default:
-        return 'bg-gray-500/20 text-gray-400';
+// ======================= MAIN COMPONENT =======================
+const ContentPage: React.FC = () => {
+  const [activeTab, setActiveTab] = useState<'calendar' | 'scheduled' | 'history'>('calendar');
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [scheduledPosts, setScheduledPosts] = useState<ScheduledPost[]>([]);
+  const [historyPosts, setHistoryPosts] = useState<HistoryPost[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+
+  // Fetch data
+  const fetchData = useCallback(async () => {
+    try {
+      setRefreshing(true);
+
+      // Fetch scheduled posts
+      const scheduledRes = await apiCall('/scheduled').catch(() => ({ scheduled: [] }));
+      const scheduled: ScheduledPost[] = (scheduledRes.scheduled || scheduledRes.data || []).map((item: any) => ({
+        id: item.id || item.job_id || item._id || String(Math.random()),
+        jobId: item.job_id || item.id || item._id,
+        title: item.title || item.caption || 'Untitled',
+        platforms: item.platforms || [],
+        scheduledDate: item.scheduled_date || item.scheduledDate || item.date || '',
+        status: item.status || 'scheduled',
+        mediaType: item.media_type || item.type || 'photo',
+        mediaUrl: item.media_url || item.file_url || '',
+        thumbnailUrl: item.thumbnail_url || item.cover_url || '',
+      }));
+      setScheduledPosts(scheduled);
+
+      // Fetch upload history
+      const historyRes = await apiCall('/history?limit=50').catch(() => ({ uploads: [] }));
+      const history: HistoryPost[] = (historyRes.uploads || historyRes.data || []).map((item: any) => ({
+        id: item.id || item.request_id || item._id || String(Math.random()),
+        title: item.title || item.caption || 'Untitled',
+        platforms: item.platforms || [],
+        createdAt: item.created_at || item.createdAt || item.date || '',
+        status: item.status || 'completed',
+        mediaType: item.media_type || item.type || 'photo',
+        request_id: item.request_id,
+      }));
+      setHistoryPosts(history);
+    } catch (error) {
+      console.error('Failed to fetch social media data:', error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  // Calendar helpers
+  const getCalendarDays = (): CalendarDay[] => {
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const startPad = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1; // Monday-start
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const days: CalendarDay[] = [];
+
+    // Previous month padding
+    for (let i = startPad - 1; i >= 0; i--) {
+      const date = new Date(year, month, -i);
+      days.push({ date, isCurrentMonth: false, isToday: false, posts: [] });
+    }
+
+    // Current month days
+    for (let d = 1; d <= lastDay.getDate(); d++) {
+      const date = new Date(year, month, d);
+      const dateStr = date.toISOString().split('T')[0];
+      const isToday = date.getTime() === today.getTime();
+
+      // Match posts to this day
+      const dayPosts: (ScheduledPost | HistoryPost)[] = [];
+      scheduledPosts.forEach(p => {
+        if (p.scheduledDate && p.scheduledDate.startsWith(dateStr)) dayPosts.push(p);
+      });
+      historyPosts.forEach(p => {
+        if (p.createdAt && p.createdAt.startsWith(dateStr)) dayPosts.push(p);
+      });
+
+      days.push({ date, isCurrentMonth: true, isToday, posts: dayPosts });
+    }
+
+    // Next month padding (fill to 42 = 6 weeks)
+    const remaining = 42 - days.length;
+    for (let i = 1; i <= remaining; i++) {
+      const date = new Date(year, month + 1, i);
+      days.push({ date, isCurrentMonth: false, isToday: false, posts: [] });
+    }
+
+    return days;
+  };
+
+  const prevMonth = () => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
+  const nextMonth = () => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
+  const goToToday = () => setCurrentDate(new Date());
+
+  const handleCancelScheduled = async (jobId: string) => {
+    if (!confirm('Cancel this scheduled post?')) return;
+    try {
+      await apiCall(`/scheduled/${jobId}`, { method: 'DELETE' });
+      await fetchData();
+    } catch (error: any) {
+      alert('Failed to cancel: ' + error.message);
     }
   };
 
-  const getTypeColor = (type: ContentType) => {
-    switch (type) {
-      case 'blog':
-        return 'bg-purple-500/20 text-purple-400';
-      case 'news':
-        return 'bg-pink-500/20 text-pink-400';
-      case 'tutorial':
-        return 'bg-blue-500/20 text-blue-400';
-      case 'press':
-        return 'bg-yellow-500/20 text-yellow-400';
+  const handleCalendarDayClick = (day: CalendarDay) => {
+    if (!day.isCurrentMonth) return;
+    setSelectedDate(day.date);
+    setShowCreateModal(true);
+  };
+
+  const monthName = currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  const calendarDays = getCalendarDays();
+
+  const getPlatformIcon = (platform: string) => {
+    switch (platform.toLowerCase()) {
+      case 'instagram': return <Instagram size={14} className="text-pink-400" />;
+      case 'youtube': return <Youtube size={14} className="text-red-400" />;
+      default: return <Send size={14} className="text-gray-400" />;
+    }
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'completed':
+      case 'published':
+        return <span className="flex items-center gap-1 text-xs text-green-400"><CheckCircle size={12} /> Published</span>;
+      case 'scheduled':
+      case 'pending':
+        return <span className="flex items-center gap-1 text-xs text-blue-400"><Clock size={12} /> Scheduled</span>;
+      case 'failed':
+      case 'error':
+        return <span className="flex items-center gap-1 text-xs text-red-400"><AlertCircle size={12} /> Failed</span>;
       default:
-        return 'bg-gray-500/20 text-gray-400';
+        return <span className="flex items-center gap-1 text-xs text-gray-400"><Clock size={12} /> {status}</span>;
     }
   };
 
@@ -76,597 +211,755 @@ const ContentPage: React.FC = () => {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-white">Content Management</h1>
-            <p className="text-gray-400 mt-2">Manage blog posts, news, tutorials, and press releases</p>
+            <h1 className="text-3xl font-bold text-white">Social Media Planner</h1>
+            <p className="text-gray-400 mt-2">Schedule and manage posts for Instagram & YouTube</p>
           </div>
-          <button
-            onClick={handleCreate}
-            className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-purple-700 hover:to-pink-700 transition-all flex items-center space-x-2"
-          >
-            <Plus size={20} />
-            <span>Create Content</span>
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={fetchData}
+              disabled={refreshing}
+              className="p-2 bg-gray-800 border border-gray-700 rounded-lg text-gray-400 hover:text-white transition disabled:opacity-50"
+              title="Refresh"
+            >
+              <RefreshCw size={20} className={refreshing ? 'animate-spin' : ''} />
+            </button>
+            <button
+              onClick={() => { setSelectedDate(null); setShowCreateModal(true); }}
+              className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-purple-700 hover:to-pink-700 transition-all flex items-center space-x-2"
+            >
+              <Plus size={20} />
+              <span>Create Post</span>
+            </button>
+          </div>
         </div>
 
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="bg-gray-800 border border-gray-700 rounded-xl p-4">
-            <p className="text-gray-400 text-sm">Total Content</p>
-            <p className="text-2xl font-bold text-white mt-1">{content.length}</p>
+            <p className="text-gray-400 text-sm">Scheduled</p>
+            <p className="text-2xl font-bold text-blue-400 mt-1">{scheduledPosts.length}</p>
           </div>
           <div className="bg-gray-800 border border-gray-700 rounded-xl p-4">
             <p className="text-gray-400 text-sm">Published</p>
-            <p className="text-2xl font-bold text-white mt-1">
-              {content.filter((c) => c.status === 'published').length}
+            <p className="text-2xl font-bold text-green-400 mt-1">
+              {historyPosts.filter(p => p.status === 'completed' || p.status === 'published').length}
             </p>
           </div>
-          <div className="bg-gray-800 border border-gray-700 rounded-xl p-4">
-            <p className="text-gray-400 text-sm">Featured</p>
-            <p className="text-2xl font-bold text-white mt-1">
-              {content.filter((c) => c.featured).length}
-            </p>
+          <div className="bg-gray-800 border border-gray-700 rounded-xl p-4 flex items-center gap-3">
+            <Instagram size={24} className="text-pink-400" />
+            <div>
+              <p className="text-gray-400 text-sm">Instagram</p>
+              <p className="text-white font-bold">Connected</p>
+            </div>
           </div>
-          <div className="bg-gray-800 border border-gray-700 rounded-xl p-4">
-            <p className="text-gray-400 text-sm">Total Views</p>
-            <p className="text-2xl font-bold text-white mt-1">
-              {content.reduce((sum, c) => sum + c.views, 0).toLocaleString()}
-            </p>
+          <div className="bg-gray-800 border border-gray-700 rounded-xl p-4 flex items-center gap-3">
+            <Youtube size={24} className="text-red-400" />
+            <div>
+              <p className="text-gray-400 text-sm">YouTube</p>
+              <p className="text-white font-bold">Connected</p>
+            </div>
           </div>
         </div>
 
-        {/* Filters */}
-        <div className="flex flex-wrap gap-4">
-          <div>
-            <label className="text-sm text-gray-400 mb-2 block">Filter by Type</label>
-            <select
-              value={filterType}
-              onChange={(e) => setFilterType(e.target.value as ContentType | 'all')}
-              className="bg-gray-800 border border-gray-700 text-white rounded-lg px-4 py-2 focus:outline-none focus:border-purple-500"
-            >
-              <option value="all">All Types</option>
-              <option value="blog">Blog</option>
-              <option value="news">News</option>
-              <option value="tutorial">Tutorial</option>
-              <option value="press">Press</option>
-            </select>
-          </div>
-          <div>
-            <label className="text-sm text-gray-400 mb-2 block">Filter by Status</label>
-            <select
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value as ContentStatus | 'all')}
-              className="bg-gray-800 border border-gray-700 text-white rounded-lg px-4 py-2 focus:outline-none focus:border-purple-500"
-            >
-              <option value="all">All Status</option>
-              <option value="draft">Draft</option>
-              <option value="published">Published</option>
-              <option value="scheduled">Scheduled</option>
-              <option value="archived">Archived</option>
-            </select>
-          </div>
+        {/* Tabs */}
+        <div className="flex gap-2 border-b border-gray-700">
+          <button
+            onClick={() => setActiveTab('calendar')}
+            className={`px-4 py-2 font-medium transition flex items-center gap-2 ${
+              activeTab === 'calendar'
+                ? 'text-purple-400 border-b-2 border-purple-400'
+                : 'text-gray-400 hover:text-gray-300'
+            }`}
+          >
+            <CalendarIcon size={18} /> Calendar
+          </button>
+          <button
+            onClick={() => setActiveTab('scheduled')}
+            className={`px-4 py-2 font-medium transition flex items-center gap-2 ${
+              activeTab === 'scheduled'
+                ? 'text-purple-400 border-b-2 border-purple-400'
+                : 'text-gray-400 hover:text-gray-300'
+            }`}
+          >
+            <Clock size={18} /> Scheduled ({scheduledPosts.length})
+          </button>
+          <button
+            onClick={() => setActiveTab('history')}
+            className={`px-4 py-2 font-medium transition flex items-center gap-2 ${
+              activeTab === 'history'
+                ? 'text-purple-400 border-b-2 border-purple-400'
+                : 'text-gray-400 hover:text-gray-300'
+            }`}
+          >
+            <CheckCircle size={18} /> History ({historyPosts.length})
+          </button>
         </div>
 
-        {/* Content Table */}
-        <div className="bg-gray-800 border border-gray-700 rounded-xl overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-700">
-                <tr>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">
-                    Title
-                  </th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">
-                    Type
-                  </th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">
-                    Status
-                  </th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">
-                    Author
-                  </th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">
-                    Stats
-                  </th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">
-                    Published
-                  </th>
-                  <th className="px-6 py-4 text-right text-sm font-semibold text-gray-300">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-700">
-                {loading ? (
-                  <tr>
-                    <td colSpan={7} className="px-6 py-12 text-center text-gray-400">
-                      Loading content...
-                    </td>
-                  </tr>
-                ) : filteredContent.length === 0 ? (
-                  <tr>
-                    <td colSpan={7} className="px-6 py-12 text-center text-gray-400">
-                      No content found. Create your first content piece!
-                    </td>
-                  </tr>
-                ) : (
-                  filteredContent.map((item) => (
-                    <tr key={item.id} className="hover:bg-gray-700/50">
-                      <td className="px-6 py-4">
-                        <div className="flex items-center space-x-3">
-                          {item.featuredImage && (
-                            <img
-                              src={item.featuredImage}
-                              alt={item.title}
-                              className="w-12 h-12 rounded object-cover"
-                            />
-                          )}
-                          <div>
-                            <p className="font-medium text-white">{item.title}</p>
-                            {item.excerpt && (
-                              <p className="text-sm text-gray-400 truncate max-w-xs">
-                                {item.excerpt}
-                              </p>
-                            )}
-                            {item.featured && (
-                              <span className="inline-block mt-1 px-2 py-0.5 bg-yellow-500/20 text-yellow-400 rounded text-xs">
-                                Featured
-                              </span>
-                            )}
+        {/* Calendar View */}
+        {activeTab === 'calendar' && (
+          <div className="bg-gray-800 border border-gray-700 rounded-xl overflow-hidden">
+            {/* Calendar Header */}
+            <div className="flex items-center justify-between p-4 border-b border-gray-700">
+              <button onClick={prevMonth} className="p-2 hover:bg-gray-700 rounded-lg text-gray-400 hover:text-white transition">
+                <ChevronLeft size={20} />
+              </button>
+              <div className="flex items-center gap-3">
+                <h2 className="text-xl font-bold text-white">{monthName}</h2>
+                <button onClick={goToToday} className="text-xs px-2 py-1 bg-gray-700 hover:bg-gray-600 text-gray-300 rounded transition">
+                  Today
+                </button>
+              </div>
+              <button onClick={nextMonth} className="p-2 hover:bg-gray-700 rounded-lg text-gray-400 hover:text-white transition">
+                <ChevronRight size={20} />
+              </button>
+            </div>
+
+            {/* Day Headers */}
+            <div className="grid grid-cols-7 bg-gray-700/50">
+              {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => (
+                <div key={day} className="p-2 text-center text-xs font-semibold text-gray-400 uppercase">
+                  {day}
+                </div>
+              ))}
+            </div>
+
+            {/* Calendar Grid */}
+            <div className="grid grid-cols-7">
+              {calendarDays.map((day, i) => (
+                <div
+                  key={i}
+                  onClick={() => handleCalendarDayClick(day)}
+                  className={`min-h-[100px] border-t border-r border-gray-700/50 p-1.5 transition cursor-pointer ${
+                    !day.isCurrentMonth ? 'bg-gray-900/30 opacity-40' :
+                    day.isToday ? 'bg-purple-900/20 border-l-2 border-l-purple-500' :
+                    'hover:bg-gray-700/30'
+                  }`}
+                >
+                  <div className={`text-xs font-medium mb-1 ${
+                    day.isToday ? 'text-purple-400 font-bold' :
+                    day.isCurrentMonth ? 'text-gray-300' : 'text-gray-600'
+                  }`}>
+                    {day.date.getDate()}
+                  </div>
+                  <div className="space-y-0.5">
+                    {day.posts.slice(0, 3).map((post, j) => {
+                      const isScheduled = 'scheduledDate' in post;
+                      return (
+                        <div
+                          key={j}
+                          className={`text-[10px] px-1 py-0.5 rounded truncate ${
+                            isScheduled
+                              ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30'
+                              : 'bg-green-500/20 text-green-300 border border-green-500/30'
+                          }`}
+                          title={post.title}
+                        >
+                          <div className="flex items-center gap-0.5">
+                            {post.platforms?.slice(0, 2).map((p: any, k: number) => (
+                              <span key={k}>{getPlatformIcon(typeof p === 'string' ? p : p.name)}</span>
+                            ))}
+                            <span className="truncate">{post.title}</span>
                           </div>
                         </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className={`px-2 py-1 rounded text-sm capitalize ${getTypeColor(item.type)}`}>
-                          {item.type}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className={`px-2 py-1 rounded text-sm capitalize ${getStatusColor(item.status)}`}>
-                          {item.status}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-gray-300">
-                        {item.authorName}
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center space-x-3 text-sm text-gray-400">
-                          <div className="flex items-center space-x-1">
-                            <Eye size={14} />
-                            <span>{item.views}</span>
-                          </div>
-                          <div className="flex items-center space-x-1">
-                            <Heart size={14} />
-                            <span>{item.likes}</span>
-                          </div>
-                          <div className="flex items-center space-x-1">
-                            <Share2 size={14} />
-                            <span>{item.shares}</span>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        {item.publishedAt ? (
-                          <div className="flex items-center space-x-1 text-sm text-gray-400">
-                            <Calendar size={14} />
-                            <span>
-                              {new Date(item.publishedAt.toDate()).toLocaleDateString()}
-                            </span>
-                          </div>
-                        ) : item.scheduledFor ? (
-                          <div className="flex items-center space-x-1 text-sm text-blue-400">
-                            <Calendar size={14} />
-                            <span>
-                              {new Date(item.scheduledFor.toDate()).toLocaleDateString()}
-                            </span>
-                          </div>
-                        ) : (
-                          <span className="text-sm text-gray-500">-</span>
-                        )}
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center justify-end space-x-2">
-                          <button
-                            onClick={() => handleEdit(item)}
-                            className="p-2 text-blue-400 hover:bg-blue-500/20 rounded transition-colors"
-                            title="Edit"
-                          >
-                            <Edit size={18} />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(item.id)}
-                            className="p-2 text-red-400 hover:bg-red-500/20 rounded transition-colors"
-                            title="Delete"
-                          >
-                            <Trash2 size={18} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                      );
+                    })}
+                    {day.posts.length > 3 && (
+                      <div className="text-[10px] text-gray-500 text-center">
+                        +{day.posts.length - 3} more
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
+
+        {/* Scheduled Posts View */}
+        {activeTab === 'scheduled' && (
+          <div className="space-y-3">
+            {loading ? (
+              <div className="bg-gray-800 border border-gray-700 rounded-xl p-12 text-center text-gray-400">
+                Loading scheduled posts...
+              </div>
+            ) : scheduledPosts.length === 0 ? (
+              <div className="bg-gray-800 border border-gray-700 rounded-xl p-12 text-center">
+                <Clock size={48} className="mx-auto mb-4 text-gray-600" />
+                <h3 className="text-xl font-bold text-white mb-2">No scheduled posts</h3>
+                <p className="text-gray-400 mb-4">Create your first scheduled post to get started</p>
+                <button
+                  onClick={() => setShowCreateModal(true)}
+                  className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-3 rounded-lg font-semibold"
+                >
+                  Schedule Post
+                </button>
+              </div>
+            ) : (
+              scheduledPosts.map(post => (
+                <div key={post.id} className="bg-gray-800 border border-gray-700 rounded-xl p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4 flex-1 min-w-0">
+                      {/* Media Type Icon */}
+                      <div className="w-10 h-10 rounded-lg bg-gray-700 flex items-center justify-center flex-shrink-0">
+                        {post.mediaType === 'video' ? <Film size={20} className="text-red-400" /> :
+                         post.mediaType === 'photo' ? <Image size={20} className="text-blue-400" /> :
+                         <Type size={20} className="text-green-400" />}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <h3 className="font-bold text-white truncate">{post.title}</h3>
+                        <div className="flex items-center gap-3 mt-1">
+                          <div className="flex items-center gap-1">
+                            {post.platforms.map((p, i) => (
+                              <span key={i}>{getPlatformIcon(p)}</span>
+                            ))}
+                          </div>
+                          <span className="text-xs text-gray-400">
+                            <CalendarIcon size={12} className="inline mr-1" />
+                            {new Date(post.scheduledDate).toLocaleString()}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      {getStatusBadge(post.status)}
+                      {post.jobId && (
+                        <button
+                          onClick={() => handleCancelScheduled(post.jobId!)}
+                          className="p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition"
+                          title="Cancel scheduled post"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        )}
+
+        {/* History View */}
+        {activeTab === 'history' && (
+          <div className="space-y-3">
+            {loading ? (
+              <div className="bg-gray-800 border border-gray-700 rounded-xl p-12 text-center text-gray-400">
+                Loading history...
+              </div>
+            ) : historyPosts.length === 0 ? (
+              <div className="bg-gray-800 border border-gray-700 rounded-xl p-12 text-center">
+                <CheckCircle size={48} className="mx-auto mb-4 text-gray-600" />
+                <h3 className="text-xl font-bold text-white mb-2">No posts yet</h3>
+                <p className="text-gray-400">Your published posts will appear here</p>
+              </div>
+            ) : (
+              historyPosts.map(post => (
+                <div key={post.id} className="bg-gray-800 border border-gray-700 rounded-xl p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4 flex-1 min-w-0">
+                      <div className="min-w-0 flex-1">
+                        <h3 className="font-bold text-white truncate">{post.title}</h3>
+                        <div className="flex items-center gap-3 mt-1 flex-wrap">
+                          <div className="flex items-center gap-1">
+                            {post.platforms.map((p, i) => {
+                              const pName = typeof p === 'string' ? p : p.name;
+                              const pUrl = typeof p === 'string' ? undefined : p.url;
+                              return (
+                                <span key={i} className="flex items-center gap-0.5">
+                                  {getPlatformIcon(pName)}
+                                  {pUrl && (
+                                    <a href={pUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-purple-400 hover:underline">
+                                      View
+                                    </a>
+                                  )}
+                                </span>
+                              );
+                            })}
+                          </div>
+                          <span className="text-xs text-gray-400">
+                            {post.createdAt ? new Date(post.createdAt).toLocaleString() : 'N/A'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex-shrink-0">
+                      {getStatusBadge(post.status)}
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        )}
       </div>
 
-      {/* Content Form Modal */}
-      {showModal && (
-        <ContentFormModal
-          content={editingContent}
-          onClose={() => setShowModal(false)}
-          onSave={() => {
-            setShowModal(false);
-            setEditingContent(null);
-          }}
+      {/* Create Post Modal */}
+      {showCreateModal && (
+        <CreatePostModal
+          onClose={() => { setShowCreateModal(false); setSelectedDate(null); }}
+          onSave={() => { setShowCreateModal(false); setSelectedDate(null); fetchData(); }}
+          preselectedDate={selectedDate}
         />
       )}
     </AdminLayout>
   );
 };
 
-interface ContentFormModalProps {
-  content: Content | null;
+// ======================= CREATE POST MODAL =======================
+
+interface CreatePostModalProps {
   onClose: () => void;
   onSave: () => void;
+  preselectedDate: Date | null;
 }
 
-const ContentFormModal: React.FC<ContentFormModalProps> = ({ content, onClose, onSave }) => {
-  const [formData, setFormData] = useState({
-    title: content?.title || '',
-    type: content?.type || 'blog' as ContentType,
-    slug: content?.slug || '',
-    excerpt: content?.excerpt || '',
-    category: content?.category || '',
-    tags: content?.tags?.join(', ') || '',
-    featuredImage: content?.featuredImage || '',
-    status: content?.status || 'draft' as ContentStatus,
-    featured: content?.featured || false,
-    metaTitle: content?.metaTitle || '',
-    metaDescription: content?.metaDescription || '',
-    metaKeywords: content?.metaKeywords?.join(', ') || '',
-    contentText: content?.blocks?.find(b => b.type === 'text')?.content || '',
-  });
-  const [saving, setSaving] = useState(false);
+const CreatePostModal: React.FC<CreatePostModalProps> = ({ onClose, onSave, preselectedDate }) => {
+  const [postType, setPostType] = useState<'photo' | 'video' | 'text'>('photo');
+  const [platforms, setPlatforms] = useState<string[]>(['instagram']);
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [mediaFile, setMediaFile] = useState<File | null>(null);
+  const [mediaPreview, setMediaPreview] = useState<string>('');
+  const [mediaUrl, setMediaUrl] = useState('');
+  const [isScheduled, setIsScheduled] = useState(!!preselectedDate);
+  const [scheduledDate, setScheduledDate] = useState(
+    preselectedDate
+      ? `${preselectedDate.getFullYear()}-${String(preselectedDate.getMonth() + 1).padStart(2, '0')}-${String(preselectedDate.getDate()).padStart(2, '0')}T12:00`
+      : ''
+  );
   const [uploading, setUploading] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState<string>('');
 
-  const API_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InRlY2huaWVrQGpvbm5hcmluY29uLm5sIiwiZXhwIjo0OTI0NDk3Nzc0LCJqdGkiOiIwZjY2YjZmNS01OTg2LTRmMzYtYTVlMy01Yzc4MTFhYjJiOGUifQ.o_SjqVg7uIvu5TL9hsjkPD6_Io5CODTMi9XY7kM-f-0';
+  // Instagram-specific
+  const [igMediaType, setIgMediaType] = useState<'REELS' | 'STORIES' | 'IMAGE'>('IMAGE');
+  // YouTube-specific
+  const [ytPrivacy, setYtPrivacy] = useState<'public' | 'unlisted' | 'private'>('public');
+  const [ytTags, setYtTags] = useState('');
+  const [ytCategoryId, setYtCategoryId] = useState('22');
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const togglePlatform = (platform: string) => {
+    setPlatforms(prev =>
+      prev.includes(platform)
+        ? prev.filter(p => p !== platform)
+        : [...prev, platform]
+    );
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    setMediaFile(file);
+    setMediaPreview(URL.createObjectURL(file));
 
-    setUploading(true);
-    try {
-      // Create FormData for browser upload
-      const uploadFormData = new FormData();
-      uploadFormData.append('file', file);
-      uploadFormData.append('user', 'jonnarincon');
-      uploadFormData.append('title', formData.title || 'Content Image');
-
-      // Upload directly to Upload-Post API
-      const response = await fetch('https://api.upload-post.com/api/upload', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Apikey ${API_KEY}`,
-        },
-        body: uploadFormData,
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Upload failed');
-      }
-
-      const result = await response.json();
-
-      // Get URL from result and set it
-      if (result && result.url) {
-        setFormData((prev) => ({ ...prev, featuredImage: result.url }));
-        alert('Image uploaded successfully!');
-      }
-    } catch (error: any) {
-      console.error('Upload failed:', error);
-      alert('Upload failed: ' + (error.message || 'Unknown error'));
-    } finally {
-      setUploading(false);
+    // Auto-detect post type
+    if (file.type.startsWith('video/')) {
+      setPostType('video');
+    } else if (file.type.startsWith('image/')) {
+      setPostType('photo');
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSaving(true);
+    if (!title.trim()) return;
+    if (postType !== 'text' && !mediaFile && !mediaUrl) {
+      alert('Please upload a file or provide a media URL');
+      return;
+    }
+    if (platforms.length === 0) {
+      alert('Please select at least one platform');
+      return;
+    }
+
+    setUploading(true);
+    setUploadStatus('Preparing upload...');
 
     try {
-      // Create content blocks
-      const blocks: ContentBlock[] = [];
+      const formData = new FormData();
+      formData.append('user', PROFILE_USER);
+      formData.append('title', title);
+      formData.append('platforms', JSON.stringify(platforms));
 
-      // Add text block if content exists
-      if (formData.contentText.trim()) {
-        blocks.push({
-          id: '1',
-          type: 'text',
-          content: formData.contentText,
-          order: 0,
-        });
+      if (description) formData.append('description', description);
+
+      // Scheduling
+      if (isScheduled && scheduledDate) {
+        const isoDate = new Date(scheduledDate).toISOString();
+        formData.append('scheduledDate', isoDate);
+        formData.append('timezone', Intl.DateTimeFormat().resolvedOptions().timeZone);
       }
 
-      const contentData: any = {
-        title: formData.title,
-        type: formData.type,
-        slug: formData.slug || formData.title.toLowerCase().replace(/\s+/g, '-'),
-        excerpt: formData.excerpt,
-        blocks: blocks,
-        category: formData.category,
-        tags: formData.tags.split(',').map((t) => t.trim()).filter(t => t),
-        featuredImage: formData.featuredImage,
-        status: formData.status,
-        featured: formData.featured,
-        metaTitle: formData.metaTitle,
-        metaDescription: formData.metaDescription,
-        metaKeywords: formData.metaKeywords.split(',').map((k) => k.trim()).filter(k => k),
-      };
+      // Instagram options
+      if (platforms.includes('instagram')) {
+        if (postType === 'video') {
+          formData.append('instagramMediaType', igMediaType === 'IMAGE' ? 'REELS' : igMediaType);
+        } else if (postType === 'photo') {
+          formData.append('instagramMediaType', igMediaType === 'REELS' ? 'IMAGE' : igMediaType);
+        }
+      }
 
-      if (content) {
-        await contentService.updateContent(content.id, contentData);
-        alert('Content updated successfully');
+      // YouTube options
+      if (platforms.includes('youtube')) {
+        formData.append('youtubePrivacyStatus', ytPrivacy);
+        if (ytTags) formData.append('youtubeTags', ytTags);
+        formData.append('youtubeCategoryId', ytCategoryId);
+        if (description) formData.append('youtubeDescription', description);
+      }
+
+      let endpoint = '/upload';
+      if (postType === 'photo') {
+        endpoint = '/upload/photos';
+        if (mediaFile) {
+          formData.append('files', mediaFile);
+        } else if (mediaUrl) {
+          formData.append('urls', JSON.stringify([mediaUrl]));
+        }
+      } else if (postType === 'video') {
+        endpoint = '/upload';
+        if (mediaFile) {
+          formData.append('file', mediaFile);
+        } else if (mediaUrl) {
+          formData.append('url', mediaUrl);
+        }
       } else {
-        await contentService.createContent(contentData);
-        alert('Content created successfully');
+        endpoint = '/upload/text';
       }
 
+      setUploadStatus('Uploading to platforms...');
+
+      const res = await fetch(`${API_BASE}${endpoint}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Apikey ${API_KEY}`,
+        },
+        body: formData,
+      });
+
+      const result = await res.json();
+
+      if (!res.ok) {
+        throw new Error(result.message || `Upload failed (${res.status})`);
+      }
+
+      if (result.success === false) {
+        throw new Error(result.message || 'Upload failed');
+      }
+
+      setUploadStatus('');
+      alert(isScheduled ? 'Post scheduled successfully!' : 'Post published successfully!');
       onSave();
     } catch (error: any) {
-      alert(error.message);
+      console.error('Upload failed:', error);
+      setUploadStatus('');
+      alert('Upload failed: ' + error.message);
     } finally {
-      setSaving(false);
+      setUploading(false);
     }
   };
 
+  // Available video platforms
+  const availablePlatforms = postType === 'text'
+    ? [{ id: 'instagram', label: 'Instagram', icon: Instagram, color: 'pink' }]
+    : [
+        { id: 'instagram', label: 'Instagram', icon: Instagram, color: 'pink' },
+        { id: 'youtube', label: 'YouTube', icon: Youtube, color: 'red' },
+      ];
+
+  // YouTube only supports video
+  const filteredPlatforms = postType === 'photo'
+    ? availablePlatforms.filter(p => p.id !== 'youtube')
+    : availablePlatforms;
+
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 overflow-y-auto">
-      <div className="bg-gray-800 rounded-xl max-w-4xl w-full my-8">
+    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 overflow-y-auto">
+      <div className="bg-gray-800 rounded-xl max-w-2xl w-full my-8">
+        {/* Modal Header */}
         <div className="p-6 border-b border-gray-700 flex items-center justify-between">
           <h2 className="text-2xl font-bold text-white">
-            {content ? 'Edit Content' : 'Create New Content'}
+            {isScheduled ? 'Schedule Post' : 'Create Post'}
           </h2>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-white transition-colors"
-          >
+          <button onClick={onClose} className="text-gray-400 hover:text-white transition">
             <X size={24} />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-6 max-h-[calc(100vh-200px)] overflow-y-auto">
-          {/* Basic Info */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-white">Basic Information</h3>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Title *</label>
-                <input
-                  type="text"
-                  value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-purple-500"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Type *</label>
-                <select
-                  value={formData.type}
-                  onChange={(e) => setFormData({ ...formData, type: e.target.value as ContentType })}
-                  className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-purple-500"
-                  required
-                >
-                  <option value="blog">Blog</option>
-                  <option value="news">News</option>
-                  <option value="tutorial">Tutorial</option>
-                  <option value="press">Press</option>
-                </select>
-              </div>
+        <form onSubmit={handleSubmit} className="p-6 space-y-5 max-h-[calc(100vh-200px)] overflow-y-auto">
+          {/* Post Type */}
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">Content Type</label>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setPostType('photo')}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition ${
+                  postType === 'photo'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-700 text-gray-400 hover:bg-gray-600'
+                }`}
+              >
+                <Image size={18} /> Photo
+              </button>
+              <button
+                type="button"
+                onClick={() => setPostType('video')}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition ${
+                  postType === 'video'
+                    ? 'bg-red-600 text-white'
+                    : 'bg-gray-700 text-gray-400 hover:bg-gray-600'
+                }`}
+              >
+                <Film size={18} /> Video
+              </button>
+              <button
+                type="button"
+                onClick={() => setPostType('text')}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition ${
+                  postType === 'text'
+                    ? 'bg-green-600 text-white'
+                    : 'bg-gray-700 text-gray-400 hover:bg-gray-600'
+                }`}
+              >
+                <Type size={18} /> Text
+              </button>
             </div>
+          </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Slug</label>
-                <input
-                  type="text"
-                  value={formData.slug}
-                  onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                  className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-purple-500"
-                  placeholder="auto-generated from title"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Category</label>
-                <input
-                  type="text"
-                  value={formData.category}
-                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                  className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-purple-500"
-                  placeholder="e.g., Music Production, Industry News"
-                />
-              </div>
+          {/* Platforms */}
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">Post to Platforms</label>
+            <div className="flex gap-2">
+              {filteredPlatforms.map(p => {
+                const Icon = p.icon;
+                const isActive = platforms.includes(p.id);
+                return (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() => togglePlatform(p.id)}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition border ${
+                      isActive
+                        ? `bg-${p.color}-600/20 border-${p.color}-500 text-${p.color}-400`
+                        : 'bg-gray-700 border-gray-600 text-gray-400 hover:bg-gray-600'
+                    }`}
+                    style={isActive ? {
+                      backgroundColor: p.color === 'pink' ? 'rgba(236,72,153,0.2)' : 'rgba(239,68,68,0.2)',
+                      borderColor: p.color === 'pink' ? '#ec4899' : '#ef4444',
+                      color: p.color === 'pink' ? '#f472b6' : '#f87171',
+                    } : {}}
+                  >
+                    <Icon size={18} />
+                    {p.label}
+                  </button>
+                );
+              })}
             </div>
+          </div>
 
+          {/* Title/Caption */}
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Caption / Title *
+            </label>
+            <textarea
+              value={title}
+              onChange={e => setTitle(e.target.value)}
+              className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-purple-500 resize-none"
+              rows={3}
+              placeholder="Write your caption or title..."
+              required
+            />
+            <p className="text-xs text-gray-500 mt-1">{title.length} characters</p>
+          </div>
+
+          {/* Description (for YouTube) */}
+          {platforms.includes('youtube') && (
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Excerpt</label>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                YouTube Description
+              </label>
               <textarea
-                value={formData.excerpt}
-                onChange={(e) => setFormData({ ...formData, excerpt: e.target.value })}
-                className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-purple-500"
-                rows={2}
-                placeholder="Short description of the content"
+                value={description}
+                onChange={e => setDescription(e.target.value)}
+                className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-purple-500 resize-none"
+                rows={3}
+                placeholder="YouTube video description..."
               />
             </div>
+          )}
 
+          {/* Media Upload */}
+          {postType !== 'text' && (
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Tags (comma separated)</label>
-              <input
-                type="text"
-                value={formData.tags}
-                onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
-                className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-purple-500"
-                placeholder="production, beats, tutorial"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Featured Image</label>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                {postType === 'video' ? 'Upload Video' : 'Upload Photo'}
+              </label>
               <div className="space-y-2">
-                {/* Upload Button */}
-                <div className="flex gap-2">
-                  <label className="flex-1 cursor-pointer">
-                    <div className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-white font-medium transition-all">
-                      <Upload size={18} />
-                      {uploading ? 'Uploading...' : 'Upload Image'}
-                    </div>
-                    <input
-                      type="file"
-                      accept="image/*,video/*"
-                      onChange={handleFileUpload}
-                      className="hidden"
-                      disabled={uploading}
-                    />
-                  </label>
+                <label className="flex items-center justify-center gap-2 px-4 py-4 bg-gray-700 border-2 border-dashed border-gray-600 rounded-lg text-gray-400 hover:border-purple-500 hover:text-purple-400 cursor-pointer transition">
+                  <Upload size={20} />
+                  <span>{mediaFile ? mediaFile.name : `Choose ${postType === 'video' ? 'video' : 'image'} file`}</span>
+                  <input
+                    type="file"
+                    accept={postType === 'video' ? 'video/*' : 'image/*'}
+                    onChange={handleFileChange}
+                    className="hidden"
+                  />
+                </label>
+                <div className="flex items-center gap-2 text-gray-500 text-sm">
+                  <span>or</span>
                 </div>
-                {/* Or Manual URL Input */}
                 <input
                   type="url"
-                  value={formData.featuredImage}
-                  onChange={(e) => setFormData({ ...formData, featuredImage: e.target.value })}
+                  value={mediaUrl}
+                  onChange={e => setMediaUrl(e.target.value)}
                   className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-purple-500"
-                  placeholder="Or paste URL manually"
+                  placeholder="Paste media URL..."
                 />
                 {/* Preview */}
-                {formData.featuredImage && (
+                {mediaPreview && (
                   <div className="mt-2">
-                    <img
-                      src={formData.featuredImage}
-                      alt="Preview"
-                      className="w-full h-48 object-cover rounded-lg"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = 'none';
-                      }}
-                    />
+                    {postType === 'video' ? (
+                      <video src={mediaPreview} controls className="w-full h-48 rounded-lg object-cover" />
+                    ) : (
+                      <img src={mediaPreview} alt="Preview" className="w-full h-48 rounded-lg object-cover" />
+                    )}
                   </div>
                 )}
               </div>
             </div>
-          </div>
+          )}
 
-          {/* Content */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-white">Content</h3>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Main Content *</label>
-              <textarea
-                value={formData.contentText}
-                onChange={(e) => setFormData({ ...formData, contentText: e.target.value })}
-                className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-purple-500 font-mono text-sm"
-                rows={10}
-                placeholder="Write your content here..."
-                required
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                Use markdown syntax for formatting. Rich text editor can be added later.
-              </p>
-            </div>
-          </div>
-
-          {/* SEO */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-white">SEO & Meta</h3>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Meta Title</label>
-              <input
-                type="text"
-                value={formData.metaTitle}
-                onChange={(e) => setFormData({ ...formData, metaTitle: e.target.value })}
-                className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-purple-500"
-                placeholder="Leave empty to use title"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Meta Description</label>
-              <textarea
-                value={formData.metaDescription}
-                onChange={(e) => setFormData({ ...formData, metaDescription: e.target.value })}
-                className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-purple-500"
-                rows={2}
-                placeholder="SEO description"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Meta Keywords (comma separated)</label>
-              <input
-                type="text"
-                value={formData.metaKeywords}
-                onChange={(e) => setFormData({ ...formData, metaKeywords: e.target.value })}
-                className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-purple-500"
-                placeholder="keyword1, keyword2, keyword3"
-              />
-            </div>
-          </div>
-
-          {/* Publishing */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-white">Publishing</h3>
-
-            <div className="grid grid-cols-2 gap-4">
+          {/* Platform-specific options */}
+          {platforms.includes('instagram') && postType !== 'text' && (
+            <div className="bg-gradient-to-r from-pink-900/20 to-purple-900/20 border border-pink-700/30 rounded-lg p-4">
+              <h4 className="text-sm font-semibold text-pink-400 flex items-center gap-2 mb-3">
+                <Instagram size={16} /> Instagram Options
+              </h4>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Status *</label>
+                <label className="block text-xs text-gray-400 mb-1">Media Type</label>
                 <select
-                  value={formData.status}
-                  onChange={(e) => setFormData({ ...formData, status: e.target.value as ContentStatus })}
-                  className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-purple-500"
+                  value={igMediaType}
+                  onChange={e => setIgMediaType(e.target.value as any)}
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm focus:outline-none focus:border-pink-500"
                 >
-                  <option value="draft">Draft</option>
-                  <option value="published">Published</option>
-                  <option value="scheduled">Scheduled</option>
-                  <option value="archived">Archived</option>
+                  {postType === 'video' ? (
+                    <>
+                      <option value="REELS">Reels</option>
+                      <option value="STORIES">Story</option>
+                    </>
+                  ) : (
+                    <>
+                      <option value="IMAGE">Feed Post</option>
+                      <option value="STORIES">Story</option>
+                    </>
+                  )}
                 </select>
               </div>
+            </div>
+          )}
 
-              <div className="flex items-end">
-                <label className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    checked={formData.featured}
-                    onChange={(e) => setFormData({ ...formData, featured: e.target.checked })}
-                    className="w-4 h-4 rounded"
-                  />
-                  <span className="text-sm text-gray-300">Featured Content</span>
-                </label>
+          {platforms.includes('youtube') && postType === 'video' && (
+            <div className="bg-red-900/20 border border-red-700/30 rounded-lg p-4">
+              <h4 className="text-sm font-semibold text-red-400 flex items-center gap-2 mb-3">
+                <Youtube size={16} /> YouTube Options
+              </h4>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs text-gray-400 mb-1">Privacy</label>
+                  <select
+                    value={ytPrivacy}
+                    onChange={e => setYtPrivacy(e.target.value as any)}
+                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm focus:outline-none focus:border-red-500"
+                  >
+                    <option value="public">Public</option>
+                    <option value="unlisted">Unlisted</option>
+                    <option value="private">Private</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-400 mb-1">Category</label>
+                  <select
+                    value={ytCategoryId}
+                    onChange={e => setYtCategoryId(e.target.value)}
+                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm focus:outline-none focus:border-red-500"
+                  >
+                    <option value="10">Music</option>
+                    <option value="22">People & Blogs</option>
+                    <option value="24">Entertainment</option>
+                    <option value="26">Howto & Style</option>
+                    <option value="20">Gaming</option>
+                    <option value="1">Film & Animation</option>
+                  </select>
+                </div>
+              </div>
+              <div className="mt-3">
+                <label className="block text-xs text-gray-400 mb-1">Tags (comma separated)</label>
+                <input
+                  type="text"
+                  value={ytTags}
+                  onChange={e => setYtTags(e.target.value)}
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm focus:outline-none focus:border-red-500"
+                  placeholder="music, beats, producer"
+                />
               </div>
             </div>
+          )}
+
+          {/* Scheduling */}
+          <div className="bg-gray-900/50 border border-gray-700 rounded-lg p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="text-sm font-semibold text-white flex items-center gap-2">
+                <Clock size={16} /> Schedule Post
+              </h4>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={isScheduled}
+                  onChange={e => setIsScheduled(e.target.checked)}
+                  className="w-4 h-4 rounded"
+                />
+                <span className="text-sm text-gray-300">Schedule for later</span>
+              </label>
+            </div>
+            {isScheduled && (
+              <input
+                type="datetime-local"
+                value={scheduledDate}
+                onChange={e => setScheduledDate(e.target.value)}
+                className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-purple-500"
+                required={isScheduled}
+              />
+            )}
           </div>
 
+          {/* Upload Status */}
+          {uploadStatus && (
+            <div className="bg-blue-900/30 border border-blue-700 rounded-lg p-3 flex items-center gap-2">
+              <RefreshCw size={16} className="animate-spin text-blue-400" />
+              <span className="text-blue-300 text-sm">{uploadStatus}</span>
+            </div>
+          )}
+
           {/* Actions */}
-          <div className="flex items-center justify-end space-x-4 pt-6 border-t border-gray-700">
+          <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-700">
             <button
               type="button"
               onClick={onClose}
-              className="px-6 py-2 text-gray-400 hover:text-white transition-colors"
+              className="px-6 py-2 text-gray-400 hover:text-white transition"
             >
               Cancel
             </button>
             <button
               type="submit"
-              disabled={saving}
-              className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-2 rounded-lg font-semibold hover:from-purple-700 hover:to-pink-700 transition-all disabled:opacity-50"
+              disabled={uploading || !title.trim() || platforms.length === 0}
+              className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-2 rounded-lg font-semibold hover:from-purple-700 hover:to-pink-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
-              {saving ? 'Saving...' : content ? 'Update Content' : 'Create Content'}
+              {uploading ? (
+                <><RefreshCw size={18} className="animate-spin" /> Uploading...</>
+              ) : isScheduled ? (
+                <><Clock size={18} /> Schedule Post</>
+              ) : (
+                <><Send size={18} /> Publish Now</>
+              )}
             </button>
           </div>
         </form>
