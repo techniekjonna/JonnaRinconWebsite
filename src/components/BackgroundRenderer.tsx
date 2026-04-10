@@ -10,33 +10,21 @@ const BackgroundRenderer: React.FC = () => {
 
   React.useEffect(() => {
     if (activeBackground?.imageUrl) {
-      // Apply background image to body element
-      const style = document.documentElement.style;
-      style.backgroundImage = `url('${activeBackground.imageUrl}')`;
-      style.backgroundAttachment = 'fixed';
-      style.backgroundPosition = 'center';
-      style.backgroundRepeat = 'no-repeat';
-      style.backgroundSize = 'cover';
-      style.zIndex = '-1';
-
-      // Also set on body as fallback
-      document.body.style.backgroundImage = `url('${activeBackground.imageUrl}')`;
-      document.body.style.backgroundAttachment = 'fixed';
-      document.body.style.backgroundPosition = 'center';
-      document.body.style.backgroundRepeat = 'no-repeat';
-      document.body.style.backgroundSize = 'cover';
+      // Apply background image to html element only
+      const htmlStyle = document.documentElement.style;
+      htmlStyle.backgroundImage = `url('${activeBackground.imageUrl}')`;
+      htmlStyle.backgroundAttachment = 'fixed';
+      htmlStyle.backgroundPosition = 'center';
+      htmlStyle.backgroundRepeat = 'no-repeat';
+      htmlStyle.backgroundSize = 'cover';
     } else {
-      // Clear background if none is active (fallback to black)
-      const style = document.documentElement.style;
-      style.backgroundImage = 'none';
-      document.body.style.backgroundImage = 'none';
+      // Clear background if none is active (fallback to black from CSS)
+      document.documentElement.style.backgroundImage = 'none';
     }
 
     return () => {
       // Cleanup on unmount
-      const style = document.documentElement.style;
-      style.backgroundImage = 'none';
-      document.body.style.backgroundImage = 'none';
+      document.documentElement.style.backgroundImage = 'none';
     };
   }, [activeBackground]);
 

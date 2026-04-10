@@ -4,9 +4,13 @@
 
 @layer base {
   body {
-    @apply bg-black text-white font-sans overflow-x-hidden;
+    @apply text-white font-sans overflow-x-hidden;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+  }
+
+  html {
+    background-color: #000;
   }
 
   html {
