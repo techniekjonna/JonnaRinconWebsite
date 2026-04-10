@@ -792,12 +792,12 @@ export default function TracksPage() {
           </section>
             )}
 
-          {/* Stats - Compact, Single Row */}
-          <div className="flex justify-between gap-4 md:gap-8 mb-8">
+          {/* Stats - Compact, Centered */}
+          <div className="flex justify-center gap-6 md:gap-8 mb-12">
             {stats.map((stat) => (
-              <div key={stat.label} className="flex-1 min-w-0">
-                <p className="text-lg md:text-2xl font-black text-white truncate">{stat.value}</p>
-                <p className="text-[9px] md:text-[10px] text-white/30 uppercase tracking-wider mt-0.5 truncate">{stat.label}</p>
+              <div key={stat.label} className="flex flex-col items-center gap-1">
+                <p className="text-base md:text-lg font-black text-white">{stat.value}</p>
+                <p className="text-[8px] md:text-[9px] text-white/40 uppercase tracking-widest">{stat.label}</p>
               </div>
             ))}
           </div>

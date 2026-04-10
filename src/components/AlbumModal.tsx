@@ -153,6 +153,7 @@ export default function AlbumModal({ album, isOpen, onClose }: AlbumModalProps) 
                     showType={false}
                     showCover={false}
                     showPlayButton={false}
+                    showAlbumPlayButton={false}
                   />
                 ))}
               </div>

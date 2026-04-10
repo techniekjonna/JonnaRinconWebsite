@@ -279,7 +279,7 @@ export default function RemixesPage() {
           {/* Page Title */}
           <div className="flex flex-col items-center gap-6 mb-8">
             <h2 className="text-3xl md:text-4xl font-black uppercase tracking-tight text-white">
-              REMIXES
+              REMIXES, EDITS, BOOTLEGS
             </h2>
 
             {/* Filter & Playlist Buttons - Mobile only */}
@@ -325,7 +325,7 @@ export default function RemixesPage() {
 
           {/* Subtitle */}
           <p className="text-center text-white/50 text-sm md:text-base max-w-2xl mx-auto">
-            Original remixes, edits, and bootleg versions of tracks across multiple genres. Discover reinterpretations and creative takes on popular music.
+            Original remixes, edits, and bootleg versions of tracks across multiple genres. Discover reinterpretations and creative takes on popular music. All tracks are downloadable.
           </p>
         </div>
       </section>

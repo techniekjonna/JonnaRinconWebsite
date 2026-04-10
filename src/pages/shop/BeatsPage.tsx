@@ -8,7 +8,7 @@ import { useCyberDecodeInView } from '../../hooks/useCyberDecode';
 import { useCart } from '../../hooks/useCart';
 import { toDirectUrl } from '../../lib/utils/urlUtils';
 import { getPlayButtonContainerClass, getPlayButtonSymbolClass, getRowHighlightClass } from '../../lib/utils/buttonStyles';
-import { setCurrentTrack, getCurrentTrack } from '../../components/GlobalAudioPlayer';
+import { setCurrentTrack, getCurrentTrack, getIsPlaying } from '../../components/GlobalAudioPlayer';
 import { collection, query, where, onSnapshot, orderBy } from 'firebase/firestore';
 import { db } from '../../lib/firebase/config';
 import FilterModal from '../../components/FilterModal';
@@ -452,22 +452,20 @@ const BeatsShop: React.FC = () => {
                 onClick={() => setSelectedBeat(beat)}
                 className={`w-full text-left flex items-center gap-3 md:gap-5 p-3 md:p-4 bg-white/[0.04] backdrop-blur-md border border-white/[0.06] rounded-2xl group hover:bg-white/[0.06] transition-all ${getRowHighlightClass(isCurrentBeatPlaying(beat.id))}`}
               >
-                <span className="text-lg md:text-xl font-black text-white/15 w-6 md:w-10 text-center flex-shrink-0">
-                  {index + 1}
-                </span>
+                <button
+                  onClick={(e) => { e.stopPropagation(); handlePlayBeat(beat); }}
+                  className="flex-shrink-0 p-1.5 hover:bg-white/[0.1] rounded-lg transition-all"
+                  title={isCurrentBeatPlaying(beat.id) && getIsPlaying() ? 'Pause' : 'Play'}
+                >
+                  {isCurrentBeatPlaying(beat.id) && getIsPlaying() ? (
+                    <Pause size={16} className="text-red-600" fill="currentColor" />
+                  ) : (
+                    <Play size={16} className="text-white/60 hover:text-white" fill="currentColor" />
+                  )}
+                </button>
 
                 <div className="relative w-12 h-12 md:w-16 md:h-16 flex-shrink-0 rounded-lg overflow-hidden">
                   <img src={beat.artworkUrl || '/JEIGHTENESIS.jpg'} alt={beat.title} className="w-full h-full object-cover" />
-                  <button
-                    onClick={(e) => { e.preventDefault(); handlePlayBeat(beat); }}
-                    className={`absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg ${getPlayButtonContainerClass(isCurrentBeatPlaying(beat.id))}`}
-                  >
-                    {isCurrentBeatPlaying(beat.id) ? (
-                      <Pause className="w-5 h-5 text-red-500" fill="currentColor" />
-                    ) : (
-                      <Play className="w-5 h-5 text-gray-400 ml-0.5" fill="currentColor" />
-                    )}
-                  </button>
                 </div>
 
                 <div className="flex-1 min-w-0">
