@@ -9,6 +9,7 @@ import { useScrollToTop } from '../hooks/useScrollToTop';
 import { setCurrentTrack, getCurrentTrack } from '../components/GlobalAudioPlayer';
 import TrackListItem from '../components/TrackListItem';
 import { useRemixes } from '../hooks/useRemixes';
+import { useRelatedTracks } from '../hooks/useRelatedTracks';
 import FilterModal from '../components/FilterModal';
 import TrackDetailModal from '../components/TrackDetailModal';
 import LoginModal from '../components/LoginModal';
@@ -16,7 +17,7 @@ import LoadingSpinner from '../components/LoadingSpinner';
 import PlaylistModal from '../components/PlaylistModal';
 import PlaylistDetailView from '../components/PlaylistDetailView';
 import { extractUniqueGenres } from '../lib/utils/genreExtractor';
-import { remixService } from '../lib/firebase/services';
+import { remixService, playlistService } from '../lib/firebase/services';
 import { Playlist, Track as FirebaseTrack } from '../lib/firebase/types';
 
 // Track data structure
@@ -147,6 +148,16 @@ export default function RemixesPage() {
     setIsPlaylistDetailOpen(true);
   };
 
+  const handleAddToPlaylist = async (trackId: string, playlistId: string) => {
+    try {
+      await playlistService.addTrackToPlaylist(playlistId, trackId);
+      // Show success feedback
+      console.log('Remix added to playlist');
+    } catch (error) {
+      console.error('Error adding to playlist:', error);
+    }
+  };
+
   const handlePlayPlaylistTracks = (playlistTracks: FirebaseTrack[], startIndex: number = 0) => {
     if (playlistTracks.length === 0) return;
 
@@ -218,7 +229,7 @@ export default function RemixesPage() {
       {/* Fixed JEIGHTENESIS Background */}
       <div className="fixed inset-0 -z-10 overflow-hidden">
         <img src="/JEIGHTENESIS.jpg" alt="" className="absolute inset-0 w-full h-full object-cover" style={{objectPosition: 'center'}} />
-        <div className="absolute inset-0 bg-black/20" />
+        <div className="absolute inset-0 bg-black/80" />
       </div>
 
       <Navigation isDarkOverlay={true} isLightMode={false} />
@@ -233,6 +244,8 @@ export default function RemixesPage() {
         onClose={() => setIsModalOpen(false)}
         isPlaying={selectedTrack ? false : false}
         onPlay={handlePlayRemix}
+        relatedTracks={useRelatedTracks(selectedTrack, [])}
+        onAddToPlaylist={handleAddToPlaylist}
       />
 
       {/* Playlist Modal */}

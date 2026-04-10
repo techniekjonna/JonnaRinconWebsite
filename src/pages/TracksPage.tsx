@@ -12,6 +12,7 @@ import { setCurrentTrack, getCurrentTrack } from '../components/GlobalAudioPlaye
 import TrackListItem from '../components/TrackListItem';
 import { useTracks } from '../hooks/useTracks';
 import { useRemixes } from '../hooks/useRemixes';
+import { useRelatedTracks } from '../hooks/useRelatedTracks';
 import FilterModal from '../components/FilterModal';
 import TrackDetailModal from '../components/TrackDetailModal';
 import AlbumModal from '../components/AlbumModal';
@@ -19,7 +20,7 @@ import LoginModal from '../components/LoginModal';
 import PlaylistModal from '../components/PlaylistModal';
 import PlaylistDetailView from '../components/PlaylistDetailView';
 import { extractUniqueGenres } from '../lib/utils/genreExtractor';
-import { trackService, settingsService } from '../lib/firebase/services';
+import { trackService, settingsService, playlistService } from '../lib/firebase/services';
 import { useCart } from '../hooks/useCart';
 import { Playlist, Track as FirebaseTrack } from '../lib/firebase/types';
 
@@ -239,6 +240,16 @@ export default function TracksPage() {
     }
   };
 
+  const handleAddToPlaylist = async (trackId: string, playlistId: string) => {
+    try {
+      await playlistService.addTrackToPlaylist(playlistId, trackId);
+      // Show success feedback
+      console.log('Track added to playlist');
+    } catch (error) {
+      console.error('Error adding to playlist:', error);
+    }
+  };
+
   const handleTogglePlayTrack = (track: Track) => {
     const currentTrack = getCurrentTrack();
 
@@ -451,7 +462,7 @@ export default function TracksPage() {
       {/* Fixed JEIGHTENESIS Background */}
       <div className="fixed inset-0 -z-10 overflow-hidden">
         <img src="/JEIGHTENESIS.jpg" alt="" className="absolute inset-0 w-full h-full object-cover" style={{objectPosition: 'center'}} />
-        <div className="absolute inset-0 bg-black/20" />
+        <div className="absolute inset-0 bg-black/80" />
       </div>
 
       <Navigation isDarkOverlay={true} isLightMode={false} />
@@ -468,6 +479,8 @@ export default function TracksPage() {
         onPlay={handlePlayTrack}
         onBuy={handleBuyTrack}
         cartItems={cartItems}
+        relatedTracks={useRelatedTracks(selectedTrack, [])}
+        onAddToPlaylist={handleAddToPlaylist}
       />
 
       {/* Album Modal */}

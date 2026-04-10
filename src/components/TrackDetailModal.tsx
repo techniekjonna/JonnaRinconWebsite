@@ -1,6 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { X, Play, Pause, ShoppingCart, Download } from 'lucide-react';
+import { X, Play, Pause, ShoppingCart, Download, ChevronDown, Plus, Dice5 } from 'lucide-react';
 import { getCurrentTrack } from './GlobalAudioPlayer';
+import { useAuth } from '../hooks/useAuth';
+import { playlistService } from '../lib/firebase/services';
+import { Playlist } from '../lib/firebase/types';
 
 interface Track {
   id: string;
@@ -34,6 +37,8 @@ interface TrackDetailModalProps {
   onPlay?: (track: Track) => void;
   onBuy?: (track: Track) => void;
   cartItems?: any[];
+  relatedTracks?: Track[];
+  onAddToPlaylist?: (trackId: string, playlistId: string) => Promise<void>;
 }
 
 export default function TrackDetailModal({
@@ -44,9 +49,17 @@ export default function TrackDetailModal({
   onPlay,
   onBuy,
   cartItems = [],
+  relatedTracks = [],
+  onAddToPlaylist,
 }: TrackDetailModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
+  const { user } = useAuth();
   const [isHoveringCover, setIsHoveringCover] = useState(false);
+  const [isPlaylistExpanded, setIsPlaylistExpanded] = useState(false);
+  const [selectedPlaylistId, setSelectedPlaylistId] = useState<string | null>(null);
+  const [userPlaylists, setUserPlaylists] = useState<Playlist[]>([]);
+  const [isAddingToPlaylist, setIsAddingToPlaylist] = useState(false);
+  const [currentRelatedTracks, setCurrentRelatedTracks] = useState(relatedTracks);
 
   // Handle play button click on cover
   const handleCoverClick = () => {
@@ -54,6 +67,11 @@ export default function TrackDetailModal({
       onPlay(track);
     }
   };
+
+  // Update current related tracks when prop changes
+  useEffect(() => {
+    setCurrentRelatedTracks(relatedTracks);
+  }, [relatedTracks]);
 
   // Check if track is already in cart
   const isInCart = track ? cartItems.some(item => item.id === track.id) : false;
@@ -97,6 +115,39 @@ export default function TrackDetailModal({
     document.addEventListener('keydown', handleEscape);
     return () => document.removeEventListener('keydown', handleEscape);
   }, [isOpen, onClose]);
+
+  // Load user playlists when modal opens
+  useEffect(() => {
+    if (!isOpen || !user) {
+      setUserPlaylists([]);
+      return;
+    }
+
+    playlistService
+      .getPlaylistsByUserId(user.uid)
+      .then((playlists) => {
+        setUserPlaylists(playlists);
+      })
+      .catch((error) => {
+        console.error('Error loading playlists:', error);
+      });
+  }, [isOpen, user]);
+
+  // Handle add to playlist
+  const handleAddToPlaylist = async () => {
+    if (!selectedPlaylistId || !track) return;
+    setIsAddingToPlaylist(true);
+    try {
+      await playlistService.addTrackToPlaylist(selectedPlaylistId, track.id);
+      setSelectedPlaylistId(null);
+      // Show success message
+      console.log('Track added to playlist');
+    } catch (error) {
+      console.error('Error adding to playlist:', error);
+    } finally {
+      setIsAddingToPlaylist(false);
+    }
+  };
 
   if (!isOpen || !track) return null;
 
@@ -259,6 +310,123 @@ export default function TrackDetailModal({
                   Listen to original tracks and support the artist directly on their own platform
                 </p>
               </div>
+            </div>
+
+            {/* Related Tracks Carousel */}
+            {currentRelatedTracks && currentRelatedTracks.length > 0 && (
+              <div className="mt-6 pt-6 border-t border-white/[0.1]">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-white/60 text-xs uppercase tracking-wider font-semibold">
+                    Related Tracks
+                  </h3>
+                  <button
+                    onClick={() => setCurrentRelatedTracks([...currentRelatedTracks].sort(() => Math.random() - 0.5))}
+                    className="p-1.5 bg-white/[0.06] hover:bg-white/[0.12] rounded-lg text-white/40 hover:text-white transition-all"
+                    title="Generate random recommendations"
+                  >
+                    <Dice5 size={16} />
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-[220px] overflow-y-auto">
+                  {currentRelatedTracks.map(relTrack => (
+                    <button
+                      key={relTrack.id}
+                      onClick={() => onPlay?.(relTrack)}
+                      className="group rounded-lg bg-white/[0.04] hover:bg-white/[0.08] p-2 flex flex-col items-start gap-2 transition-all border border-white/[0.08] hover:border-white/[0.12]"
+                    >
+                      <img
+                        src={relTrack.coverArt || '/JEIGHTENESIS.jpg'}
+                        alt={relTrack.title}
+                        className="w-12 h-12 rounded-md object-cover"
+                      />
+                      <div className="flex-1 min-w-0 w-full">
+                        <p className="text-xs text-white font-semibold truncate">
+                          {relTrack.title}
+                        </p>
+                        <p className="text-[10px] text-white/50 truncate">
+                          {relTrack.artist}
+                        </p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Add to Playlist Section */}
+            <div className="mt-6 border border-white/[0.1] rounded-xl overflow-hidden bg-white/[0.04]">
+              <button
+                onClick={() => setIsPlaylistExpanded(!isPlaylistExpanded)}
+                className="w-full px-6 py-3 flex items-center justify-between text-white font-semibold text-sm uppercase tracking-wider hover:bg-white/[0.06] transition-colors"
+              >
+                <span>Add to Playlist</span>
+                <ChevronDown size={16} className={`transition-transform ${isPlaylistExpanded ? 'rotate-180' : ''}`} />
+              </button>
+
+              {isPlaylistExpanded && (
+                <div className="border-t border-white/[0.1] p-4 space-y-3">
+                  {user ? (
+                    <>
+                      <button
+                        onClick={() => {
+                          // For now, just log - in full implementation would open create playlist flow
+                          console.log('Create new playlist');
+                        }}
+                        className="w-full px-4 py-2 bg-red-600/80 hover:bg-red-600 text-white rounded-lg font-semibold text-sm uppercase tracking-wider flex items-center justify-center gap-2 transition-colors"
+                      >
+                        <Plus size={16} />
+                        Create New Playlist
+                      </button>
+
+                      {userPlaylists.length > 0 && (
+                        <div className="space-y-2 max-h-[200px] overflow-y-auto">
+                          {userPlaylists.map(playlist => (
+                            <label key={playlist.id} className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/[0.06] cursor-pointer transition-colors">
+                              <input
+                                type="radio"
+                                name="playlist"
+                                value={playlist.id}
+                                checked={selectedPlaylistId === playlist.id}
+                                onChange={() => setSelectedPlaylistId(playlist.id)}
+                                className="w-4 h-4"
+                              />
+                              <div className="flex-1 min-w-0">
+                                <p className="text-white text-sm font-semibold truncate">
+                                  {(playlist as any).name || 'Untitled Playlist'}
+                                </p>
+                                <p className="text-white/40 text-xs">
+                                  {(playlist as any).trackIds?.length || 0} tracks
+                                </p>
+                              </div>
+                            </label>
+                          ))}
+                        </div>
+                      )}
+
+                      {userPlaylists.length === 0 && (
+                        <p className="text-white/40 text-sm text-center py-2">
+                          No playlists yet. Create one to get started!
+                        </p>
+                      )}
+
+                      {selectedPlaylistId && (
+                        <button
+                          onClick={handleAddToPlaylist}
+                          disabled={isAddingToPlaylist}
+                          className="w-full px-4 py-2 bg-white/[0.1] hover:bg-white/[0.15] disabled:opacity-50 text-white rounded-lg font-semibold text-sm uppercase tracking-wider transition-colors"
+                        >
+                          {isAddingToPlaylist ? 'Adding...' : 'Add Track'}
+                        </button>
+                      )}
+                    </>
+                  ) : (
+                    <p className="text-white/40 text-sm text-center py-2">
+                      Sign in to add tracks to playlists
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Download Button - if track has audioUrl */}
