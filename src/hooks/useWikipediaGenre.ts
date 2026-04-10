@@ -3,63 +3,94 @@ import { useState, useEffect } from 'react';
 interface WikipediaInfo {
   content: string;
   loading: boolean;
-  error: string | null;
 }
 
-// Cache to avoid repeated API calls
+// Cache to avoid repeated API calls and failed attempts
 const genreCache = new Map<string, string>();
+const failedGenres = new Set<string>();
 
 /**
  * Hook to fetch Wikipedia genre information
  * Returns the first 8 sentences max from Wikipedia
+ * Silently handles errors without logging to console
  * @param genre - The genre to fetch information for
- * @returns Object with content, loading state, and error
+ * @returns Object with content and loading state
  */
 export const useWikipediaGenre = (genre?: string): WikipediaInfo => {
   const [content, setContent] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!genre) {
       setContent('');
       setLoading(false);
-      setError(null);
+      return;
+    }
+
+    // Extract primary genre (handle comma-separated genres)
+    const primaryGenre = genre.split(',')[0].trim().toLowerCase();
+
+    // Skip if already failed before
+    if (failedGenres.has(primaryGenre)) {
+      setContent('');
+      setLoading(false);
       return;
     }
 
     // Check cache first
-    if (genreCache.has(genre)) {
-      setContent(genreCache.get(genre) || '');
+    if (genreCache.has(primaryGenre)) {
+      setContent(genreCache.get(primaryGenre) || '');
       setLoading(false);
-      setError(null);
       return;
     }
 
     const fetchWikipedia = async () => {
       setLoading(true);
-      setError(null);
       try {
-        const response = await fetch(
-          `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(genre)}_music`
-        );
+        // Try multiple variations of the genre name
+        const searchVariations = [
+          `${primaryGenre}_music`,
+          `${primaryGenre}_(music)`,
+          primaryGenre,
+        ];
 
-        if (!response.ok) {
-          throw new Error('Genre not found');
+        let found = false;
+        for (const variation of searchVariations) {
+          try {
+            const response = await fetch(
+              `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(variation)}`,
+              { signal: AbortSignal.timeout(5000) } // 5 second timeout
+            );
+
+            if (response.ok) {
+              const data = await response.json();
+              let extract = data.extract || '';
+
+              if (extract) {
+                // Limit to 8 sentences
+                const sentences = extract.match(/[^.!?]+[.!?]+/g) || [];
+                const limitedContent = sentences.slice(0, 8).join('').trim();
+
+                if (limitedContent) {
+                  setContent(limitedContent);
+                  genreCache.set(primaryGenre, limitedContent);
+                  found = true;
+                  break;
+                }
+              }
+            }
+          } catch {
+            // Try next variation silently
+            continue;
+          }
         }
 
-        const data = await response.json();
-        let extract = data.extract || '';
-
-        // Limit to 8 sentences
-        const sentences = extract.match(/[^.!?]+[.!?]+/g) || [];
-        const limitedContent = sentences.slice(0, 8).join('').trim();
-
-        setContent(limitedContent);
-        genreCache.set(genre, limitedContent);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to fetch genre information');
-        genreCache.set(genre, '');
+        // If nothing found, cache as failed
+        if (!found) {
+          failedGenres.add(primaryGenre);
+          genreCache.set(primaryGenre, '');
+          setContent('');
+        }
       } finally {
         setLoading(false);
       }
@@ -68,5 +99,5 @@ export const useWikipediaGenre = (genre?: string): WikipediaInfo => {
     fetchWikipedia();
   }, [genre]);
 
-  return { content, loading, error };
+  return { content, loading };
 };

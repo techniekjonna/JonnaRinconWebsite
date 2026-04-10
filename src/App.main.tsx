@@ -29,6 +29,7 @@ import ReleasesPage from './pages/ReleasesPage';
 import DownloadGatePage from './pages/DownloadGatePage';
 import SocialsPage from './pages/SocialsPage';
 import ContactPage from './pages/ContactPage';
+import MessengerPage from './pages/MessengerPage';
 import CataloguePage from './pages/CataloguePage';
 import DJSetsPage from './pages/DJSetsPage';
 import ProductionsPage from './pages/ProductionsPage';
@@ -126,6 +127,14 @@ const MainApp: React.FC = () => {
           <Route path="/download/:trackId" element={<DownloadGatePage />} />
           <Route path="/socials" element={<SocialsPage />} />
           <Route path="/contact" element={<ContactPage />} />
+          <Route
+            path="/messenger"
+            element={
+              <ProtectedRoute allowedRoles={['user', 'artist', 'admin']}>
+                <MessengerPage />
+              </ProtectedRoute>
+            }
+          />
 
           {/* Customer Routes (protected - user role only) */}
           <Route
