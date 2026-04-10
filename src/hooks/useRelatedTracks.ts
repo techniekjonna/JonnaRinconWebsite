@@ -23,7 +23,7 @@ export const useRelatedTracks = (
     if (!track || !tracks.length) return [];
 
     // Score each track based on matches
-    const scored: ScoredTrack[] = tracks
+    return tracks
       .filter((t) => {
         // Exclude current track and specified IDs
         if (t.id === track.id) return false;
@@ -75,8 +75,6 @@ export const useRelatedTracks = (
       })
       .slice(0, 6)
       .map((item) => item.track);
-
-    return relatedTracks;
   }, [track, tracks, JSON.stringify(excludeIds)]);
 
   return relatedTracks;

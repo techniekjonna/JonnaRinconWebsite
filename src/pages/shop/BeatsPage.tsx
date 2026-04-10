@@ -104,7 +104,9 @@ const BeatsShop: React.FC = () => {
       year: new Date().getFullYear(),
       collab: 'Solo' as const,
       createdAt: beat.createdAt?.seconds ? beat.createdAt.seconds * 1000 : Date.now(),
-    };
+      _isBeat: true, // Mark as beat for player
+      _beatData: beat, // Store original beat data
+    } as any;
 
     // Use global player
     setCurrentTrack(trackBeat, [trackBeat]);
@@ -273,59 +275,6 @@ const BeatsShop: React.FC = () => {
       />
 
       <div className="max-w-7xl mx-auto px-6 md:px-12 py-16 md:py-24">
-
-        {/* Featured Beats */}
-        {!loading && featuredBeats.length > 0 && (
-          <div className="mb-16">
-            <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tight mb-8">Featured</h2>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-              {featuredBeats.slice(0, 4).map((beat) => (
-                <button
-                  key={beat.id}
-                  onClick={() => setSelectedBeat(beat)}
-                  className="group relative bg-white/[0.04] backdrop-blur-md border border-white/[0.06] rounded-2xl overflow-hidden hover:border-white/[0.12] transition-all duration-500 hover:scale-[1.02] text-left"
-                >
-                  <div className="absolute top-3 left-3 z-10">
-                    <span className="px-2.5 py-1 bg-red-600 text-white text-[10px] font-bold rounded-full uppercase tracking-wider shadow-lg">
-                      Featured
-                    </span>
-                  </div>
-
-                  <div className="relative aspect-square">
-                    <img src={beat.artworkUrl || '/JEIGHTENESIS.jpg'} alt={beat.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                    <button
-                      onClick={(e) => { e.preventDefault(); handlePlayBeat(beat); }}
-                      className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300"
-                    >
-                      <div className={`w-14 h-14 rounded-full bg-red-600 flex items-center justify-center shadow-2xl hover:scale-110 transition-transform ${getPlayButtonContainerClass(isCurrentBeatPlaying(beat.id))}`}>
-                        {isCurrentBeatPlaying(beat.id) ? (
-                          <Pause className="w-6 h-6 text-red-500" fill="currentColor" />
-                        ) : (
-                          <Play className="w-6 h-6 text-gray-400 ml-1" fill="currentColor" />
-                        )}
-                      </div>
-                    </button>
-
-                    <div className="absolute bottom-0 left-0 right-0 p-4">
-                      <h3 className="font-bold text-base md:text-lg text-white truncate">{beat.title}</h3>
-                      <p className="text-xs text-white/50 truncate">{beat.artist}</p>
-                      <div className="flex items-center justify-between mt-2">
-                        <div className="flex gap-1.5">
-                          <span className="px-2 py-0.5 bg-white/10 rounded text-xs">{beat.bpm} BPM</span>
-                          <span className="px-2 py-0.5 bg-white/10 rounded text-xs">{beat.key}</span>
-                        </div>
-                        <span className="text-lg font-black text-red-500">
-                          &euro;{beat.licenses.exclusive?.price.toFixed(0) || '0'}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
 
         {/* Trending Section */}
         {!loading && trendingBeats.length > 0 && (

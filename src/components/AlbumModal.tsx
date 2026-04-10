@@ -132,7 +132,9 @@ export default function AlbumModal({ album, isOpen, onClose }: AlbumModalProps) 
 
               {/* Tracks List - More compact */}
               <div className="space-y-0.5 mt-2">
-                {album.tracks.map((track, index) => (
+                {album.tracks
+                  .sort((a, b) => (a.trackNumber || 0) - (b.trackNumber || 0))
+                  .map((track, index) => (
                   <TrackListItem
                     key={track.id}
                     track={{

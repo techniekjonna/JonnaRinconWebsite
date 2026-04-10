@@ -4,6 +4,7 @@ import { getCurrentTrack } from './GlobalAudioPlayer';
 import { useAuth } from '../hooks/useAuth';
 import { playlistService } from '../lib/firebase/services';
 import { Playlist } from '../lib/firebase/types';
+import { useWikipediaGenre } from '../hooks/useWikipediaGenre';
 
 interface Track {
   id: string;
@@ -60,6 +61,7 @@ export default function TrackDetailModal({
   const [userPlaylists, setUserPlaylists] = useState<Playlist[]>([]);
   const [isAddingToPlaylist, setIsAddingToPlaylist] = useState(false);
   const [currentRelatedTracks, setCurrentRelatedTracks] = useState(relatedTracks);
+  const { content: genreInfo, loading: genreLoading } = useWikipediaGenre(track?.genre);
 
   // Handle play button click on cover
   const handleCoverClick = () => {
@@ -298,6 +300,22 @@ export default function TrackDetailModal({
                 <div className="mb-6">
                   <p className="text-white/40 text-xs uppercase tracking-wider mb-2">Type</p>
                   <p className="text-white text-sm">{track.collab}</p>
+                </div>
+              )}
+
+              {/* Genre Information from Wikipedia */}
+              {track.genre && (
+                <div className="mb-6">
+                  <p className="text-white/40 text-xs uppercase tracking-wider mb-2">About {track.genre}</p>
+                  {genreLoading && (
+                    <div className="text-white/50 text-sm">Loading genre information...</div>
+                  )}
+                  {genreInfo && (
+                    <p className="text-white/70 text-sm leading-relaxed">{genreInfo}</p>
+                  )}
+                  {!genreLoading && !genreInfo && (
+                    <p className="text-white/50 text-sm italic">No information available for this genre.</p>
+                  )}
                 </div>
               )}
 

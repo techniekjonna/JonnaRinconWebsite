@@ -1,6 +1,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { SkipBack, Play, Pause, SkipForward, Shuffle, Repeat, Volume2, VolumeX, X } from 'lucide-react';
 import { useTrackDetail } from '../contexts/TrackDetailContext';
+import { useBeatDetail } from '../contexts/BeatDetailContext';
 import './GlobalAudioPlayer.css';
 
 interface Track {
@@ -148,6 +149,7 @@ export default function GlobalAudioPlayer({ onCoverClick }: { onCoverClick?: () 
   const audioRef = useRef<HTMLAudioElement>(null);
   const [store, setStore] = useState<PlayerStore>(playerStore);
   const { setSelectedTrack, setIsModalOpen } = useTrackDetail();
+  const { setSelectedBeat, setIsModalOpen: setBeatModalOpen } = useBeatDetail();
   const [isVisible, setIsVisible] = useState(isPlayerVisible);
   const [volume, setVolume] = useState<number>(() => {
     if (typeof window !== 'undefined') {
@@ -401,23 +403,13 @@ export default function GlobalAudioPlayer({ onCoverClick }: { onCoverClick?: () 
                 className="jonna-cover-wrapper"
                 onClick={() => {
                   if (store.currentTrack) {
-                    const trackData: any = {
-                      id: store.currentTrack.id,
-                      title: store.currentTrack.title,
-                      artist: store.currentTrack.artist,
-                      audioUrl: store.currentTrack.audioUrl,
-                      coverArt: store.currentTrack.coverArt,
-                    };
-                    setSelectedTrack(trackData);
-                    setIsModalOpen(true);
-                  }
-                  onCoverClick?.();
-                }}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    if (store.currentTrack) {
+                    const isBeat = (store.currentTrack as any)._isBeat;
+                    if (isBeat && (store.currentTrack as any)._beatData) {
+                      // Open beat detail modal
+                      setSelectedBeat((store.currentTrack as any)._beatData);
+                      setBeatModalOpen(true);
+                    } else {
+                      // Open track detail modal
                       const trackData: any = {
                         id: store.currentTrack.id,
                         title: store.currentTrack.title,
@@ -427,6 +419,32 @@ export default function GlobalAudioPlayer({ onCoverClick }: { onCoverClick?: () 
                       };
                       setSelectedTrack(trackData);
                       setIsModalOpen(true);
+                    }
+                  }
+                  onCoverClick?.();
+                }}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    if (store.currentTrack) {
+                      const isBeat = (store.currentTrack as any)._isBeat;
+                      if (isBeat && (store.currentTrack as any)._beatData) {
+                        // Open beat detail modal
+                        setSelectedBeat((store.currentTrack as any)._beatData);
+                        setBeatModalOpen(true);
+                      } else {
+                        // Open track detail modal
+                        const trackData: any = {
+                          id: store.currentTrack.id,
+                          title: store.currentTrack.title,
+                          artist: store.currentTrack.artist,
+                          audioUrl: store.currentTrack.audioUrl,
+                          coverArt: store.currentTrack.coverArt,
+                        };
+                        setSelectedTrack(trackData);
+                        setIsModalOpen(true);
+                      }
                     }
                     onCoverClick?.();
                   }

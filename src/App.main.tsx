@@ -3,9 +3,11 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { BackgroundProvider } from './contexts/BackgroundContext';
 import { TrackDetailProvider } from './contexts/TrackDetailContext';
+import { BeatDetailProvider } from './contexts/BeatDetailContext';
 import { useScrollToTop } from './hooks/useScrollToTop';
 import ProtectedRoute from './components/ProtectedRoute';
 import GlobalAudioPlayer from './components/GlobalAudioPlayer';
+import GlobalBeatDetailModal from './components/GlobalBeatDetailModal';
 import BackgroundRenderer from './components/BackgroundRenderer';
 
 // Public pages
@@ -93,10 +95,12 @@ const MainApp: React.FC = () => {
     <AuthProvider>
       <BackgroundProvider>
         <TrackDetailProvider>
-          <BrowserRouter>
+          <BeatDetailProvider>
+            <BrowserRouter>
             <ScrollToTopWrapper>
               <BackgroundRenderer />
               <GlobalAudioPlayer />
+              <GlobalBeatDetailModal />
               <Routes>
               {/* Public Routes */}
           <Route path="/" element={<HomePage />} />
@@ -456,6 +460,7 @@ const MainApp: React.FC = () => {
               </Routes>
             </ScrollToTopWrapper>
             </BrowserRouter>
+          </BeatDetailProvider>
         </TrackDetailProvider>
       </BackgroundProvider>
     </AuthProvider>
