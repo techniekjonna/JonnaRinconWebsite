@@ -5,6 +5,7 @@ import Footer from '../components/Footer';
 import { Check, Lock, Download, ExternalLink, Music, Instagram, Youtube } from 'lucide-react';
 import { useCyberDecodeInView } from '../hooks/useCyberDecode';
 import { useAuth } from '../contexts/AuthContext';
+import { useScrollToTop } from '../hooks/useScrollToTop';
 
 interface FollowStep {
   id: string;
@@ -43,6 +44,7 @@ const followSteps: FollowStep[] = [
 ];
 
 export default function DownloadGatePage() {
+  useScrollToTop();
   const { trackId } = useParams<{ trackId: string }>();
   const { user } = useAuth();
   const navigate = useNavigate();

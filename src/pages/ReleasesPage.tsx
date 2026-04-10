@@ -5,6 +5,7 @@ import Footer from '../components/Footer';
 import { Play, Lock, ExternalLink, Disc3, Music, Download } from 'lucide-react';
 import { useCyberDecodeInView } from '../hooks/useCyberDecode';
 import { useAuth } from '../contexts/AuthContext';
+import { useScrollToTop } from '../hooks/useScrollToTop';
 
 type ReleaseType = 'all' | 'album' | 'ep' | 'single';
 
@@ -120,6 +121,7 @@ const remixes: Remix[] = [
 ];
 
 export default function ReleasesPage() {
+  useScrollToTop();
   const [filter, setFilter] = useState<ReleaseType>('all');
   const [selectedRelease, setSelectedRelease] = useState<Release | null>(null);
   const { user } = useAuth();

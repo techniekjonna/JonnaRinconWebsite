@@ -3,6 +3,7 @@ import { Music2, Play, ChevronLeft, ChevronRight } from 'lucide-react';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
 import { useCyberDecodeInView } from '../hooks/useCyberDecode';
+import { useScrollToTop } from '../hooks/useScrollToTop';
 
 interface Compilation {
   id: string;
@@ -18,6 +19,7 @@ interface SpotifyPlaylist {
 }
 
 const SpotifyPage: React.FC = () => {
+  useScrollToTop();
   const heroTitle = useCyberDecodeInView('SPOTIFY');
   const [currentPlaylist, setCurrentPlaylist] = useState(0);
 
@@ -70,7 +72,7 @@ const SpotifyPage: React.FC = () => {
         <div className="relative z-10 max-w-7xl mx-auto w-full text-center">
           <h1
             ref={heroTitle.ref as React.RefObject<HTMLHeadingElement>}
-            className="text-6xl md:text-8xl lg:text-9xl font-black uppercase leading-[0.85] tracking-tighter mb-8"
+            style={{fontSize: 'clamp(1.875rem, 8vw, 10.2rem)'}} className="font-black uppercase leading-[0.85] tracking-tighter mb-8"
           >
             {heroTitle.display}
           </h1>

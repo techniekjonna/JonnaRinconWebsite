@@ -147,7 +147,7 @@ export default function Hero() {
 
         {/* Buttons — absoluut gepositioneerd onderaan het scherm, onder de pet */}
         <div
-          className="absolute bottom-12 md:bottom-16 flex flex-col sm:flex-row gap-3 transition-opacity duration-700"
+          className="absolute bottom-20 md:bottom-24 flex flex-col sm:flex-row gap-3 transition-opacity duration-700"
           style={{ opacity: done ? 1 : 0 }}
         >
           <a

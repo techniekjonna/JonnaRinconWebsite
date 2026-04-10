@@ -4,6 +4,7 @@ import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
 import { Mail, Instagram, Youtube, Music, Cloud as CloudIcon, ArrowUpRight } from 'lucide-react';
 import { useCyberDecodeInView } from '../hooks/useCyberDecode';
+import { useScrollToTop } from '../hooks/useScrollToTop';
 
 const socialLinks = [
   { name: 'Instagram', icon: Instagram, url: 'https://www.instagram.com/jonnarincon/' },
@@ -13,6 +14,7 @@ const socialLinks = [
 ];
 
 export default function ContactPage() {
+  useScrollToTop();
   const [formData, setFormData] = useState({ name: '', email: '', subject: 'commission', message: '' });
   const heroTitle = useCyberDecodeInView('Contact');
 

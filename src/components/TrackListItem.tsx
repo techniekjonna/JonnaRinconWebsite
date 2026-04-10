@@ -21,6 +21,7 @@ interface TrackListItemProps {
   isPlaying?: boolean;
   showDownload?: boolean;
   showCover?: boolean;
+  showPlayButton?: boolean;
 }
 
 export default function TrackListItem({
@@ -41,6 +42,7 @@ export default function TrackListItem({
   isPlaying = false,
   showDownload = false,
   showCover = true,
+  showPlayButton = true,
 }: TrackListItemProps) {
   // Force re-render when global player state changes
   const [, setPlayerState] = useState({});
@@ -102,7 +104,7 @@ export default function TrackListItem({
       )}
 
       {/* Play/Pause Button for Album Tracks */}
-      {isAlbumTrack && (
+      {isAlbumTrack && showPlayButton && (
         <button
           onClick={(e) => {
             e.stopPropagation();

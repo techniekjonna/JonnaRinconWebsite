@@ -14,6 +14,7 @@ import { db } from '../../lib/firebase/config';
 import FilterModal from '../../components/FilterModal';
 import BeatDetailModal from '../../components/BeatDetailModal';
 import { beatService } from '../../lib/firebase/services';
+import { useScrollToTop } from '../../hooks/useScrollToTop';
 
 const BeatsShop: React.FC = () => {
   const [beats, setBeats] = useState<Beat[]>([]);
@@ -172,7 +173,7 @@ const BeatsShop: React.FC = () => {
       {/* Hero Section - Centered Layout */}
       <section className="relative pt-40 px-6 md:px-12 pb-4">
         <div className="relative z-10 max-w-7xl mx-auto w-full">
-          <h1 ref={heroTitle.ref as React.RefObject<HTMLHeadingElement>} className="text-6xl md:text-8xl lg:text-9xl font-black uppercase leading-[0.85] tracking-tighter mb-8 text-center">
+          <h1 ref={heroTitle.ref as React.RefObject<HTMLHeadingElement>} style={{fontSize: 'clamp(1.875rem, 8vw, 10.2rem)'}} className="font-black uppercase leading-[0.85] tracking-tighter mb-8 text-center">
             {heroTitle.display}
           </h1>
 

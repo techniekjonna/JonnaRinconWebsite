@@ -150,6 +150,7 @@ export default function AlbumModal({ album, isOpen, onClose }: AlbumModalProps) 
                     showMetadata={false}
                     showType={false}
                     showCover={false}
+                    showPlayButton={false}
                   />
                 ))}
               </div>

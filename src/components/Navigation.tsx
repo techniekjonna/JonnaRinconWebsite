@@ -5,6 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useCart } from '../hooks/useCart';
 import ShoppingCart from './ShoppingCart';
 import { getCurrentTrack, togglePlayerOpen } from './GlobalAudioPlayer';
+import { useContrastColor } from '../lib/utils/colorDetection';
 
 interface NavigationProps {
   cartItemCount?: number;
@@ -32,6 +33,13 @@ export default function Navigation({ cartItemCount = 0, onCartClick, isDarkOverl
   const navigate = useNavigate();
   const closeTimeout = useRef<NodeJS.Timeout | null>(null);
   const scrollPositionRef = useRef(0);
+
+  // Smart color detection for menu button and logo
+  const smartColor = useContrastColor(window.innerWidth - 60, 30);
+
+  // Fall back to original logic if smart color not available, but prefer smart detection
+  const fallbackNavTextColor = isDarkOverlay && !isLightMode ? 'text-white' : 'text-black';
+  const navTextColor = `text-${smartColor}`;
 
   // Lock scroll when menu is open - improved state management
   useEffect(() => {
@@ -155,10 +163,9 @@ export default function Navigation({ cartItemCount = 0, onCartClick, isDarkOverl
   };
 
   // Determine nav colors based on context
+  // Old logic preserved as fallback
   const useWhiteNav = isDarkOverlay && !isLightMode;
   const useBlackNav = isLightMode || !isDarkOverlay;
-
-  const navTextColor = useWhiteNav ? 'text-white' : 'text-black';
 
   const shopSubmenu = [
     { label: 'Beat Shop', subtitle: 'Browse instrumentals', href: '/shop/beats' },
@@ -636,6 +643,11 @@ export default function Navigation({ cartItemCount = 0, onCartClick, isDarkOverl
         .animate-panel-slide-in {
           animation: panel-slide-in 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
+        @media (max-width: 768px) {
+          .animate-panel-slide-in {
+            animation: panel-slide-in 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+          }
+        }
 
         @keyframes panel-slide-out {
           from {
@@ -648,6 +660,11 @@ export default function Navigation({ cartItemCount = 0, onCartClick, isDarkOverl
         .animate-panel-slide-out {
           animation: panel-slide-out 0.5s cubic-bezier(0.7, 0, 0.84, 0) forwards;
         }
+        @media (max-width: 768px) {
+          .animate-panel-slide-out {
+            animation: panel-slide-out 0.2s cubic-bezier(0.7, 0, 0.84, 0) forwards;
+          }
+        }
 
         @keyframes menu-item-reveal {
           from {
@@ -657,6 +674,13 @@ export default function Navigation({ cartItemCount = 0, onCartClick, isDarkOverl
           to {
             opacity: 1;
             transform: translateX(0);
+          }
+        }
+
+        @media (max-width: 768px) {
+          /* Faster animations on mobile */
+          [style*="animation-delay"] {
+            animation-duration: 0.3s !important;
           }
         }
       `}</style>

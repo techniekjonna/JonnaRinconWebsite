@@ -4,6 +4,7 @@ import { Music, Disc3, Radio, Lightbulb, Music2, Heart, ArrowUpRight } from 'luc
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
 import { useCyberDecodeInView } from '../hooks/useCyberDecode';
+import { useScrollToTop } from '../hooks/useScrollToTop';
 
 interface CatalogueCategory {
   id: string;
@@ -17,6 +18,7 @@ interface CatalogueCategory {
 }
 
 const CataloguePage: React.FC = () => {
+  useScrollToTop();
   const heroTitle = useCyberDecodeInView('CATALOGUE');
   const [selectedFilter, setSelectedFilter] = useState<string>('All');
 
@@ -118,7 +120,7 @@ const CataloguePage: React.FC = () => {
         <div className="relative z-10 max-w-7xl mx-auto w-full text-center">
           <h1
             ref={heroTitle.ref as React.RefObject<HTMLHeadingElement>}
-            className="text-6xl md:text-8xl lg:text-9xl font-black uppercase leading-[0.85] tracking-tighter mb-8"
+            style={{fontSize: 'clamp(1.875rem, 8vw, 10.2rem)'}} className="font-black uppercase leading-[0.85] tracking-tighter mb-8"
           >
             {heroTitle.display}
           </h1>
