@@ -147,21 +147,31 @@ export interface Art {
   title: string;
   description: string;
   artist: string;
-  medium: string; // e.g., "Digital", "Acrylic", "Mixed Media"
+  medium: string;
   year: number;
-  category: string; // e.g., "Digital Art", "Cover Design", "Visual Art", "Illustration", "Photography"
-  image: string; // Main image URL
 
-  // Media
-  gallery?: string[]; // Additional gallery images
+  // Art Type System
+  type: 'Painting' | 'Hardware' | 'Furniture' | 'Clothing';
+  subtype?: string; // For Clothing: 'Jacket', 'Bomber Jacket', 'Jeans', 'Leather Jacket', 'Belt', 'Cap', 'Sunglasses', etc.
+  category: string; // Legacy category support
+
+  image: string;
+  gallery?: string[];
+
+  // Pricing & Availability
+  forSale: boolean; // Toggle for NOT FOR SALE
+  price?: number; // Optional, if not set = FREE
+  isFree: boolean; // True if no price set or price is 0
+
+  // Stock Management (All art pieces are unique, stock = 1)
+  stock: number; // Always 1 for unique pieces
+  sold: boolean; // True when purchased
+  soldAt?: Timestamp; // When it was sold
+  soldToUserId?: string; // User who bought it
 
   // Status
   status: 'draft' | 'published' | 'archived';
   featured: boolean;
-
-  // Stats
-  views: number;
-  likes: number;
 
   // SEO & Meta
   slug: string;

@@ -1,19 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../hooks/useAuth';
-import { purchaseService } from '../../lib/firebase/services';
+import { purchaseService, artService } from '../../lib/firebase/services';
 import { followGateService } from '../../lib/firebase/services/followGateService';
-import { Purchase, FollowGateCompletion } from '../../lib/firebase/types';
+import { Purchase, FollowGateCompletion, Art } from '../../lib/firebase/types';
 import CustomerLayout from '../../components/customer/CustomerLayout';
 import ProductCard from '../../components/ProductCard';
 import ProductDetailModal from '../../components/ProductDetailModal';
 import LoadingSpinner from '../../components/LoadingSpinner';
-import { Download, Calendar, Package, AlertCircle, Gift, ShoppingBag, ExternalLink } from 'lucide-react';
+import { Download, Calendar, Package, AlertCircle, Gift, ShoppingBag, ExternalLink, Image } from 'lucide-react';
 
-type FilterType = 'all' | 'purchased' | 'free';
+type FilterType = 'all' | 'purchased' | 'art' | 'free';
 
 export default function MyProductsPage() {
   const { user, isAuthenticated } = useAuth();
   const [purchases, setPurchases] = useState<Purchase[]>([]);
+  const [purchasedArt, setPurchasedArt] = useState<Art[]>([]);
   const [freeDownloads, setFreeDownloads] = useState<FollowGateCompletion[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -28,12 +29,14 @@ export default function MyProductsPage() {
       try {
         setLoading(true);
         setError(null);
-        const [purchaseData, freeData] = await Promise.all([
+        const [purchaseData, freeData, artData] = await Promise.all([
           purchaseService.getUserPurchases(user.uid),
           followGateService.getUserCompletions(user.uid),
+          artService.getUserPurchasedArt(user.uid),
         ]);
         setPurchases(purchaseData);
         setFreeDownloads(freeData);
+        setPurchasedArt(artData);
       } catch (error: any) {
         setError(error.message || 'Failed to fetch products');
         console.error('Failed to fetch products:', error);
@@ -60,11 +63,12 @@ export default function MyProductsPage() {
   const expiredFreeDownloads = freeDownloads.filter(f => followGateService.isExpired(f.expiresAt));
 
   const totalActive = activeProducts.length + activeFreeDownloads.length;
-  const totalAll = purchases.length + freeDownloads.length;
+  const totalAll = purchases.length + freeDownloads.length + purchasedArt.length;
 
   const filterTabs: { value: FilterType; label: string; icon: React.ElementType; count: number }[] = [
     { value: 'all', label: 'All', icon: Package, count: totalAll },
     { value: 'purchased', label: 'Purchased', icon: ShoppingBag, count: purchases.length },
+    { value: 'art', label: 'Art Collection', icon: Image, count: purchasedArt.length },
     { value: 'free', label: 'Free Downloads', icon: Gift, count: freeDownloads.length },
   ];
 
@@ -189,6 +193,42 @@ export default function MyProductsPage() {
                       onClick={() => setSelectedProduct(product)}
                       daysUntilExpiry={purchaseService.getDaysUntilExpiry(product.expiresAt)}
                     />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Art Collection */}
+            {(filter === 'all' || filter === 'art') && purchasedArt.length > 0 && (
+              <div className="space-y-4">
+                <h2 className="text-2xl font-black text-white uppercase">Art Collection</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {purchasedArt.map((art) => (
+                    <div
+                      key={art.id}
+                      className="bg-white/[0.06] border border-white/[0.06] rounded-2xl overflow-hidden hover:border-white/[0.12] transition-all group cursor-pointer"
+                    >
+                      <div className="relative aspect-square">
+                        <img src={art.image} alt={art.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                        <div className="absolute bottom-3 left-3 right-3">
+                          <h3 className="text-white font-bold text-sm truncate">{art.title}</h3>
+                          <p className="text-white/40 text-xs mt-1">{art.artist}</p>
+                        </div>
+                      </div>
+                      <div className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-white/40 text-xs uppercase tracking-wider">{art.type}</p>
+                            {art.subtype && <p className="text-white/60 text-xs">{art.subtype}</p>}
+                          </div>
+                          <div className="text-right">
+                            <p className="text-white font-bold">{art.year}</p>
+                            <p className="text-white/40 text-xs">Owned</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   ))}
                 </div>
               </div>
