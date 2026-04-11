@@ -170,10 +170,10 @@ export default function Navigation({ cartItemCount = 0, onCartClick, isDarkOverl
     }
   };
 
-  // Determine nav colors based on context
-  // Old logic preserved as fallback
-  const useWhiteNav = isDarkOverlay && !isLightMode;
-  const useBlackNav = isLightMode || !isDarkOverlay;
+  // Determine nav colors based on smart detection
+  // Use smartColor for both logo and menu based on background brightness
+  const useWhiteNav = smartColor === 'white';  // Logo should be white when text should be white (dark background)
+  const useBlackNav = smartColor === 'black';  // Logo should be black when text should be black (light background)
 
   const shopSubmenu = [
     { label: 'Beat Shop', subtitle: 'Browse instrumentals', href: '/shop/beats' },

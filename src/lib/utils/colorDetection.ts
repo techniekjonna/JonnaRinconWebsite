@@ -9,10 +9,24 @@ const imageCache = new Map<string, HTMLImageElement>();
  */
 export const getContrastColor = (): 'white' | 'black' => {
   try {
-    // Check for fixed background on html element
-    const style = window.getComputedStyle(document.documentElement);
-    const bgImage = style.backgroundImage;
-    const bgColor = style.backgroundColor;
+    // Check for fixed background in container or html element
+    let bgImage = '';
+    let bgColor = '';
+
+    // First check site-bg-container div
+    const bgContainer = document.getElementById('site-bg-container');
+    if (bgContainer) {
+      const containerStyle = window.getComputedStyle(bgContainer);
+      bgImage = containerStyle.backgroundImage;
+      bgColor = containerStyle.backgroundColor;
+    }
+
+    // Fallback to html element if no container
+    if (!bgImage || bgImage === 'none') {
+      const style = window.getComputedStyle(document.documentElement);
+      bgImage = style.backgroundImage;
+      bgColor = bgColor || style.backgroundColor;
+    }
 
     // If there's a background image, try to sample from it
     if (bgImage && bgImage !== 'none') {

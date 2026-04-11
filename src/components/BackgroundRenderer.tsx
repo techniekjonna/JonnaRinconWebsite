@@ -10,21 +10,42 @@ const BackgroundRenderer: React.FC = () => {
 
   React.useEffect(() => {
     if (activeBackground?.imageUrl) {
-      // Apply background image to html element only
-      const htmlStyle = document.documentElement.style;
-      htmlStyle.backgroundImage = `url('${activeBackground.imageUrl}')`;
-      htmlStyle.backgroundAttachment = 'fixed';
-      htmlStyle.backgroundPosition = 'center';
-      htmlStyle.backgroundRepeat = 'no-repeat';
-      htmlStyle.backgroundSize = 'cover';
+      // Create a container div for the background that won't interfere with content
+      let bgContainer = document.getElementById('site-bg-container');
+
+      if (!bgContainer) {
+        bgContainer = document.createElement('div');
+        bgContainer.id = 'site-bg-container';
+        bgContainer.style.cssText = `
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          z-index: -1;
+          background-attachment: fixed;
+          background-position: center;
+          background-repeat: no-repeat;
+          background-size: cover;
+          width: 100%;
+          height: 100%;
+        `;
+        document.body.insertBefore(bgContainer, document.body.firstChild);
+      }
+
+      // Set background image with proper styling
+      bgContainer.style.backgroundImage = `url('${activeBackground.imageUrl}')`;
+      bgContainer.style.backgroundAttachment = 'fixed';
     } else {
-      // Clear background if none is active (fallback to black from CSS)
-      document.documentElement.style.backgroundImage = 'none';
+      // Clear background if none is active
+      const bgContainer = document.getElementById('site-bg-container');
+      if (bgContainer) {
+        bgContainer.style.backgroundImage = 'none';
+      }
     }
 
     return () => {
-      // Cleanup on unmount
-      document.documentElement.style.backgroundImage = 'none';
+      // Don't cleanup on unmount - let the background persist
     };
   }, [activeBackground]);
 
