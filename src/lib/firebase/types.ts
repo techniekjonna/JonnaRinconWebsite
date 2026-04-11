@@ -188,44 +188,6 @@ export interface Art {
 }
 
 // ============================================
-// MERCHANDISE TYPES
-// ============================================
-
-export interface Merchandise {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  category: string; // e.g., "Clothing", "Accessories", "Home", "Other"
-  image: string; // Main product image URL
-
-  // Media
-  gallery?: string[]; // Additional product images
-
-  // Status
-  status: 'draft' | 'published' | 'archived';
-  featured: boolean;
-  inStock: boolean;
-
-  // Stats
-  views: number;
-  sold: number;
-
-  // SEO & Meta
-  slug: string;
-  metaTitle?: string;
-  metaDescription?: string;
-
-  // Timestamps
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
-
-  // Creator info
-  createdBy: string;
-  lastUpdatedBy: string;
-}
-
-// ============================================
 // SERVICE TYPES
 // ============================================
 
@@ -260,6 +222,15 @@ export interface Service {
 }
 
 // ============================================
+// MERCHANDISE SIZE TYPE
+// ============================================
+
+export interface MerchandiseSize {
+  name: string; // e.g., "S", "M", "L", "XL"
+  stock: number; // Quantity available in this size
+}
+
+// ============================================
 // MERCHANDISE TYPES
 // ============================================
 
@@ -272,13 +243,25 @@ export interface Merchandise {
   image: string; // Product image URL
   gallery?: string[]; // Additional product images
 
+  // Inventory Management
+  totalStock: number; // Total quantity available
+  sold: number; // Total quantity sold
+  sizes?: MerchandiseSize[]; // Optional sizes with individual stock counts (for clothing)
+
+  // Pre-order
+  isPreOrder: boolean; // Whether this is a pre-order item
+  preOrderDeadline?: Timestamp; // When pre-orders close
+
+  // Brand Logos
+  showJeighteenLogo: boolean; // Show JEIGHTEEN logo
+  showJonnaRinconLogo: boolean; // Show JONNA RINCON logo
+
   // Status
   status: 'draft' | 'published' | 'archived';
   featured: boolean;
 
   // Stats
   views: number;
-  sold: number;
 
   // SEO & Meta
   slug: string;

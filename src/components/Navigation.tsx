@@ -420,7 +420,7 @@ export default function Navigation({ cartItemCount = 0, onCartClick, isDarkOverl
                 <div className="w-full h-px bg-white/[0.06]" />
 
                 {/* Menu items — clean, modern, spaced, scrollable */}
-                <div className="flex-1 flex flex-col overflow-y-auto -mt-8 pr-2 pb-6">
+                <div className="flex-1 flex flex-col overflow-y-auto -mt-8 pr-2 pb-12">
                   {menuItems.map((item, i) => (
                     <div key={item.label}>
                       <button
@@ -445,7 +445,7 @@ export default function Navigation({ cartItemCount = 0, onCartClick, isDarkOverl
 
                       {/* Submenu */}
                       {item.submenu && (
-                        <div className={`overflow-hidden transition-all duration-300 ease-out ${item.expanded ? 'max-h-[500px]' : 'max-h-0'}`}>
+                        <div className={`overflow-hidden transition-all duration-300 ease-out ${item.expanded ? 'max-h-[800px]' : 'max-h-0'}`}>
                           {/* Group small items together */}
                           {(() => {
                             const smallItems = item.submenu.filter((s: any) => s.isSmall);
