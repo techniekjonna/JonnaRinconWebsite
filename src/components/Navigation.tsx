@@ -445,7 +445,7 @@ export default function Navigation({ cartItemCount = 0, onCartClick, isDarkOverl
 
                       {/* Submenu */}
                       {item.submenu && (
-                        <div className={`overflow-hidden transition-all duration-300 ease-out ${item.expanded ? 'max-h-96' : 'max-h-0'}`}>
+                        <div className={`overflow-hidden transition-all duration-300 ease-out ${item.expanded ? 'max-h-[500px]' : 'max-h-0'}`}>
                           {/* Group small items together */}
                           {(() => {
                             const smallItems = item.submenu.filter((s: any) => s.isSmall);
