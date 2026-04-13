@@ -417,10 +417,10 @@ export default function Navigation({ cartItemCount = 0, onCartClick, isDarkOverl
                 </div>
 
                 {/* Divider */}
-                <div className="w-full h-px bg-white/[0.06]" />
+                <div className="w-full h-px bg-white/[0.06] mb-4" />
 
                 {/* Menu items — clean, modern, spaced, scrollable */}
-                <div className="flex-1 flex flex-col overflow-y-auto -mt-8 pr-2 pb-12">
+                <div className="flex-1 flex flex-col overflow-y-auto pr-2 pb-12">
                   {menuItems.map((item, i) => (
                     <div key={item.label}>
                       <button

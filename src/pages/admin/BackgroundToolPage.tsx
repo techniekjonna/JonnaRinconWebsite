@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import AdminLayout from '../../components/admin/AdminLayout';
 import { settingsService } from '../../lib/firebase/services';
 import { SiteBackground } from '../../lib/firebase/types';
+import { toDirectUrl } from '../../lib/utils/urlUtils';
 import { Trash2, Check, Image } from 'lucide-react';
 
 // Background management tool - allows admins to change site background
@@ -39,7 +40,8 @@ const BackgroundToolPage: React.FC = () => {
     setSuccess('');
 
     try {
-      await settingsService.addBackground(imageUrl.trim(), name.trim() || undefined);
+      const directUrl = toDirectUrl(imageUrl.trim());
+      await settingsService.addBackground(directUrl, name.trim() || undefined);
       setSuccess('Background applied successfully');
       setImageUrl('');
       setName('');
