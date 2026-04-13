@@ -238,7 +238,7 @@ const MerchandisePage: React.FC = () => {
                   {/* Logos */}
                   <div className="absolute top-3 left-3 right-3 flex justify-between items-start gap-2">
                     {item.showJonnaRinconLogo && (
-                      <div className="w-10 h-10 bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg p-1.5 flex items-center justify-center flex-shrink-0">
+                      <div className="w-12 h-12 bg-white backdrop-blur-sm border border-white/30 rounded-lg p-2 flex items-center justify-center flex-shrink-0">
                         <img
                           src="/Jonna Rincon Logo WH.png"
                           alt="Jonna Rincon"
@@ -250,11 +250,11 @@ const MerchandisePage: React.FC = () => {
                       </div>
                     )}
                     {item.showJeighteenLogo && (
-                      <div className="w-10 h-10 bg-black/60 backdrop-blur-sm border border-white/20 rounded-lg p-1.5 flex items-center justify-center flex-shrink-0">
+                      <div className="w-12 h-12 bg-white backdrop-blur-sm border border-white/30 rounded-lg p-2 flex items-center justify-center flex-shrink-0">
                         <img
                           src="/JEIGHTEEN-logo.png"
                           alt="JEIGHTEEN"
-                          className="w-full h-full object-contain"
+                          className="w-full h-full object-contain brightness-0"
                           onError={(e) => {
                             (e.target as HTMLImageElement).style.display = 'none';
                           }}

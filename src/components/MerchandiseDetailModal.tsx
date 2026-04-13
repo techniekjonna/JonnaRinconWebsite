@@ -158,7 +158,7 @@ export default function MerchandiseDetailModal({
               {/* Logos */}
               <div className="absolute top-3 left-3 right-3 flex justify-between items-start gap-2">
                 {merchandise.showJonnaRinconLogo && (
-                  <div className="w-10 h-10 bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg p-1.5 flex items-center justify-center flex-shrink-0">
+                  <div className="w-14 h-14 bg-white backdrop-blur-sm border border-white/30 rounded-lg p-2 flex items-center justify-center flex-shrink-0">
                     <img
                       src="/Jonna Rincon Logo WH.png"
                       alt="Jonna Rincon"
@@ -170,11 +170,11 @@ export default function MerchandiseDetailModal({
                   </div>
                 )}
                 {merchandise.showJeighteenLogo && (
-                  <div className="w-10 h-10 bg-black/60 backdrop-blur-sm border border-white/20 rounded-lg p-1.5 flex items-center justify-center flex-shrink-0">
+                  <div className="w-14 h-14 bg-white backdrop-blur-sm border border-white/30 rounded-lg p-2 flex items-center justify-center flex-shrink-0">
                     <img
                       src="/JEIGHTEEN-logo.png"
                       alt="JEIGHTEEN"
-                      className="w-full h-full object-contain"
+                      className="w-full h-full object-contain brightness-0"
                       onError={(e) => {
                         (e.target as HTMLImageElement).style.display = 'none';
                       }}
@@ -341,7 +341,30 @@ export default function MerchandiseDetailModal({
                   <div className="flex-1">
                     <p className="text-xs font-bold text-orange-200 uppercase tracking-wider">Pre-Order Item</p>
                     <p className="text-xs text-orange-200/70 mt-0.5">
-                      Order now and receive your item soon. Pre-order deadline: {merchandise.preOrderDeadline ? new Date(merchandise.preOrderDeadline.toDate()).toLocaleDateString() : 'TBA'}
+                      Order now and receive your item soon. Pre-order deadline: {
+                        merchandise.preOrderDeadline
+                          ? (() => {
+                              try {
+                                const deadline = merchandise.preOrderDeadline;
+                                // Handle Timestamp objects (has toDate method)
+                                if (deadline && typeof deadline === 'object' && 'toDate' in deadline) {
+                                  return (deadline as any).toDate().toLocaleDateString();
+                                }
+                                // Handle Date objects
+                                if (deadline instanceof Date) {
+                                  return deadline.toLocaleDateString();
+                                }
+                                // Handle string dates
+                                if (typeof deadline === 'string') {
+                                  return new Date(deadline).toLocaleDateString();
+                                }
+                                return 'TBA';
+                              } catch (e) {
+                                return 'TBA';
+                              }
+                            })()
+                          : 'TBA'
+                      }
                     </p>
                   </div>
                 </div>
