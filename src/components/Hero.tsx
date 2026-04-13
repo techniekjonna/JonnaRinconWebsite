@@ -111,16 +111,16 @@ export default function Hero() {
     <section className="relative w-full min-h-screen flex items-center justify-center">
       {/* Background is handled by BackgroundRenderer */}
 
-      {/* Scroll-triggered overlay effect */}
+      {/* Scroll-triggered overlay effect - only within hero section */}
       <div
         ref={overlayRef}
-        className="fixed inset-0 bg-black pointer-events-none z-0"
-        style={{ opacity: 0 }}
+        className="absolute inset-0 bg-black pointer-events-none"
+        style={{ opacity: 0, zIndex: 1 }}
       ></div>
       <div
         ref={gradientRef}
-        className="fixed inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/30 pointer-events-none z-0"
-        style={{ opacity: 0 }}
+        className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/30 pointer-events-none"
+        style={{ opacity: 0, zIndex: 1 }}
       ></div>
 
       {/* Content — titel gecentreerd, buttons onderaan (onder de pet) */}
