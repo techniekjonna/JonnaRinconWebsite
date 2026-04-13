@@ -102,17 +102,7 @@ const CataloguePage: React.FC = () => {
 
   return (
     <div className="min-h-screen text-white">
-      {/* Fixed JEIGHTENESIS Background */}
-      <div className="fixed inset-0 w-full h-screen -z-10">
-        <img
-          src="/JEIGHTENESIS.jpg"
-          alt=""
-          className="w-full h-full object-cover"
-          style={{ objectPosition: 'center' }}
-        />
-        <div className="absolute inset-0 bg-black/80" />
-      </div>
-
+      {/* Background is handled by BackgroundRenderer */}
       <Navigation isDarkOverlay={true} />
 
       {/* Hero Section */}

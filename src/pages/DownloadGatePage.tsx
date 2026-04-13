@@ -78,13 +78,8 @@ export default function DownloadGatePage() {
 
   return (
     <div className="min-h-screen text-white">
-      {/* Fixed JEIGHTENESIS Background */}
-      <div className="fixed inset-0 w-full h-screen -z-10">
-        <img src="/JEIGHTENESIS.jpg" alt="" className="w-full h-full object-cover" style={{ objectPosition: 'center' }} />
-        <div className="absolute inset-0 bg-black/80" />
-      </div>
-
-      <Navigation isDarkOverlay={true} isLightMode={false} />
+      {/* Background is handled by BackgroundRenderer */}
+<Navigation isDarkOverlay={true} isLightMode={false} />
 
       {/* Hero */}
       <section className="relative min-h-[40vh] flex items-end pb-12 md:pb-16 pt-40 px-6 md:px-12">

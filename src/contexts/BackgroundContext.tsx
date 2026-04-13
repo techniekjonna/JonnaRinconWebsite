@@ -19,7 +19,26 @@ export const BackgroundProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     // Subscribe to real-time background updates
     const unsubscribe = settingsService.subscribeToBackgrounds((backgrounds) => {
       try {
-        const active = backgrounds.find((bg) => bg.isActive) || null;
+        // Find active background, or use the first one, or set a default
+        let active = backgrounds.find((bg) => bg.isActive);
+
+        if (!active && backgrounds.length > 0) {
+          // If no background is marked as active but we have backgrounds, use the first one
+          active = backgrounds[0];
+        }
+
+        // If still no background, create a default with JEIGHTENESIS
+        if (!active) {
+          active = {
+            id: 'default',
+            imageUrl: '/JEIGHTENESIS.jpg',
+            name: 'Default Background',
+            isActive: true,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          } as SiteBackground;
+        }
+
         setActiveBackground(active);
         setError(null);
       } catch (err: any) {

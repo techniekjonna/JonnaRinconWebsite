@@ -445,11 +445,7 @@ export default function TracksPage() {
   if (!isLoading && !isAuthenticated) {
     return (
       <div className="min-h-screen text-white">
-        {/* Fixed JEIGHTENESIS Background */}
-        <div className="fixed inset-0 -z-10 overflow-hidden">
-          <img src="/JEIGHTENESIS.jpg" alt="" className="absolute inset-0 w-full h-full object-cover" style={{objectPosition: 'center'}} />
-          <div className="absolute inset-0 bg-black/60" />
-        </div>
+      {/* Background is handled by BackgroundRenderer */}
 
         <Navigation isDarkOverlay={true} isLightMode={false} />
         <LoginModal isOpen={true} onClose={() => {}} />
@@ -459,11 +455,7 @@ export default function TracksPage() {
 
   return (
     <div className="min-h-screen text-white">
-      {/* Fixed JEIGHTENESIS Background */}
-      <div className="fixed inset-0 -z-10 overflow-hidden">
-        <img src="/JEIGHTENESIS.jpg" alt="" className="absolute inset-0 w-full h-full object-cover" style={{objectPosition: 'center'}} />
-        <div className="absolute inset-0 bg-black/80" />
-      </div>
+      {/* Background is handled by BackgroundRenderer */}
 
       <Navigation isDarkOverlay={true} isLightMode={false} />
 

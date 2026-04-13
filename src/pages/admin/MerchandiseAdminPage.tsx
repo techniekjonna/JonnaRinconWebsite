@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Timestamp } from 'firebase/firestore';
 import AdminLayout from '../../components/admin/AdminLayout';
 import LinkInput from '../../components/admin/LinkInput';
 import { useMerchandise } from '../../hooks/useMerchandise';
@@ -220,6 +221,18 @@ const MerchandiseFormModal: React.FC<MerchandiseFormModalProps> = ({ merchandise
   // Update form data when merchandise prop changes (for editing)
   React.useEffect(() => {
     if (merchandise) {
+      // Convert Timestamp to datetime-local string format if it exists
+      let preOrderDeadlineStr = '';
+      if (merchandise.preOrderDeadline) {
+        try {
+          const date = merchandise.preOrderDeadline.toDate ? merchandise.preOrderDeadline.toDate() : merchandise.preOrderDeadline;
+          const isoString = new Date(date).toISOString().slice(0, 16);
+          preOrderDeadlineStr = isoString;
+        } catch (err) {
+          console.error('Error converting preOrderDeadline:', err);
+        }
+      }
+
       setFormData({
         name: merchandise.name || '',
         description: merchandise.description || '',
@@ -235,7 +248,7 @@ const MerchandiseFormModal: React.FC<MerchandiseFormModalProps> = ({ merchandise
         totalStock: merchandise.totalStock || 0,
         sizes: merchandise.sizes || [],
         isPreOrder: merchandise.isPreOrder || false,
-        preOrderDeadline: merchandise.preOrderDeadline || '',
+        preOrderDeadline: preOrderDeadlineStr,
         showJeighteenLogo: merchandise.showJeighteenLogo || false,
         showJonnaRinconLogo: merchandise.showJonnaRinconLogo || false,
       });
@@ -289,6 +302,17 @@ const MerchandiseFormModal: React.FC<MerchandiseFormModalProps> = ({ merchandise
         return;
       }
 
+      // Convert preOrderDeadline string to Timestamp if it exists
+      let preOrderDeadline: Timestamp | undefined = undefined;
+      if (formData.isPreOrder && formData.preOrderDeadline) {
+        try {
+          const date = new Date(formData.preOrderDeadline);
+          preOrderDeadline = Timestamp.fromDate(date);
+        } catch (err) {
+          console.error('Invalid pre-order deadline:', err);
+        }
+      }
+
       const merchandiseData: any = {
         name: formData.name,
         description: formData.description,
@@ -304,7 +328,7 @@ const MerchandiseFormModal: React.FC<MerchandiseFormModalProps> = ({ merchandise
         totalStock: formData.totalStock || 0,
         sizes: formData.sizes.length > 0 ? formData.sizes : undefined,
         isPreOrder: formData.isPreOrder,
-        preOrderDeadline: formData.isPreOrder && formData.preOrderDeadline ? formData.preOrderDeadline : undefined,
+        preOrderDeadline: preOrderDeadline,
         showJeighteenLogo: formData.showJeighteenLogo,
         showJonnaRinconLogo: formData.showJonnaRinconLogo,
         sold: merchandise?.sold || 0,
