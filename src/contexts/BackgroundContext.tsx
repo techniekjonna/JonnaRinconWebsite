@@ -105,20 +105,19 @@ export const BackgroundProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           } as SiteBackground;
         }
 
+        // CRITICAL: Always set Firebase data immediately - this takes priority over cache
+        // This ensures that when the user changes the background in the admin panel,
+        // the new background displays on all pages, overriding any stale cache
         setActiveBackground(active);
-        // Cache the new background
         saveCachedBackground(active.imageUrl, active.id);
         setError(null);
+        setLoading(false); // Mark loading complete once we have Firebase data
       } catch (err: any) {
         console.error('Error processing backgrounds:', err);
         setError(err.message || 'Failed to load background');
+        setLoading(false);
       } finally {
         setFirebaseLoading(false);
-        // Only mark loading as false if we didn't have a cache (on first load)
-        const cached = loadCachedBackground();
-        if (!cached) {
-          setLoading(false);
-        }
       }
     });
 

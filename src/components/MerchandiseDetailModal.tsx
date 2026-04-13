@@ -156,9 +156,9 @@ export default function MerchandiseDetailModal({
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
 
               {/* Logos */}
-              <div className="absolute top-3 left-3 right-3 flex justify-between items-start gap-2">
+              <div className="absolute top-4 left-4 right-4 flex justify-between items-start gap-2">
                 {merchandise.showJonnaRinconLogo && (
-                  <div className="w-14 h-14 bg-white backdrop-blur-sm border border-white/30 rounded-lg p-2 flex items-center justify-center flex-shrink-0">
+                  <div className="w-16 h-16 flex items-center justify-center flex-shrink-0 drop-shadow-lg">
                     <img
                       src="/Jonna Rincon Logo WH.png"
                       alt="Jonna Rincon"
@@ -170,11 +170,11 @@ export default function MerchandiseDetailModal({
                   </div>
                 )}
                 {merchandise.showJeighteenLogo && (
-                  <div className="w-14 h-14 bg-white backdrop-blur-sm border border-white/30 rounded-lg p-2 flex items-center justify-center flex-shrink-0">
+                  <div className="w-16 h-16 flex items-center justify-center flex-shrink-0 drop-shadow-lg">
                     <img
                       src="/JEIGHTEEN-logo.png"
                       alt="JEIGHTEEN"
-                      className="w-full h-full object-contain brightness-0"
+                      className="w-full h-full object-contain brightness-0 drop-shadow-md"
                       onError={(e) => {
                         (e.target as HTMLImageElement).style.display = 'none';
                       }}
