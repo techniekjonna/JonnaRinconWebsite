@@ -109,27 +109,19 @@ export default function Hero() {
 
   return (
     <section className="relative w-full min-h-screen flex items-center justify-center">
-      {/* Fullscreen Background Image - FIXED */}
-      <div className="fixed inset-0 w-full h-screen -z-10">
-        <img
-          ref={imgRef}
-          src="/JEIGHTENESIS.jpg"
-          alt="Jonna Rincon"
-          className="w-full h-full object-cover transition-opacity duration-500"
-          style={{objectPosition: 'center'}}
-        />
-        {/* Dynamische Overlay - wordt donkerder + blurred bij scrollen */}
-        <div
-          ref={overlayRef}
-          className="absolute inset-0 bg-black"
-          style={{ opacity: 0 }}
-        ></div>
-        <div
-          ref={gradientRef}
-          className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/30"
-          style={{ opacity: 0 }}
-        ></div>
-      </div>
+      {/* Background is handled by BackgroundRenderer */}
+
+      {/* Scroll-triggered overlay effect */}
+      <div
+        ref={overlayRef}
+        className="fixed inset-0 bg-black pointer-events-none -z-10"
+        style={{ opacity: 0 }}
+      ></div>
+      <div
+        ref={gradientRef}
+        className="fixed inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/30 pointer-events-none -z-10"
+        style={{ opacity: 0 }}
+      ></div>
 
       {/* Content — titel gecentreerd, buttons onderaan (onder de pet) */}
       <div className="relative z-10 w-full h-screen flex flex-col items-center justify-center px-6">
