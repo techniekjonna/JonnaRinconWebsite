@@ -1,10 +1,8 @@
 import React, { Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
-import { BackgroundProvider } from './contexts/BackgroundContext';
 import { useScrollToTop } from './hooks/useScrollToTop';
 import ProtectedRoute from './components/ProtectedRoute';
-import BackgroundRenderer from './components/BackgroundRenderer';
 
 // Scroll to top on route change
 const ScrollToTopWrapper = ({ children }: { children: React.ReactNode }) => {
@@ -24,17 +22,14 @@ import EditsPage from './pages/admin/EditsPage';
 import ServicesPage from './pages/admin/ServicesPage';
 import OrdersPage from './pages/admin/OrdersPage';
 import CollaborationsPage from './pages/admin/CollaborationsPage';
-import BackgroundToolPage from './pages/admin/BackgroundToolPage';
 import DiscountCodesPage from './pages/admin/DiscountCodesPage';
 import PlaylistsPage from './pages/admin/PlaylistsPage';
 
 const AdminApp: React.FC = () => {
   return (
     <AuthProvider>
-      <BackgroundProvider>
-        <BrowserRouter>
-          <ScrollToTopWrapper>
-            <BackgroundRenderer />
+      <BrowserRouter>
+        <ScrollToTopWrapper>
             <Routes>
           {/* Login Route */}
           <Route path="/admin/login" element={<LoginPage />} />
@@ -154,9 +149,8 @@ const AdminApp: React.FC = () => {
             </Routes>
           </ScrollToTopWrapper>
         </BrowserRouter>
-      </BackgroundProvider>
-    </AuthProvider>
-  );
-};
+      </AuthProvider>
+    );
+  };
 
 export default AdminApp;

@@ -1,15 +1,12 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
-import { BackgroundProvider, useBackground } from './contexts/BackgroundContext';
 import { TrackDetailProvider } from './contexts/TrackDetailContext';
 import { BeatDetailProvider } from './contexts/BeatDetailContext';
 import { useScrollToTop } from './hooks/useScrollToTop';
 import ProtectedRoute from './components/ProtectedRoute';
 import GlobalAudioPlayer from './components/GlobalAudioPlayer';
 import GlobalBeatDetailModal from './components/GlobalBeatDetailModal';
-import BackgroundRenderer from './components/BackgroundRenderer';
-import { initializeBackgroundPreload, addBackgroundPreload } from './utils/preloadBackground';
 
 // Public pages
 import HomePage from './App';
@@ -74,7 +71,6 @@ import AdminCollabRequests from './pages/admin/CollabRequestsPage';
 import AdminArtistRoleRequests from './pages/admin/ArtistRoleRequestsPage';
 import AdminSettings from './pages/admin/SettingsPage';
 import AdminChat from './pages/admin/ChatPage';
-import AdminBackground from './pages/admin/BackgroundToolPage';
 import AdminDiscountCodes from './pages/admin/DiscountCodesPage';
 import AdminArt from './pages/admin/ArtAdminPage';
 import AdminServices from './pages/admin/ServicesPage';
@@ -92,37 +88,13 @@ const ScrollToTopWrapper = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
-/**
- * BackgroundPreloadManager updates preload hints when background changes
- * This ensures the browser can prioritize the next background image download
- */
-const BackgroundPreloadManager: React.FC = () => {
-  const { activeBackground } = useBackground();
-
-  React.useEffect(() => {
-    if (activeBackground?.imageUrl) {
-      addBackgroundPreload(activeBackground.imageUrl);
-    }
-  }, [activeBackground?.imageUrl]);
-
-  return null;
-};
-
 const MainApp: React.FC = () => {
-  // Initialize background preload on app startup
-  React.useEffect(() => {
-    initializeBackgroundPreload();
-  }, []);
-
   return (
     <AuthProvider>
-      <BackgroundProvider>
-        <TrackDetailProvider>
-          <BeatDetailProvider>
-            <BrowserRouter>
-            <ScrollToTopWrapper>
-              <BackgroundRenderer />
-              <BackgroundPreloadManager />
+      <TrackDetailProvider>
+        <BeatDetailProvider>
+          <BrowserRouter>
+          <ScrollToTopWrapper>
               <GlobalAudioPlayer />
               <GlobalBeatDetailModal />
               <Routes>
@@ -423,14 +395,6 @@ const MainApp: React.FC = () => {
             }
           />
           <Route
-            path="/admin/background"
-            element={
-              <ProtectedRoute allowedRoles={['admin']}>
-                <AdminBackground />
-              </ProtectedRoute>
-            }
-          />
-          <Route
             path="/admin/discount-codes"
             element={
               <ProtectedRoute allowedRoles={['admin']}>
@@ -494,9 +458,8 @@ const MainApp: React.FC = () => {
             </BrowserRouter>
           </BeatDetailProvider>
         </TrackDetailProvider>
-      </BackgroundProvider>
-    </AuthProvider>
-  );
-};
+      </AuthProvider>
+    );
+  };
 
 export default MainApp;
