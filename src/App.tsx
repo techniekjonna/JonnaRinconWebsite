@@ -78,7 +78,17 @@ function App() {
 
 
   return (
-    <div className="min-h-screen text-white">
+    <div className="min-h-screen text-white relative">
+      {/* Fixed Background */}
+      <div className="fixed inset-0 w-full h-screen -z-10">
+        <img
+          src="/JEIGHTENESIS.jpg"
+          alt=""
+          className="w-full h-full object-cover"
+          style={{ objectPosition: 'center' }}
+        />
+      </div>
+
       <Navigation
         cartItemCount={cartItems.length}
         onCartClick={() => setIsCartOpen(true)}
