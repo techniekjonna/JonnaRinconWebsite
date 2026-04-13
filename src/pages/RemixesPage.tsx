@@ -212,7 +212,8 @@ export default function RemixesPage() {
   if (!isLoading && !isAuthenticated) {
     return (
       <div className="min-h-screen text-white">
-      {/* Background is handled by BackgroundRenderer */}
+      {/* Fixed Dark Overlay */}
+      <div className="fixed inset-0 w-full h-screen -z-10 bg-black/80" />
 
         <Navigation isDarkOverlay={true} isLightMode={false} />
         <LoginModal isOpen={true} onClose={() => {}} />
@@ -222,7 +223,8 @@ export default function RemixesPage() {
 
   return (
     <div className="min-h-screen text-white">
-      {/* Background is handled by BackgroundRenderer */}
+      {/* Fixed Dark Overlay */}
+      <div className="fixed inset-0 w-full h-screen -z-10 bg-black/80" />
 
       <Navigation isDarkOverlay={true} isLightMode={false} />
 
