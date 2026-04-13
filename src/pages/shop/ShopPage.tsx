@@ -76,6 +76,9 @@ const ShopPage: React.FC = () => {
   return (
     <div className="min-h-screen text-white">
       {/* Background is handled by BackgroundRenderer */}
+      {/* Dark overlay for readability */}
+      <div className="fixed inset-0 bg-black/60 pointer-events-none -z-10" />
+
       <Navigation isDarkOverlay={true} />
 
       {/* Hero Section */}

@@ -114,12 +114,12 @@ export default function Hero() {
       {/* Scroll-triggered overlay effect */}
       <div
         ref={overlayRef}
-        className="fixed inset-0 bg-black pointer-events-none -z-10"
+        className="fixed inset-0 bg-black pointer-events-none z-0"
         style={{ opacity: 0 }}
       ></div>
       <div
         ref={gradientRef}
-        className="fixed inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/30 pointer-events-none -z-10"
+        className="fixed inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/30 pointer-events-none z-0"
         style={{ opacity: 0 }}
       ></div>
 
