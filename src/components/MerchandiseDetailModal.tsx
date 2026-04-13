@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { X, ShoppingCart, ChevronLeft, ChevronRight } from 'lucide-react';
+import { X, ShoppingCart, ChevronLeft, ChevronRight, Package, Sparkles, BadgeCheck, Zap } from 'lucide-react';
 import { Merchandise } from '../lib/firebase/types';
 import { toDirectUrl } from '../lib/utils/imageUtils';
 
@@ -118,21 +118,30 @@ export default function MerchandiseDetailModal({
       {/* Modal */}
       <div
         ref={modalRef}
-        className="relative w-full max-w-3xl bg-white/[0.08] backdrop-blur-xl border border-white/[0.15] rounded-3xl overflow-hidden shadow-2xl"
+        className="relative w-full max-w-4xl bg-white/[0.08] backdrop-blur-xl border border-white/[0.15] rounded-3xl overflow-hidden shadow-2xl"
       >
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 z-10 p-2 bg-white/[0.1] hover:bg-white/[0.15] rounded-full text-white/60 hover:text-white transition-all"
+          className="absolute top-6 right-6 z-20 p-2 bg-white/[0.1] hover:bg-white/[0.15] rounded-full text-white/60 hover:text-white transition-all"
         >
-          <X size={20} />
+          <X size={24} />
         </button>
 
+        {/* Featured Badge */}
+        {merchandise.featured && (
+          <div className="absolute top-6 left-6 z-20 flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-purple-500/30 to-pink-500/30 border border-purple-400/30 rounded-full">
+            <BadgeCheck size={14} className="text-purple-300" />
+            <span className="text-xs font-bold text-purple-200 uppercase tracking-wider">Featured</span>
+          </div>
+        )}
+
         {/* Content */}
-        <div className="flex flex-col md:flex-row gap-6 p-6 md:p-8">
-          {/* Image Section */}
-          <div className="w-full md:w-1/2 flex-shrink-0">
-            <div className="relative aspect-square rounded-2xl overflow-hidden bg-white/[0.06]">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-0 overflow-y-auto max-h-[90vh]">
+          {/* Left Column - Image */}
+          <div className="md:col-span-2 bg-gradient-to-b from-white/[0.08] to-transparent p-4 md:p-6 border-b md:border-b-0 md:border-r border-white/[0.1]">
+            {/* Product Image */}
+            <div className="relative aspect-square rounded-2xl overflow-hidden mb-4 group">
               {isImageLoading && (
                 <div className="absolute inset-0 flex items-center justify-center bg-white/[0.06]">
                   <div className="text-white/40">Loading...</div>
@@ -144,31 +153,29 @@ export default function MerchandiseDetailModal({
                 className="w-full h-full object-cover"
                 onLoad={() => setIsImageLoading(false)}
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
 
               {/* Logos */}
-              <div className="absolute top-4 left-4 right-4 flex justify-between items-start gap-2">
+              <div className="absolute top-3 left-3 right-3 flex justify-between items-start gap-2">
                 {merchandise.showJonnaRinconLogo && (
-                  <div className="w-12 h-12 bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg p-2 flex items-center justify-center flex-shrink-0">
+                  <div className="w-10 h-10 bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg p-1.5 flex items-center justify-center flex-shrink-0">
                     <img
                       src="/Jonna Rincon Logo WH.png"
                       alt="Jonna Rincon"
                       className="w-full h-full object-contain"
                       onError={(e) => {
-                        // Fallback to a text badge if logo doesn't load
                         (e.target as HTMLImageElement).style.display = 'none';
                       }}
                     />
                   </div>
                 )}
                 {merchandise.showJeighteenLogo && (
-                  <div className="w-12 h-12 bg-black/60 backdrop-blur-sm border border-white/20 rounded-lg p-2 flex items-center justify-center flex-shrink-0">
+                  <div className="w-10 h-10 bg-black/60 backdrop-blur-sm border border-white/20 rounded-lg p-1.5 flex items-center justify-center flex-shrink-0">
                     <img
-                      src="/Logo.png"
+                      src="/JEIGHTEEN-logo.png"
                       alt="JEIGHTEEN"
-                      className="w-full h-full object-contain invert"
+                      className="w-full h-full object-contain"
                       onError={(e) => {
-                        // Fallback to a text badge if logo doesn't load
                         (e.target as HTMLImageElement).style.display = 'none';
                       }}
                     />
@@ -204,7 +211,7 @@ export default function MerchandiseDetailModal({
 
             {/* Thumbnail Gallery */}
             {allImages.length > 1 && (
-              <div className="mt-4 flex gap-2 overflow-x-auto">
+              <div className="flex gap-2 overflow-x-auto">
                 {allImages.map((image, index) => (
                   <button
                     key={index}
@@ -212,7 +219,7 @@ export default function MerchandiseDetailModal({
                       setCurrentImageIndex(index);
                       setIsImageLoading(true);
                     }}
-                    className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden transition-all border ${
+                    className={`flex-shrink-0 w-14 h-14 rounded-lg overflow-hidden transition-all border ${
                       currentImageIndex === index
                         ? 'border-pink-500 ring-2 ring-pink-500'
                         : 'border-white/[0.1] hover:border-white/[0.2]'
@@ -227,42 +234,55 @@ export default function MerchandiseDetailModal({
                 ))}
               </div>
             )}
-          </div>
 
-          {/* Details Section */}
-          <div className="flex-1 flex flex-col justify-between">
-            {/* Title & Info */}
-            <div>
-              <h2 className="text-2xl md:text-3xl font-black text-white mb-2 uppercase tracking-tight">
-                {merchandise.name}
-              </h2>
-
-              {/* Category & Price */}
-              <div className="flex items-center justify-between mb-4">
-                <span className="text-white/40 text-sm font-semibold uppercase tracking-wider">
-                  {merchandise.category}
-                </span>
-                <span className="text-2xl font-black text-pink-500">
-                  ${merchandise.price.toFixed(2)}
+            {/* Stock Status */}
+            <div className="mt-4 p-4 bg-white/[0.06] border border-white/[0.1] rounded-xl">
+              <div className="flex items-center justify-between">
+                <span className="text-white/40 text-xs uppercase tracking-wider font-semibold">Stock</span>
+                <span className={`font-bold text-sm ${
+                  (merchandise.totalStock ?? 0) > 0 ? 'text-green-400' : 'text-red-400'
+                }`}>
+                  {(merchandise.totalStock ?? 0) > 0 ? `${merchandise.totalStock} Available` : 'Out of Stock'}
                 </span>
               </div>
+            </div>
+          </div>
 
-              {/* Divider */}
-              <div className="border-b border-white/[0.1] mb-4" />
+          {/* Right Column - Details */}
+          <div className="md:col-span-3 p-4 md:p-6 flex flex-col justify-between overflow-y-auto">
+            {/* Header */}
+            <div className="mb-6">
+              {/* Title & Category */}
+              <div className="mb-4">
+                <p className="text-white/40 text-xs uppercase tracking-wider font-semibold mb-2">{merchandise.category}</p>
+                <h2 className="text-2xl md:text-3xl font-black text-white mb-1 uppercase tracking-tight leading-tight">
+                  {merchandise.name}
+                </h2>
+              </div>
 
-              {/* Description */}
+              {/* Price */}
               <div className="mb-6">
-                <h3 className="text-white/60 text-xs uppercase tracking-wider font-semibold mb-2">
-                  Description
-                </h3>
-                <p className="text-white/80 text-sm leading-relaxed">
-                  {merchandise.description}
+                <p className="text-white/40 text-xs uppercase tracking-wider font-semibold mb-2">Price</p>
+                <p className="text-4xl font-black text-pink-500">
+                  ${merchandise.price.toFixed(2)}
                 </p>
               </div>
 
-              {/* Meta Info */}
+              {/* Divider */}
+              <div className="border-b border-white/[0.1] mb-6" />
+
+              {/* Description */}
+              {merchandise.description && (
+                <div className="mb-6">
+                  <p className="text-white/80 text-sm leading-relaxed">
+                    {merchandise.description}
+                  </p>
+                </div>
+              )}
+
+              {/* Product Info */}
               {merchandise.metaDescription && (
-                <div className="p-4 bg-white/[0.06] border border-white/[0.08] rounded-xl mb-6">
+                <div className="mb-6 p-4 bg-white/[0.06] border border-white/[0.1] rounded-xl">
                   <p className="text-white/60 text-sm">
                     {merchandise.metaDescription}
                   </p>
@@ -296,35 +316,72 @@ export default function MerchandiseDetailModal({
                   </div>
                 </div>
               )}
+
+              {/* Product Features (if applicable) */}
+              {merchandise.tags && merchandise.tags.length > 0 && (
+                <div className="mb-6">
+                  <p className="text-white/40 text-xs uppercase tracking-wider font-semibold mb-3">Features & Materials</p>
+                  <div className="flex flex-wrap gap-2">
+                    {merchandise.tags.map((tag) => (
+                      <span
+                        key={tag}
+                        className="px-3 py-1.5 bg-gradient-to-r from-pink-500/20 to-purple-500/20 border border-pink-400/30 rounded-full text-xs text-pink-200 uppercase tracking-wider font-semibold"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Pre-order Info */}
+              {merchandise.isPreOrder && (
+                <div className="mb-6 p-4 bg-gradient-to-r from-orange-500/10 to-amber-500/10 border border-orange-400/20 rounded-xl flex items-start gap-3">
+                  <Zap size={18} className="text-orange-300 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <p className="text-xs font-bold text-orange-200 uppercase tracking-wider">Pre-Order Item</p>
+                    <p className="text-xs text-orange-200/70 mt-0.5">
+                      Order now and receive your item soon. Pre-order deadline: {merchandise.preOrderDeadline ? new Date(merchandise.preOrderDeadline.toDate()).toLocaleDateString() : 'TBA'}
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
 
-            {/* Add to Cart Button */}
-            <button
-              onClick={handleAddToCart}
-              disabled={isInCart || (merchandise.sizes && merchandise.sizes.length > 0 && !selectedSize)}
-              className={`w-full px-6 py-3 rounded-xl font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 ${
-                isInCart
-                  ? 'bg-green-600/20 text-green-400 border border-green-500/20 cursor-not-allowed'
+            {/* Action Buttons */}
+            <div className="border-t border-white/[0.1] pt-6 space-y-3">
+              {/* Add to Cart Button */}
+              <button
+                onClick={handleAddToCart}
+                disabled={isInCart || (merchandise.sizes && merchandise.sizes.length > 0 && !selectedSize) || (merchandise.totalStock ?? 0) === 0}
+                className={`w-full px-6 py-3 rounded-xl font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 ${
+                  isInCart
+                    ? 'bg-green-600/20 text-green-400 border border-green-500/20 cursor-not-allowed'
+                    : merchandise.sizes && merchandise.sizes.length > 0 && !selectedSize
+                    ? 'bg-white/[0.06] text-white/40 border border-white/[0.08] cursor-not-allowed'
+                    : (merchandise.totalStock ?? 0) === 0
+                    ? 'bg-white/[0.06] text-white/40 border border-white/[0.08] cursor-not-allowed'
+                    : 'bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700 text-white border border-pink-500/30 hover:border-pink-500/50'
+                }`}
+              >
+                <ShoppingCart size={18} />
+                {isInCart
+                  ? 'Added to Cart'
                   : merchandise.sizes && merchandise.sizes.length > 0 && !selectedSize
-                  ? 'bg-white/[0.06] text-white/40 border border-white/[0.08] cursor-not-allowed'
-                  : 'bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700 text-white'
-              }`}
-            >
-              <ShoppingCart size={18} />
-              {isInCart
-                ? 'Added to Cart'
-                : merchandise.sizes && merchandise.sizes.length > 0 && !selectedSize
-                ? 'Select a Size'
-                : 'Add to Cart'}
-            </button>
+                  ? 'Select a Size'
+                  : (merchandise.totalStock ?? 0) === 0
+                  ? 'Out of Stock'
+                  : 'Add to Cart'}
+              </button>
 
-            {/* Close Button for Mobile */}
-            <button
-              onClick={onClose}
-              className="mt-3 px-6 py-2 bg-white/[0.1] hover:bg-white/[0.15] text-white/60 hover:text-white rounded-xl font-semibold transition-all md:hidden"
-            >
-              Close
-            </button>
+              {/* Close Button for Mobile */}
+              <button
+                onClick={onClose}
+                className="w-full px-6 py-2 bg-white/[0.1] hover:bg-white/[0.15] text-white/60 hover:text-white rounded-xl font-semibold transition-all md:hidden"
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       </div>

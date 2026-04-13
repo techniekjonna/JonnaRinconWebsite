@@ -10,7 +10,21 @@
   }
 
   html {
-    background-color: #000;
+    background-color: #0a0a0a;
+  }
+
+  /* FOUC Prevention - Background Container States */
+  #site-bg-container {
+    opacity: 1;
+  }
+
+  #site-bg-container.site-bg-container-loading {
+    background-color: #0a0a0a;
+    opacity: 1;
+  }
+
+  #site-bg-container.site-bg-container-loaded {
+    opacity: 1;
   }
 
   html {

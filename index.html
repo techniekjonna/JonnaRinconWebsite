@@ -23,6 +23,28 @@
     <link rel="manifest" href="/site.webmanifest" />
 
     <title>Jonna Rincon - J18</title>
+
+    <!-- FOUC Prevention: Initialize background preload early -->
+    <script>
+      (function() {
+        try {
+          const cached = localStorage.getItem('cachedBackground');
+          if (cached) {
+            const parsed = JSON.parse(cached);
+            if (parsed.imageUrl) {
+              const link = document.createElement('link');
+              link.rel = 'preload';
+              link.as = 'image';
+              link.href = parsed.imageUrl;
+              link.setAttribute('importance', 'high');
+              document.head.appendChild(link);
+            }
+          }
+        } catch (e) {
+          // Silently fail if localStorage is unavailable
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

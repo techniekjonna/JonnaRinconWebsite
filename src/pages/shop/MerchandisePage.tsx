@@ -252,9 +252,9 @@ const MerchandisePage: React.FC = () => {
                     {item.showJeighteenLogo && (
                       <div className="w-10 h-10 bg-black/60 backdrop-blur-sm border border-white/20 rounded-lg p-1.5 flex items-center justify-center flex-shrink-0">
                         <img
-                          src="/Logo.png"
+                          src="/JEIGHTEEN-logo.png"
                           alt="JEIGHTEEN"
-                          className="w-full h-full object-contain invert"
+                          className="w-full h-full object-contain"
                           onError={(e) => {
                             (e.target as HTMLImageElement).style.display = 'none';
                           }}

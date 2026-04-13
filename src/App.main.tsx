@@ -1,7 +1,7 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
-import { BackgroundProvider } from './contexts/BackgroundContext';
+import { BackgroundProvider, useBackground } from './contexts/BackgroundContext';
 import { TrackDetailProvider } from './contexts/TrackDetailContext';
 import { BeatDetailProvider } from './contexts/BeatDetailContext';
 import { useScrollToTop } from './hooks/useScrollToTop';
@@ -9,6 +9,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import GlobalAudioPlayer from './components/GlobalAudioPlayer';
 import GlobalBeatDetailModal from './components/GlobalBeatDetailModal';
 import BackgroundRenderer from './components/BackgroundRenderer';
+import { initializeBackgroundPreload, addBackgroundPreload } from './utils/preloadBackground';
 
 // Public pages
 import HomePage from './App';
@@ -91,7 +92,28 @@ const ScrollToTopWrapper = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
+/**
+ * BackgroundPreloadManager updates preload hints when background changes
+ * This ensures the browser can prioritize the next background image download
+ */
+const BackgroundPreloadManager: React.FC = () => {
+  const { activeBackground } = useBackground();
+
+  React.useEffect(() => {
+    if (activeBackground?.imageUrl) {
+      addBackgroundPreload(activeBackground.imageUrl);
+    }
+  }, [activeBackground?.imageUrl]);
+
+  return null;
+};
+
 const MainApp: React.FC = () => {
+  // Initialize background preload on app startup
+  React.useEffect(() => {
+    initializeBackgroundPreload();
+  }, []);
+
   return (
     <AuthProvider>
       <BackgroundProvider>
@@ -100,6 +122,7 @@ const MainApp: React.FC = () => {
             <BrowserRouter>
             <ScrollToTopWrapper>
               <BackgroundRenderer />
+              <BackgroundPreloadManager />
               <GlobalAudioPlayer />
               <GlobalBeatDetailModal />
               <Routes>
