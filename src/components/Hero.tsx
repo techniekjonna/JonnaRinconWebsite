@@ -68,9 +68,22 @@ export default function Hero() {
   }, []);
 
   useEffect(() => {
+    // Call handleScroll immediately on mount
+    handleScroll();
+
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, [handleScroll]);
+
+  // Force update on mount
+  useEffect(() => {
+    if (overlayRef.current) {
+      overlayRef.current.style.opacity = '0';
+    }
+    if (gradientRef.current) {
+      gradientRef.current.style.opacity = '0';
+    }
+  }, []);
 
   return (
     <section className="relative w-full min-h-screen flex items-center justify-center">
@@ -87,12 +100,12 @@ export default function Hero() {
         <div
           ref={overlayRef}
           className="absolute inset-0 bg-black"
-          style={{ opacity: 0, transition: 'opacity 0.3s ease-out' }}
+          style={{ opacity: 0, transition: 'opacity 0.2s ease-out', WebkitTransition: 'opacity 0.2s ease-out' }}
         ></div>
         <div
           ref={gradientRef}
           className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/30"
-          style={{ opacity: 0 }}
+          style={{ opacity: 0, transition: 'opacity 0.2s ease-out', WebkitTransition: 'opacity 0.2s ease-out' }}
         ></div>
       </div>
 
