@@ -73,6 +73,11 @@ self.addEventListener('fetch', (event) => {
             });
 
           return response;
+        }).catch(() => {
+          // Network request failed - return cached response if available or error
+          return caches.match(event.request).then((cachedResponse) => {
+            return cachedResponse || new Response('Network error', { status: 503 });
+          });
         });
       })
   );
