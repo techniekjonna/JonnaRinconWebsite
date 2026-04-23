@@ -5,7 +5,7 @@ import { useArt } from '../../hooks/useArt';
 import { toDirectUrl } from '../../lib/utils/urlUtils';
 import { artService } from '../../lib/firebase/services';
 import { Art } from '../../lib/firebase/types';
-import { Plus, Edit, Trash2 } from 'lucide-react';
+import { Plus, Edit, Trash2, Upload } from 'lucide-react';
 
 const categories = [
   'Digital Art',
@@ -416,6 +416,17 @@ const ArtFormModal: React.FC<ArtFormModalProps> = ({ art, onClose, onSave }) => 
                   className="flex-1 px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white"
                   placeholder="Add gallery image URL..."
                 />
+                <button
+                  type="button"
+                  onClick={() => {
+                    // Upload wiring comes later
+                  }}
+                  className="px-4 py-2 bg-white/[0.08] border border-white/[0.1] rounded-lg text-white/70 hover:text-white hover:bg-white/[0.12] transition-colors inline-flex items-center gap-2"
+                  title="Upload file"
+                >
+                  <Upload size={14} />
+                  <span className="text-xs font-semibold uppercase tracking-wider hidden sm:inline">Upload</span>
+                </button>
                 <button
                   type="button"
                   onClick={handleAddGalleryImage}

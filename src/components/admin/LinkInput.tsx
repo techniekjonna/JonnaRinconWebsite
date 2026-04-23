@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Copy, Check, AlertCircle, X } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Copy, Check, AlertCircle, X, Upload } from 'lucide-react';
 import { toDirectUrl, detectUrlType, isValidUrl } from '../../lib/utils/urlUtils';
 
 interface LinkInputProps {
@@ -10,6 +10,13 @@ interface LinkInputProps {
   type?: 'audio' | 'image' | 'any';
   required?: boolean;
   placeholder?: string;
+  /**
+   * Optional file-upload handler. Wiring comes later — for now the button
+   * opens a native file picker and, if a handler is provided, forwards
+   * the selected File. If omitted, the click still works visually but
+   * the selected file is ignored.
+   */
+  onUpload?: (file: File) => void;
 }
 
 export default function LinkInput({
@@ -20,10 +27,12 @@ export default function LinkInput({
   type = 'any',
   required = false,
   placeholder,
+  onUpload,
 }: LinkInputProps) {
   const [value, setValue] = useState(defaultValue);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Update value when defaultValue prop changes (e.g., when editing a beat)
   useEffect(() => {
@@ -83,6 +92,22 @@ export default function LinkInput({
     setError('');
   };
 
+  const acceptAttr =
+    type === 'audio' ? 'audio/*' : type === 'image' ? 'image/*' : undefined;
+
+  const handleUploadClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFilePicked = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && onUpload) {
+      onUpload(file);
+    }
+    // Reset so picking the same file twice still fires onChange
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
   return (
     <div className="mb-4">
       <label className="block text-sm font-medium text-white mb-2">
@@ -91,31 +116,54 @@ export default function LinkInput({
       </label>
 
       <div className="space-y-2">
-        <div className="relative">
+        <div className="flex gap-2">
+          <div className="relative flex-1 min-w-0">
+            <input
+              type="text"
+              name={name}
+              value={value}
+              onChange={handleChange}
+              placeholder={placeholder || 'https://example.com/audio/track.mp3'}
+              className={`w-full bg-white/[0.05] border rounded px-4 py-2 text-white placeholder-white/40 transition-all ${
+                error
+                  ? 'border-red-500/50 focus:border-red-500'
+                  : isValid
+                    ? 'border-white/[0.1] focus:border-white/[0.3]'
+                    : 'border-red-500/50 focus:border-red-500'
+              } focus:outline-none focus:bg-white/[0.08]`}
+              required={required}
+            />
+            {value && (
+              <button
+                type="button"
+                onClick={handleClear}
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-white/40 hover:text-white/60 transition"
+                aria-label="Clear"
+              >
+                <X size={16} />
+              </button>
+            )}
+          </div>
+
+          <button
+            type="button"
+            onClick={handleUploadClick}
+            className="flex-shrink-0 inline-flex items-center gap-2 px-4 py-2 rounded bg-white/[0.08] border border-white/[0.1] text-white/80 hover:bg-white/[0.12] hover:text-white transition"
+            title="Upload file"
+          >
+            <Upload size={14} />
+            <span className="text-xs font-semibold uppercase tracking-wider hidden sm:inline">
+              Upload
+            </span>
+          </button>
+
           <input
-            type="text"
-            name={name}
-            value={value}
-            onChange={handleChange}
-            placeholder={placeholder || 'https://example.com/audio/track.mp3'}
-            className={`w-full bg-white/[0.05] border rounded px-4 py-2 text-white placeholder-white/40 transition-all ${
-              error
-                ? 'border-red-500/50 focus:border-red-500'
-                : isValid
-                  ? 'border-white/[0.1] focus:border-white/[0.3]'
-                  : 'border-red-500/50 focus:border-red-500'
-            } focus:outline-none focus:bg-white/[0.08]`}
-            required={required}
+            ref={fileInputRef}
+            type="file"
+            accept={acceptAttr}
+            onChange={handleFilePicked}
+            className="hidden"
           />
-          {value && (
-            <button
-              type="button"
-              onClick={handleClear}
-              className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-white/40 hover:text-white/60 transition"
-            >
-              <X size={16} />
-            </button>
-          )}
         </div>
 
         {/* URL Info */}
