@@ -5,7 +5,7 @@ import LoadingSpinner from '../../components/LoadingSpinner';
 import { useTracks } from '../../hooks/useTracks';
 import { trackService } from '../../lib/firebase/services';
 import { Track } from '../../lib/firebase/types';
-import { Plus, Edit, Trash2, Play, Pause, ChevronDown, GripVertical, ArrowUp, ArrowDown, Link as LinkIcon, AlertCircle } from 'lucide-react';
+import { Plus, Edit, Trash2, Play, Pause, ChevronDown, GripVertical, ArrowUp, ArrowDown, Link as LinkIcon, AlertCircle, Filter as FilterIcon, X as XIcon } from 'lucide-react';
 import { toDirectUrl, detectUrlType, isValidUrl } from '../../lib/utils/urlUtils';
 
 const TracksPage: React.FC = () => {
@@ -19,6 +19,7 @@ const TracksPage: React.FC = () => {
   const [selectedTypes, setSelectedTypes] = useState<Set<string>>(new Set());
   const [selectedYear, setSelectedYear] = useState<number | null>(null);
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
+  const [showFilters, setShowFilters] = useState(false);
 
   const handleCreate = () => {
     setEditingTrack(null);
@@ -301,13 +302,27 @@ const TracksPage: React.FC = () => {
             <h1 className="text-3xl font-bold text-white">Tracks Management</h1>
             <p className="text-white/40 mt-2">Manage your track catalog</p>
           </div>
-          <button
-            onClick={handleCreate}
-            className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-purple-700 hover:to-pink-700 transition-all flex items-center space-x-2"
-          >
-            <Plus size={20} />
-            <span>Add Track</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleCreate}
+              className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-purple-700 hover:to-pink-700 transition-all flex items-center space-x-2"
+            >
+              <Plus size={20} />
+              <span>Add Track</span>
+            </button>
+            <button
+              onClick={() => setShowFilters((v) => !v)}
+              className={`p-3 rounded-lg border transition-all ${
+                hasActiveFilters
+                  ? 'bg-red-600 border-red-600 text-white'
+                  : 'bg-white/[0.06] border-white/[0.08] text-white/60 hover:text-white hover:bg-white/[0.12]'
+              }`}
+              title={showFilters ? 'Hide filters' : 'Show filters'}
+              aria-label="Toggle filters"
+            >
+              <FilterIcon size={20} />
+            </button>
+          </div>
         </div>
 
         {error && (
@@ -344,12 +359,21 @@ const TracksPage: React.FC = () => {
         </div>
 
         {/* Filter Section */}
+        {showFilters && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Filter Section */}
           <div className="lg:col-span-1 bg-white/[0.08] border border-white/[0.06] rounded-xl p-6">
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold text-white">Filters</h3>
+                <button
+                  onClick={() => setShowFilters(false)}
+                  className="p-1 rounded text-white/40 hover:text-white hover:bg-white/10 transition"
+                  title="Close filters"
+                  aria-label="Close filters"
+                >
+                  <XIcon size={16} />
+                </button>
               </div>
 
               {/* Type Buttons */}
@@ -431,6 +455,7 @@ const TracksPage: React.FC = () => {
           </div>
 
         </div>
+        )}
 
         <div className="space-y-3">
           {loading ? (
@@ -925,7 +950,7 @@ const TrackFormModal: React.FC<TrackFormModalProps> = ({ track, onClose, onSave 
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-white/60 mb-2">
-                {(formData.type === 'Album' || formData.type === 'EP') ? 'Album Name' : 'Title'}
+                {(formData.type === 'Album' || formData.type === 'EP') ? 'Album Name' : 'Title'} <span className="text-red-400">*</span>
               </label>
               <input
                 type="text"
@@ -937,7 +962,7 @@ const TrackFormModal: React.FC<TrackFormModalProps> = ({ track, onClose, onSave 
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Artist</label>
+              <label className="block text-sm font-medium text-white/60 mb-2">Artist <span className="text-red-400">*</span></label>
               <input
                 type="text"
                 value={formData.artist}
@@ -947,7 +972,7 @@ const TrackFormModal: React.FC<TrackFormModalProps> = ({ track, onClose, onSave 
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Type</label>
+              <label className="block text-sm font-medium text-white/60 mb-2">Type <span className="text-red-400">*</span></label>
               <select
                 value={formData.type}
                 onChange={(e) => setFormData({ ...formData, type: e.target.value as 'Album' | 'EP' | 'Single' | 'Exclusive' })}
@@ -961,7 +986,7 @@ const TrackFormModal: React.FC<TrackFormModalProps> = ({ track, onClose, onSave 
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Year</label>
+              <label className="block text-sm font-medium text-white/60 mb-2">Year <span className="text-red-400">*</span></label>
               <input
                 type="number"
                 value={formData.year}
@@ -971,7 +996,7 @@ const TrackFormModal: React.FC<TrackFormModalProps> = ({ track, onClose, onSave 
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Collab</label>
+              <label className="block text-sm font-medium text-white/60 mb-2">Collab <span className="text-red-400">*</span></label>
               <select
                 value={formData.collab}
                 onChange={(e) => setFormData({ ...formData, collab: e.target.value as 'Solo' | 'Collab' })}
@@ -983,7 +1008,7 @@ const TrackFormModal: React.FC<TrackFormModalProps> = ({ track, onClose, onSave 
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Genre</label>
+              <label className="block text-sm font-medium text-white/60 mb-2">Genre <span className="text-red-400">*</span></label>
               <input
                 type="text"
                 value={formData.genre}

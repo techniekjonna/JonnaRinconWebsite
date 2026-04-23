@@ -529,7 +529,7 @@ const BeatFormModal: React.FC<BeatFormModalProps> = ({ beat, onClose, onSave }) 
         <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto flex-1">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Title</label>
+              <label className="block text-sm font-medium text-white/60 mb-2">Title <span className="text-red-400">*</span></label>
               <input
                 type="text"
                 value={formData.title}
@@ -540,7 +540,7 @@ const BeatFormModal: React.FC<BeatFormModalProps> = ({ beat, onClose, onSave }) 
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Artist</label>
+              <label className="block text-sm font-medium text-white/60 mb-2">Artist <span className="text-red-400">*</span></label>
               <input
                 type="text"
                 value={formData.artist}
@@ -551,7 +551,7 @@ const BeatFormModal: React.FC<BeatFormModalProps> = ({ beat, onClose, onSave }) 
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">BPM</label>
+              <label className="block text-sm font-medium text-white/60 mb-2">BPM <span className="text-red-400">*</span></label>
               <input
                 type="number"
                 value={formData.bpm}
@@ -562,7 +562,7 @@ const BeatFormModal: React.FC<BeatFormModalProps> = ({ beat, onClose, onSave }) 
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Key</label>
+              <label className="block text-sm font-medium text-white/60 mb-2">Key <span className="text-red-400">*</span></label>
               <input
                 type="text"
                 value={formData.key}
@@ -584,7 +584,7 @@ const BeatFormModal: React.FC<BeatFormModalProps> = ({ beat, onClose, onSave }) 
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Genre</label>
+              <label className="block text-sm font-medium text-white/60 mb-2">Genre <span className="text-red-400">*</span></label>
               <input
                 type="text"
                 value={formData.genre}
@@ -658,6 +658,7 @@ const BeatFormModal: React.FC<BeatFormModalProps> = ({ beat, onClose, onSave }) 
               onChange={handleAudioUrlChange}
               defaultValue={formData.audioUrl}
               placeholder="https://nextcloud.example.com/index.php/s/abc123"
+              required
             />
             <LinkInput
               label="Artwork URL"
@@ -666,6 +667,7 @@ const BeatFormModal: React.FC<BeatFormModalProps> = ({ beat, onClose, onSave }) 
               onChange={(url) => setFormData({ ...formData, artworkUrl: url })}
               defaultValue={formData.artworkUrl}
               placeholder="https://example.com/image.jpg"
+              required
             />
           </div>
 
@@ -683,7 +685,7 @@ const BeatFormModal: React.FC<BeatFormModalProps> = ({ beat, onClose, onSave }) 
 
           <div className="grid grid-cols-1 gap-4">
             <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Exclusive License Price (€)</label>
+              <label className="block text-sm font-medium text-white/60 mb-2">Exclusive License Price (€) <span className="text-red-400">*</span></label>
               <input
                 type="number"
                 step="0.01"
@@ -939,7 +941,7 @@ const BeatPackFormModal: React.FC<BeatPackFormModalProps> = ({ pack, onClose, on
           {currentPage === 0 && (
             <>
               <div>
-                <label className="block text-sm font-medium text-white/60 mb-2">Pack Title</label>
+                <label className="block text-sm font-medium text-white/60 mb-2">Pack Title <span className="text-red-400">*</span></label>
                 <input type="text" value={title} onChange={(e) => setTitle(e.target.value)}
                   className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white" required />
               </div>

@@ -335,7 +335,7 @@ const ArtFormModal: React.FC<ArtFormModalProps> = ({ art, onClose, onSave }) => 
         <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto flex-1">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Title</label>
+              <label className="block text-sm font-medium text-white/60 mb-2">Title <span className="text-red-400">*</span></label>
               <input
                 type="text"
                 value={formData.title}
@@ -346,7 +346,7 @@ const ArtFormModal: React.FC<ArtFormModalProps> = ({ art, onClose, onSave }) => 
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Artist</label>
+              <label className="block text-sm font-medium text-white/60 mb-2">Artist <span className="text-red-400">*</span></label>
               <input
                 type="text"
                 value={formData.artist}
@@ -358,7 +358,7 @@ const ArtFormModal: React.FC<ArtFormModalProps> = ({ art, onClose, onSave }) => 
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-white/60 mb-2">Description</label>
+            <label className="block text-sm font-medium text-white/60 mb-2">Description <span className="text-red-400">*</span></label>
             <textarea
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
@@ -369,7 +369,7 @@ const ArtFormModal: React.FC<ArtFormModalProps> = ({ art, onClose, onSave }) => 
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Medium</label>
+              <label className="block text-sm font-medium text-white/60 mb-2">Medium <span className="text-red-400">*</span></label>
               <input
                 type="text"
                 value={formData.medium}
@@ -381,7 +381,7 @@ const ArtFormModal: React.FC<ArtFormModalProps> = ({ art, onClose, onSave }) => 
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Year</label>
+              <label className="block text-sm font-medium text-white/60 mb-2">Year <span className="text-red-400">*</span></label>
               <input
                 type="number"
                 min="1900"
@@ -395,7 +395,7 @@ const ArtFormModal: React.FC<ArtFormModalProps> = ({ art, onClose, onSave }) => 
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-white/60 mb-2">Category</label>
+            <label className="block text-sm font-medium text-white/60 mb-2">Category <span className="text-red-400">*</span></label>
             <select
               value={formData.category}
               onChange={(e) => setFormData({ ...formData, category: e.target.value })}

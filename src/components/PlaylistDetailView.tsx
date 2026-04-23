@@ -271,7 +271,26 @@ export default function PlaylistDetailView({
             <span>{isPlaying ? 'Pause' : 'Play'} Playlist</span>
           </button>
           <button
-            onClick={() => {}}
+            onClick={async () => {
+              // Build an internal, app-scoped share URL — never leak storage URLs.
+              const slugOrId = (updatedPlaylist as any).slug || updatedPlaylist.id;
+              const shareUrl = `${window.location.origin}/playlist/${slugOrId}`;
+              try {
+                if (navigator.share) {
+                  await navigator.share({
+                    title: updatedPlaylist.name,
+                    text: `Check out this playlist: ${updatedPlaylist.name}`,
+                    url: shareUrl,
+                  });
+                } else {
+                  await navigator.clipboard.writeText(shareUrl);
+                  setError('Share link copied to clipboard');
+                  setTimeout(() => setError(null), 2000);
+                }
+              } catch {
+                // user cancelled share; no-op
+              }
+            }}
             className="flex items-center gap-2 px-4 py-2 bg-white/[0.1] hover:bg-white/[0.15] text-white rounded-lg font-semibold transition-colors"
           >
             <Share2 size={18} />

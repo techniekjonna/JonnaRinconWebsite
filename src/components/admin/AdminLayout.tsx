@@ -423,7 +423,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                         {item.submenu.map((sub, si) => (
                           <button
                             key={sub.href}
-                            onClick={() => { closeMenu(); navigate(sub.href); }}
+                            onClick={() => { navigate(sub.href); }}
                             className="group w-full text-left py-3 md:py-4 cursor-pointer border-b border-white/[0.04] hover:translate-x-1.5 transition-transform duration-300"
                             style={{
                               animation: item.expanded && !isMenuClosing ? `menu-item-reveal 0.4s cubic-bezier(0.16, 1, 0.3, 1) ${0.05 + si * 0.04}s both` : 'none',
@@ -447,14 +447,14 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                 <div className="flex flex-col gap-4 pt-6">
                   <div className="flex items-center justify-center gap-3">
                     <button
-                      onClick={() => { closeMenu(); navigate('/admin/dashboard'); }}
+                      onClick={() => { navigate('/admin/dashboard'); }}
                       className="p-2.5 rounded-xl transition-all duration-200 text-white/40 hover:bg-white/[0.04] hover:text-white/80"
                       title="Dashboard"
                     >
                       <LayoutDashboard size={18} />
                     </button>
                     <button
-                      onClick={() => { closeMenu(); navigate('/admin/settings'); }}
+                      onClick={() => { navigate('/admin/settings'); }}
                       className="p-2.5 rounded-xl transition-all duration-200 text-white/40 hover:bg-white/[0.04] hover:text-white/80"
                       title="Settings"
                     >

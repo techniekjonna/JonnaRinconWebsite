@@ -373,7 +373,7 @@ const DiscountCodeFormModal: React.FC<DiscountCodeFormModalProps> = ({
         <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto flex-1">
           {/* Code & Description */}
           <div>
-            <label className="block text-sm font-medium text-white/60 mb-2">Code</label>
+            <label className="block text-sm font-medium text-white/60 mb-2">Code <span className="text-red-400">*</span></label>
             <input
               type="text"
               value={formData.code}
@@ -414,7 +414,7 @@ const DiscountCodeFormModal: React.FC<DiscountCodeFormModalProps> = ({
 
             <div>
               <label className="block text-sm font-medium text-white/60 mb-2">
-                Discount Value ({formData.discountType === 'percentage' ? '%' : '€'})
+                Discount Value ({formData.discountType === 'percentage' ? '%' : '€'}) <span className="text-red-400">*</span>
               </label>
               <input
                 type="number"
@@ -503,7 +503,7 @@ const DiscountCodeFormModal: React.FC<DiscountCodeFormModalProps> = ({
 
             {formData.usageLimit === 'limited' && (
               <div>
-                <label className="block text-sm font-medium text-white/60 mb-2">Max Uses</label>
+                <label className="block text-sm font-medium text-white/60 mb-2">Max Uses <span className="text-red-400">*</span></label>
                 <input
                   type="number"
                   min="1"

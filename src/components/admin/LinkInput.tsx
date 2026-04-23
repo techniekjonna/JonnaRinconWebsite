@@ -87,7 +87,7 @@ export default function LinkInput({
     <div className="mb-4">
       <label className="block text-sm font-medium text-white mb-2">
         {label}
-        {required && <span className="text-red-400">*</span>}
+        {required && <span className="text-red-400 ml-1">*</span>}
       </label>
 
       <div className="space-y-2">

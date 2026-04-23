@@ -321,7 +321,7 @@ const AlbumsPage: React.FC = () => {
                 <div className="grid md:grid-cols-2 gap-6">
                   <div>
                     <label className="block text-sm font-semibold text-white/80 mb-2">
-                      Album Title
+                      Album Title <span className="text-red-400">*</span>
                     </label>
                     <input
                       type="text"
@@ -336,7 +336,7 @@ const AlbumsPage: React.FC = () => {
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-white/80 mb-2">
-                      Artist
+                      Artist <span className="text-red-400">*</span>
                     </label>
                     <input
                       type="text"
@@ -355,7 +355,7 @@ const AlbumsPage: React.FC = () => {
                 <div className="grid md:grid-cols-2 gap-6">
                   <div>
                     <label className="block text-sm font-semibold text-white/80 mb-2">
-                      Genre
+                      Genre <span className="text-red-400">*</span>
                     </label>
                     <input
                       type="text"

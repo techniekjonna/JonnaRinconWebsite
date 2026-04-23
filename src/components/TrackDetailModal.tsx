@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { X, Play, Pause, ShoppingCart, Download, ChevronDown, Plus, Dice5 } from 'lucide-react';
 import { getCurrentTrack } from './GlobalAudioPlayer';
 import { useAuth } from '../hooks/useAuth';
@@ -55,6 +56,7 @@ export default function TrackDetailModal({
   onAddToPlaylist,
 }: TrackDetailModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [isHoveringCover, setIsHoveringCover] = useState(false);
   const [isPlaylistExpanded, setIsPlaylistExpanded] = useState(false);
@@ -453,16 +455,19 @@ export default function TrackDetailModal({
               </div>
             )}
 
-            {/* Download Button - if track has audioUrl */}
+            {/* Download Button - routes through gated /download page so the raw storage URL isn't exposed */}
             {track.audioUrl && (
-              <a
-                href={track.audioUrl}
-                download
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  navigate(`/download/${track.id}`);
+                }}
                 className="w-full px-6 py-3 text-white rounded-xl font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-3 mb-3 bg-red-600/80 hover:bg-red-600 hover:scale-[1.02] active:scale-95"
               >
                 <Download size={18} />
                 <span>Download Track</span>
-              </a>
+              </button>
             )}
 
             {/* Buy Button - for non-free tracks with a price */}

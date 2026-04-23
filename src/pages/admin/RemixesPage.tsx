@@ -353,7 +353,7 @@ const RemixFormModal: React.FC<RemixFormModalProps> = ({ remix, onClose, onSave 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Title</label>
+              <label className="block text-sm font-medium text-white/60 mb-2">Title <span className="text-red-400">*</span></label>
               <input
                 type="text"
                 value={formData.title}
@@ -363,7 +363,7 @@ const RemixFormModal: React.FC<RemixFormModalProps> = ({ remix, onClose, onSave 
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Remix Artist</label>
+              <label className="block text-sm font-medium text-white/60 mb-2">Remix Artist <span className="text-red-400">*</span></label>
               <input
                 type="text"
                 value={formData.remixArtist}
@@ -373,7 +373,7 @@ const RemixFormModal: React.FC<RemixFormModalProps> = ({ remix, onClose, onSave 
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Original Artist</label>
+              <label className="block text-sm font-medium text-white/60 mb-2">Original Artist <span className="text-red-400">*</span></label>
               <input
                 type="text"
                 value={formData.originalArtist}
@@ -392,7 +392,7 @@ const RemixFormModal: React.FC<RemixFormModalProps> = ({ remix, onClose, onSave 
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Type</label>
+              <label className="block text-sm font-medium text-white/60 mb-2">Type <span className="text-red-400">*</span></label>
               <select
                 value={formData.remixType}
                 onChange={(e) => setFormData({ ...formData, remixType: e.target.value as 'Remix' | 'Edit' | 'Bootleg' })}
@@ -405,7 +405,7 @@ const RemixFormModal: React.FC<RemixFormModalProps> = ({ remix, onClose, onSave 
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Year</label>
+              <label className="block text-sm font-medium text-white/60 mb-2">Year <span className="text-red-400">*</span></label>
               <input
                 type="number"
                 value={formData.year}
@@ -415,7 +415,7 @@ const RemixFormModal: React.FC<RemixFormModalProps> = ({ remix, onClose, onSave 
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Collab</label>
+              <label className="block text-sm font-medium text-white/60 mb-2">Collab <span className="text-red-400">*</span></label>
               <select
                 value={formData.collab}
                 onChange={(e) => setFormData({ ...formData, collab: e.target.value as 'Solo' | 'Collab' })}
@@ -427,7 +427,7 @@ const RemixFormModal: React.FC<RemixFormModalProps> = ({ remix, onClose, onSave 
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Genre</label>
+              <label className="block text-sm font-medium text-white/60 mb-2">Genre <span className="text-red-400">*</span></label>
               <input
                 type="text"
                 value={formData.genre}

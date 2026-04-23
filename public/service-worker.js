@@ -1,4 +1,4 @@
-const CACHE_NAME = 'jonna-rincon-v1.4.0';
+const CACHE_NAME = 'jonna-rincon-v1.5.0';
 const urlsToCache = [
   '/',
   '/icon-192x192.png',
@@ -34,50 +34,65 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
+// Helper: produce an offline fallback Response when nothing is cached
+const offlineFallbackResponse = () =>
+  new Response('', { status: 504, statusText: 'Offline and not cached' });
+
 // Fetch event - serve from cache, fallback to network
 self.addEventListener('fetch', (event) => {
+  const request = event.request;
+
+  // Only handle GET requests - skip POST/PUT/DELETE so they pass through
+  if (request.method !== 'GET') {
+    return;
+  }
+
+  // Skip non-http(s) schemes (chrome-extension:, data:, blob:, etc.)
+  const url = new URL(request.url);
+  if (!url.protocol.startsWith('http')) {
+    return;
+  }
+
+  // Skip API calls - they should always hit the network
+  if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/.netlify/')) {
+    return;
+  }
+
   // For navigation requests (page loads/refreshes), always serve index.html
   // This is critical for SPA client-side routing to work
-  if (event.request.mode === 'navigate') {
+  if (request.mode === 'navigate') {
     event.respondWith(
-      fetch(event.request).catch(() => {
-        return caches.match('/');
-      })
+      fetch(request)
+        .catch(async () => (await caches.match('/')) || offlineFallbackResponse())
     );
     return;
   }
 
   event.respondWith(
-    caches.match(event.request)
-      .then((response) => {
-        // Cache hit - return response
-        if (response) {
-          return response;
+    caches.match(request)
+      .then((cached) => {
+        if (cached) {
+          return cached;
         }
 
-        // Clone the request
-        const fetchRequest = event.request.clone();
-
-        return fetch(fetchRequest).then((response) => {
-          // Check if valid response
+        return fetch(request.clone()).then((response) => {
+          // Only cache successful, basic (same-origin) responses
           if (!response || response.status !== 200 || response.type !== 'basic') {
             return response;
           }
 
-          // Clone the response
           const responseToCache = response.clone();
-
           caches.open(CACHE_NAME)
-            .then((cache) => {
-              cache.put(event.request, responseToCache);
-            });
+            .then((cache) => cache.put(request, responseToCache))
+            .catch(() => {});
 
           return response;
-        }).catch(() => {
-          // Network error - return cached version if available
-          return caches.match(event.request);
+        }).catch(async () => {
+          const fallback = await caches.match(request);
+          return fallback || offlineFallbackResponse();
         });
       })
+      .catch(() => offlineFallbackResponse())
   );
 });
 

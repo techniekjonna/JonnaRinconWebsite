@@ -353,7 +353,7 @@ const PlaylistsPage: React.FC = () => {
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-white mb-2">
-                    Playlist Name *
+                    Playlist Name <span className="text-red-400">*</span>
                   </label>
                   <input
                     type="text"

@@ -309,7 +309,7 @@ const EditFormModal: React.FC<EditFormModalProps> = ({ edit, onClose, onSave }) 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Title</label>
+              <label className="block text-sm font-medium text-white/60 mb-2">Title <span className="text-red-400">*</span></label>
               <input
                 type="text"
                 value={formData.title}
@@ -320,7 +320,7 @@ const EditFormModal: React.FC<EditFormModalProps> = ({ edit, onClose, onSave }) 
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Artist</label>
+              <label className="block text-sm font-medium text-white/60 mb-2">Artist <span className="text-red-400">*</span></label>
               <input
                 type="text"
                 value={formData.artist}
@@ -356,7 +356,7 @@ const EditFormModal: React.FC<EditFormModalProps> = ({ edit, onClose, onSave }) 
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">BPM</label>
+              <label className="block text-sm font-medium text-white/60 mb-2">BPM <span className="text-red-400">*</span></label>
               <input
                 type="number"
                 value={formData.bpm}
@@ -367,7 +367,7 @@ const EditFormModal: React.FC<EditFormModalProps> = ({ edit, onClose, onSave }) 
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Key</label>
+              <label className="block text-sm font-medium text-white/60 mb-2">Key <span className="text-red-400">*</span></label>
               <input
                 type="text"
                 value={formData.key}
@@ -378,7 +378,7 @@ const EditFormModal: React.FC<EditFormModalProps> = ({ edit, onClose, onSave }) 
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Genre</label>
+              <label className="block text-sm font-medium text-white/60 mb-2">Genre <span className="text-red-400">*</span></label>
               <input
                 type="text"
                 value={formData.genre}

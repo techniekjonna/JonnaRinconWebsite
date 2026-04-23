@@ -362,7 +362,7 @@ const MerchandiseFormModal: React.FC<MerchandiseFormModalProps> = ({ merchandise
         <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto flex-1">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Name</label>
+              <label className="block text-sm font-medium text-white/60 mb-2">Name <span className="text-red-400">*</span></label>
               <input
                 type="text"
                 value={formData.name}
@@ -373,7 +373,7 @@ const MerchandiseFormModal: React.FC<MerchandiseFormModalProps> = ({ merchandise
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Price</label>
+              <label className="block text-sm font-medium text-white/60 mb-2">Price <span className="text-red-400">*</span></label>
               <input
                 type="number"
                 step="0.01"
@@ -387,7 +387,7 @@ const MerchandiseFormModal: React.FC<MerchandiseFormModalProps> = ({ merchandise
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-white/60 mb-2">Description</label>
+            <label className="block text-sm font-medium text-white/60 mb-2">Description <span className="text-red-400">*</span></label>
             <textarea
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
