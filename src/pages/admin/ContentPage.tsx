@@ -285,34 +285,6 @@ const ContentPage: React.FC = () => {
           </div>
         )}
 
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-4">
-            <p className="text-white/40 text-sm">Scheduled</p>
-            <p className="text-2xl font-bold text-blue-400 mt-1">{scheduledPosts.length}</p>
-          </div>
-          <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-4">
-            <p className="text-white/40 text-sm">Published</p>
-            <p className="text-2xl font-bold text-green-400 mt-1">
-              {historyPosts.filter(p => p.status === 'completed' || p.status === 'published').length}
-            </p>
-          </div>
-          <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-4 flex items-center gap-3">
-            <Instagram size={24} className="text-pink-400" />
-            <div>
-              <p className="text-white/40 text-sm">Instagram</p>
-              <p className="text-white font-bold">{profileUsername ? 'Ready' : 'Not configured'}</p>
-            </div>
-          </div>
-          <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-4 flex items-center gap-3">
-            <Youtube size={24} className="text-red-400" />
-            <div>
-              <p className="text-white/40 text-sm">YouTube</p>
-              <p className="text-white font-bold">{profileUsername ? 'Ready' : 'Not configured'}</p>
-            </div>
-          </div>
-        </div>
-
         {/* Tabs */}
         <div className="flex gap-2 border-b border-white/[0.06]">
           <button

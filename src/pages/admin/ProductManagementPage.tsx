@@ -127,26 +127,6 @@ const ProductManagementPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-4">
-            <p className="text-white/40 text-sm">Total Products</p>
-            <p className="text-2xl font-bold text-white mt-1">{purchases.length}</p>
-          </div>
-          <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-4">
-            <p className="text-white/40 text-sm">Support Requested</p>
-            <p className="text-2xl font-bold text-orange-400 mt-1">
-              {purchases.filter(p => p.supportStatus === 'requested').length}
-            </p>
-          </div>
-          <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-4">
-            <p className="text-white/40 text-sm">Downloads Active</p>
-            <p className="text-2xl font-bold text-green-400 mt-1">
-              {purchases.filter(p => p.status === 'active').length}
-            </p>
-          </div>
-        </div>
-
         {/* Products Table */}
         <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl overflow-hidden">
           <div className="overflow-x-auto">

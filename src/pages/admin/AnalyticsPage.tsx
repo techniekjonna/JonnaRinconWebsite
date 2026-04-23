@@ -6,20 +6,31 @@ import { useRemixes } from '../../hooks/useRemixes';
 import { useOrders } from '../../hooks/useOrders';
 import { useContent } from '../../hooks/useContent';
 import { useCollaborations } from '../../hooks/useCollaborations';
+import { useArt } from '../../hooks/useArt';
+import { useMerchandise } from '../../hooks/useMerchandise';
+import { useServices } from '../../hooks/useServices';
+import { usePlaylists } from '../../hooks/usePlaylists';
+import { useEdits } from '../../hooks/useEdits';
+import { useDiscountCodes } from '../../hooks/useDiscountCodes';
 import { db } from '../../lib/firebase/config';
 import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
 import {
   TrendingUp,
-  TrendingDown,
   DollarSign,
   ShoppingCart,
   Music,
   Eye,
   Users,
   FileText,
-  Handshake,
-  Calendar,
   MessageSquare,
+  Palette,
+  Shirt,
+  Briefcase,
+  ListMusic,
+  Disc3,
+  Tag,
+  UserPlus,
+  Handshake,
 } from 'lucide-react';
 
 const AnalyticsPage: React.FC = () => {
@@ -29,6 +40,12 @@ const AnalyticsPage: React.FC = () => {
   const { orders, statistics: orderStats } = useOrders();
   const { content } = useContent();
   const { collaborations, statistics: collabStats } = useCollaborations();
+  const { art } = useArt();
+  const { merchandise } = useMerchandise();
+  const { services } = useServices();
+  const { playlists } = usePlaylists();
+  const { edits } = useEdits();
+  const { discountCodes } = useDiscountCodes();
 
   const [dateRange, setDateRange] = useState<'7d' | '30d' | '90d' | 'all'>('30d');
   const [chatStats, setChatStats] = useState({
@@ -36,6 +53,26 @@ const AnalyticsPage: React.FC = () => {
     uniqueConversations: 0,
     messagesByRole: { customer: 0, artist: 0, manager: 0, admin: 0 },
   });
+  const [artistRoleRequests, setArtistRoleRequests] = useState<any[]>([]);
+  const [collabRequests, setCollabRequests] = useState<any[]>([]);
+
+  // Artist role requests
+  useEffect(() => {
+    const q = query(collection(db, 'artistRoleRequests'), orderBy('createdAt', 'desc'));
+    const unsub = onSnapshot(q, (snap) => {
+      setArtistRoleRequests(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+    });
+    return () => unsub();
+  }, []);
+
+  // Collaboration requests
+  useEffect(() => {
+    const q = query(collection(db, 'collabRequests'), orderBy('createdAt', 'desc'));
+    const unsub = onSnapshot(q, (snap) => {
+      setCollabRequests(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+    });
+    return () => unsub();
+  }, []);
 
   // Load chat statistics
   useEffect(() => {
@@ -165,7 +202,38 @@ const AnalyticsPage: React.FC = () => {
   const publishedRemixes = remixes.filter((r) => r.status === 'published').length;
   const featuredRemixes = remixes.filter((r) => r.featured).length;
   const publishedContent = content.filter((c) => c.status === 'published').length;
-  const activeCollaborations = collaborations.filter((c) => c.status === 'active').length;
+
+  // Catalog breakdown
+  const publishedArt = art.filter((a) => a.status === 'published').length;
+  const featuredArt = art.filter((a) => a.featured).length;
+  const publishedMerch = merchandise.filter((m) => m.status === 'published').length;
+  const featuredMerch = merchandise.filter((m) => m.featured).length;
+  const publishedServices = services.filter((s) => s.status === 'published').length;
+  const featuredServices = services.filter((s) => s.featured).length;
+  const publishedEdits = edits.filter((e) => e.status === 'published').length;
+  const featuredEdits = edits.filter((e) => e.featured).length;
+  const publicPlaylists = playlists.filter((p) => p.isPublic).length;
+  const featuredPlaylists = playlists.filter((p) => p.isFeatured).length;
+
+  // Discount codes
+  const activeDiscountCodes = discountCodes.filter((d) => d.isActive).length;
+  const totalDiscountUses = discountCodes.reduce((sum, d) => sum + (d.usedCount || 0), 0);
+
+  // Requests
+  const pendingArtistRequests = artistRoleRequests.filter((r) => r.status === 'pending').length;
+  const approvedArtistRequests = artistRoleRequests.filter((r) => r.status === 'approved').length;
+  const pendingCollabRequests = collabRequests.filter((r) => r.status === 'pending').length;
+  const approvedCollabRequests = collabRequests.filter((r) => r.status === 'approved').length;
+
+  // Orders breakdown
+  const pendingOrders = orders.filter((o) => o.status === 'pending').length;
+  const completedOrders = orders.filter((o) => o.status === 'completed').length;
+
+  // Collaborations
+  const activeCollaborations = collaborations.filter((c) =>
+    ['agreed', 'contract_sent', 'signed', 'in_progress'].includes(c.status)
+  ).length;
+  const completedCollaborations = collaborations.filter((c) => c.status === 'completed').length;
 
   // Loading states
   const isLoading = beatsLoading || tracksLoading || remixesLoading;
@@ -333,6 +401,172 @@ const AnalyticsPage: React.FC = () => {
                   {content.reduce((sum, c) => sum + c.shares, 0).toLocaleString()}
                 </p>
               </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Catalog Overview — published / featured per collection */}
+        <div>
+          <h2 className="text-xl font-semibold text-white mb-3">Catalog Overview</h2>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+            <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-5">
+              <div className="flex items-center justify-between mb-1">
+                <p className="text-white/40 text-sm">Beats</p>
+                <Music className="text-purple-400" size={18} />
+              </div>
+              <p className="text-2xl font-bold text-white">{beats.length}</p>
+              <p className="text-xs text-white/40 mt-1">
+                {publishedBeats} published · {featuredBeats} featured
+              </p>
+            </div>
+
+            <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-5">
+              <div className="flex items-center justify-between mb-1">
+                <p className="text-white/40 text-sm">Tracks</p>
+                <Music className="text-blue-400" size={18} />
+              </div>
+              <p className="text-2xl font-bold text-white">{tracks.length}</p>
+              <p className="text-xs text-white/40 mt-1">
+                {publishedTracks} published · {featuredTracks} featured
+              </p>
+            </div>
+
+            <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-5">
+              <div className="flex items-center justify-between mb-1">
+                <p className="text-white/40 text-sm">Remixes</p>
+                <Music className="text-pink-400" size={18} />
+              </div>
+              <p className="text-2xl font-bold text-white">{remixes.length}</p>
+              <p className="text-xs text-white/40 mt-1">
+                {publishedRemixes} published · {featuredRemixes} featured
+              </p>
+            </div>
+
+            <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-5">
+              <div className="flex items-center justify-between mb-1">
+                <p className="text-white/40 text-sm">Edits</p>
+                <Disc3 className="text-orange-400" size={18} />
+              </div>
+              <p className="text-2xl font-bold text-white">{edits.length}</p>
+              <p className="text-xs text-white/40 mt-1">
+                {publishedEdits} published · {featuredEdits} featured
+              </p>
+            </div>
+
+            <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-5">
+              <div className="flex items-center justify-between mb-1">
+                <p className="text-white/40 text-sm">Art</p>
+                <Palette className="text-fuchsia-400" size={18} />
+              </div>
+              <p className="text-2xl font-bold text-white">{art.length}</p>
+              <p className="text-xs text-white/40 mt-1">
+                {publishedArt} published · {featuredArt} featured
+              </p>
+            </div>
+
+            <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-5">
+              <div className="flex items-center justify-between mb-1">
+                <p className="text-white/40 text-sm">Merchandise</p>
+                <Shirt className="text-amber-400" size={18} />
+              </div>
+              <p className="text-2xl font-bold text-white">{merchandise.length}</p>
+              <p className="text-xs text-white/40 mt-1">
+                {publishedMerch} published · {featuredMerch} featured
+              </p>
+            </div>
+
+            <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-5">
+              <div className="flex items-center justify-between mb-1">
+                <p className="text-white/40 text-sm">Services</p>
+                <Briefcase className="text-teal-400" size={18} />
+              </div>
+              <p className="text-2xl font-bold text-white">{services.length}</p>
+              <p className="text-xs text-white/40 mt-1">
+                {publishedServices} published · {featuredServices} featured
+              </p>
+            </div>
+
+            <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-5">
+              <div className="flex items-center justify-between mb-1">
+                <p className="text-white/40 text-sm">Playlists</p>
+                <ListMusic className="text-indigo-400" size={18} />
+              </div>
+              <p className="text-2xl font-bold text-white">{playlists.length}</p>
+              <p className="text-xs text-white/40 mt-1">
+                {publicPlaylists} public · {featuredPlaylists} featured
+              </p>
+            </div>
+
+            <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-5">
+              <div className="flex items-center justify-between mb-1">
+                <p className="text-white/40 text-sm">Discount Codes</p>
+                <Tag className="text-emerald-400" size={18} />
+              </div>
+              <p className="text-2xl font-bold text-white">{discountCodes.length}</p>
+              <p className="text-xs text-white/40 mt-1">
+                {activeDiscountCodes} active · {totalDiscountUses} uses
+              </p>
+            </div>
+
+            <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-5">
+              <div className="flex items-center justify-between mb-1">
+                <p className="text-white/40 text-sm">Articles</p>
+                <FileText className="text-sky-400" size={18} />
+              </div>
+              <p className="text-2xl font-bold text-white">{content.length}</p>
+              <p className="text-xs text-white/40 mt-1">
+                {publishedContent} published
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Operations Overview — orders, requests, collaborations */}
+        <div>
+          <h2 className="text-xl font-semibold text-white mb-3">Operations</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-5">
+              <div className="flex items-center justify-between mb-1">
+                <p className="text-white/40 text-sm">Orders</p>
+                <ShoppingCart className="text-blue-400" size={18} />
+              </div>
+              <p className="text-2xl font-bold text-white">{orders.length}</p>
+              <p className="text-xs text-white/40 mt-1">
+                {pendingOrders} pending · {completedOrders} completed
+              </p>
+            </div>
+
+            <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-5">
+              <div className="flex items-center justify-between mb-1">
+                <p className="text-white/40 text-sm">Artist Requests</p>
+                <UserPlus className="text-yellow-400" size={18} />
+              </div>
+              <p className="text-2xl font-bold text-white">{artistRoleRequests.length}</p>
+              <p className="text-xs text-white/40 mt-1">
+                {pendingArtistRequests} pending · {approvedArtistRequests} approved
+              </p>
+            </div>
+
+            <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-5">
+              <div className="flex items-center justify-between mb-1">
+                <p className="text-white/40 text-sm">Collab Requests</p>
+                <Handshake className="text-orange-400" size={18} />
+              </div>
+              <p className="text-2xl font-bold text-white">{collabRequests.length}</p>
+              <p className="text-xs text-white/40 mt-1">
+                {pendingCollabRequests} pending · {approvedCollabRequests} approved
+              </p>
+            </div>
+
+            <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-5">
+              <div className="flex items-center justify-between mb-1">
+                <p className="text-white/40 text-sm">Collaborations</p>
+                <Users className="text-green-400" size={18} />
+              </div>
+              <p className="text-2xl font-bold text-white">{collaborations.length}</p>
+              <p className="text-xs text-white/40 mt-1">
+                {activeCollaborations} active · {completedCollaborations} completed
+              </p>
             </div>
           </div>
         </div>

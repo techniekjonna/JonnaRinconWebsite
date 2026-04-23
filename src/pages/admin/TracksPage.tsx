@@ -457,31 +457,6 @@ const TracksPage: React.FC = () => {
           </div>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-4">
-            <p className="text-white/40 text-sm">Total Tracks</p>
-            <p className="text-2xl font-bold text-white mt-1">{tracks.length}</p>
-          </div>
-          <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-4">
-            <p className="text-white/40 text-sm">Published</p>
-            <p className="text-2xl font-bold text-white mt-1">
-              {tracks.filter((t) => t.status === 'published').length}
-            </p>
-          </div>
-          <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-4">
-            <p className="text-white/40 text-sm">Featured</p>
-            <p className="text-2xl font-bold text-white mt-1">
-              {tracks.filter((t) => t.featured).length}
-            </p>
-          </div>
-          <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-4">
-            <p className="text-white/40 text-sm">Total Plays</p>
-            <p className="text-2xl font-bold text-white mt-1">
-              {tracks.reduce((sum, t) => sum + t.plays, 0)}
-            </p>
-          </div>
-        </div>
-
         <div className="space-y-3">
           {loading ? (
             <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-12">
