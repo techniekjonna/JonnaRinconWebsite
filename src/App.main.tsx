@@ -1,5 +1,6 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { Analytics } from '@vercel/analytics/react';
 import { AuthProvider } from './contexts/AuthContext';
 import { CartProvider } from './contexts/CartContext';
 import { TrackDetailProvider } from './contexts/TrackDetailContext';
@@ -481,6 +482,7 @@ const MainApp: React.FC = () => {
                 </Routes>
                 </ScrollToTopWrapper>
               </BrowserRouter>
+              <Analytics />
             </BeatDetailProvider>
           </TrackDetailProvider>
         </CartProvider>
