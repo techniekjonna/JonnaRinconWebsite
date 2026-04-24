@@ -1140,6 +1140,59 @@ export interface Playlist {
 }
 
 // ============================================
+// AGENDA / JONNA RINCON PANEL TYPES
+// ============================================
+
+export type AgendaStatusType =
+  | 'beschikbaar'
+  | 'afwezig'
+  | 'beschikbaar_studio'
+  | 'custom';
+
+export interface AgendaStatus {
+  id: string;
+  name: string;
+  color: string; // hex color, e.g. '#22c55e'
+  bgColor: string; // tailwind/hex bg color
+  type: AgendaStatusType;
+  isBuiltIn: boolean;
+  createdAt: Timestamp;
+}
+
+export interface AgendaTask {
+  id: string;
+  date: string; // YYYY-MM-DD
+  title: string;
+  description?: string;
+  assignedUserId?: string;
+  assignedUserName?: string;
+  productType?: string;
+  time?: string; // HH:mm
+  isCompleted: boolean;
+  expiresAt?: Timestamp;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+export interface AgendaDay {
+  id: string; // YYYY-MM-DD
+  date: string; // YYYY-MM-DD
+  statusId?: string;
+  statusNote?: string;
+  studioSessionOrderId?: string;
+  studioSessionInfo?: {
+    customerName: string;
+    customerEmail: string;
+    orderId: string;
+    orderNumber: string;
+    serviceTitle: string;
+    bookedAt: Timestamp;
+  };
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+// ============================================
 // UTILITY TYPES
 // ============================================
 

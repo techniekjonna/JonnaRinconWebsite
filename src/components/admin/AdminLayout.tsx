@@ -27,6 +27,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const [expandedArtist, setExpandedArtist] = useState(false);
   const [expandedSocial, setExpandedSocial] = React.useState(false);
   const [expandedAnalytics, setExpandedAnalytics] = React.useState(false);
+  const [expandedJonnaPanel, setExpandedJonnaPanel] = React.useState(false);
   const [sidebarPosition, setSidebarPositionState] = useState<SidebarPosition>(() => {
     const saved = localStorage.getItem('admin-sidebar-position') as SidebarPosition;
     return saved || 'floating';
@@ -105,6 +106,15 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
         { label: 'Discount Codes', subtitle: 'Promo codes', href: '/admin/discount-codes' },
       ],
       expanded: expandedAnalytics,
+    },
+    {
+      label: 'JONNA RINCON PANEL',
+      subtitle: 'Agenda',
+      action: () => setExpandedJonnaPanel(!expandedJonnaPanel),
+      submenu: [
+        { label: 'Agenda', subtitle: 'Planning & beschikbaarheid', href: '/admin/agenda' },
+      ],
+      expanded: expandedJonnaPanel,
     },
   ];
 
@@ -235,9 +245,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                     <span className="block text-[11px] font-bold text-white/60 group-hover:text-white uppercase tracking-widest transition-colors">
                       {item.label}
                     </span>
-                    <span className="block text-[10px] text-white/25 mt-0.5 group-hover:text-red-400/60 transition-colors truncate">
-                      {item.subtitle}
-                    </span>
                   </div>
                   <ChevronRight
                     size={13}
@@ -252,7 +259,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                       className="group w-full text-left px-8 py-2.5 border-b border-white/[0.03] hover:bg-white/[0.04] transition-colors"
                     >
                       <span className="block text-xs text-white/50 group-hover:text-white transition-colors">{sub.label}</span>
-                      <span className="block text-[10px] text-white/20 group-hover:text-white/40 transition-colors mt-0.5">{sub.subtitle}</span>
                     </button>
                   ))}
                 </div>
