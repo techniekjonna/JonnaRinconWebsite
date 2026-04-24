@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, Calendar, List } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar, List, CheckCircle2, Circle } from 'lucide-react';
 import ManagerLayout from '../../components/manager/ManagerLayout';
 import {
   getAgendaDaysByMonth,
@@ -9,9 +9,11 @@ import {
 import { AgendaDay, AgendaTask, AgendaStatus } from '../../lib/firebase/types';
 
 type ViewMode = 'calendar' | 'list';
+type FilterType = 'all' | 'available' | 'absent' | 'studio' | 'completed' | 'pending';
 
 interface DayData {
   date: string;
+  statusId?: string;
   status?: AgendaStatus;
   tasks: AgendaTask[];
   studioSessionInfo?: AgendaDay['studioSessionInfo'];
@@ -24,7 +26,7 @@ const ManagerAgendaPage: React.FC = () => {
   const [statuses, setStatuses] = useState<AgendaStatus[]>([]);
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [showDetails, setShowDetails] = useState(false);
-  const [filterOpen, setFilterOpen] = useState(false);
+  const [activeFilter, setActiveFilter] = useState<FilterType>('all');
 
   // Load statuses on mount
   useEffect(() => {
@@ -46,12 +48,27 @@ const ManagerAgendaPage: React.FC = () => {
       const map = new Map<string, DayData>();
 
       days.forEach(day => {
+        const dayStatus = day.statusId ? statuses.find(s => s.id === day.statusId) : undefined;
         map.set(day.date, {
           date: day.date,
-          status: day.statusId ? statuses.find(s => s.id === day.statusId) : undefined,
+          statusId: day.statusId || undefined,
+          status: dayStatus,
           tasks: tasks.filter(t => t.date === day.date),
           studioSessionInfo: day.studioSessionInfo,
         });
+      });
+
+      // Add days with only tasks
+      tasks.forEach(task => {
+        if (!map.has(task.date!)) {
+          map.set(task.date!, {
+            date: task.date!,
+            statusId: undefined,
+            status: undefined,
+            tasks: [task],
+            studioSessionInfo: undefined,
+          });
+        }
       });
 
       setDaysData(map);
@@ -113,26 +130,20 @@ const ManagerAgendaPage: React.FC = () => {
             <p className="text-sm text-white/30 mt-1">View schedule and availability</p>
           </div>
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => setViewMode('calendar')}
-              className={`px-4 py-2 rounded-lg transition-all ${
-                viewMode === 'calendar'
-                  ? 'bg-blue-600/20 border border-blue-600/40 text-blue-400'
-                  : 'bg-white/[0.04] border border-white/[0.06] text-white/40 hover:bg-white/[0.08]'
-              }`}
-            >
+            <button onClick={() => setViewMode('calendar')} className={`px-4 py-2 rounded-lg transition-all ${viewMode === 'calendar' ? 'bg-blue-600/20 border border-blue-600/40 text-blue-400' : 'bg-white/[0.04] border border-white/[0.06] text-white/40'}`}>
               <Calendar size={18} />
             </button>
-            <button
-              onClick={() => setViewMode('list')}
-              className={`px-4 py-2 rounded-lg transition-all ${
-                viewMode === 'list'
-                  ? 'bg-blue-600/20 border border-blue-600/40 text-blue-400'
-                  : 'bg-white/[0.04] border border-white/[0.06] text-white/40 hover:bg-white/[0.08]'
-              }`}
-            >
+            <button onClick={() => setViewMode('list')} className={`px-4 py-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-blue-600/20 border border-blue-600/40 text-blue-400' : 'bg-white/[0.04] border border-white/[0.06] text-white/40'}`}>
               <List size={18} />
             </button>
+            <select value={activeFilter} onChange={(e) => setActiveFilter(e.target.value as FilterType)} className="px-4 py-2 rounded-lg bg-white/[0.04] border border-white/[0.06] text-white/40 text-sm">
+              <option value="all">All</option>
+              <option value="available">Available</option>
+              <option value="absent">Absent</option>
+              <option value="studio">Studio</option>
+              <option value="pending">Pending Tasks</option>
+              <option value="completed">Completed</option>
+            </select>
           </div>
         </div>
 
@@ -162,34 +173,14 @@ const ManagerAgendaPage: React.FC = () => {
             {/* Days grid */}
             <div className="grid grid-cols-7 gap-2">
               {calendarDays.map((day, idx) => {
-                if (day === null) {
-                  return <div key={`empty-${idx}`} className="aspect-square" />;
-                }
-
+                if (day === null) return <div key={`empty-${idx}`} className="aspect-square" />;
                 const dateStr = formatDate(currentDate.getFullYear(), currentDate.getMonth(), day);
                 const data = daysData.get(dateStr);
-                const status = data?.status;
-
                 return (
-                  <button
-                    key={day}
-                    onClick={() => handleDayClick(day)}
-                    className="aspect-square p-3 rounded-xl bg-white/[0.06] border border-white/[0.08] hover:border-white/[0.15] hover:bg-white/[0.10] transition-all flex flex-col items-start justify-start text-left cursor-pointer"
-                  >
+                  <button key={day} onClick={() => handleDayClick(day)} className="aspect-square p-3 rounded-xl bg-white/[0.06] border border-white/[0.08] hover:border-white/[0.15] hover:bg-white/[0.10] transition-all flex flex-col items-start justify-start text-left cursor-pointer">
                     <div className="text-sm font-semibold text-white">{day}</div>
-                    {status && (
-                      <div
-                        className="text-[10px] font-medium mt-1 px-1.5 py-0.5 rounded-full text-white"
-                        style={{ backgroundColor: status.color + '33' }}
-                      >
-                        {status.name}
-                      </div>
-                    )}
-                    {data?.tasks && data.tasks.length > 0 && (
-                      <div className="text-[10px] text-white/40 mt-1">
-                        {data.tasks.filter(t => !t.completed).length} task{data.tasks.filter(t => !t.completed).length !== 1 ? 's' : ''}
-                      </div>
-                    )}
+                    {data?.status && <div className="text-[10px] font-medium mt-1 px-1.5 py-0.5 rounded-full text-white" style={{ backgroundColor: data.status.color + '33' }}>{data.status.name}</div>}
+                    {data?.tasks.length ? <div className="text-[10px] text-white/40 mt-1">{data.tasks.filter(t => !t.completed).length} todo</div> : null}
                   </button>
                 );
               })}
@@ -202,28 +193,21 @@ const ManagerAgendaPage: React.FC = () => {
           <div className="space-y-3">
             {Array.from(daysData.entries())
               .sort(([dateA], [dateB]) => dateA.localeCompare(dateB))
+              .filter(([_, data]) => {
+                if (activeFilter === 'available') return data.status?.type === 'beschikbaar';
+                if (activeFilter === 'absent') return data.status?.type === 'afwezig';
+                if (activeFilter === 'studio') return data.status?.type === 'beschikbaar_studio';
+                if (activeFilter === 'completed') return data.tasks.some(t => t.completed);
+                if (activeFilter === 'pending') return data.tasks.some(t => !t.completed);
+                return true;
+              })
               .map(([date, data]) => (
-                <div
-                  key={date}
-                  onClick={() => {
-                    setSelectedDay(date);
-                    setShowDetails(true);
-                  }}
-                  className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-4 hover:border-white/[0.12] cursor-pointer transition-all"
-                >
+                <div key={date} onClick={() => { setSelectedDay(date); setShowDetails(true); }} className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-4 hover:border-white/[0.12] cursor-pointer transition-all">
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
                       <h3 className="font-semibold text-white">{date}</h3>
-                      {data.status && (
-                        <p className="text-sm mt-1" style={{ color: data.status.color }}>
-                          {data.status.name}
-                        </p>
-                      )}
-                      {data.tasks.length > 0 && (
-                        <p className="text-sm text-white/30 mt-1">
-                          {data.tasks.filter(t => !t.completed).length} pending task{data.tasks.filter(t => !t.completed).length !== 1 ? 's' : ''}
-                        </p>
-                      )}
+                      {data.status && <p className="text-sm mt-1" style={{ color: data.status.color }}>{data.status.name}</p>}
+                      {data.tasks.length > 0 && <p className="text-sm text-white/30 mt-1">{data.tasks.filter(t => !t.completed).length} pending</p>}
                     </div>
                   </div>
                 </div>
@@ -305,26 +289,15 @@ const ManagerAgendaPage: React.FC = () => {
                   <h3 className="text-sm font-semibold text-white/60 uppercase mb-3">Tasks</h3>
                   <div className="space-y-2">
                     {dayData.tasks.map(task => (
-                      <div
-                        key={task.id}
-                        className="bg-white/[0.04] border border-white/[0.06] rounded-lg p-3"
-                      >
-                        <div className="flex items-start justify-between gap-2">
-                          <p className={`text-sm font-medium ${task.completed ? 'text-white/40 line-through' : 'text-white'}`}>
-                            {task.title}
-                          </p>
-                          {task.completed && (
-                            <span className="text-xs px-2 py-1 rounded-full bg-emerald-500/10 text-emerald-400">
-                              Done
-                            </span>
-                          )}
+                      <div key={task.id} className="bg-white/[0.04] border border-white/[0.06] rounded-lg p-3">
+                        <div className="flex items-start gap-2">
+                          <div className="mt-0.5 flex-shrink-0">{task.completed ? <CheckCircle2 size={16} className="text-emerald-400" /> : <Circle size={16} className="text-white/30" />}</div>
+                          <div className="flex-1">
+                            <p className={`text-sm font-medium ${task.completed ? 'text-white/40 line-through' : 'text-white'}`}>{task.title}</p>
+                            {task.description && <p className="text-white/40 text-xs mt-1">{task.description}</p>}
+                            {task.time && <p className="text-white/30 text-xs mt-1">⏰ {task.time}</p>}
+                          </div>
                         </div>
-                        {task.description && (
-                          <p className="text-white/40 text-xs mt-1">{task.description}</p>
-                        )}
-                        {task.time && (
-                          <p className="text-white/30 text-xs mt-1">⏰ {task.time}</p>
-                        )}
                       </div>
                     ))}
                   </div>
