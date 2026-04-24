@@ -86,6 +86,7 @@ import ManagerDashboard from './pages/manager/DashboardPage';
 import ManagerBeats from './pages/manager/BeatsPage';
 import ManagerCollaborations from './pages/manager/CollaborationsPage';
 import ManagerChat from './pages/manager/ChatPage';
+import ManagerAgendaPage from './pages/manager/AgendaPage';
 
 // Checkout pages (public)
 import CheckoutPage from './pages/CheckoutPage';
@@ -469,6 +470,14 @@ const MainApp: React.FC = () => {
             element={
               <ProtectedRoute allowedRoles={['manager']}>
                 <ManagerChat />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/manager/agenda"
+            element={
+              <ProtectedRoute allowedRoles={['manager']}>
+                <ManagerAgendaPage />
               </ProtectedRoute>
             }
           />
