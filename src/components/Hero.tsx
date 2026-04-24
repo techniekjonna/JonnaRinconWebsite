@@ -145,9 +145,9 @@ export default function Hero() {
           {display || '\u00A0'}
         </h1>
 
-        {/* Buttons — absoluut gepositioneerd onderaan het scherm, onder de pet */}
+        {/* Buttons — absoluut gepositioneerd onder het scherm, hoger geplaatst */}
         <div
-          className="absolute bottom-16 md:bottom-24 flex flex-col sm:flex-row gap-3 transition-opacity duration-700 flex-wrap justify-center"
+          className="absolute bottom-40 md:bottom-48 flex flex-col sm:flex-row gap-3 transition-opacity duration-700 flex-wrap justify-center"
           style={{ opacity: done ? 1 : 0 }}
         >
           <a
