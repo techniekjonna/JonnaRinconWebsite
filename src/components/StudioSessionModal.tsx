@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, ChevronLeft, ChevronRight, ShoppingCart } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, ShoppingCart, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Service } from '../lib/firebase/types';
 import { useAuth } from '../contexts/AuthContext';
@@ -7,9 +7,7 @@ import { useCartContext } from '../contexts/CartContext';
 import LoginModal from './LoginModal';
 import {
   getAgendaDaysByMonth,
-  getAgendaStatuses,
 } from '../lib/firebase/services/agendaService';
-import { AgendaStatus } from '../lib/firebase/types';
 
 interface StudioSessionModalProps {
   service: Service | null;
@@ -17,30 +15,30 @@ interface StudioSessionModalProps {
   onClose: () => void;
 }
 
+interface HourRate {
+  hours: number;
+  price: number;
+}
+
 const StudioSessionModal: React.FC<StudioSessionModalProps> = ({ service, isOpen, onClose }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { addItem } = useCartContext();
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [page, setPage] = useState<'overview' | 'calendar'>('overview');
+
+  // Pricing
+  const [useCustomHours, setUseCustomHours] = useState(false);
+  const [hourRates, setHourRates] = useState<HourRate[]>([
+    { hours: 2, price: 200 },
+    { hours: 4, price: 350 },
+  ]);
+
+  // Calendar
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [selectedRate, setSelectedRate] = useState<HourRate | null>(null);
   const [studioAvailableDays, setStudioAvailableDays] = useState<Set<string>>(new Set());
-  const [statuses, setStatuses] = useState<AgendaStatus[]>([]);
-  const [selectedDelivery, setSelectedDelivery] = useState<'48h' | '72h' | '7days' | null>(null);
-
-  const DELIVERY_OPTIONS = [
-    { key: '48h' as const, label: '48H Delivery', price: 250 },
-    { key: '72h' as const, label: '72H Delivery', price: 150 },
-    { key: '7days' as const, label: '7 Days', price: 100 },
-  ];
-
-  useEffect(() => {
-    const loadStatuses = async () => {
-      const allStatuses = await getAgendaStatuses();
-      setStatuses(allStatuses);
-    };
-    loadStatuses();
-  }, []);
 
   useEffect(() => {
     const loadStudioDays = async () => {
@@ -75,7 +73,7 @@ const StudioSessionModal: React.FC<StudioSessionModalProps> = ({ service, isOpen
     return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
   };
 
-  const monthString = currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  const monthString = currentDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
   const daysInMonth = getDaysInMonth(currentDate);
   const firstDay = getFirstDayOfMonth(currentDate);
 
@@ -87,24 +85,25 @@ const StudioSessionModal: React.FC<StudioSessionModalProps> = ({ service, isOpen
     calendarDays.push(day);
   }
 
-  const handlePrevMonth = () => {
-    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1));
-  };
-
-  const handleNextMonth = () => {
-    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1));
-  };
-
-  const handleSelectDate = (day: number) => {
-    const dateStr = formatDate(currentDate.getFullYear(), currentDate.getMonth(), day);
-    if (studioAvailableDays.has(dateStr)) {
-      setSelectedDate(dateStr);
+  const handleAddRate = () => {
+    if (hourRates.length < 5) {
+      setHourRates([...hourRates, { hours: 1, price: 100 }]);
     }
   };
 
+  const handleRemoveRate = (idx: number) => {
+    setHourRates(hourRates.filter((_, i) => i !== idx));
+  };
+
+  const handleUpdateRate = (idx: number, field: 'hours' | 'price', value: number) => {
+    const updated = [...hourRates];
+    updated[idx][field] = value;
+    setHourRates(updated);
+  };
+
   const handleAddToCart = () => {
-    if (!selectedDate || !selectedDelivery) {
-      alert('Please select both a date and delivery option');
+    if (!selectedDate || !selectedRate) {
+      alert('Please select both a date and duration');
       return;
     }
 
@@ -113,25 +112,30 @@ const StudioSessionModal: React.FC<StudioSessionModalProps> = ({ service, isOpen
       return;
     }
 
-    const deliveryInfo = DELIVERY_OPTIONS.find(opt => opt.key === selectedDelivery);
-    const price = deliveryInfo?.price || service.rate;
-
     addItem({
       id: service.id,
-      title: `${service.name} - ${selectedDate}`,
-      price: price,
+      title: `${service.name} - ${selectedRate.hours}h - ${selectedDate}`,
+      price: selectedRate.price,
       quantity: 1,
       image: service.coverUrl || '',
       metadata: {
         serviceId: service.id,
         serviceName: service.name,
         bookingDate: selectedDate,
-        deliveryOption: selectedDelivery,
+        duration: `${selectedRate.hours}h`,
+        price: selectedRate.price,
       },
     });
 
     alert('Studio session added to cart!');
     onClose();
+  };
+
+  const selectDate = (day: number) => {
+    const dateStr = formatDate(currentDate.getFullYear(), currentDate.getMonth(), day);
+    if (studioAvailableDays.has(dateStr)) {
+      setSelectedDate(dateStr);
+    }
   };
 
   return (
@@ -142,10 +146,10 @@ const StudioSessionModal: React.FC<StudioSessionModalProps> = ({ service, isOpen
         <div className="fixed inset-0 flex items-center justify-center p-4 overflow-y-auto">
           <div className="relative bg-black border border-white/10 rounded-3xl max-w-2xl w-full my-8">
             {/* Header */}
-            <div className="sticky top-0 z-10 bg-black/80 backdrop-blur-sm border-b border-white/10 px-6 md:px-8 py-6 flex items-center justify-between rounded-t-3xl">
+            <div className="sticky top-0 z-10 bg-black/80 backdrop-blur-sm border-b border-white/10 px-6 md:px-8 py-5 flex items-center justify-between rounded-t-3xl">
               <div>
                 <h2 className="text-2xl md:text-3xl font-bold text-white">{service.name}</h2>
-                <p className="text-white/40 text-sm mt-1">Select available studio date</p>
+                <p className="text-white/40 text-xs mt-1">{page === 'overview' ? 'Configure your session' : 'Select available date'}</p>
               </div>
               <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full transition-colors">
                 <X size={24} className="text-white/60 hover:text-white" />
@@ -153,114 +157,205 @@ const StudioSessionModal: React.FC<StudioSessionModalProps> = ({ service, isOpen
             </div>
 
             {/* Content */}
-            <div className="px-6 md:px-8 py-6 space-y-6">
-              {/* Calendar Section */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-white">Select Available Date</h3>
+            <div className="px-6 md:px-8 py-6">
+              {page === 'overview' ? (
+                // PAGE 1: Overview
+                <div className="space-y-6">
+                  {/* Service Description */}
+                  <div className="space-y-2">
+                    <h3 className="text-sm font-semibold text-white/60 uppercase">About</h3>
+                    <p className="text-white/70 text-sm">{service.description}</p>
+                  </div>
 
-                {/* Month Navigation */}
-                <div className="flex items-center justify-between bg-white/[0.05] border border-white/10 rounded-xl p-4">
-                  <button onClick={handlePrevMonth} className="p-2 hover:bg-white/10 rounded-lg transition-colors">
-                    <ChevronLeft size={20} className="text-white" />
-                  </button>
-                  <h4 className="text-white font-semibold min-w-[200px] text-center">{monthString}</h4>
-                  <button onClick={handleNextMonth} className="p-2 hover:bg-white/10 rounded-lg transition-colors">
-                    <ChevronRight size={20} className="text-white" />
-                  </button>
-                </div>
+                  {/* Base Rate */}
+                  <div className="bg-white/[0.05] border border-white/10 rounded-xl p-4">
+                    <p className="text-white/40 text-xs uppercase">Base Rate</p>
+                    <p className="text-2xl font-bold text-white">€{service.rate}<span className="text-sm text-white/40">/hour</span></p>
+                  </div>
 
-                {/* Calendar Grid */}
-                <div className="bg-white/[0.03] border border-white/10 rounded-2xl p-4 space-y-4">
-                  {/* Day Headers */}
-                  <div className="grid grid-cols-7 gap-2">
-                    {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => (
-                      <div key={d} className="text-center text-xs font-semibold text-white/40 py-2">
-                        {d}
+                  {/* Pricing Options */}
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-sm font-semibold text-white/60 uppercase">Custom Duration Pricing</h3>
+                      <button
+                        onClick={() => setUseCustomHours(!useCustomHours)}
+                        className={`px-3 py-1 rounded-lg text-xs font-medium transition-all ${
+                          useCustomHours
+                            ? 'bg-red-600/20 border border-red-600/40 text-red-400'
+                            : 'bg-white/[0.05] border border-white/10 text-white/40'
+                        }`}
+                      >
+                        {useCustomHours ? 'Enabled' : 'Disabled'}
+                      </button>
+                    </div>
+
+                    {useCustomHours && (
+                      <div className="space-y-3 bg-white/[0.03] border border-white/10 rounded-xl p-4">
+                        {hourRates.map((rate, idx) => (
+                          <div key={idx} className="flex gap-2 items-end">
+                            <div className="flex-1">
+                              <label className="text-xs text-white/40">Hours</label>
+                              <input
+                                type="number"
+                                min="1"
+                                max="168"
+                                value={rate.hours}
+                                onChange={(e) => handleUpdateRate(idx, 'hours', parseInt(e.target.value) || 1)}
+                                className="w-full px-3 py-2 bg-white/[0.08] border border-white/10 rounded-lg text-white text-sm"
+                              />
+                            </div>
+                            <div className="flex-1">
+                              <label className="text-xs text-white/40">Price (€)</label>
+                              <input
+                                type="number"
+                                min="0"
+                                value={rate.price}
+                                onChange={(e) => handleUpdateRate(idx, 'price', parseInt(e.target.value) || 0)}
+                                className="w-full px-3 py-2 bg-white/[0.08] border border-white/10 rounded-lg text-white text-sm"
+                              />
+                            </div>
+                            <button
+                              onClick={() => handleRemoveRate(idx)}
+                              className="px-3 py-2 rounded-lg bg-red-600/20 text-red-400 hover:bg-red-600/30 text-sm"
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        ))}
+
+                        {hourRates.length < 5 && (
+                          <button
+                            onClick={handleAddRate}
+                            className="w-full py-2 px-3 rounded-lg bg-white/[0.05] border border-white/10 text-white/40 hover:bg-white/[0.08] text-sm font-medium transition-all"
+                          >
+                            + Add Duration Option
+                          </button>
+                        )}
                       </div>
-                    ))}
+                    )}
                   </div>
 
-                  {/* Calendar Days */}
-                  <div className="grid grid-cols-7 gap-2">
-                    {calendarDays.map((day, idx) => {
-                      if (day === null) return <div key={`empty-${idx}`} />;
-
-                      const dateStr = formatDate(currentDate.getFullYear(), currentDate.getMonth(), day);
-                      const isAvailable = studioAvailableDays.has(dateStr);
-                      const isSelected = selectedDate === dateStr;
-
-                      return (
-                        <button
-                          key={day}
-                          onClick={() => handleSelectDate(day)}
-                          disabled={!isAvailable}
-                          className={`aspect-square flex items-center justify-center rounded-lg font-medium transition-all ${
-                            isSelected
-                              ? 'bg-red-600 text-white border border-red-500'
-                              : isAvailable
-                              ? 'bg-green-600/20 text-green-400 border border-green-600/40 hover:bg-green-600/30 cursor-pointer'
-                              : 'bg-white/[0.03] text-white/30 border border-white/10 cursor-not-allowed'
-                          }`}
-                        >
-                          {day}
-                        </button>
-                      );
-                    })}
-                  </div>
+                  {/* Next Button */}
+                  <button
+                    onClick={() => setPage('calendar')}
+                    className="w-full py-4 rounded-xl bg-red-600 hover:bg-red-700 text-white font-semibold transition-all flex items-center justify-center gap-2"
+                  >
+                    Continue to Booking <ArrowRight size={18} />
+                  </button>
                 </div>
+              ) : (
+                // PAGE 2: Calendar & Selection
+                <div className="space-y-4">
+                  {/* Compact Calendar */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between bg-white/[0.05] rounded-lg p-3">
+                      <button onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1))} className="p-1 hover:bg-white/10 rounded">
+                        <ChevronLeft size={16} className="text-white" />
+                      </button>
+                      <span className="text-sm font-semibold text-white">{monthString}</span>
+                      <button onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1))} className="p-1 hover:bg-white/10 rounded">
+                        <ChevronRight size={16} className="text-white" />
+                      </button>
+                    </div>
 
-                {selectedDate && (
-                  <div className="bg-green-600/10 border border-green-600/30 rounded-xl p-4">
-                    <p className="text-green-400 font-medium">Selected: {selectedDate}</p>
+                    {/* Calendar Grid - Compact */}
+                    <div className="bg-white/[0.03] border border-white/10 rounded-xl p-3 space-y-2">
+                      <div className="grid grid-cols-7 gap-1">
+                        {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(d => (
+                          <div key={d} className="text-center text-[10px] font-semibold text-white/40 py-1">
+                            {d}
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="grid grid-cols-7 gap-1">
+                        {calendarDays.map((day, idx) => {
+                          if (day === null) return <div key={`empty-${idx}`} />;
+
+                          const dateStr = formatDate(currentDate.getFullYear(), currentDate.getMonth(), day);
+                          const isAvailable = studioAvailableDays.has(dateStr);
+                          const isSelected = selectedDate === dateStr;
+
+                          return (
+                            <button
+                              key={day}
+                              onClick={() => selectDate(day)}
+                              disabled={!isAvailable}
+                              className={`aspect-square flex items-center justify-center text-xs font-semibold rounded transition-all ${
+                                isSelected
+                                  ? 'bg-red-600 text-white'
+                                  : isAvailable
+                                  ? 'bg-green-600/20 text-green-400 hover:bg-green-600/30'
+                                  : 'bg-white/[0.02] text-white/20'
+                              }`}
+                            >
+                              {day}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
                   </div>
-                )}
-              </div>
 
-              {/* Delivery Options */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-white">Delivery Option</h3>
-                <div className="grid grid-cols-3 gap-3">
-                  {DELIVERY_OPTIONS.map(option => (
+                  {/* Duration Selection */}
+                  {useCustomHours ? (
+                    <div className="space-y-2">
+                      <label className="text-xs font-semibold text-white/60 uppercase">Select Duration</label>
+                      <div className="grid grid-cols-1 gap-2">
+                        {hourRates.map(rate => (
+                          <button
+                            key={`${rate.hours}-${rate.price}`}
+                            onClick={() => setSelectedRate(rate)}
+                            className={`p-3 rounded-lg border-2 transition-all text-left ${
+                              selectedRate?.hours === rate.hours && selectedRate?.price === rate.price
+                                ? 'bg-red-600/20 border-red-600/40 text-red-400'
+                                : 'bg-white/[0.05] border-white/10 text-white/60 hover:bg-white/[0.08]'
+                            }`}
+                          >
+                            <div className="font-semibold text-sm">{rate.hours}h Session</div>
+                            <div className="text-xs text-white/40">€{rate.price}</div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="bg-white/[0.05] border border-white/10 rounded-xl p-4">
+                      <p className="text-xs text-white/40 uppercase mb-2">Price</p>
+                      <p className="text-2xl font-bold text-white">€{service.rate}<span className="text-sm text-white/40">/hour</span></p>
+                      <p className="text-xs text-white/50 mt-2">Enter hours at checkout</p>
+                    </div>
+                  )}
+
+                  {selectedDate && (
+                    <div className="bg-green-600/10 border border-green-600/30 rounded-lg p-3">
+                      <p className="text-green-400 text-xs font-semibold uppercase">Selected Date</p>
+                      <p className="text-white text-sm font-medium">{selectedDate}</p>
+                    </div>
+                  )}
+
+                  {/* Action Buttons */}
+                  <div className="flex gap-3">
                     <button
-                      key={option.key}
-                      onClick={() => setSelectedDelivery(option.key)}
-                      className={`p-4 rounded-xl border-2 transition-all ${
-                        selectedDelivery === option.key
-                          ? 'bg-red-600/20 border-red-600/40 text-red-400'
-                          : 'bg-white/[0.05] border-white/10 text-white/60 hover:bg-white/10'
+                      onClick={() => setPage('overview')}
+                      className="flex-1 py-3 rounded-xl bg-white/[0.05] border border-white/10 text-white font-semibold hover:bg-white/[0.08]"
+                    >
+                      Back
+                    </button>
+                    <button
+                      onClick={handleAddToCart}
+                      disabled={!selectedDate || (!useCustomHours && !selectedRate)}
+                      className={`flex-1 py-3 rounded-xl font-semibold transition-all flex items-center justify-center gap-2 ${
+                        selectedDate && (useCustomHours ? selectedRate : true)
+                          ? 'bg-red-600 hover:bg-red-700 text-white cursor-pointer'
+                          : 'bg-white/[0.05] text-white/40 cursor-not-allowed'
                       }`}
                     >
-                      <div className="font-semibold text-sm">{option.label}</div>
-                      <div className="text-xs text-white/40 mt-1">€{option.price}</div>
+                      <ShoppingCart size={18} />
+                      Add to Cart {selectedRate && `- €${selectedRate.price}`}
                     </button>
-                  ))}
+                  </div>
                 </div>
-              </div>
-
-              {/* Service Info */}
-              <div className="bg-white/[0.05] border border-white/10 rounded-xl p-4 space-y-2">
-                <h4 className="font-semibold text-white text-sm">Service Details</h4>
-                <p className="text-white/60 text-sm">{service.description}</p>
-                <p className="text-white/40 text-xs mt-3">Rate: €{service.rate}/hour</p>
-              </div>
-
-              {/* Action Button */}
-              <button
-                onClick={handleAddToCart}
-                disabled={!selectedDate || !selectedDelivery}
-                className={`w-full py-4 rounded-xl font-semibold transition-all flex items-center justify-center gap-2 ${
-                  selectedDate && selectedDelivery
-                    ? 'bg-red-600 hover:bg-red-700 text-white cursor-pointer'
-                    : 'bg-white/[0.05] text-white/40 cursor-not-allowed'
-                }`}
-              >
-                <ShoppingCart size={20} />
-                Add to Cart - €{selectedDelivery ? DELIVERY_OPTIONS.find(o => o.key === selectedDelivery)?.price : '0'}
-              </button>
-
-              <p className="text-white/40 text-xs text-center">
-                You'll confirm booking details and payment in the checkout
-              </p>
+              )}
             </div>
           </div>
         </div>
