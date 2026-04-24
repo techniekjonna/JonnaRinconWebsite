@@ -27,7 +27,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const [expandedArtist, setExpandedArtist] = useState(false);
   const [expandedSocial, setExpandedSocial] = React.useState(false);
   const [expandedAnalytics, setExpandedAnalytics] = React.useState(false);
-  const [expandedJonnaPanel, setExpandedJonnaPanel] = React.useState(false);
+  const [expandedPanel, setExpandedPanel] = React.useState(false);
   const [sidebarPosition, setSidebarPositionState] = useState<SidebarPosition>(() => {
     const saved = localStorage.getItem('admin-sidebar-position') as SidebarPosition;
     return saved || 'floating';
@@ -110,11 +110,11 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     {
       label: 'JONNA RINCON PANEL',
       subtitle: 'Agenda',
-      action: () => setExpandedJonnaPanel(!expandedJonnaPanel),
+      action: () => setExpandedPanel(!expandedPanel),
       submenu: [
-        { label: 'Agenda', subtitle: 'Planning & beschikbaarheid', href: '/admin/agenda' },
+        { label: 'Agenda', subtitle: 'Planning & tasks', href: '/admin/agenda' },
       ],
-      expanded: expandedJonnaPanel,
+      expanded: expandedPanel,
     },
   ];
 

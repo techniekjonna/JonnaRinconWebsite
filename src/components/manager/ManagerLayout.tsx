@@ -35,6 +35,7 @@ const ManagerLayout: React.FC<ManagerLayoutProps> = ({ children }) => {
     { name: 'Beats', href: '/manager/beats', icon: Music },
     { name: 'Collaborations', href: '/manager/collaborations', icon: Handshake },
     { name: 'Chat', href: '/manager/chat', icon: MessageSquare },
+    { name: 'Agenda', href: '/manager/agenda', icon: CalendarDays },
   ];
 
   const isActive = (path: string) => location.pathname === path;
