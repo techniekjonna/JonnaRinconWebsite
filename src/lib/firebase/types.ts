@@ -1140,6 +1140,49 @@ export interface Playlist {
 }
 
 // ============================================
+// AGENDA TYPES
+// ============================================
+
+export type AgendaDayStatus = 'available' | 'absent' | 'studio' | string;
+
+export interface AgendaTask {
+  id: string;
+  title: string;
+  description?: string;
+  userId?: string;
+  userDisplayName?: string;
+  productType?: string;
+  time?: string;
+  completed: boolean;
+  createdAt: Timestamp;
+}
+
+export interface AgendaEntry {
+  id: string; // YYYY-MM-DD date string
+  date: string; // YYYY-MM-DD
+  status?: AgendaDayStatus;
+  statusLabel?: string;
+  statusDescription?: string;
+  tasks: AgendaTask[];
+  studioSessionInfo?: {
+    clientName?: string;
+    clientEmail?: string;
+    sessionType?: string;
+    notes?: string;
+  };
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+export interface AgendaCustomStatus {
+  id: string;
+  name: string;
+  color: string;
+  description?: string;
+  createdAt: Timestamp;
+}
+
+// ============================================
 // UTILITY TYPES
 // ============================================
 
