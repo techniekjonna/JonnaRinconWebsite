@@ -145,22 +145,28 @@ export default function Hero() {
           {display || '\u00A0'}
         </h1>
 
-        {/* Buttons — absoluut gepositioneerd onderaan het scherm, onder de pet */}
+        {/* Buttons — absoluut gepositioneerd onder het scherm, hoger geplaatst */}
         <div
-          className="absolute bottom-16 md:bottom-24 flex flex-col sm:flex-row gap-3 transition-opacity duration-700"
+          className="absolute bottom-40 md:bottom-48 flex flex-col sm:flex-row gap-3 transition-opacity duration-700 flex-wrap justify-center"
           style={{ opacity: done ? 1 : 0 }}
         >
           <a
             href="/shop"
             className="px-8 py-3.5 bg-white text-black font-bold text-sm uppercase tracking-widest hover:bg-gray-200 transition-all duration-300 hover:scale-105 active:scale-95 text-center min-w-[180px]"
           >
-            Browse Beats
+            SHOP
           </a>
           <a
-            href="#music"
+            href="/my-tracks"
             className="px-8 py-3.5 bg-white text-black font-bold text-sm uppercase tracking-widest hover:bg-gray-200 transition-all duration-300 hover:scale-105 active:scale-95 text-center min-w-[180px]"
           >
             Listen Now
+          </a>
+          <a
+            href="/contact"
+            className="px-8 py-3.5 bg-white text-black font-bold text-sm uppercase tracking-widest hover:bg-gray-200 transition-all duration-300 hover:scale-105 active:scale-95 text-center min-w-[180px]"
+          >
+            Contact
           </a>
         </div>
       </div>
