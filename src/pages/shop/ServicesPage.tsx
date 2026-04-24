@@ -8,6 +8,7 @@ import { useServices } from '../../hooks/useServices';
 import { Service } from '../../lib/firebase/types';
 import { useScrollToTop } from '../../hooks/useScrollToTop';
 import MixMasterModal from '../../components/MixMasterModal';
+import StudioSessionModal from '../../components/StudioSessionModal';
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   Zap,
@@ -30,6 +31,12 @@ const isMixMasterService = (service: Service): boolean => {
   const name = service.name.toLowerCase();
   const slug = (service.slug || '').toLowerCase();
   return name.includes('mix') || slug.includes('mix');
+};
+
+const isStudioSessionService = (service: Service): boolean => {
+  const name = service.name.toLowerCase();
+  const slug = (service.slug || '').toLowerCase();
+  return name.includes('studio') || slug.includes('studio');
 };
 
 const ServicesPage: React.FC = () => {
@@ -162,9 +169,17 @@ const ServicesPage: React.FC = () => {
 
       <Footer />
 
-      {/* Service Modal — currently Mix & Master for all mix-type services */}
+      {/* Service Modals */}
       {selectedService && isMixMasterService(selectedService) && (
         <MixMasterModal
+          service={selectedService}
+          isOpen={modalOpen}
+          onClose={handleModalClose}
+        />
+      )}
+
+      {selectedService && isStudioSessionService(selectedService) && (
+        <StudioSessionModal
           service={selectedService}
           isOpen={modalOpen}
           onClose={handleModalClose}
