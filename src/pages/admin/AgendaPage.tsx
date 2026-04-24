@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, Plus, Calendar, List, Filter, Trash2, Edit2, CheckCircle2, Circle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Calendar, List, Filter, Trash2, Edit2, CheckCircle2, Circle, ChevronDown } from 'lucide-react';
 import AdminLayout from '../../components/admin/AdminLayout';
 import {
   getAgendaDaysByMonth,
@@ -44,6 +44,8 @@ const AgendaPage: React.FC = () => {
     userDisplayName: '',
     productType: '',
   });
+  const [expandedStatus, setExpandedStatus] = useState(true);
+  const [expandedTasks, setExpandedTasks] = useState(true);
 
   useEffect(() => {
     const loadStatuses = async () => {
@@ -278,59 +280,75 @@ const AgendaPage: React.FC = () => {
         {showModal && dayData && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowModal(false)} />
-            <div className="relative bg-black border border-white/[0.06] rounded-2xl p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto">
-              <button onClick={() => setShowModal(false)} className="absolute top-4 right-4 text-white/40 hover:text-white">✕</button>
-              <h2 className="text-2xl font-bold text-white mb-6">{selectedDay}</h2>
-
-              <div className="mb-6 pb-6 border-b border-white/[0.06]">
-                <h3 className="text-sm font-semibold text-white/60 uppercase mb-3">Status</h3>
-                <div className="space-y-2">
-                  {statuses.map(s => (
-                    <button key={s.id} onClick={() => handleStatusChange(s.id)} className={`w-full text-left px-4 py-3 rounded-lg transition-all ${dayData.statusId === s.id ? 'bg-white/[0.12] border border-white/[0.2]' : 'bg-white/[0.04] border border-white/[0.06] hover:bg-white/[0.08]'}`}>
-                      <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full" style={{ backgroundColor: s.color }} /><span className="text-white font-medium">{s.name}</span></div>
-                    </button>
-                  ))}
-                </div>
-                {showNewStatusInput ? (
-                  <div className="flex gap-2 mt-3">
-                    <input value={newStatusName} onChange={(e) => setNewStatusName(e.target.value)} placeholder="New status name" className="flex-1 px-3 py-2 rounded-lg bg-white/[0.04] border border-white/[0.06] text-white text-sm" />
-                    <button onClick={handleCreateStatus} className="px-4 py-2 rounded-lg bg-red-600/20 text-red-400 text-sm">Save</button>
-                  </div>
-                ) : (
-                  <button onClick={() => setShowNewStatusInput(true)} className="mt-3 w-full py-2 text-sm text-white/40 hover:text-white/60">+ Custom Status</button>
-                )}
+            <div className="relative bg-black border border-white/[0.06] rounded-2xl max-w-sm w-full max-h-[85vh] overflow-y-auto">
+              {/* Header */}
+              <div className="sticky top-0 bg-black/80 backdrop-blur-sm border-b border-white/[0.06] px-5 py-4 flex items-center justify-between z-10">
+                <h2 className="text-lg font-bold text-white">{selectedDay}</h2>
+                <button onClick={() => setShowModal(false)} className="text-white/40 hover:text-white"><Plus size={20} className="rotate-45" /></button>
               </div>
 
-              <div>
-                <h3 className="text-sm font-semibold text-white/60 uppercase mb-3">Tasks</h3>
-                <div className="space-y-2 mb-4">
-                  {dayData.tasks.map(task => (
-                    <div key={task.id} className="bg-white/[0.04] border border-white/[0.06] rounded-lg p-3">
-                      <div className="flex items-start justify-between gap-2">
-                        <button onClick={() => handleToggleTaskComplete(task)} className="mt-0.5 flex-shrink-0">{task.completed ? <CheckCircle2 size={18} className="text-emerald-400" /> : <Circle size={18} className="text-white/30" />}</button>
-                        <div className="flex-1 min-w-0">
-                          <p className={`text-sm font-medium ${task.completed ? 'text-white/40 line-through' : 'text-white'}`}>{task.title}</p>
-                          {task.description && <p className="text-xs text-white/40 mt-1">{task.description}</p>}
-                          {task.time && <p className="text-xs text-white/30 mt-1">⏰ {task.time}</p>}
+              <div className="px-5 py-4 space-y-3">
+                {/* Status Section */}
+                <div className="bg-white/[0.04] border border-white/[0.06] rounded-lg overflow-hidden">
+                  <button onClick={() => setExpandedStatus(!expandedStatus)} className="w-full flex items-center justify-between px-4 py-3 hover:bg-white/[0.06]">
+                    <span className="text-xs font-semibold text-white/60 uppercase">Status</span>
+                    <ChevronDown size={16} className={`text-white/40 transition-transform ${expandedStatus ? 'rotate-180' : ''}`} />
+                  </button>
+                  {expandedStatus && (
+                    <div className="border-t border-white/[0.06] px-4 py-3 space-y-1.5 max-h-48 overflow-y-auto">
+                      {statuses.map(s => (
+                        <button key={s.id} onClick={() => handleStatusChange(s.id)} className={`w-full text-left px-2 py-1.5 rounded text-xs transition-all flex items-center gap-2 ${dayData.statusId === s.id ? 'bg-white/[0.12] text-white' : 'text-white/50 hover:text-white/70'}`}>
+                          <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: s.color }} />
+                          <span>{s.name}</span>
+                        </button>
+                      ))}
+                      {!showNewStatusInput ? (
+                        <button onClick={() => setShowNewStatusInput(true)} className="w-full text-left px-2 py-1.5 text-xs text-white/40 hover:text-white/60 rounded">+ Add Custom</button>
+                      ) : (
+                        <div className="flex gap-1.5 mt-2">
+                          <input value={newStatusName} onChange={(e) => setNewStatusName(e.target.value)} placeholder="Status name" className="flex-1 px-2 py-1 rounded bg-white/[0.08] border border-white/[0.06] text-white text-xs" />
+                          <button onClick={handleCreateStatus} className="px-2 py-1 rounded bg-red-600/20 text-red-400 text-xs">Save</button>
                         </div>
-                        <div className="flex gap-1 flex-shrink-0">
-                          <button onClick={() => setEditingTask(task)} className="p-1 text-white/40 hover:text-white"><Edit2 size={14} /></button>
-                          <button onClick={() => handleDeleteTask(task.id)} className="p-1 text-white/40 hover:text-red-400"><Trash2 size={14} /></button>
-                        </div>
-                      </div>
+                      )}
                     </div>
-                  ))}
+                  )}
                 </div>
 
-                <div className="space-y-3 bg-white/[0.04] border border-white/[0.06] rounded-lg p-4">
-                  <input value={taskForm.title} onChange={(e) => setTaskForm({ ...taskForm, title: e.target.value })} placeholder="Task title" className="w-full px-3 py-2 rounded-lg bg-white/[0.08] border border-white/[0.06] text-white text-sm" />
-                  <textarea value={taskForm.description} onChange={(e) => setTaskForm({ ...taskForm, description: e.target.value })} placeholder="Description (optional)" className="w-full px-3 py-2 rounded-lg bg-white/[0.08] border border-white/[0.06] text-white text-sm resize-none" rows={2} />
-                  <input value={taskForm.time} onChange={(e) => setTaskForm({ ...taskForm, time: e.target.value })} placeholder="Time (e.g., 10:30 AM)" className="w-full px-3 py-2 rounded-lg bg-white/[0.08] border border-white/[0.06] text-white text-sm" />
-                  <input value={taskForm.userDisplayName} onChange={(e) => setTaskForm({ ...taskForm, userDisplayName: e.target.value })} placeholder="Assign to (optional)" className="w-full px-3 py-2 rounded-lg bg-white/[0.08] border border-white/[0.06] text-white text-sm" />
-                  <input value={taskForm.productType} onChange={(e) => setTaskForm({ ...taskForm, productType: e.target.value })} placeholder="Product type (optional)" className="w-full px-3 py-2 rounded-lg bg-white/[0.08] border border-white/[0.06] text-white text-sm" />
-                  <button onClick={handleSaveTask} className="w-full py-2 px-4 rounded-lg bg-red-600/20 border border-red-600/40 text-red-400 hover:bg-red-600/30 transition-all text-sm font-medium">
-                    {editingTask ? 'Update Task' : '+ Add Task'}
+                {/* Tasks Section */}
+                <div className="bg-white/[0.04] border border-white/[0.06] rounded-lg overflow-hidden">
+                  <button onClick={() => setExpandedTasks(!expandedTasks)} className="w-full flex items-center justify-between px-4 py-3 hover:bg-white/[0.06]">
+                    <span className="text-xs font-semibold text-white/60 uppercase">Tasks {dayData.tasks.length > 0 && <span className="ml-1 text-red-400">({dayData.tasks.filter(t => !t.completed).length})</span>}</span>
+                    <ChevronDown size={16} className={`text-white/40 transition-transform ${expandedTasks ? 'rotate-180' : ''}`} />
                   </button>
+                  {expandedTasks && (
+                    <div className="border-t border-white/[0.06] px-4 py-3 space-y-2 max-h-60 overflow-y-auto">
+                      {dayData.tasks.map(task => (
+                        <div key={task.id} className="flex items-start gap-2 p-2 rounded bg-white/[0.02] group">
+                          <button onClick={() => handleToggleTaskComplete(task)} className="mt-0.5 flex-shrink-0">{task.completed ? <CheckCircle2 size={14} className="text-emerald-400" /> : <Circle size={14} className="text-white/30" />}</button>
+                          <div className="flex-1 min-w-0">
+                            <p className={`text-xs font-medium ${task.completed ? 'text-white/40 line-through' : 'text-white'}`}>{task.title}</p>
+                            {task.time && <p className="text-[10px] text-white/30">⏰ {task.time}</p>}
+                          </div>
+                          <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button onClick={() => setEditingTask(task)} className="p-0.5 text-white/40 hover:text-white"><Edit2 size={12} /></button>
+                            <button onClick={() => handleDeleteTask(task.id)} className="p-0.5 text-white/40 hover:text-red-400"><Trash2 size={12} /></button>
+                          </div>
+                        </div>
+                      ))}
+
+                      {/* Task Form */}
+                      <div className="border-t border-white/[0.06] pt-2 mt-2 space-y-1.5">
+                        <input value={taskForm.title} onChange={(e) => setTaskForm({ ...taskForm, title: e.target.value })} placeholder="New task" className="w-full px-2 py-1.5 rounded bg-white/[0.08] border border-white/[0.06] text-white text-xs" />
+                        <div className="grid grid-cols-2 gap-1.5">
+                          <input value={taskForm.time} onChange={(e) => setTaskForm({ ...taskForm, time: e.target.value })} placeholder="Time" className="px-2 py-1 rounded bg-white/[0.08] border border-white/[0.06] text-white text-xs" />
+                          <input value={taskForm.userDisplayName} onChange={(e) => setTaskForm({ ...taskForm, userDisplayName: e.target.value })} placeholder="Assign" className="px-2 py-1 rounded bg-white/[0.08] border border-white/[0.06] text-white text-xs" />
+                        </div>
+                        <button onClick={handleSaveTask} className="w-full py-1.5 rounded bg-red-600/20 border border-red-600/40 text-red-400 hover:bg-red-600/30 text-xs font-medium">
+                          {editingTask ? 'Update' : '+ Task'}
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
