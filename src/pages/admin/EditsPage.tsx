@@ -59,31 +59,6 @@ const EditsPage: React.FC = () => {
           </button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-4">
-            <p className="text-white/40 text-sm">Total Edits</p>
-            <p className="text-2xl font-bold text-white mt-1">{edits.length}</p>
-          </div>
-          <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-4">
-            <p className="text-white/40 text-sm">Published</p>
-            <p className="text-2xl font-bold text-white mt-1">
-              {edits.filter((e) => e.status === 'published').length}
-            </p>
-          </div>
-          <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-4">
-            <p className="text-white/40 text-sm">Featured</p>
-            <p className="text-2xl font-bold text-white mt-1">
-              {edits.filter((e) => e.featured).length}
-            </p>
-          </div>
-          <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-4">
-            <p className="text-white/40 text-sm">Total Plays</p>
-            <p className="text-2xl font-bold text-white mt-1">
-              {edits.reduce((sum, e) => sum + e.plays, 0)}
-            </p>
-          </div>
-        </div>
-
         <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
@@ -309,7 +284,7 @@ const EditFormModal: React.FC<EditFormModalProps> = ({ edit, onClose, onSave }) 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Title</label>
+              <label className="block text-sm font-medium text-white/60 mb-2">Title <span className="text-red-400">*</span></label>
               <input
                 type="text"
                 value={formData.title}
@@ -320,7 +295,7 @@ const EditFormModal: React.FC<EditFormModalProps> = ({ edit, onClose, onSave }) 
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Artist</label>
+              <label className="block text-sm font-medium text-white/60 mb-2">Artist <span className="text-red-400">*</span></label>
               <input
                 type="text"
                 value={formData.artist}
@@ -356,7 +331,7 @@ const EditFormModal: React.FC<EditFormModalProps> = ({ edit, onClose, onSave }) 
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">BPM</label>
+              <label className="block text-sm font-medium text-white/60 mb-2">BPM <span className="text-red-400">*</span></label>
               <input
                 type="number"
                 value={formData.bpm}
@@ -367,7 +342,7 @@ const EditFormModal: React.FC<EditFormModalProps> = ({ edit, onClose, onSave }) 
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Key</label>
+              <label className="block text-sm font-medium text-white/60 mb-2">Key <span className="text-red-400">*</span></label>
               <input
                 type="text"
                 value={formData.key}
@@ -378,7 +353,7 @@ const EditFormModal: React.FC<EditFormModalProps> = ({ edit, onClose, onSave }) 
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Genre</label>
+              <label className="block text-sm font-medium text-white/60 mb-2">Genre <span className="text-red-400">*</span></label>
               <input
                 type="text"
                 value={formData.genre}

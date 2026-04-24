@@ -6,7 +6,7 @@ import { useMerchandise } from '../../hooks/useMerchandise';
 import { merchandiseService } from '../../lib/firebase/services';
 import { Merchandise, MerchandiseSize } from '../../lib/firebase/types';
 import { toDirectUrl } from '../../lib/utils/urlUtils';
-import { Plus, Edit, Trash2, X } from 'lucide-react';
+import { Plus, Edit, Trash2, X, Upload } from 'lucide-react';
 
 const categories = [
   'Clothing',
@@ -57,26 +57,6 @@ const MerchandiseAdminPage: React.FC = () => {
             <Plus size={20} />
             <span>Add Merchandise</span>
           </button>
-        </div>
-
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-4">
-            <p className="text-white/40 text-sm">Total Merchandise</p>
-            <p className="text-2xl font-bold text-white mt-1">{merchandise.length}</p>
-          </div>
-          <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-4">
-            <p className="text-white/40 text-sm">Published</p>
-            <p className="text-2xl font-bold text-white mt-1">
-              {merchandise.filter((m) => m.status === 'published').length}
-            </p>
-          </div>
-          <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-4">
-            <p className="text-white/40 text-sm">Featured</p>
-            <p className="text-2xl font-bold text-white mt-1">
-              {merchandise.filter((m) => m.featured).length}
-            </p>
-          </div>
         </div>
 
         {/* Merchandise Table */}
@@ -362,7 +342,7 @@ const MerchandiseFormModal: React.FC<MerchandiseFormModalProps> = ({ merchandise
         <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto flex-1">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Name</label>
+              <label className="block text-sm font-medium text-white/60 mb-2">Name <span className="text-red-400">*</span></label>
               <input
                 type="text"
                 value={formData.name}
@@ -373,7 +353,7 @@ const MerchandiseFormModal: React.FC<MerchandiseFormModalProps> = ({ merchandise
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Price</label>
+              <label className="block text-sm font-medium text-white/60 mb-2">Price <span className="text-red-400">*</span></label>
               <input
                 type="number"
                 step="0.01"
@@ -387,7 +367,7 @@ const MerchandiseFormModal: React.FC<MerchandiseFormModalProps> = ({ merchandise
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-white/60 mb-2">Description</label>
+            <label className="block text-sm font-medium text-white/60 mb-2">Description <span className="text-red-400">*</span></label>
             <textarea
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
@@ -447,6 +427,17 @@ const MerchandiseFormModal: React.FC<MerchandiseFormModalProps> = ({ merchandise
                   className="flex-1 px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white"
                   placeholder="Add gallery image URL..."
                 />
+                <button
+                  type="button"
+                  onClick={() => {
+                    // Upload wiring comes later
+                  }}
+                  className="px-4 py-2 bg-white/[0.08] border border-white/[0.1] rounded-lg text-white/70 hover:text-white hover:bg-white/[0.12] transition-colors inline-flex items-center gap-2"
+                  title="Upload file"
+                >
+                  <Upload size={14} />
+                  <span className="text-xs font-semibold uppercase tracking-wider hidden sm:inline">Upload</span>
+                </button>
                 <button
                   type="button"
                   onClick={handleAddGalleryImage}

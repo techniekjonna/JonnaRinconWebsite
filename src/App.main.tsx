@@ -10,6 +10,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import GlobalAudioPlayer from './components/GlobalAudioPlayer';
 import GlobalBeatDetailModal from './components/GlobalBeatDetailModal';
 import BackgroundRenderer from './components/BackgroundRenderer';
+import BackgroundOverlay from './components/BackgroundOverlay';
 
 // Public pages
 import HomePage from './App';
@@ -106,6 +107,7 @@ const MainApp: React.FC = () => {
             <BeatDetailProvider>
               <BrowserRouter>
                 <ScrollToTopWrapper>
+                  <BackgroundOverlay />
                   <GlobalAudioPlayer />
                   <GlobalBeatDetailModal />
                 <Routes>

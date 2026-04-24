@@ -64,26 +64,6 @@ const ServicesPage: React.FC = () => {
           </button>
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-4">
-            <p className="text-white/40 text-sm">Total Services</p>
-            <p className="text-2xl font-bold text-white mt-1">{services.length}</p>
-          </div>
-          <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-4">
-            <p className="text-white/40 text-sm">Published</p>
-            <p className="text-2xl font-bold text-white mt-1">
-              {services.filter((s) => s.status === 'published').length}
-            </p>
-          </div>
-          <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-4">
-            <p className="text-white/40 text-sm">Featured</p>
-            <p className="text-2xl font-bold text-white mt-1">
-              {services.filter((s) => s.featured).length}
-            </p>
-          </div>
-        </div>
-
         {/* Services Table */}
         <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl overflow-hidden">
           <div className="overflow-x-auto">
@@ -313,7 +293,7 @@ const ServiceFormModal: React.FC<ServiceFormModalProps> = ({ service, onClose, o
         <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto flex-1">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Name</label>
+              <label className="block text-sm font-medium text-white/60 mb-2">Name <span className="text-red-400">*</span></label>
               <input
                 type="text"
                 value={formData.name}
@@ -324,7 +304,7 @@ const ServiceFormModal: React.FC<ServiceFormModalProps> = ({ service, onClose, o
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Rate (€)</label>
+              <label className="block text-sm font-medium text-white/60 mb-2">Rate (€) <span className="text-red-400">*</span></label>
               <input
                 type="number"
                 step="0.01"
@@ -379,7 +359,7 @@ const ServiceFormModal: React.FC<ServiceFormModalProps> = ({ service, onClose, o
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-white/60 mb-2">Description</label>
+            <label className="block text-sm font-medium text-white/60 mb-2">Description <span className="text-red-400">*</span></label>
             <textarea
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
@@ -390,7 +370,7 @@ const ServiceFormModal: React.FC<ServiceFormModalProps> = ({ service, onClose, o
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">CTA Button Text</label>
+              <label className="block text-sm font-medium text-white/60 mb-2">CTA Button Text <span className="text-red-400">*</span></label>
               <input
                 type="text"
                 value={formData.cta}

@@ -5,7 +5,7 @@ import { useArt } from '../../hooks/useArt';
 import { toDirectUrl } from '../../lib/utils/urlUtils';
 import { artService } from '../../lib/firebase/services';
 import { Art } from '../../lib/firebase/types';
-import { Plus, Edit, Trash2 } from 'lucide-react';
+import { Plus, Edit, Trash2, Upload } from 'lucide-react';
 
 const categories = [
   'Digital Art',
@@ -57,26 +57,6 @@ const ArtAdminPage: React.FC = () => {
             <Plus size={20} />
             <span>Add Art</span>
           </button>
-        </div>
-
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-4">
-            <p className="text-white/40 text-sm">Total Art</p>
-            <p className="text-2xl font-bold text-white mt-1">{art.length}</p>
-          </div>
-          <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-4">
-            <p className="text-white/40 text-sm">Published</p>
-            <p className="text-2xl font-bold text-white mt-1">
-              {art.filter((a) => a.status === 'published').length}
-            </p>
-          </div>
-          <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-4">
-            <p className="text-white/40 text-sm">Featured</p>
-            <p className="text-2xl font-bold text-white mt-1">
-              {art.filter((a) => a.featured).length}
-            </p>
-          </div>
         </div>
 
         {/* Art Table */}
@@ -335,7 +315,7 @@ const ArtFormModal: React.FC<ArtFormModalProps> = ({ art, onClose, onSave }) => 
         <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto flex-1">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Title</label>
+              <label className="block text-sm font-medium text-white/60 mb-2">Title <span className="text-red-400">*</span></label>
               <input
                 type="text"
                 value={formData.title}
@@ -346,7 +326,7 @@ const ArtFormModal: React.FC<ArtFormModalProps> = ({ art, onClose, onSave }) => 
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Artist</label>
+              <label className="block text-sm font-medium text-white/60 mb-2">Artist <span className="text-red-400">*</span></label>
               <input
                 type="text"
                 value={formData.artist}
@@ -358,7 +338,7 @@ const ArtFormModal: React.FC<ArtFormModalProps> = ({ art, onClose, onSave }) => 
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-white/60 mb-2">Description</label>
+            <label className="block text-sm font-medium text-white/60 mb-2">Description <span className="text-red-400">*</span></label>
             <textarea
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
@@ -369,7 +349,7 @@ const ArtFormModal: React.FC<ArtFormModalProps> = ({ art, onClose, onSave }) => 
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Medium</label>
+              <label className="block text-sm font-medium text-white/60 mb-2">Medium <span className="text-red-400">*</span></label>
               <input
                 type="text"
                 value={formData.medium}
@@ -381,7 +361,7 @@ const ArtFormModal: React.FC<ArtFormModalProps> = ({ art, onClose, onSave }) => 
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Year</label>
+              <label className="block text-sm font-medium text-white/60 mb-2">Year <span className="text-red-400">*</span></label>
               <input
                 type="number"
                 min="1900"
@@ -395,7 +375,7 @@ const ArtFormModal: React.FC<ArtFormModalProps> = ({ art, onClose, onSave }) => 
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-white/60 mb-2">Category</label>
+            <label className="block text-sm font-medium text-white/60 mb-2">Category <span className="text-red-400">*</span></label>
             <select
               value={formData.category}
               onChange={(e) => setFormData({ ...formData, category: e.target.value })}
@@ -436,6 +416,17 @@ const ArtFormModal: React.FC<ArtFormModalProps> = ({ art, onClose, onSave }) => 
                   className="flex-1 px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white"
                   placeholder="Add gallery image URL..."
                 />
+                <button
+                  type="button"
+                  onClick={() => {
+                    // Upload wiring comes later
+                  }}
+                  className="px-4 py-2 bg-white/[0.08] border border-white/[0.1] rounded-lg text-white/70 hover:text-white hover:bg-white/[0.12] transition-colors inline-flex items-center gap-2"
+                  title="Upload file"
+                >
+                  <Upload size={14} />
+                  <span className="text-xs font-semibold uppercase tracking-wider hidden sm:inline">Upload</span>
+                </button>
                 <button
                   type="button"
                   onClick={handleAddGalleryImage}

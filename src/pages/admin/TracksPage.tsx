@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import AdminLayout from '../../components/admin/AdminLayout';
 import LinkInput from '../../components/admin/LinkInput';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { useTracks } from '../../hooks/useTracks';
 import { trackService } from '../../lib/firebase/services';
 import { Track } from '../../lib/firebase/types';
-import { Plus, Edit, Trash2, Play, Pause, ChevronDown, GripVertical, ArrowUp, ArrowDown, Link as LinkIcon, AlertCircle } from 'lucide-react';
+import { Plus, Edit, Trash2, Play, Pause, ChevronDown, GripVertical, ArrowUp, ArrowDown, Link as LinkIcon, AlertCircle, Filter as FilterIcon } from 'lucide-react';
 import { toDirectUrl, detectUrlType, isValidUrl } from '../../lib/utils/urlUtils';
 
 const TracksPage: React.FC = () => {
@@ -19,6 +19,20 @@ const TracksPage: React.FC = () => {
   const [selectedTypes, setSelectedTypes] = useState<Set<string>>(new Set());
   const [selectedYear, setSelectedYear] = useState<number | null>(null);
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
+  const [showFilters, setShowFilters] = useState(false);
+  const filterRef = useRef<HTMLDivElement>(null);
+
+  // Close the filter dropdown when clicking outside
+  useEffect(() => {
+    if (!showFilters) return;
+    const handleDocClick = (e: MouseEvent) => {
+      if (filterRef.current && !filterRef.current.contains(e.target as Node)) {
+        setShowFilters(false);
+      }
+    };
+    document.addEventListener('mousedown', handleDocClick);
+    return () => document.removeEventListener('mousedown', handleDocClick);
+  }, [showFilters]);
 
   const handleCreate = () => {
     setEditingTrack(null);
@@ -301,13 +315,138 @@ const TracksPage: React.FC = () => {
             <h1 className="text-3xl font-bold text-white">Tracks Management</h1>
             <p className="text-white/40 mt-2">Manage your track catalog</p>
           </div>
-          <button
-            onClick={handleCreate}
-            className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-purple-700 hover:to-pink-700 transition-all flex items-center space-x-2"
-          >
-            <Plus size={20} />
-            <span>Add Track</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleCreate}
+              className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-purple-700 hover:to-pink-700 transition-all flex items-center space-x-2"
+            >
+              <Plus size={20} />
+              <span>Add Track</span>
+            </button>
+            <div className="relative" ref={filterRef}>
+              <button
+                onClick={() => setShowFilters((v) => !v)}
+                className={`p-3 rounded-lg border transition-all ${
+                  hasActiveFilters
+                    ? 'bg-red-600 border-red-600 text-white'
+                    : 'bg-white/[0.06] border-white/[0.08] text-white/60 hover:text-white hover:bg-white/[0.12]'
+                }`}
+                title={showFilters ? 'Hide filters' : 'Show filters'}
+                aria-label="Toggle filters"
+                aria-expanded={showFilters}
+              >
+                <FilterIcon size={20} />
+              </button>
+
+              {showFilters && (
+                <div className="absolute right-0 top-full mt-2 w-72 bg-black/90 backdrop-blur-xl border border-white/[0.08] rounded-xl p-4 shadow-2xl z-50">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-sm font-semibold text-white">Filters</h3>
+                    {hasActiveFilters && (
+                      <button
+                        onClick={clearAllFilters}
+                        className="text-xs text-red-400 hover:text-red-300 transition"
+                      >
+                        Clear all
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="space-y-3">
+                    {/* Type Buttons */}
+                    <div>
+                      <p className="text-[11px] uppercase tracking-wider text-white/40 mb-1.5">Type</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {['Singles', 'Albums', 'EPs'].map((type) => {
+                          const actualType = type === 'Singles' ? 'Single' : type === 'EPs' ? 'EP' : 'Album';
+                          const isActive = selectedTypes.has(actualType);
+                          return (
+                            <button
+                              key={type}
+                              onClick={() => toggleTypeFilter(actualType)}
+                              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                                isActive
+                                  ? 'bg-red-600 text-white'
+                                  : 'bg-white/[0.06] text-white/60 hover:bg-white/[0.12]'
+                              }`}
+                            >
+                              {type}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Year */}
+                    <div>
+                      <p className="text-[11px] uppercase tracking-wider text-white/40 mb-1.5">Year</p>
+                      <select
+                        value={selectedYear ?? ''}
+                        onChange={(e) => setSelectedYear(e.target.value ? parseInt(e.target.value) : null)}
+                        className={`w-full px-3 py-2 rounded-lg text-sm transition-all ${
+                          selectedYear !== null
+                            ? 'bg-red-600 text-white'
+                            : 'bg-white/[0.06] text-white/60 hover:bg-white/[0.12]'
+                        } focus:outline-none`}
+                      >
+                        <option value="">All years</option>
+                        {availableYears.map((year) => (
+                          <option key={year} value={year}>
+                            {year}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Status */}
+                    <div>
+                      <p className="text-[11px] uppercase tracking-wider text-white/40 mb-1.5">Status</p>
+                      <select
+                        value={selectedStatus ?? ''}
+                        onChange={(e) => setSelectedStatus(e.target.value || null)}
+                        className={`w-full px-3 py-2 rounded-lg text-sm transition-all ${
+                          selectedStatus !== null
+                            ? 'bg-red-600 text-white'
+                            : 'bg-white/[0.06] text-white/60 hover:bg-white/[0.12]'
+                        } focus:outline-none`}
+                      >
+                        <option value="">All statuses</option>
+                        <option value="published">Published</option>
+                        <option value="draft">Draft</option>
+                        <option value="archived">Archived</option>
+                      </select>
+                    </div>
+
+                    {hasActiveFilters && (
+                      <div className="text-xs text-white/60 pt-2 border-t border-white/[0.06]">
+                        Showing{' '}
+                        <span className="font-semibold text-white">
+                          {Object.keys(groupedTracks).length}
+                        </span>{' '}
+                        of{' '}
+                        <span className="font-semibold text-white">
+                          {Object.keys(
+                            sortedTracks.reduce((acc, track) => {
+                              if (track.type === 'Album' || track.type === 'EP') {
+                                const albumName = track.album || track.title;
+                                const albumKey = `${track.type}:${albumName}`;
+                                if (!acc[albumKey]) acc[albumKey] = true;
+                              } else {
+                                const singleKey = `single:${track.id}`;
+                                if (!acc[singleKey]) acc[singleKey] = true;
+                              }
+                              return acc;
+                            }, {} as Record<string, boolean>)
+                          ).length}
+                        </span>{' '}
+                        items
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
         {error && (
@@ -317,120 +456,6 @@ const TracksPage: React.FC = () => {
             </p>
           </div>
         )}
-
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-4">
-            <p className="text-white/40 text-sm">Total Tracks</p>
-            <p className="text-2xl font-bold text-white mt-1">{tracks.length}</p>
-          </div>
-          <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-4">
-            <p className="text-white/40 text-sm">Published</p>
-            <p className="text-2xl font-bold text-white mt-1">
-              {tracks.filter((t) => t.status === 'published').length}
-            </p>
-          </div>
-          <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-4">
-            <p className="text-white/40 text-sm">Featured</p>
-            <p className="text-2xl font-bold text-white mt-1">
-              {tracks.filter((t) => t.featured).length}
-            </p>
-          </div>
-          <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-4">
-            <p className="text-white/40 text-sm">Total Plays</p>
-            <p className="text-2xl font-bold text-white mt-1">
-              {tracks.reduce((sum, t) => sum + t.plays, 0)}
-            </p>
-          </div>
-        </div>
-
-        {/* Filter Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Filter Section */}
-          <div className="lg:col-span-1 bg-white/[0.08] border border-white/[0.06] rounded-xl p-6">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-white">Filters</h3>
-              </div>
-
-              {/* Type Buttons */}
-              <div className="flex flex-wrap gap-2">
-                {['Singles', 'Albums', 'EPs'].map((type) => {
-                  const actualType = type === 'Singles' ? 'Single' : type === 'EPs' ? 'EP' : 'Album';
-                  const isActive = selectedTypes.has(actualType);
-                  return (
-                    <button
-                      key={type}
-                      onClick={() => toggleTypeFilter(actualType)}
-                      className={`px-4 py-2 rounded-lg font-medium transition-all ${
-                        isActive
-                          ? 'bg-red-600 text-white shadow-lg'
-                          : 'bg-white/[0.06] text-white/60 hover:bg-white/[0.12]'
-                      }`}
-                    >
-                      {type}
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* Year and Status Dropdowns */}
-              <div className="flex flex-col gap-3">
-                <select
-                  value={selectedYear ?? ''}
-                  onChange={(e) => setSelectedYear(e.target.value ? parseInt(e.target.value) : null)}
-                  className={`px-4 py-2 rounded-lg font-medium transition-all ${
-                    selectedYear !== null
-                      ? 'bg-red-600 text-white'
-                      : 'bg-white/[0.06] text-white/60 hover:bg-white/[0.12]'
-                  } focus:outline-none`}
-                >
-                  <option value="">Year</option>
-                  {availableYears.map((year) => (
-                    <option key={year} value={year}>
-                      {year}
-                    </option>
-                  ))}
-                </select>
-
-                <select
-                  value={selectedStatus ?? ''}
-                  onChange={(e) => setSelectedStatus(e.target.value || null)}
-                  className={`px-4 py-2 rounded-lg font-medium transition-all ${
-                    selectedStatus !== null
-                      ? 'bg-red-600 text-white'
-                      : 'bg-white/[0.06] text-white/60 hover:bg-white/[0.12]'
-                  } focus:outline-none`}
-                >
-                  <option value="">Status</option>
-                  <option value="published">Published</option>
-                  <option value="draft">Draft</option>
-                  <option value="archived">Archived</option>
-                </select>
-              </div>
-
-              {/* Results Counter */}
-              {hasActiveFilters && (
-                <div className="text-sm text-white/60 pt-2">
-                  Showing <span className="font-semibold text-white">{Object.keys(groupedTracks).length}</span> of{' '}
-                  <span className="font-semibold text-white">{Object.keys(
-                    sortedTracks.reduce((acc, track) => {
-                      if (track.type === 'Album' || track.type === 'EP') {
-                        const albumName = track.album || track.title;
-                        const albumKey = `${track.type}:${albumName}`;
-                        if (!acc[albumKey]) acc[albumKey] = true;
-                      } else {
-                        const singleKey = `single:${track.id}`;
-                        if (!acc[singleKey]) acc[singleKey] = true;
-                      }
-                      return acc;
-                    }, {} as Record<string, boolean>)
-                  ).length}</span> items
-                </div>
-              )}
-            </div>
-          </div>
-
-        </div>
 
         <div className="space-y-3">
           {loading ? (
@@ -925,7 +950,7 @@ const TrackFormModal: React.FC<TrackFormModalProps> = ({ track, onClose, onSave 
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-white/60 mb-2">
-                {(formData.type === 'Album' || formData.type === 'EP') ? 'Album Name' : 'Title'}
+                {(formData.type === 'Album' || formData.type === 'EP') ? 'Album Name' : 'Title'} <span className="text-red-400">*</span>
               </label>
               <input
                 type="text"
@@ -937,7 +962,7 @@ const TrackFormModal: React.FC<TrackFormModalProps> = ({ track, onClose, onSave 
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Artist</label>
+              <label className="block text-sm font-medium text-white/60 mb-2">Artist <span className="text-red-400">*</span></label>
               <input
                 type="text"
                 value={formData.artist}
@@ -947,7 +972,7 @@ const TrackFormModal: React.FC<TrackFormModalProps> = ({ track, onClose, onSave 
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Type</label>
+              <label className="block text-sm font-medium text-white/60 mb-2">Type <span className="text-red-400">*</span></label>
               <select
                 value={formData.type}
                 onChange={(e) => setFormData({ ...formData, type: e.target.value as 'Album' | 'EP' | 'Single' | 'Exclusive' })}
@@ -961,7 +986,7 @@ const TrackFormModal: React.FC<TrackFormModalProps> = ({ track, onClose, onSave 
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Year</label>
+              <label className="block text-sm font-medium text-white/60 mb-2">Year <span className="text-red-400">*</span></label>
               <input
                 type="number"
                 value={formData.year}
@@ -971,7 +996,7 @@ const TrackFormModal: React.FC<TrackFormModalProps> = ({ track, onClose, onSave 
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Collab</label>
+              <label className="block text-sm font-medium text-white/60 mb-2">Collab <span className="text-red-400">*</span></label>
               <select
                 value={formData.collab}
                 onChange={(e) => setFormData({ ...formData, collab: e.target.value as 'Solo' | 'Collab' })}
@@ -983,7 +1008,7 @@ const TrackFormModal: React.FC<TrackFormModalProps> = ({ track, onClose, onSave 
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Genre</label>
+              <label className="block text-sm font-medium text-white/60 mb-2">Genre <span className="text-red-400">*</span></label>
               <input
                 type="text"
                 value={formData.genre}

@@ -86,32 +86,6 @@ const CollaborationsPage: React.FC = () => {
           <p className="text-white/40 mt-2">Manage partnerships and deals</p>
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-4">
-            <p className="text-white/40 text-sm">Total</p>
-            <p className="text-2xl font-bold text-white mt-1">{collaborations.length}</p>
-          </div>
-          <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-4">
-            <p className="text-white/40 text-sm">Active</p>
-            <p className="text-2xl font-bold text-blue-400 mt-1">
-              {collaborations.filter(c => ['agreed', 'contract_sent', 'signed', 'in_progress'].includes(c.status)).length}
-            </p>
-          </div>
-          <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-4">
-            <p className="text-white/40 text-sm">Completed</p>
-            <p className="text-2xl font-bold text-green-400 mt-1">
-              {collaborations.filter(c => c.status === 'completed').length}
-            </p>
-          </div>
-          <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-4">
-            <p className="text-white/40 text-sm">Total Revenue</p>
-            <p className="text-2xl font-bold text-white mt-1">
-              €{collaborations.reduce((sum, c) => sum + c.paidAmount, 0).toFixed(2)}
-            </p>
-          </div>
-        </div>
-
         {/* Collaborations List */}
         <div className="space-y-4">
           {loading ? (

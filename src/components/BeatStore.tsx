@@ -1,8 +1,15 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { Search, Filter, Grid3x3, List, Play, Pause, ShoppingCart, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useCyberDecodeInView } from '../hooks/useCyberDecode';
 import { useScrollReveal } from '../hooks/useScrollReveal';
 import LoadingSpinner from './LoadingSpinner';
+import {
+  setCurrentTrack as setGlobalTrack,
+  getCurrentTrack as getGlobalTrack,
+  getIsPlaying as getGlobalIsPlaying,
+  togglePlayPause as toggleGlobalPlayPause,
+  subscribeToPlayerState,
+} from './GlobalAudioPlayer';
 
 // Firebase imports
 import { collection, query, where, onSnapshot, orderBy } from 'firebase/firestore';
@@ -51,9 +58,18 @@ export default function BeatStore({ onAddToCart }: BeatStoreProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
-  const [playingId, setPlayingId] = useState<string | null>(null);
-  const audioRef = useRef<HTMLAudioElement>(null);
+  const [playingId, setPlayingId] = useState<string | null>(getGlobalTrack()?.id || null);
+  const [isGlobalPlaying, setIsGlobalPlaying] = useState<boolean>(getGlobalIsPlaying());
   const [currentPage, setCurrentPage] = useState(0);
+
+  // Subscribe to global player state so play/pause UI stays in sync
+  useEffect(() => {
+    const unsub = subscribeToPlayerState((store) => {
+      setPlayingId(store.currentTrack?.id || null);
+      setIsGlobalPlaying(store.isPlaying);
+    });
+    return unsub;
+  }, []);
 
   // FIREBASE REAL-TIME LISTENER
   useEffect(() => {
@@ -104,21 +120,31 @@ export default function BeatStore({ onAddToCart }: BeatStoreProps) {
     setCurrentPage(0);
   }, [viewMode]);
 
-  useEffect(() => {
-    if (!audioRef.current) return;
-    if (playingId) {
-      const beat = beats.find(b => b.id === playingId);
-      if (beat?.audio_url) {
-        if (audioRef.current.src !== beat.audio_url) {
-          audioRef.current.src = beat.audio_url;
-        }
-        audioRef.current.play().catch(() => {});
-      }
-    } else {
-      audioRef.current.pause();
-      audioRef.current.src = '';
+  const handleBeatPlayToggle = (beat: Beat) => {
+    const current = getGlobalTrack();
+    if (current?.id === beat.id) {
+      // Same beat: just toggle play/pause on the global player
+      toggleGlobalPlayPause();
+      return;
     }
-  }, [playingId, beats]);
+
+    // Load this beat into the global player, using the filtered beats as the queue
+    const queue = filteredBeats.map((b) => ({
+      id: b.id,
+      title: b.title,
+      artist: b.artist,
+      audioUrl: b.audio_url,
+      coverArt: b.artwork_url,
+    }));
+    const track = queue.find((t) => t.id === beat.id) || {
+      id: beat.id,
+      title: beat.title,
+      artist: beat.artist,
+      audioUrl: beat.audio_url,
+      coverArt: beat.artwork_url,
+    };
+    setGlobalTrack(track, queue);
+  };
 
   const filterBeats = () => {
     let filtered = [...beats];
@@ -318,11 +344,11 @@ export default function BeatStore({ onAddToCart }: BeatStoreProps) {
                 <div className="grid grid-cols-12 gap-2 md:gap-4 items-center">
                   {/* Play Button */}
                   <button
-                    onClick={() => setPlayingId(playingId === beat.id ? null : beat.id)}
+                    onClick={() => handleBeatPlayToggle(beat)}
                     className="col-span-1 flex items-center justify-center text-gray-400 hover:text-red-500 transition-colors"
-                    title={playingId === beat.id ? 'Pause' : 'Play'}
+                    title={playingId === beat.id && isGlobalPlaying ? 'Pause' : 'Play'}
                   >
-                    {playingId === beat.id ? (
+                    {playingId === beat.id && isGlobalPlaying ? (
                       <Pause className="w-4 h-4 md:w-5 md:h-5" fill="currentColor" />
                     ) : (
                       <Play className="w-4 h-4 md:w-5 md:h-5 ml-0.5" fill="currentColor" />
@@ -453,7 +479,6 @@ export default function BeatStore({ onAddToCart }: BeatStoreProps) {
           </div>
         )}
       </div>
-      <audio ref={audioRef} onEnded={() => setPlayingId(null)} />
     </section>
   );
 }

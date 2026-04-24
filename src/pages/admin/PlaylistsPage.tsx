@@ -183,26 +183,6 @@ const PlaylistsPage: React.FC = () => {
           </button>
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-4">
-            <p className="text-white/40 text-sm">Total Playlists</p>
-            <p className="text-2xl font-bold text-white mt-1">{playlists.length}</p>
-          </div>
-          <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-4">
-            <p className="text-white/40 text-sm">Public Playlists</p>
-            <p className="text-2xl font-bold text-white mt-1">
-              {playlists.filter((p) => p.isPublic).length}
-            </p>
-          </div>
-          <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-4">
-            <p className="text-white/40 text-sm">Featured</p>
-            <p className="text-2xl font-bold text-white mt-1">
-              {playlists.filter((p) => p.isFeatured).length}
-            </p>
-          </div>
-        </div>
-
         {/* Playlists Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {playlists.map((playlist) => {
@@ -353,7 +333,7 @@ const PlaylistsPage: React.FC = () => {
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-white mb-2">
-                    Playlist Name *
+                    Playlist Name <span className="text-red-400">*</span>
                   </label>
                   <input
                     type="text"
