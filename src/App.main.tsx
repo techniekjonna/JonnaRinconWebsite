@@ -128,6 +128,7 @@ const MainApp: React.FC = () => {
                   {/* Standalone Pages (public) */}
                   <Route path="/catalogue" element={<CataloguePage />} />
                   <Route path="/tracks" element={<TracksPage />} />
+                  <Route path="/my-tracks" element={<TracksPage />} />
                   <Route path="/remixes" element={<RemixesPage />} />
                   <Route path="/dj-sets" element={<DJSetsPage />} />
                   <Route path="/productions" element={<ProductionsPage />} />
