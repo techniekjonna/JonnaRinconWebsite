@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronDown, Edit2, MessageCircle, CheckCircle2 } from 'lucide-react';
+import { ChevronDown, Edit2, MessageCircle, CheckCircle2, Smile } from 'lucide-react';
 import { Project, ProjectComment, ProjectSubTask } from '../../lib/firebase/types';
 import { projectService } from '../../lib/firebase/services';
 import { useAuth } from '../../contexts/AuthContext';
@@ -9,6 +9,8 @@ interface ProjectViewPageProps {
   onEdit: () => void;
   canEdit: boolean;
 }
+
+const EMOJI_REACTIONS = ['👍', '❤️', '😀', '🔥', '🎉', '✅', '💯'];
 
 const ProjectViewPage: React.FC<ProjectViewPageProps> = ({ project, onEdit, canEdit }) => {
   const { user } = useAuth();
@@ -22,6 +24,7 @@ const ProjectViewPage: React.FC<ProjectViewPageProps> = ({ project, onEdit, canE
   const [subTasks, setSubTasks] = useState<ProjectSubTask[]>([]);
   const [newComment, setNewComment] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState<string | null>(null);
 
   useEffect(() => {
     if (project.id) {
