@@ -12,7 +12,9 @@ interface ProjectCardProps {
 const ProjectCard: React.FC<ProjectCardProps> = ({ project, onSelect, availableDaysCount, canEdit }) => {
   const statusColors: Record<string, string> = {
     'completed': 'bg-green-500/20 text-green-400',
-    'in-progress': 'bg-orange-500/20 text-orange-400',
+    'in-progress': 'bg-blue-500/20 text-blue-400',
+    'on-hold': 'bg-orange-500/20 text-orange-400',
+    'awaiting-feedback': 'bg-purple-500/20 text-purple-400',
     'not-started': 'bg-yellow-500/20 text-yellow-400',
   };
 

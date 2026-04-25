@@ -1215,7 +1215,7 @@ export interface AgendaCustomStatus {
 // PROJECT TYPES
 // ============================================
 
-export type ProjectStatus = 'not-started' | 'in-progress' | 'completed';
+export type ProjectStatus = 'not-started' | 'in-progress' | 'on-hold' | 'awaiting-feedback' | 'completed';
 export type ProjectFilterType = 'all' | 'completed' | 'in-progress' | 'not-started' | 'not-completed' | 'now-working';
 
 export interface ProjectAttachment {
