@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import Navigation from './components/Navigation';
 import Hero from './components/Hero';
-import About from './components/About';
 import BeatStore from './components/BeatStore';
 import Music from './components/Music';
 import Socials from './components/Socials';
@@ -103,7 +102,6 @@ function App() {
       <main className="pt-20">
         {/* === HERO + DARK SECTIONS === */}
         <div id="hero" className="h-screen overflow-hidden"><Hero /></div>
-        <About />
         <Marquee />
         <BeatStore onAddToCart={handleAddToCart} />
         <WaveformDivider />
