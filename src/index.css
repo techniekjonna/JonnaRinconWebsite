@@ -18,12 +18,6 @@
     image-rendering: -webkit-optimize-contrast;
   }
 
-  @media (max-width: 768px) {
-    html {
-      background-attachment: scroll;
-    }
-  }
-
   /* FOUC Prevention - Background Container States */
   #site-bg-container {
     opacity: 1;
@@ -39,7 +33,7 @@
   }
 
   html {
-    scroll-behavior: smooth;
+    scroll-behavior: auto;
   }
 
   /* Modern selection color */

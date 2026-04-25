@@ -147,18 +147,18 @@ export default function Hero() {
 
         {/* Buttons — absoluut gepositioneerd onderaan het scherm, onder de pet */}
         <div
-          className="absolute bottom-16 md:bottom-24 flex flex-col sm:flex-row gap-3 transition-opacity duration-700"
+          className="absolute bottom-12 md:bottom-24 flex flex-row gap-2 md:gap-3 transition-opacity duration-700 w-full px-4 md:px-0 justify-center"
           style={{ opacity: done ? 1 : 0 }}
         >
           <a
             href="/shop"
-            className="px-8 py-3.5 bg-white text-black font-bold text-sm uppercase tracking-widest hover:bg-gray-200 transition-all duration-300 hover:scale-105 active:scale-95 text-center min-w-[180px]"
+            className="px-4 md:px-8 py-2 md:py-3.5 bg-white text-black font-bold text-xs md:text-sm uppercase tracking-widest hover:bg-gray-200 transition-all duration-300 hover:scale-105 active:scale-95 text-center"
           >
             Browse Beats
           </a>
           <a
             href="#music"
-            className="px-8 py-3.5 bg-white text-black font-bold text-sm uppercase tracking-widest hover:bg-gray-200 transition-all duration-300 hover:scale-105 active:scale-95 text-center min-w-[180px]"
+            className="px-4 md:px-8 py-2 md:py-3.5 bg-white text-black font-bold text-xs md:text-sm uppercase tracking-widest hover:bg-gray-200 transition-all duration-300 hover:scale-105 active:scale-95 text-center"
           >
             Listen Now
           </a>
