@@ -20,8 +20,9 @@ const ProjectEditPage: React.FC<ProjectEditPageProps> = ({
   onCancel,
 }) => {
   const [newSubTask, setNewSubTask] = useState('');
-  const [subTasks, setSubTasks] = useState<ProjectSubTask[]>(project.subTasks || []);
+  const [subTasks, setSubTasks] = useState<any[]>(project.subTasks || []);
   const [editingSubTask, setEditingSubTask] = useState<string | null>(null);
+  const [localSubTaskCounter, setLocalSubTaskCounter] = useState(0);
 
   // Agenda scheduling
   const [showAgendaPicker, setShowAgendaPicker] = useState(false);
@@ -50,15 +51,32 @@ const ProjectEditPage: React.FC<ProjectEditPageProps> = ({
   };
 
   const handleAddSubTask = async () => {
-    if (!newSubTask.trim() || !project.id) return;
+    if (!newSubTask.trim()) return;
 
     try {
-      const subTask = await projectService.createSubTask(project.id, {
-        title: newSubTask,
-        status: 'not-started',
-        order: subTasks.length,
-      });
-      setSubTasks([...subTasks, subTask]);
+      if (project.id) {
+        // If project exists, save to Firebase
+        const subTask = await projectService.createSubTask(project.id, {
+          title: newSubTask,
+          status: 'not-started',
+          order: subTasks.length,
+        });
+        setSubTasks([...subTasks, subTask]);
+      } else {
+        // For new projects, create locally with temporary ID
+        const localId = `local-${localSubTaskCounter}`;
+        const newLocalSubTask = {
+          id: localId,
+          projectId: '',
+          title: newSubTask,
+          status: 'not-started',
+          order: subTasks.length,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        };
+        setSubTasks([...subTasks, newLocalSubTask]);
+        setLocalSubTaskCounter(localSubTaskCounter + 1);
+      }
       setNewSubTask('');
     } catch (error) {
       console.error('Failed to create sub-task:', error);
@@ -67,7 +85,10 @@ const ProjectEditPage: React.FC<ProjectEditPageProps> = ({
 
   const handleDeleteSubTask = async (id: string) => {
     try {
-      await projectService.deleteSubTask(id);
+      // Only delete from Firebase if it has a real ID (not local)
+      if (!id.startsWith('local-')) {
+        await projectService.deleteSubTask(id);
+      }
       setSubTasks(subTasks.filter(t => t.id !== id));
     } catch (error) {
       console.error('Failed to delete sub-task:', error);
@@ -76,7 +97,10 @@ const ProjectEditPage: React.FC<ProjectEditPageProps> = ({
 
   const handleUpdateSubTask = async (id: string, title: string) => {
     try {
-      await projectService.updateSubTask(id, { title } as any);
+      // Only update in Firebase if it has a real ID (not local)
+      if (!id.startsWith('local-')) {
+        await projectService.updateSubTask(id, { title } as any);
+      }
       setSubTasks(subTasks.map(t => (t.id === id ? { ...t, title } : t)));
       setEditingSubTask(null);
     } catch (error) {
@@ -390,7 +414,15 @@ const ProjectEditPage: React.FC<ProjectEditPageProps> = ({
           Cancel
         </button>
         <button
-          onClick={onSave}
+          onClick={() => {
+            // Update form with local sub-tasks before saving
+            onFormChange({
+              ...project,
+              localSubTasks: subTasks,
+            });
+            // Small delay to ensure state is updated
+            setTimeout(onSave, 0);
+          }}
           disabled={loading}
           className="flex-1 py-2 px-4 bg-red-600 hover:bg-red-700 disabled:bg-red-600/50 text-white rounded-lg transition-colors font-semibold"
         >

@@ -13,12 +13,16 @@ interface ProjectModalProps {
   onSave: () => void;
 }
 
+interface FormDataWithLocalSubTasks extends Partial<Project> {
+  localSubTasks?: any[];
+}
+
 const ProjectModal: React.FC<ProjectModalProps> = ({ project, isOpen, onClose, onSave }) => {
   const { user } = useAuth();
   const canEdit = user?.role === 'admin';
 
   const [currentPage, setCurrentPage] = useState<'view' | 'edit'>('view');
-  const [formData, setFormData] = useState<Partial<Project>>(
+  const [formData, setFormData] = useState<FormDataWithLocalSubTasks>(
     project || {
       title: '',
       description: '',
@@ -29,6 +33,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ project, isOpen, onClose, o
       subTasks: [],
       agendaTaskIds: [],
       availableDateRanges: [],
+      localSubTasks: [],
     }
   );
   const [loading, setLoading] = useState(false);
@@ -70,12 +75,28 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ project, isOpen, onClose, o
         throw new Error('Project description is required');
       }
 
+      let savedProject: Project;
+
       if (project?.id) {
         // Update existing project
         await projectService.updateProject(project.id, formData as Project);
+        savedProject = { ...project, ...formData } as Project;
       } else {
         // Create new project
-        await projectService.createProject(formData as any);
+        savedProject = await projectService.createProject(formData as any);
+      }
+
+      // Save any locally created sub-tasks
+      const localSubTasks = (formData as any).localSubTasks || [];
+      for (const subTask of localSubTasks) {
+        if (!subTask.id) {
+          // Only save if it's new (no id)
+          await projectService.createSubTask(savedProject.id, {
+            title: subTask.title,
+            status: subTask.status || 'not-started',
+            order: subTask.order,
+          });
+        }
       }
 
       onSave();
