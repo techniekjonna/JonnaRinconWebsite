@@ -1,6 +1,8 @@
 import { useMemo } from 'react';
 import { Track } from '../lib/firebase/types';
 import { useTracks } from './useTracks';
+import { useRemixes } from './useRemixes';
+import { useBeats } from './useBeats';
 
 interface ScoredTrack {
   track: Track;
@@ -17,35 +19,50 @@ export const useRelatedTracks = (
   track: Track | null,
   excludeIds: string[] = []
 ): Track[] => {
-  const { tracks } = useTracks();
+  const { tracks } = useTracks({ status: 'published' });
+  const { remixes } = useRemixes({ status: 'published' });
+  const { beats } = useBeats({ status: 'published' });
 
   // Convert excludeIds array to a Set for faster lookups and stable reference
   const excludeIdsStr = excludeIds.join(',');
 
   const relatedTracks = useMemo(() => {
-    if (!track || !tracks.length) return [];
+    if (!track) return [];
 
     const excludeSet = new Set(excludeIds);
 
-    // Score each track based on matches
+    // Combine all published content from different sources
+    const allContent: Track[] = [
+      ...(tracks || []),
+      ...(remixes?.map(r => ({
+        ...r,
+        artist: r.remixArtist || r.artist,
+        title: r.title,
+      } as Track)) || []),
+      ...(beats?.map(b => ({
+        ...b,
+        artist: b.producer || b.artist || 'Unknown',
+        title: b.title,
+      } as Track)) || []),
+    ];
+
+    // Score each content based on matches
     const scored: ScoredTrack[] = [];
 
-    for (const t of tracks) {
+    for (const content of allContent) {
       // Exclude current track and specified IDs
-      if (t.id === track.id) continue;
-      if (excludeSet.has(t.id)) continue;
-      // Only include published tracks
-      if (t.status !== 'published') continue;
+      if (content.id === track.id) continue;
+      if (excludeSet.has(content.id)) continue;
 
       let score = 0;
 
       // Genre match: +2 points (higher priority)
-      if (t.genre === track.genre) {
+      if (content.genre === track.genre) {
         score += 2;
       }
 
       // Artist match: +1 point
-      // Check against artist, originalArtist (for remixes), or remixArtist
+      // Check against artist, originalArtist (for remixes), or remixArtist/producer (for beats)
       const trackArtists = [
         track.artist,
         (track as any).originalArtist,
@@ -53,18 +70,22 @@ export const useRelatedTracks = (
       ].filter(Boolean);
 
       const currentArtists = [
-        t.artist,
-        (t as any).originalArtist,
-        (t as any).remixArtist,
+        content.artist,
+        (content as any).originalArtist,
+        (content as any).remixArtist,
+        (content as any).producer,
       ].filter(Boolean);
 
       if (trackArtists.some((artist) => currentArtists.includes(artist))) {
         score += 1;
       }
 
-      if (score > 0) {
-        scored.push({ track: t, score });
+      // If no genre or artist match, still include some content (randomize)
+      if (score === 0) {
+        score = 0.5;
       }
+
+      scored.push({ track: content, score });
     }
 
     // Sort by score descending, then by creation date descending
@@ -77,9 +98,9 @@ export const useRelatedTracks = (
       return bDate - aDate;
     });
 
-    // Return top 6 tracks
+    // Return top 6 tracks/content
     return scored.slice(0, 6).map((item) => item.track);
-  }, [track, tracks, excludeIdsStr]);
+  }, [track, tracks, remixes, beats, excludeIdsStr]);
 
   return relatedTracks;
 };
