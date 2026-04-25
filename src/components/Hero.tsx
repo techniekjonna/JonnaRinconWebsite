@@ -244,20 +244,21 @@ export default function Hero() {
 
         {/* RIGHT: Instagram Carousel */}
         <div
-          className="flex-1 flex justify-center lg:justify-end transition-opacity duration-700 min-w-0"
+          className="absolute bottom-12 md:bottom-24 flex flex-row gap-2 md:gap-3 transition-opacity duration-700 w-full px-4 md:px-0 justify-center"
           style={{ opacity: done ? 1 : 0 }}
         >
-          <SocialCardCarousel
-            slides={SLIDES.map((s) => ({
-              imageSrc: s.imageSrc,
-              imageAlt: s.imageAlt,
-              location: s.caption,
-              caption: s.text,
-              likes: s.likes,
-            }))}
-            activeIndex={activeCarouselIndex}
-            onIndexChange={setActiveCarouselIndex}
-          />
+          <a
+            href="/shop"
+            className="px-4 md:px-8 py-2 md:py-3.5 bg-white text-black font-bold text-xs md:text-sm uppercase tracking-widest hover:bg-gray-200 transition-all duration-300 hover:scale-105 active:scale-95 text-center"
+          >
+            Browse Beats
+          </a>
+          <a
+            href="#music"
+            className="px-4 md:px-8 py-2 md:py-3.5 bg-white text-black font-bold text-xs md:text-sm uppercase tracking-widest hover:bg-gray-200 transition-all duration-300 hover:scale-105 active:scale-95 text-center"
+          >
+            Listen Now
+          </a>
         </div>
       </div>
     </section>

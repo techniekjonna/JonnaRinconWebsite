@@ -36,6 +36,8 @@ const AgendaPage: React.FC = () => {
   const [editingTask, setEditingTask] = useState<AgendaTask | null>(null);
   const [newStatusName, setNewStatusName] = useState('');
   const [showNewStatusInput, setShowNewStatusInput] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [daysToShow, setDaysToShow] = useState(isMobile ? 7 : 14);
 
   const [taskForm, setTaskForm] = useState({
     title: '',
@@ -54,6 +56,18 @@ const AgendaPage: React.FC = () => {
     };
     loadStatuses();
   }, []);
+
+  useEffect(() => {
+    const handleResize = () => {
+      const isNowMobile = window.innerWidth < 768;
+      if (isNowMobile !== isMobile) {
+        setIsMobile(isNowMobile);
+        setDaysToShow(isNowMobile ? 7 : 14);
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [isMobile]);
 
   useEffect(() => {
     const loadMonthData = async () => {
@@ -195,16 +209,42 @@ const AgendaPage: React.FC = () => {
     setCurrentDate(new Date(currentDate));
   };
 
+  const getStatusAbbrev = (status: AgendaStatus): string => {
+    const abbrevMap: { [key: string]: string } = {
+      'beschikbaar': 'A',
+      'afwezig': 'X',
+      'beschikbaar_studio': 'S',
+    };
+    return abbrevMap[status.type] || status.name.charAt(0).toUpperCase();
+  };
+
   const monthString = currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
   const daysInMonth = getDaysInMonth(currentDate);
   const firstDay = getFirstDayOfMonth(currentDate);
 
   const calendarDays = [];
-  for (let i = 0; i < firstDay; i++) {
+  let dayCounter = 1;
+  let addedDays = 0;
+
+  // Add empty slots for days before the first day of the month
+  for (let i = 0; i < firstDay && addedDays < daysToShow; i++) {
     calendarDays.push(null);
+    addedDays++;
   }
-  for (let day = 1; day <= daysInMonth; day++) {
-    calendarDays.push(day);
+
+  // Add days up to daysToShow
+  while (dayCounter <= daysInMonth && addedDays < daysToShow) {
+    calendarDays.push(dayCounter);
+    dayCounter++;
+    addedDays++;
+  }
+
+  // If we haven't reached daysToShow yet, add days from next month
+  let nextMonthDay = 1;
+  while (addedDays < daysToShow) {
+    calendarDays.push(-nextMonthDay); // Use negative to indicate next month days
+    nextMonthDay++;
+    addedDays++;
   }
 
   const dayData = selectedDay && daysData.has(selectedDay) ? daysData.get(selectedDay)! : null;
@@ -253,7 +293,24 @@ const AgendaPage: React.FC = () => {
         </div>
 
         {viewMode === 'calendar' && (
-          <div className="bg-white/[0.08] border border-white/[0.06] rounded-2xl p-6">
+          <div className="bg-white/[0.08] border border-white/[0.06] rounded-2xl p-4 md:p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex gap-2 flex-wrap">
+                {[7, 14, 30].map(days => (
+                  <button
+                    key={days}
+                    onClick={() => setDaysToShow(days)}
+                    className={`px-3 py-1 rounded text-xs font-semibold transition-all ${
+                      daysToShow === days
+                        ? 'bg-red-600/20 border border-red-600/40 text-red-400'
+                        : 'bg-white/[0.04] border border-white/[0.06] text-white/40 hover:text-white/60'
+                    }`}
+                  >
+                    {days}d
+                  </button>
+                ))}
+              </div>
+            </div>
             <div className="grid grid-cols-7 gap-2 mb-4">
               {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => (
                 <div key={d} className="text-center text-xs font-semibold text-white/40 py-2">{d}</div>
@@ -262,17 +319,47 @@ const AgendaPage: React.FC = () => {
             <div className="grid grid-cols-7 gap-2">
               {calendarDays.map((day, idx) => {
                 if (day === null) return <div key={`empty-${idx}`} className="aspect-square" />;
-                const dateStr = formatDate(currentDate.getFullYear(), currentDate.getMonth(), day);
+
+                let dateStr: string;
+                let displayDay: number;
+                let isNextMonth = false;
+
+                if (day > 0) {
+                  dateStr = formatDate(currentDate.getFullYear(), currentDate.getMonth(), day);
+                  displayDay = day;
+                } else {
+                  isNextMonth = true;
+                  displayDay = -day;
+                  const nextMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1);
+                  dateStr = formatDate(nextMonth.getFullYear(), nextMonth.getMonth(), displayDay);
+                }
+
                 const data = daysData.get(dateStr);
                 return (
-                  <button key={day} onClick={() => openDayModal(day)} className="aspect-square p-2 rounded-xl bg-white/[0.06] border border-white/[0.08] hover:border-white/[0.15] hover:bg-white/[0.10] transition-all flex flex-col items-start justify-between text-left">
+                  <button
+                    key={`${day}-${idx}`}
+                    onClick={() => {
+                      if (isNextMonth) {
+                        setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1));
+                      }
+                      setSelectedDay(dateStr);
+                      setTaskForm({ title: '', description: '', time: '', userDisplayName: '', productType: '' });
+                      setEditingTask(null);
+                      setShowModal(true);
+                    }}
+                    className={`aspect-square p-2 rounded-xl border transition-all flex flex-col items-start justify-between text-left ${
+                      isNextMonth
+                        ? 'bg-white/[0.03] border-white/[0.04] hover:border-white/[0.08]'
+                        : 'bg-white/[0.06] border-white/[0.08] hover:border-white/[0.15] hover:bg-white/[0.10]'
+                    }`}
+                  >
                     {data?.status && (
-                      <div className="text-[9px] font-bold px-1.5 py-0.5 rounded-full text-white w-full text-center" style={{ backgroundColor: data.status.color + '33', color: data.status.color }}>
-                        {data.status.name}
+                      <div className="text-[8px] font-bold px-1 py-0.5 rounded text-white w-full text-center" style={{ backgroundColor: data.status.color + '33', color: data.status.color }}>
+                        {getStatusAbbrev(data.status)}
                       </div>
                     )}
-                    <div className={`text-sm font-semibold text-white ${!data?.status ? 'pt-2' : ''}`}>{day}</div>
-                    {data?.tasks.length ? <div className="text-[10px] text-white/40">{data.tasks.filter(t => !t.completed).length} todo</div> : null}
+                    <div className={`text-xs md:text-sm font-semibold ${isNextMonth ? 'text-white/30' : 'text-white'} ${!data?.status ? 'pt-1' : ''}`}>{displayDay}</div>
+                    {data?.tasks.length ? <div className="text-[9px] text-white/40">{data.tasks.filter(t => !t.completed).length}</div> : null}
                   </button>
                 );
               })}
