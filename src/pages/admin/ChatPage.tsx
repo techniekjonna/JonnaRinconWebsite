@@ -225,7 +225,7 @@ const AdminChat: React.FC = () => {
   if (isMobile) {
     return (
       <AdminLayout>
-        <div className="h-[calc(100vh-120px)] w-full overflow-hidden flex flex-col">
+        <div className="max-h-[calc(100vh-160px)] h-[calc(100vh-160px)] w-full overflow-hidden flex flex-col">
 
           {/* Contacts view - Mobile */}
           {leftView === 'contacts' && !selectedGroup && (
@@ -446,7 +446,7 @@ const AdminChat: React.FC = () => {
   // Desktop layout (original)
   return (
     <AdminLayout>
-      <div className="grid grid-cols-12 h-[calc(100vh-120px)] gap-3">
+      <div className="grid grid-cols-12 max-h-[calc(100vh-140px)] h-[calc(100vh-140px)] gap-3 overflow-hidden">
 
         {/* Left panel */}
         <div className="col-span-4 backdrop-blur-xl bg-gradient-to-b from-white/[0.08] to-white/[0.03] border border-white/[0.12] rounded-xl overflow-hidden flex flex-col">
