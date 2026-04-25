@@ -48,7 +48,7 @@ export default function Navigation({ cartItemCount = 0, onCartClick, isDarkOverl
     return colors[colorName] || '#ffffff';
   };
 
-  const navTextColor = getColorValue(smartColor);
+  const navTextColor = getColorValue('white');  // Always white navigation text
 
   // Lock scroll when menu is open - improved state management
   useEffect(() => {
@@ -173,8 +173,8 @@ export default function Navigation({ cartItemCount = 0, onCartClick, isDarkOverl
 
   // Determine nav colors based on smart detection
   // Use smartColor for both logo and menu based on background brightness
-  const useWhiteNav = smartColor === 'white';  // Logo should be white when text should be white (dark background)
-  const useBlackNav = smartColor === 'black';  // Logo should be black when text should be black (light background)
+  const useWhiteNav = true;  // Always use white logo and white text for nav
+  const useBlackNav = false;
 
   const shopSubmenu = [
     { label: 'Beat Shop', subtitle: 'Browse instrumentals', href: '/shop/beats' },

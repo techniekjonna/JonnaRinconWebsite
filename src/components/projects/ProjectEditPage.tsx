@@ -173,6 +173,8 @@ const ProjectEditPage: React.FC<ProjectEditPageProps> = ({
         >
           <option value="not-started">Not Started</option>
           <option value="in-progress">In Progress</option>
+          <option value="on-hold">On Hold</option>
+          <option value="awaiting-feedback">Awaiting Feedback</option>
           <option value="completed">Completed</option>
         </select>
       </div>

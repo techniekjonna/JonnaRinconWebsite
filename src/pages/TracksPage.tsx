@@ -7,6 +7,7 @@ import { useCyberDecodeInView } from '../hooks/useCyberDecode';
 import { useAuth } from '../hooks/useAuth';
 import { useTrackDetail } from '../contexts/TrackDetailContext';
 import { useScrollToTop } from '../hooks/useScrollToTop';
+import { usePlayTracking } from '../hooks/usePlayTracking';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { setCurrentTrack, getCurrentTrack } from '../components/GlobalAudioPlayer';
 import TrackListItem from '../components/TrackListItem';
@@ -211,11 +212,13 @@ export default function TracksPage() {
       return;
     }
 
-    // Increment plays counter for this track
+    // Register play after 15 seconds of playback
     if (track.id) {
-      await trackService.incrementPlays(track.id).catch((error) => {
-        console.error('Failed to increment track plays:', error);
-      });
+      setTimeout(() => {
+        trackService.incrementPlays(track.id!).catch((error) => {
+          console.error('Failed to increment track plays:', error);
+        });
+      }, 15000);
     }
 
     // Filter tracks matching current filters and create queue

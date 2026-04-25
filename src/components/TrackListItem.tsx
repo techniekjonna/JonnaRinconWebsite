@@ -223,20 +223,22 @@ export default function TrackListItem({
         </a>
       )}
 
-      {/* Play/Pause Button */}
-      <button
-        onClick={handlePlayClick}
-        className="flex-shrink-0 flex items-center justify-center text-white/40 hover:text-white/60 transition-colors duration-200"
-        style={{ width: '16px', height: '16px' }}
-        title={isCurrentTrack && actualIsPlaying ? 'Pause' : 'Play'}
-        aria-label={isCurrentTrack && actualIsPlaying ? 'Pause track' : 'Play track'}
-      >
-        {isCurrentTrack && actualIsPlaying ? (
-          <Pause size={12} fill="currentColor" />
-        ) : (
-          <Play size={12} fill="currentColor" />
-        )}
-      </button>
+      {/* Play/Pause Button - hide if album track with its own button */}
+      {!isAlbumTrack && (
+        <button
+          onClick={handlePlayClick}
+          className="flex-shrink-0 flex items-center justify-center text-white/40 hover:text-white/60 transition-colors duration-200"
+          style={{ width: '16px', height: '16px' }}
+          title={isCurrentTrack && actualIsPlaying ? 'Pause' : 'Play'}
+          aria-label={isCurrentTrack && actualIsPlaying ? 'Pause track' : 'Play track'}
+        >
+          {isCurrentTrack && actualIsPlaying ? (
+            <Pause size={12} fill="currentColor" />
+          ) : (
+            <Play size={12} fill="currentColor" />
+          )}
+        </button>
+      )}
     </div>
   );
 }
