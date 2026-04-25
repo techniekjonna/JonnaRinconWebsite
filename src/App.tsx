@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import Navigation from './components/Navigation';
 import Hero from './components/Hero';
-import About from './components/About';
 import BeatStore from './components/BeatStore';
 import Music from './components/Music';
 import Socials from './components/Socials';
@@ -11,6 +10,7 @@ import ShoppingCart from './components/ShoppingCart';
 import Marquee from './components/Marquee';
 import MarqueeRed from './components/MarqueeRed';
 import WaveformDivider from './components/WaveformDivider';
+import LoadingScreen from './components/LoadingScreen';
 
 import { Beat, CartItem } from './lib/types';
 
@@ -23,6 +23,7 @@ function App() {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isDarkOverlay, setIsDarkOverlay] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [loadingComplete, setLoadingComplete] = useState(false);
 
 
   const handleAddToCart = (beat: Beat, license: 'basic' | 'premium' | 'exclusive') => {
@@ -79,6 +80,8 @@ function App() {
 
   return (
     <div className="min-h-screen text-white">
+      <LoadingScreen onLoadingComplete={() => setLoadingComplete(true)} />
+
       <Navigation
         cartItemCount={cartItems.length}
         onCartClick={() => setIsCartOpen(true)}
@@ -99,7 +102,6 @@ function App() {
       <main className="pt-20">
         {/* === HERO + DARK SECTIONS === */}
         <div id="hero" className="h-screen overflow-hidden"><Hero /></div>
-        <About />
         <Marquee />
         <BeatStore onAddToCart={handleAddToCart} />
         <WaveformDivider />

@@ -160,79 +160,73 @@ const StudioSessionModal: React.FC<StudioSessionModalProps> = ({ service, isOpen
             <div className="px-6 md:px-8 py-6">
               {page === 'overview' ? (
                 // PAGE 1: Overview
-                <div className="space-y-6">
+                <div className="space-y-6 max-h-[calc(100vh-200px)] overflow-y-auto">
                   {/* Service Description */}
                   <div className="space-y-2">
                     <h3 className="text-sm font-semibold text-white/60 uppercase">About</h3>
                     <p className="text-white/70 text-sm">{service.description}</p>
                   </div>
 
+                  {/* Studio Highlights - Experience */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="bg-white/[0.05] border border-white/10 rounded-xl p-3">
+                      <p className="text-white/40 text-xs uppercase">Experience</p>
+                      <p className="text-xl font-bold text-white">50+</p>
+                      <p className="text-xs text-white/50">Artists worked with</p>
+                    </div>
+                    <div className="bg-white/[0.05] border border-white/10 rounded-xl p-3">
+                      <p className="text-white/40 text-xs uppercase">Studio Hours</p>
+                      <p className="text-xl font-bold text-white">10K+</p>
+                      <p className="text-xs text-white/50">Production hours</p>
+                    </div>
+                  </div>
+
+                  {/* Equipment & Setup */}
+                  <div className="space-y-3">
+                    <h3 className="text-sm font-semibold text-white/60 uppercase">Studio Setup</h3>
+                    <div className="bg-white/[0.03] border border-white/10 rounded-xl p-4 space-y-3">
+                      <div className="space-y-1">
+                        <p className="text-xs text-white/40 uppercase">Recording DAW</p>
+                        <p className="text-white text-sm">Logic Pro</p>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-xs text-white/40 uppercase">Equipment</p>
+                        <p className="text-white text-sm">Professional Software & Hardware</p>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-xs text-white/40 uppercase">Location</p>
+                        <p className="text-white text-sm">Limburg, The Netherlands</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Studio Vibe & Features */}
+                  <div className="space-y-3">
+                    <h3 className="text-sm font-semibold text-white/60 uppercase">Studio Features</h3>
+                    <div className="bg-white/[0.03] border border-white/10 rounded-xl p-4 space-y-2">
+                      <div className="flex items-start gap-2">
+                        <div className="w-1.5 h-1.5 bg-red-600 rounded-full mt-1 flex-shrink-0" />
+                        <p className="text-white/70 text-sm">Artistic studio with art made by Jonna Rincon</p>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <div className="w-1.5 h-1.5 bg-red-600 rounded-full mt-1 flex-shrink-0" />
+                        <p className="text-white/70 text-sm">Self-made studio environment</p>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <div className="w-1.5 h-1.5 bg-red-600 rounded-full mt-1 flex-shrink-0" />
+                        <p className="text-white/70 text-sm">Good vibes & creative atmosphere</p>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <div className="w-1.5 h-1.5 bg-red-600 rounded-full mt-1 flex-shrink-0" />
+                        <p className="text-white/70 text-sm">Mostly experienced in Dutch urban scene</p>
+                      </div>
+                    </div>
+                  </div>
+
                   {/* Base Rate */}
                   <div className="bg-white/[0.05] border border-white/10 rounded-xl p-4">
                     <p className="text-white/40 text-xs uppercase">Base Rate</p>
                     <p className="text-2xl font-bold text-white">€{service.rate}<span className="text-sm text-white/40">/hour</span></p>
-                  </div>
-
-                  {/* Pricing Options */}
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-sm font-semibold text-white/60 uppercase">Custom Duration Pricing</h3>
-                      <button
-                        onClick={() => setUseCustomHours(!useCustomHours)}
-                        className={`px-3 py-1 rounded-lg text-xs font-medium transition-all ${
-                          useCustomHours
-                            ? 'bg-red-600/20 border border-red-600/40 text-red-400'
-                            : 'bg-white/[0.05] border border-white/10 text-white/40'
-                        }`}
-                      >
-                        {useCustomHours ? 'Enabled' : 'Disabled'}
-                      </button>
-                    </div>
-
-                    {useCustomHours && (
-                      <div className="space-y-3 bg-white/[0.03] border border-white/10 rounded-xl p-4">
-                        {hourRates.map((rate, idx) => (
-                          <div key={idx} className="flex gap-2 items-end">
-                            <div className="flex-1">
-                              <label className="text-xs text-white/40">Hours</label>
-                              <input
-                                type="number"
-                                min="1"
-                                max="168"
-                                value={rate.hours}
-                                onChange={(e) => handleUpdateRate(idx, 'hours', parseInt(e.target.value) || 1)}
-                                className="w-full px-3 py-2 bg-white/[0.08] border border-white/10 rounded-lg text-white text-sm"
-                              />
-                            </div>
-                            <div className="flex-1">
-                              <label className="text-xs text-white/40">Price (€)</label>
-                              <input
-                                type="number"
-                                min="0"
-                                value={rate.price}
-                                onChange={(e) => handleUpdateRate(idx, 'price', parseInt(e.target.value) || 0)}
-                                className="w-full px-3 py-2 bg-white/[0.08] border border-white/10 rounded-lg text-white text-sm"
-                              />
-                            </div>
-                            <button
-                              onClick={() => handleRemoveRate(idx)}
-                              className="px-3 py-2 rounded-lg bg-red-600/20 text-red-400 hover:bg-red-600/30 text-sm"
-                            >
-                              Remove
-                            </button>
-                          </div>
-                        ))}
-
-                        {hourRates.length < 5 && (
-                          <button
-                            onClick={handleAddRate}
-                            className="w-full py-2 px-3 rounded-lg bg-white/[0.05] border border-white/10 text-white/40 hover:bg-white/[0.08] text-sm font-medium transition-all"
-                          >
-                            + Add Duration Option
-                          </button>
-                        )}
-                      </div>
-                    )}
                   </div>
 
                   {/* Next Button */}
