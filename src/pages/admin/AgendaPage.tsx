@@ -64,6 +64,22 @@ const AgendaPage: React.FC = () => {
 
       const map = new Map<string, DayData>();
 
+      // First, add ALL days of the month (even if empty)
+      const daysInMonth = getDaysInMonth(currentDate);
+      for (let day = 1; day <= daysInMonth; day++) {
+        const dateStr = formatDate(year, month, day);
+        if (!map.has(dateStr)) {
+          map.set(dateStr, {
+            date: dateStr,
+            statusId: undefined,
+            status: undefined,
+            tasks: [],
+            studioSessionInfo: undefined,
+          });
+        }
+      }
+
+      // Then update with actual day data
       days.forEach(day => {
         const dayStatus = day.statusId ? statuses.find(s => s.id === day.statusId) : undefined;
         map.set(day.date, {

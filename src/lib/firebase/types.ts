@@ -1212,6 +1212,72 @@ export interface AgendaCustomStatus {
 }
 
 // ============================================
+// PROJECT TYPES
+// ============================================
+
+export type ProjectStatus = 'not-started' | 'in-progress' | 'completed';
+export type ProjectFilterType = 'all' | 'completed' | 'in-progress' | 'not-started' | 'not-completed' | 'now-working';
+
+export interface ProjectAttachment {
+  id: string;
+  name: string;
+  url: string;
+  uploadedAt: Timestamp;
+  uploadedBy: string;
+}
+
+export interface ProjectSubTask {
+  id: string;
+  projectId: string;
+  title: string;
+  description?: string;
+  status: ProjectStatus;
+  order: number;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+export interface ProjectCommentReaction {
+  userId: string;
+  emoji: string;
+  timestamp: Timestamp;
+}
+
+export interface ProjectComment {
+  id: string;
+  projectId: string;
+  userId: string;
+  userDisplayName: string;
+  userRole: 'admin' | 'manager';
+  content: string;
+  reactions: ProjectCommentReaction[];
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+  editedAt?: Timestamp;
+}
+
+export interface Project {
+  id: string;
+  title: string;
+  description: string;
+  status: ProjectStatus;
+  coverUrl?: string;
+  internalDataLink?: string;
+  downloadSuffix?: string;
+  attachments: ProjectAttachment[];
+  subTasks: ProjectSubTask[];
+  agendaTaskIds: string[];
+  availableDateRanges: {
+    startDate: string;
+    endDate: string;
+  }[];
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+  createdBy: string;
+  lastUpdatedBy: string;
+}
+
+// ============================================
 // UTILITY TYPES
 // ============================================
 
