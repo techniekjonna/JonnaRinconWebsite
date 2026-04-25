@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronDown, Edit2, MessageCircle, CheckCircle2, Smile } from 'lucide-react';
+import { ChevronDown, Edit2, MessageCircle, CheckCircle2, Smile, Trash2 } from 'lucide-react';
 import { Project, ProjectComment, ProjectSubTask } from '../../lib/firebase/types';
 import { projectService } from '../../lib/firebase/services';
 import { useAuth } from '../../contexts/AuthContext';
@@ -64,6 +64,44 @@ const ProjectViewPage: React.FC<ProjectViewPageProps> = ({ project, onEdit, canE
       console.error('Failed to add comment:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDeleteComment = async (commentId: string) => {
+    try {
+      await projectService.deleteComment(commentId);
+      await loadData();
+    } catch (error) {
+      console.error('Failed to delete comment:', error);
+    }
+  };
+
+  const handleAddReaction = async (commentId: string, emoji: string) => {
+    try {
+      await projectService.addReaction(commentId, emoji);
+      await loadData();
+      setShowEmojiPicker(null);
+    } catch (error) {
+      console.error('Failed to add reaction:', error);
+    }
+  };
+
+  const handleRemoveReaction = async (commentId: string, emoji: string) => {
+    try {
+      await projectService.removeReaction(commentId, emoji);
+      await loadData();
+    } catch (error) {
+      console.error('Failed to remove reaction:', error);
+    }
+  };
+
+  const handleToggleSubTaskComplete = async (task: ProjectSubTask) => {
+    try {
+      const newStatus = task.status === 'completed' ? 'in-progress' : 'completed';
+      await projectService.updateSubTask(task.id, { ...task, status: newStatus } as any);
+      await loadData();
+    } catch (error) {
+      console.error('Failed to update sub-task:', error);
     }
   };
 
@@ -133,11 +171,12 @@ const ProjectViewPage: React.FC<ProjectViewPageProps> = ({ project, onEdit, canE
               {subTasks.map(task => (
                 <div
                   key={task.id}
-                  className="flex items-start gap-3 p-2 rounded bg-white/[0.02] hover:bg-white/[0.05] transition-colors"
+                  className="flex items-start gap-3 p-2 rounded bg-white/[0.02] hover:bg-white/[0.05] transition-colors group cursor-pointer"
+                  onClick={() => handleToggleSubTaskComplete(task)}
                 >
                   <CheckCircle2
                     size={18}
-                    className={task.status === 'completed' ? 'text-green-400 mt-0.5' : 'text-white/30 mt-0.5'}
+                    className={task.status === 'completed' ? 'text-green-400 mt-0.5 flex-shrink-0' : 'text-white/30 mt-0.5 flex-shrink-0'}
                   />
                   <div className="flex-1 min-w-0">
                     <p className={`text-sm ${task.status === 'completed' ? 'line-through text-white/40' : 'text-white'}`}>
@@ -236,8 +275,8 @@ const ProjectViewPage: React.FC<ProjectViewPageProps> = ({ project, onEdit, canE
             {comments.length > 0 && (
               <div className="space-y-3 max-h-48 overflow-y-auto">
                 {comments.map(comment => (
-                  <div key={comment.id} className="p-2 rounded bg-white/[0.02]">
-                    <div className="flex items-start gap-2">
+                  <div key={comment.id} className="p-3 rounded bg-white/[0.02] group">
+                    <div className="flex items-start gap-2 mb-2">
                       <img
                         src="https://via.placeholder.com/28"
                         alt={comment.userDisplayName}
@@ -249,6 +288,52 @@ const ProjectViewPage: React.FC<ProjectViewPageProps> = ({ project, onEdit, canE
                           <span className="text-[10px] text-white/40">{comment.userRole}</span>
                         </div>
                         <p className="text-xs text-white/70 mt-1">{comment.content}</p>
+                      </div>
+                      {canEdit && (
+                        <button
+                          onClick={() => handleDeleteComment(comment.id)}
+                          className="opacity-0 group-hover:opacity-100 p-1 hover:bg-red-600/20 text-red-400 rounded transition-all"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Reactions */}
+                    <div className="flex flex-wrap gap-1 items-center">
+                      {comment.reactions.map((reaction, idx) => (
+                        <button
+                          key={idx}
+                          onClick={() => handleRemoveReaction(comment.id, reaction.emoji)}
+                          className="px-2 py-0.5 bg-white/10 hover:bg-white/20 rounded text-xs transition-colors"
+                        >
+                          {reaction.emoji}
+                        </button>
+                      ))}
+
+                      {/* Emoji Picker Button */}
+                      <div className="relative">
+                        <button
+                          onClick={() => setShowEmojiPicker(showEmojiPicker === comment.id ? null : comment.id)}
+                          className="p-1 hover:bg-white/10 rounded transition-colors text-white/40 hover:text-white"
+                        >
+                          <Smile size={14} />
+                        </button>
+
+                        {/* Emoji Picker Dropdown */}
+                        {showEmojiPicker === comment.id && (
+                          <div className="absolute bottom-full mb-2 bg-black border border-white/20 rounded-lg p-2 z-10 flex gap-1 flex-wrap w-44">
+                            {EMOJI_REACTIONS.map(emoji => (
+                              <button
+                                key={emoji}
+                                onClick={() => handleAddReaction(comment.id, emoji)}
+                                className="p-1 hover:bg-white/20 rounded transition-colors text-lg"
+                              >
+                                {emoji}
+                              </button>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>

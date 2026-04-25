@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
-import { Project, ProjectSubTask } from '../../lib/firebase/types';
-import { Plus, Trash2, GripVertical } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Project, ProjectSubTask, AgendaDay } from '../../lib/firebase/types';
+import { Plus, Trash2, GripVertical, Calendar } from 'lucide-react';
 import { projectService } from '../../lib/firebase/services';
+import { getAgendaDaysByMonth } from '../../lib/firebase/services/agendaService';
 
 interface ProjectEditPageProps {
   project: Partial<Project>;
@@ -21,6 +22,25 @@ const ProjectEditPage: React.FC<ProjectEditPageProps> = ({
   const [newSubTask, setNewSubTask] = useState('');
   const [subTasks, setSubTasks] = useState<ProjectSubTask[]>(project.subTasks || []);
   const [editingSubTask, setEditingSubTask] = useState<string | null>(null);
+
+  // Agenda scheduling
+  const [showAgendaPicker, setShowAgendaPicker] = useState(false);
+  const [agendaDays, setAgendaDays] = useState<AgendaDay[]>([]);
+  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [selectedDates, setSelectedDates] = useState<string[]>(project.availableDateRanges?.map(r => r.startDate) || []);
+
+  useEffect(() => {
+    loadAgendaDays();
+  }, [currentMonth]);
+
+  const loadAgendaDays = async () => {
+    try {
+      const days = await getAgendaDaysByMonth(currentMonth.getFullYear(), currentMonth.getMonth());
+      setAgendaDays(days);
+    } catch (error) {
+      console.error('Failed to load agenda days:', error);
+    }
+  };
 
   const handleFieldChange = (field: string, value: any) => {
     onFormChange({
@@ -63,6 +83,47 @@ const ProjectEditPage: React.FC<ProjectEditPageProps> = ({
       console.error('Failed to update sub-task:', error);
     }
   };
+
+  const handleSelectDate = (date: string) => {
+    if (selectedDates.includes(date)) {
+      setSelectedDates(selectedDates.filter(d => d !== date));
+    } else {
+      setSelectedDates([...selectedDates, date]);
+    }
+  };
+
+  const handleSaveDates = () => {
+    const ranges = selectedDates.sort().map(date => ({
+      startDate: date,
+      endDate: date,
+    }));
+    handleFieldChange('availableDateRanges', ranges);
+    setShowAgendaPicker(false);
+  };
+
+  const getDaysInMonth = (date: Date) => {
+    return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+  };
+
+  const getFirstDayOfMonth = (date: Date) => {
+    return new Date(date.getFullYear(), date.getMonth(), 1).getDay();
+  };
+
+  const formatDate = (year: number, month: number, day: number) => {
+    return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+  };
+
+  const monthString = currentMonth.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+  const daysInMonth = getDaysInMonth(currentMonth);
+  const firstDay = getFirstDayOfMonth(currentMonth);
+
+  const calendarDays = [];
+  for (let i = 0; i < firstDay; i++) {
+    calendarDays.push(null);
+  }
+  for (let day = 1; day <= daysInMonth; day++) {
+    calendarDays.push(day);
+  }
 
   return (
     <div className="space-y-4">
@@ -134,7 +195,6 @@ const ProjectEditPage: React.FC<ProjectEditPageProps> = ({
           value={project.internalDataLink || ''}
           onChange={e => {
             let url = e.target.value;
-            // Auto-append /download if missing
             if (url && !url.endsWith('/download')) {
               handleFieldChange('downloadSuffix', '/download');
             }
@@ -150,7 +210,6 @@ const ProjectEditPage: React.FC<ProjectEditPageProps> = ({
       <div className="border-t border-white/10 pt-4">
         <h3 className="text-xs font-semibold text-white/60 uppercase mb-3">Sub-Tasks</h3>
 
-        {/* Add New Sub-Task */}
         {project.id && (
           <div className="flex gap-2 mb-3">
             <input
@@ -174,7 +233,6 @@ const ProjectEditPage: React.FC<ProjectEditPageProps> = ({
           </div>
         )}
 
-        {/* Sub-Tasks List */}
         {subTasks.length > 0 ? (
           <div className="space-y-2 max-h-40 overflow-y-auto">
             {subTasks.map(task => (
@@ -219,6 +277,107 @@ const ProjectEditPage: React.FC<ProjectEditPageProps> = ({
           </div>
         ) : (
           <p className="text-xs text-white/40">No sub-tasks yet</p>
+        )}
+      </div>
+
+      {/* Agenda Scheduling Section */}
+      <div className="border-t border-white/10 pt-4">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-xs font-semibold text-white/60 uppercase">Schedule Dates</h3>
+          <button
+            onClick={() => setShowAgendaPicker(!showAgendaPicker)}
+            className="p-2 hover:bg-white/10 rounded transition-colors text-white/40 hover:text-white"
+          >
+            <Calendar size={16} />
+          </button>
+        </div>
+
+        {selectedDates.length > 0 && (
+          <div className="mb-3 flex flex-wrap gap-2">
+            {selectedDates.sort().map(date => (
+              <span
+                key={date}
+                className="px-2 py-1 bg-blue-600/20 text-blue-400 rounded text-xs font-medium flex items-center gap-1"
+              >
+                {date}
+                <button
+                  onClick={() => setSelectedDates(selectedDates.filter(d => d !== date))}
+                  className="hover:text-blue-300"
+                >
+                  ×
+                </button>
+              </span>
+            ))}
+          </div>
+        )}
+
+        {showAgendaPicker && (
+          <div className="bg-white/[0.03] border border-white/10 rounded-lg p-4 mb-3">
+            <div className="flex items-center justify-between mb-3">
+              <button
+                onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1))}
+                className="text-white/40 hover:text-white"
+              >
+                ←
+              </button>
+              <span className="text-sm font-semibold text-white">{monthString}</span>
+              <button
+                onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1))}
+                className="text-white/40 hover:text-white"
+              >
+                →
+              </button>
+            </div>
+
+            <div className="grid grid-cols-7 gap-1 mb-3">
+              {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(d => (
+                <div key={d} className="text-center text-[10px] font-semibold text-white/40">
+                  {d}
+                </div>
+              ))}
+            </div>
+
+            <div className="grid grid-cols-7 gap-1 mb-3">
+              {calendarDays.map((day, idx) => {
+                if (day === null) return <div key={`empty-${idx}`} />;
+                const dateStr = formatDate(currentMonth.getFullYear(), currentMonth.getMonth(), day);
+                const isSelected = selectedDates.includes(dateStr);
+                const agendaDay = agendaDays.find(d => d.date === dateStr);
+                const isAvailable = agendaDay && agendaDay.statusId === 'beschikbaar' || agendaDay?.statusId === 'beschikbaar_studio';
+
+                return (
+                  <button
+                    key={day}
+                    onClick={() => handleSelectDate(dateStr)}
+                    className={`aspect-square flex items-center justify-center text-xs font-semibold rounded transition-all ${
+                      isSelected
+                        ? 'bg-blue-600 text-white'
+                        : isAvailable
+                        ? 'bg-green-600/20 text-green-400 hover:bg-green-600/30'
+                        : 'bg-white/[0.02] text-white/20'
+                    }`}
+                  >
+                    {day}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowAgendaPicker(false)}
+                className="flex-1 py-2 px-3 rounded bg-white/[0.05] border border-white/10 text-white/60 hover:text-white text-sm font-medium transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveDates}
+                className="flex-1 py-2 px-3 rounded bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-colors"
+              >
+                Save Dates
+              </button>
+            </div>
+          </div>
         )}
       </div>
 
