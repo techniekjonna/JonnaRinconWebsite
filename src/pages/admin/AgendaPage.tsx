@@ -265,10 +265,14 @@ const AgendaPage: React.FC = () => {
                 const dateStr = formatDate(currentDate.getFullYear(), currentDate.getMonth(), day);
                 const data = daysData.get(dateStr);
                 return (
-                  <button key={day} onClick={() => openDayModal(day)} className="aspect-square p-3 rounded-xl bg-white/[0.06] border border-white/[0.08] hover:border-white/[0.15] hover:bg-white/[0.10] transition-all flex flex-col items-start justify-start text-left">
-                    <div className="text-sm font-semibold text-white">{day}</div>
-                    {data?.status && <div className="text-[10px] font-medium mt-1 px-1.5 py-0.5 rounded-full text-white" style={{ backgroundColor: data.status.color + '33' }}>{data.status.name}</div>}
-                    {data?.tasks.length ? <div className="text-[10px] text-white/40 mt-1">{data.tasks.filter(t => !t.completed).length} todo</div> : null}
+                  <button key={day} onClick={() => openDayModal(day)} className="aspect-square p-2 rounded-xl bg-white/[0.06] border border-white/[0.08] hover:border-white/[0.15] hover:bg-white/[0.10] transition-all flex flex-col items-start justify-between text-left">
+                    {data?.status && (
+                      <div className="text-[9px] font-bold px-1.5 py-0.5 rounded-full text-white w-full text-center" style={{ backgroundColor: data.status.color + '33', color: data.status.color }}>
+                        {data.status.name}
+                      </div>
+                    )}
+                    <div className={`text-sm font-semibold text-white ${!data?.status ? 'pt-2' : ''}`}>{day}</div>
+                    {data?.tasks.length ? <div className="text-[10px] text-white/40">{data.tasks.filter(t => !t.completed).length} todo</div> : null}
                   </button>
                 );
               })}
