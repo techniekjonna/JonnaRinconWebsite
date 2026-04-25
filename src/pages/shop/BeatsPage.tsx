@@ -96,11 +96,13 @@ const BeatsShop: React.FC = () => {
   };
 
   const handlePlayBeat = async (beat: Beat) => {
-    // Increment plays counter for this beat
+    // Register play after 15 seconds of playback
     if (beat.id) {
-      await beatService.incrementPlays(beat.id).catch((error) => {
-        console.error('Failed to increment beat plays:', error);
-      });
+      setTimeout(() => {
+        beatService.incrementPlays(beat.id!).catch((error) => {
+          console.error('Failed to increment beat plays:', error);
+        });
+      }, 15000);
     }
 
     // Convert beat to track format

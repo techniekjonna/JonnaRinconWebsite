@@ -101,11 +101,13 @@ export default function RemixesPage() {
       return;
     }
 
-    // Increment plays counter for this remix
+    // Register play after 15 seconds of playback
     if (remix.id) {
-      await remixService.incrementPlays(remix.id).catch((error) => {
-        console.error('Failed to increment remix plays:', error);
-      });
+      setTimeout(() => {
+        remixService.incrementPlays(remix.id!).catch((error) => {
+          console.error('Failed to increment remix plays:', error);
+        });
+      }, 15000);
     }
 
     // Filter remixes matching current filters and create queue
