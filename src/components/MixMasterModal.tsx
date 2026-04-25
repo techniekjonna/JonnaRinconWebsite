@@ -677,27 +677,33 @@ export default function MixMasterModal({ service, isOpen, onClose }: MixMasterMo
         {/* Modal */}
         <div
           ref={modalRef}
-          className="relative w-full max-w-2xl bg-gradient-to-br from-white/[0.12] to-white/[0.05] backdrop-blur-2xl border border-white/[0.2] rounded-3xl overflow-hidden shadow-2xl my-4 max-h-[90vh]"
+          className="relative w-full max-w-2xl bg-gradient-to-br from-white/[0.12] to-white/[0.05] backdrop-blur-2xl border border-white/[0.2] rounded-3xl overflow-hidden shadow-2xl my-4 max-h-[90vh] flex flex-col"
         >
-          {/* Close Button */}
-          <button
-            onClick={onClose}
-            className="absolute top-6 right-6 z-20 p-2 bg-white/[0.1] hover:bg-white/[0.2] rounded-full text-white/60 hover:text-white transition-all duration-200"
-          >
-            <X size={24} />
-          </button>
+          {/* Header */}
+          <div className="sticky top-0 z-20 bg-white/[0.06] backdrop-blur-sm border-b border-white/[0.15] px-6 py-4 flex items-center justify-between">
+            {/* Featured Badge (info page only) */}
+            {service.featured && page === 'info' ? (
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-purple-500/30 to-pink-500/30 border border-purple-400/30 rounded-full">
+                <Star size={14} className="text-purple-300" />
+                <span className="text-xs font-bold text-purple-200 uppercase tracking-wider">
+                  Featured
+                </span>
+              </div>
+            ) : <div />}
 
-          {/* Featured Badge (info page only) */}
-          {service.featured && page === 'info' && (
-            <div className="absolute top-6 left-6 z-20 flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-purple-500/30 to-pink-500/30 border border-purple-400/30 rounded-full">
-              <Star size={14} className="text-purple-300" />
-              <span className="text-xs font-bold text-purple-200 uppercase tracking-wider">
-                Featured
-              </span>
-            </div>
-          )}
+            {/* Close Button */}
+            <button
+              onClick={onClose}
+              className="p-2 bg-white/[0.1] hover:bg-white/[0.2] rounded-full text-white/60 hover:text-white transition-all duration-200"
+            >
+              <X size={24} />
+            </button>
+          </div>
 
-          {page === 'info' ? renderInfoPage() : renderOrderPage()}
+          {/* Content */}
+          <div className="flex-1 overflow-y-auto">
+            {page === 'info' ? renderInfoPage() : renderOrderPage()}
+          </div>
         </div>
       </div>
 
