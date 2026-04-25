@@ -162,10 +162,10 @@ export default function Hero() {
       </div>
 
       {/* Content — two columns: left text, right carousel */}
-      <div className="relative z-10 w-full h-screen flex flex-col lg:flex-row items-center justify-center px-4 md:px-6 gap-8">
+      <div className="relative z-10 w-full h-screen flex flex-col lg:flex-row items-center justify-center px-6 sm:px-12 md:px-16 lg:px-20 xl:px-24 2xl:px-32 gap-12 lg:gap-16 max-w-[1600px] mx-auto">
 
         {/* LEFT: Text content */}
-        <div className="flex flex-col items-center lg:items-start justify-center max-w-lg flex-1">
+        <div className="flex flex-col items-center lg:items-start justify-center max-w-2xl lg:max-w-lg flex-1">
           {/* Banner — top badge */}
           <div
             className="mb-8 px-4 py-2 border border-white/30 rounded-full text-xs uppercase tracking-widest text-white/70 transition-opacity duration-700"
@@ -244,7 +244,7 @@ export default function Hero() {
 
         {/* RIGHT: Instagram Carousel */}
         <div
-          className="flex-1 flex justify-center transition-opacity duration-700"
+          className="flex-1 flex justify-center lg:justify-end transition-opacity duration-700 min-w-0"
           style={{ opacity: done ? 1 : 0 }}
         >
           <SocialCardCarousel
