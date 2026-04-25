@@ -108,8 +108,7 @@ export default function PlayerModal({
             {/* Track Info */}
             <div className="mb-8 text-center md:text-left">
               <h2 className="text-2xl font-black text-white mb-2 truncate">{track.title}</h2>
-              <p className="text-white/60 text-sm mb-2 truncate">{track.artist}</p>
-              <p className="text-xs text-white/40">{formatDuration(duration)}</p>
+              <p className="text-white/60 text-sm truncate">{track.artist}</p>
             </div>
 
             {/* Progress Bar */}
@@ -251,7 +250,6 @@ export default function PlayerModal({
                 step="0.01"
                 value={isMuted ? 0 : volume}
                 onChange={onVolumeChange}
-                disabled={isMuted}
                 className="flex-1 h-1 rounded-full appearance-none cursor-pointer"
                 title="Volume"
                 style={{
