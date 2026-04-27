@@ -414,27 +414,39 @@ const TracksPage: React.FC = () => {
         <div className="flex items-center justify-between">
           <div></div>
           <div className="flex items-center gap-2">
-            <button
-              onClick={handleCreate}
-              className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-purple-700 hover:to-pink-700 transition-all flex items-center space-x-2"
-            >
-              <Plus size={20} />
-              <span>Add Track</span>
-            </button>
-            <div className="relative" ref={filterRef}>
+            {activeTab === 'tracks' && (
               <button
-                onClick={() => setShowFilters((v) => !v)}
-                className={`p-3 rounded-lg border transition-all ${
-                  hasActiveFilters
-                    ? 'bg-red-600 border-red-600 text-white'
-                    : 'bg-white/[0.06] border-white/[0.08] text-white/60 hover:text-white hover:bg-white/[0.12]'
-                }`}
-                title={showFilters ? 'Hide filters' : 'Show filters'}
-                aria-label="Toggle filters"
-                aria-expanded={showFilters}
+                onClick={handleCreate}
+                className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-purple-700 hover:to-pink-700 transition-all flex items-center space-x-2"
               >
-                <FilterIcon size={20} />
+                <Plus size={20} />
+                <span>Add Track</span>
               </button>
+            )}
+            {activeTab === 'remixes' && (
+              <button
+                onClick={handleCreateRemix}
+                className="bg-gradient-to-r from-red-600 to-pink-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-red-700 hover:to-pink-700 transition-all flex items-center space-x-2"
+              >
+                <Plus size={20} />
+                <span>Add Remix</span>
+              </button>
+            )}
+            {(activeTab === 'tracks' || activeTab === 'remixes') && (
+              <div className="relative" ref={filterRef}>
+                <button
+                  onClick={() => setShowFilters((v) => !v)}
+                  className={`p-3 rounded-lg border transition-all ${
+                    hasActiveFilters
+                      ? 'bg-red-600 border-red-600 text-white'
+                      : 'bg-white/[0.06] border-white/[0.08] text-white/60 hover:text-white hover:bg-white/[0.12]'
+                  }`}
+                  title={showFilters ? 'Hide filters' : 'Show filters'}
+                  aria-label="Toggle filters"
+                  aria-expanded={showFilters}
+                >
+                  <FilterIcon size={20} />
+                </button>
 
               {showFilters && (
                 <div className="absolute right-0 top-full mt-2 w-72 bg-black/90 backdrop-blur-xl border border-white/[0.08] rounded-xl p-4 shadow-2xl z-50">
@@ -543,7 +555,8 @@ const TracksPage: React.FC = () => {
                   </div>
                 </div>
               )}
-            </div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -713,18 +726,9 @@ const TracksPage: React.FC = () => {
         {/* REMIXES TAB */}
         {activeTab === 'remixes' && (
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-xl font-bold text-white">Remixes</h2>
-                <p className="text-white/40 text-sm mt-1">{remixes.length} remix(es)</p>
-              </div>
-              <button
-                onClick={handleCreateRemix}
-                className="bg-gradient-to-r from-red-600 to-pink-600 text-white px-4 py-2 rounded-lg font-semibold hover:from-red-700 hover:to-pink-700 transition-all flex items-center gap-2 text-sm"
-              >
-                <Plus size={16} />
-                Add Remix
-              </button>
+            <div>
+              <h2 className="text-xl font-bold text-white">Remixes</h2>
+              <p className="text-white/40 text-sm mt-1">{remixes.length} remix(es)</p>
             </div>
 
             {remixesLoading ? (
