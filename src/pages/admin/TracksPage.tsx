@@ -23,6 +23,9 @@ const TracksPage: React.FC = () => {
   const [editingRemix, setEditingRemix] = useState<Remix | null>(null);
   const [currentlyPlaying, setCurrentlyPlaying] = useState<string | null>(null);
   const [expandedAlbums, setExpandedAlbums] = useState<Set<string>>(new Set());
+  const [editingPlaylist, setEditingPlaylist] = useState<Playlist | null>(null);
+  const [showPlaylistEditModal, setShowPlaylistEditModal] = useState(false);
+  const [playlistEditForm, setPlaylistEditForm] = useState({ name: '', description: '', isPublic: false, isFeatured: false });
 
   // Track settings state
   const [trackSettings, setTrackSettings] = useState<any>(null);
@@ -79,6 +82,37 @@ const TracksPage: React.FC = () => {
       alert('Track deleted successfully');
     } catch (error: any) {
       alert(error.message);
+    }
+  };
+
+  const handleEditPlaylist = (playlist: Playlist) => {
+    setEditingPlaylist(playlist);
+    setPlaylistEditForm({
+      name: playlist.name,
+      description: playlist.description || '',
+      isPublic: playlist.isPublic || false,
+      isFeatured: playlist.isFeatured || false,
+    });
+    setShowPlaylistEditModal(true);
+  };
+
+  const handleSavePlaylist = async () => {
+    if (!editingPlaylist || !playlistEditForm.name.trim()) {
+      alert('Playlist name is required');
+      return;
+    }
+    try {
+      await playlistService.updatePlaylist(editingPlaylist.id, {
+        name: playlistEditForm.name.trim(),
+        description: playlistEditForm.description,
+        isPublic: playlistEditForm.isPublic,
+        isFeatured: playlistEditForm.isFeatured,
+      });
+      alert('Playlist updated successfully');
+      setShowPlaylistEditModal(false);
+      setEditingPlaylist(null);
+    } catch (error: any) {
+      alert(error.message || 'Failed to update playlist');
     }
   };
 
@@ -826,8 +860,8 @@ const TracksPage: React.FC = () => {
                     </div>
                     <div className="flex items-center gap-2 mt-auto">
                       <button
+                        onClick={() => handleEditPlaylist(playlist)}
                         className="flex-1 px-2 py-1.5 bg-white/[0.06] text-white/60 hover:text-white text-xs rounded transition-colors"
-                        disabled
                       >
                         Edit
                       </button>
@@ -975,6 +1009,42 @@ const TracksPage: React.FC = () => {
             setEditingTrack(null);
           }}
         />
+      )}
+
+      {showPlaylistEditModal && editingPlaylist && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowPlaylistEditModal(false)} />
+          <div className="relative bg-black border border-white/[0.06] rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-black/80 backdrop-blur-sm border-b border-white/[0.06] px-5 py-4 flex items-center justify-between z-10">
+              <h2 className="text-lg font-bold text-white">Edit Playlist</h2>
+              <button onClick={() => setShowPlaylistEditModal(false)} className="text-white/40 hover:text-white"><Plus size={20} className="rotate-45" /></button>
+            </div>
+            <div className="px-5 py-4 space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-white/60 uppercase mb-2">Name</label>
+                <input value={playlistEditForm.name} onChange={(e) => setPlaylistEditForm({...playlistEditForm, name: e.target.value})} className="w-full px-3 py-2 rounded-lg bg-white/[0.08] border border-white/[0.06] text-white text-sm focus:outline-none focus:border-purple-500" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-white/60 uppercase mb-2">Description</label>
+                <textarea value={playlistEditForm.description} onChange={(e) => setPlaylistEditForm({...playlistEditForm, description: e.target.value})} className="w-full px-3 py-2 rounded-lg bg-white/[0.08] border border-white/[0.06] text-white text-sm focus:outline-none focus:border-purple-500 resize-none" rows={3} />
+              </div>
+              <div className="space-y-2">
+                <label className="flex items-center gap-2">
+                  <input type="checkbox" checked={playlistEditForm.isPublic} onChange={(e) => setPlaylistEditForm({...playlistEditForm, isPublic: e.target.checked})} className="rounded" />
+                  <span className="text-xs font-semibold text-white/60">Make Public</span>
+                </label>
+                <label className="flex items-center gap-2">
+                  <input type="checkbox" checked={playlistEditForm.isFeatured} onChange={(e) => setPlaylistEditForm({...playlistEditForm, isFeatured: e.target.checked})} className="rounded" />
+                  <span className="text-xs font-semibold text-white/60">Featured</span>
+                </label>
+              </div>
+              <div className="flex gap-2 pt-4">
+                <button onClick={() => setShowPlaylistEditModal(false)} className="flex-1 py-2 rounded-lg bg-white/[0.06] text-white hover:bg-white/[0.12] text-sm font-medium">Cancel</button>
+                <button onClick={handleSavePlaylist} className="flex-1 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 text-sm font-medium">Save</button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </AdminLayout>
   );
