@@ -3,17 +3,45 @@ import AdminLayout from '../../components/admin/AdminLayout';
 import LinkInput from '../../components/admin/LinkInput';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { useTracks } from '../../hooks/useTracks';
-import { trackService } from '../../lib/firebase/services';
-import { Track } from '../../lib/firebase/types';
-import { Plus, Edit, Trash2, Play, Pause, ChevronDown, GripVertical, ArrowUp, ArrowDown, Link as LinkIcon, AlertCircle, Filter as FilterIcon } from 'lucide-react';
+import { useRemixes } from '../../hooks/useRemixes';
+import { usePlaylists } from '../../hooks/usePlaylists';
+import { trackService, remixService, playlistService, settingsService } from '../../lib/firebase/services';
+import { Track, Remix, Playlist } from '../../lib/firebase/types';
+import { Plus, Edit, Trash2, Play, Pause, ChevronDown, Music, Save, Globe, Lock, Star, Filter as FilterIcon } from 'lucide-react';
 import { toDirectUrl, detectUrlType, isValidUrl } from '../../lib/utils/urlUtils';
 
+type CatalogueTab = 'tracks' | 'remixes' | 'playlists' | 'custom';
+
 const TracksPage: React.FC = () => {
-  const { tracks, loading, error } = useTracks();
+  const { tracks, loading: tracksLoading, error } = useTracks();
+  const { remixes, loading: remixesLoading } = useRemixes();
+  const { playlists, loading: playlistsLoading } = usePlaylists();
+
+  const [activeTab, setActiveTab] = useState<CatalogueTab>('tracks');
   const [showModal, setShowModal] = useState(false);
   const [editingTrack, setEditingTrack] = useState<Track | null>(null);
+  const [editingRemix, setEditingRemix] = useState<Remix | null>(null);
   const [currentlyPlaying, setCurrentlyPlaying] = useState<string | null>(null);
   const [expandedAlbums, setExpandedAlbums] = useState<Set<string>>(new Set());
+
+  // Track settings state
+  const [trackSettings, setTrackSettings] = useState<any>(null);
+  const [loadingSettings, setLoadingSettings] = useState(true);
+
+  // Load track settings
+  useEffect(() => {
+    const loadSettings = async () => {
+      try {
+        const data = await settingsService.getTrackSettings();
+        if (data) setTrackSettings(data);
+      } catch (error) {
+        console.error('Failed to load track settings:', error);
+      } finally {
+        setLoadingSettings(false);
+      }
+    };
+    loadSettings();
+  }, []);
 
   // Filter state
   const [selectedTypes, setSelectedTypes] = useState<Set<string>>(new Set());
@@ -96,6 +124,50 @@ const TracksPage: React.FC = () => {
       newExpanded.add(albumKey);
     }
     setExpandedAlbums(newExpanded);
+  };
+
+  // Remixes handlers
+  const handleCreateRemix = () => {
+    setEditingRemix(null);
+    setShowModal(true);
+  };
+
+  const handleEditRemix = (remix: Remix) => {
+    setEditingRemix(remix);
+    setShowModal(true);
+  };
+
+  const handleDeleteRemix = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this remix?')) return;
+    try {
+      await remixService.deleteRemix(id);
+      alert('Remix deleted successfully');
+    } catch (error: any) {
+      alert(error.message);
+    }
+  };
+
+  // Playlists handlers
+  const handleDeletePlaylist = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this playlist?')) return;
+    try {
+      await playlistService.deletePlaylist(id);
+      alert('Playlist deleted successfully');
+    } catch (error: any) {
+      alert(error.message);
+    }
+  };
+
+  // Custom settings handler
+  const handleSaveTrackSettings = async () => {
+    if (!trackSettings) return;
+    try {
+      await settingsService.saveTrackSettings(trackSettings);
+      alert('Custom track settings saved successfully!');
+    } catch (error) {
+      console.error('Failed to save settings:', error);
+      alert('Failed to save settings');
+    }
   };
 
   // Filter toggle functions
@@ -310,11 +382,37 @@ const TracksPage: React.FC = () => {
   return (
     <AdminLayout>
       <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold text-white">Catalogus Management</h1>
+          <p className="text-white/40 mt-1 text-sm">Beheer je tracks, remixes, playlists en custom instellingen</p>
+        </div>
+
+        {/* Tab Navigation */}
+        <div className="flex gap-1 border-b border-white/[0.1]">
+          {(['tracks', 'remixes', 'playlists', 'custom'] as CatalogueTab[]).map((tab) => {
+            const label = tab === 'tracks' ? 'TRACKS' : tab === 'remixes' ? 'REMIXES' : tab === 'playlists' ? 'PLAY' : 'CUSTOM';
+            const isActive = activeTab === tab;
+            return (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`px-4 py-2 font-semibold text-sm transition-all relative group ${
+                  isActive
+                    ? 'text-white'
+                    : 'text-white/40 hover:text-white hover:brightness-110'
+                }`}
+              >
+                <span>{label}</span>
+                {isActive && (
+                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-red-600 to-pink-600" />
+                )}
+              </button>
+            );
+          })}
+        </div>
+
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-white">Tracks Management</h1>
-            <p className="text-white/40 mt-2">Manage your track catalog</p>
-          </div>
+          <div></div>
           <div className="flex items-center gap-2">
             <button
               onClick={handleCreate}
@@ -449,16 +547,19 @@ const TracksPage: React.FC = () => {
           </div>
         </div>
 
-        {error && (
-          <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl">
-            <p className="text-red-400 text-sm font-semibold">
-              ⚠️ {error}
-            </p>
-          </div>
-        )}
+        {/* TRACKS TAB */}
+        {activeTab === 'tracks' && (
+          <div className="space-y-4">
+            {error && (
+              <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl">
+                <p className="text-red-400 text-sm font-semibold">
+                  ⚠️ {error}
+                </p>
+              </div>
+            )}
 
-        <div className="space-y-3">
-          {loading ? (
+            <div className="space-y-3">
+              {tracksLoading ? (
             <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-12">
               <LoadingSpinner text="Loading tracks..." />
             </div>
@@ -498,29 +599,7 @@ const TracksPage: React.FC = () => {
                     </button>
 
                     {/* Action Buttons - Album Level */}
-                    <div className="flex items-center space-x-2 flex-shrink-0">
-                      <button
-                        onClick={() => moveAlbumUp(group.albumName)}
-                        disabled={(() => {
-                          const allAlbums = Array.from(new Set(sortedTracks.filter(t => t.type === 'Album' || t.type === 'EP').map(t => t.album || t.title)));
-                          return allAlbums.indexOf(group.albumName) === 0;
-                        })()}
-                        className="p-2 text-white/40 hover:text-white disabled:opacity-30 transition-colors"
-                        title="Move album up"
-                      >
-                        <ArrowUp size={18} />
-                      </button>
-                      <button
-                        onClick={() => moveAlbumDown(group.albumName)}
-                        disabled={(() => {
-                          const allAlbums = Array.from(new Set(sortedTracks.filter(t => t.type === 'Album' || t.type === 'EP').map(t => t.album || t.title)));
-                          return allAlbums.indexOf(group.albumName) === allAlbums.length - 1;
-                        })()}
-                        className="p-2 text-white/40 hover:text-white disabled:opacity-30 transition-colors"
-                        title="Move album down"
-                      >
-                        <ArrowDown size={18} />
-                      </button>
+                    <div className="flex items-center space-x-2 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button
                         onClick={() => handleEditAlbum(group.displayTrack)}
                         className="p-2 text-white/40 hover:text-blue-400 transition-colors"
@@ -584,103 +663,303 @@ const TracksPage: React.FC = () => {
                   )}
                 </div>
               ) : (
-                // Single Track
-                <div key={albumKey} className="bg-white/[0.08] border border-white/[0.06] rounded-xl overflow-hidden">
-                  <div className="overflow-x-auto">
-                    <table className="w-full">
-                      <tbody>
-                        <tr className="hover:bg-white/[0.06]">
-                          <td className="px-6 py-4">
-                            <div className="flex items-center space-x-3">
-                              <img
-                                src={group.displayTrack.artworkUrl}
-                                alt={group.displayTrack.title}
-                                className="w-12 h-12 rounded object-cover"
-                              />
-                              <div>
-                                <p className="font-medium text-white">{group.displayTrack.title}</p>
-                                <p className="text-sm text-white/40">{group.displayTrack.artist}</p>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4">
-                            <span className="px-2 py-1 bg-purple-500/20 text-purple-400 rounded text-sm">
-                              {group.displayTrack.genre}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 text-white/60">
-                            {group.displayTrack.bpm} BPM / {group.displayTrack.key}
-                          </td>
-                          <td className="px-6 py-4">
-                            <span
-                              className={`px-2 py-1 rounded text-sm ${
-                                group.displayTrack.status === 'published'
-                                  ? 'bg-green-500/20 text-green-400'
-                                  : group.displayTrack.status === 'draft'
-                                  ? 'bg-yellow-500/20 text-yellow-400'
-                                  : 'bg-white/[0.06] text-white/40'
-                              }`}
-                            >
-                              {group.displayTrack.status}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 text-white/60">{group.displayTrack.plays}</td>
-                          <td className="px-6 py-4">
-                            <div className="flex items-center justify-end space-x-2">
-                              <button
-                                onClick={() => moveSingleTrackUp(group.displayTrack.id)}
-                                disabled={(() => {
-                                  const singleTracks = sortedTracks.filter(t => !t.album && (t.type === 'Single' || t.type === 'Exclusive'));
-                                  return singleTracks.findIndex(t => t.id === group.displayTrack.id) === 0;
-                                })()}
-                                className="p-2 text-white/40 hover:text-white disabled:opacity-30 transition-colors"
-                                title="Move up"
-                              >
-                                <ArrowUp size={18} />
-                              </button>
-                              <button
-                                onClick={() => moveSingleTrackDown(group.displayTrack.id)}
-                                disabled={(() => {
-                                  const singleTracks = sortedTracks.filter(t => !t.album && (t.type === 'Single' || t.type === 'Exclusive'));
-                                  return singleTracks.findIndex(t => t.id === group.displayTrack.id) === singleTracks.length - 1;
-                                })()}
-                                className="p-2 text-white/40 hover:text-white disabled:opacity-30 transition-colors"
-                                title="Move down"
-                              >
-                                <ArrowDown size={18} />
-                              </button>
-                              <button
-                                onClick={() => togglePlay(group.displayTrack.id)}
-                                className="p-2 text-white/40 hover:text-purple-400 transition-colors"
-                                title="Play preview"
-                              >
-                                {currentlyPlaying === group.displayTrack.id ? <Pause size={18} /> : <Play size={18} />}
-                              </button>
-                              <button
-                                onClick={() => handleEdit(group.displayTrack)}
-                                className="p-2 text-white/40 hover:text-blue-400 transition-colors"
-                                title="Edit"
-                              >
-                                <Edit size={18} />
-                              </button>
-                              <button
-                                onClick={() => handleDelete(group.displayTrack.id)}
-                                className="p-2 text-white/40 hover:text-red-400 transition-colors"
-                                title="Delete"
-                              >
-                                <Trash2 size={18} />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
+                // Single Track - Simplified
+                <div key={albumKey} className="bg-white/[0.05] border border-white/[0.06] rounded-lg p-4 hover:bg-white/[0.08] transition-all flex items-center justify-between group">
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <img
+                      src={group.displayTrack.artworkUrl}
+                      alt={group.displayTrack.title}
+                      className="w-10 h-10 rounded object-cover flex-shrink-0"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-white text-sm truncate">{group.displayTrack.title}</p>
+                      <p className="text-xs text-white/40 truncate">{group.displayTrack.artist}</p>
+                    </div>
+                    <span className="text-xs px-2 py-1 bg-white/[0.06] text-white/60 rounded flex-shrink-0">
+                      {group.displayTrack.type}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                      onClick={() => togglePlay(group.displayTrack.id)}
+                      className="p-1.5 text-white/40 hover:text-purple-400 transition-colors"
+                      title="Play preview"
+                    >
+                      {currentlyPlaying === group.displayTrack.id ? <Pause size={16} /> : <Play size={16} />}
+                    </button>
+                    <button
+                      onClick={() => handleEdit(group.displayTrack)}
+                      className="p-1.5 text-white/40 hover:text-blue-400 transition-colors"
+                      title="Edit"
+                    >
+                      <Edit size={16} />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(group.displayTrack.id)}
+                      className="p-1.5 text-white/40 hover:text-red-400 transition-colors"
+                      title="Delete"
+                    >
+                      <Trash2 size={16} />
+                    </button>
                   </div>
                 </div>
               );
             })
           )}
-        </div>
+            </div>
+          </div>
+        )}
+
+        {/* REMIXES TAB */}
+        {activeTab === 'remixes' && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-bold text-white">Remixes</h2>
+                <p className="text-white/40 text-sm mt-1">{remixes.length} remix(es)</p>
+              </div>
+              <button
+                onClick={handleCreateRemix}
+                className="bg-gradient-to-r from-red-600 to-pink-600 text-white px-4 py-2 rounded-lg font-semibold hover:from-red-700 hover:to-pink-700 transition-all flex items-center gap-2 text-sm"
+              >
+                <Plus size={16} />
+                Add Remix
+              </button>
+            </div>
+
+            {remixesLoading ? (
+              <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-8">
+                <LoadingSpinner text="Loading remixes..." />
+              </div>
+            ) : remixes.length === 0 ? (
+              <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-8 text-center text-white/40">
+                No remixes found
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {remixes.map((remix) => (
+                  <div key={remix.id} className="bg-white/[0.05] border border-white/[0.06] rounded-lg p-4 hover:bg-white/[0.08] transition-all flex items-center justify-between group">
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <div className="w-10 h-10 rounded bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center flex-shrink-0">
+                        <Music size={16} className="text-white" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-white text-sm truncate">{remix.title}</p>
+                        <p className="text-xs text-white/40 truncate">{remix.originalArtist || 'Unknown Artist'}</p>
+                      </div>
+                      <span className="text-xs px-2 py-1 bg-white/[0.06] text-white/60 rounded flex-shrink-0">
+                        Remix
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        onClick={() => handleEditRemix(remix)}
+                        className="p-1.5 text-white/40 hover:text-blue-400 transition-colors"
+                        title="Edit"
+                      >
+                        <Edit size={16} />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteRemix(remix.id)}
+                        className="p-1.5 text-white/40 hover:text-red-400 transition-colors"
+                        title="Delete"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* PLAYLISTS TAB */}
+        {activeTab === 'playlists' && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-bold text-white">Playlists</h2>
+                <p className="text-white/40 text-sm mt-1">{playlists.length} playlist(s)</p>
+              </div>
+            </div>
+
+            {playlistsLoading ? (
+              <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-8">
+                <LoadingSpinner text="Loading playlists..." />
+              </div>
+            ) : playlists.length === 0 ? (
+              <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-8 text-center text-white/40">
+                No playlists found
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                {playlists.map((playlist) => (
+                  <div key={playlist.id} className="bg-white/[0.05] border border-white/[0.06] rounded-lg p-4 hover:bg-white/[0.08] transition-all flex flex-col group">
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex-1">
+                        <p className="font-medium text-white text-sm line-clamp-2">{playlist.name}</p>
+                        <p className="text-xs text-white/40 mt-1">{playlist.trackIds?.length || 0} tracks</p>
+                      </div>
+                    </div>
+                    <p className="text-xs text-white/40 line-clamp-2 mb-3">{playlist.description || 'No description'}</p>
+                    <div className="flex items-center gap-1 mb-3 flex-wrap">
+                      {playlist.isPublic && (
+                        <span className="text-xs px-2 py-1 bg-green-500/20 text-green-400 rounded flex items-center gap-1">
+                          <Globe size={12} /> Public
+                        </span>
+                      )}
+                      {playlist.isFeatured && (
+                        <span className="text-xs px-2 py-1 bg-yellow-500/20 text-yellow-400 rounded flex items-center gap-1">
+                          <Star size={12} /> Featured
+                        </span>
+                      )}
+                      {!playlist.isPublic && (
+                        <span className="text-xs px-2 py-1 bg-white/[0.06] text-white/60 rounded flex items-center gap-1">
+                          <Lock size={12} /> Private
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 mt-auto">
+                      <button
+                        className="flex-1 px-2 py-1.5 bg-white/[0.06] text-white/60 hover:text-white text-xs rounded transition-colors"
+                        disabled
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleDeletePlaylist(playlist.id)}
+                        className="px-2 py-1.5 text-white/40 hover:text-red-400 transition-colors"
+                        title="Delete"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* CUSTOM TAB */}
+        {activeTab === 'custom' && (
+          <div className="space-y-6">
+            <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-6">
+              <h2 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
+                <Music size={20} className="text-blue-400" />
+                Custom Track Tabs
+              </h2>
+              {loadingSettings ? (
+                <LoadingSpinner text="Loading settings..." />
+              ) : trackSettings ? (
+                <div className="space-y-6">
+                  {/* Custom Tab 1 */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between p-4 bg-white/[0.06] rounded-lg">
+                      <div>
+                        <p className="font-medium text-white text-sm">Enable Custom Tab 1</p>
+                        <p className="text-xs text-white/40 mt-1">Show a custom tab in the tracks section</p>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={trackSettings.customTab1Enabled}
+                          onChange={(e) =>
+                            setTrackSettings({
+                              ...trackSettings,
+                              customTab1Enabled: e.target.checked,
+                            })
+                          }
+                          className="sr-only peer"
+                        />
+                        <div className="w-9 h-5 bg-white/[0.08] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-white/20 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
+                      </label>
+                    </div>
+                    {trackSettings.customTab1Enabled && (
+                      <div>
+                        <label className="block text-xs font-medium text-white/60 mb-2">
+                          Custom Tab 1 Label
+                        </label>
+                        <input
+                          type="text"
+                          value={trackSettings.customTab1Label}
+                          onChange={(e) =>
+                            setTrackSettings({
+                              ...trackSettings,
+                              customTab1Label: e.target.value,
+                            })
+                          }
+                          placeholder="e.g., Favorites, Trending, etc."
+                          className="w-full bg-white/[0.06] border border-white/[0.08] rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500"
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Custom Tab 2 */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between p-4 bg-white/[0.06] rounded-lg">
+                      <div>
+                        <p className="font-medium text-white text-sm">Enable Custom Tab 2</p>
+                        <p className="text-xs text-white/40 mt-1">Show another custom tab in the tracks section</p>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={trackSettings.customTab2Enabled}
+                          onChange={(e) =>
+                            setTrackSettings({
+                              ...trackSettings,
+                              customTab2Enabled: e.target.checked,
+                            })
+                          }
+                          className="sr-only peer"
+                        />
+                        <div className="w-9 h-5 bg-white/[0.08] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-white/20 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
+                      </label>
+                    </div>
+                    {trackSettings.customTab2Enabled && (
+                      <div>
+                        <label className="block text-xs font-medium text-white/60 mb-2">
+                          Custom Tab 2 Label
+                        </label>
+                        <input
+                          type="text"
+                          value={trackSettings.customTab2Label}
+                          onChange={(e) =>
+                            setTrackSettings({
+                              ...trackSettings,
+                              customTab2Label: e.target.value,
+                            })
+                          }
+                          placeholder="e.g., New Releases, Exclusive, etc."
+                          className="w-full bg-white/[0.06] border border-white/[0.08] rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500"
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex justify-end pt-4">
+                    <button
+                      onClick={handleSaveTrackSettings}
+                      className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 px-4 py-2 rounded-lg text-white font-medium transition-all text-sm"
+                    >
+                      <Save size={16} />
+                      Save Settings
+                    </button>
+                  </div>
+                </div>
+              ) : null}
+            </div>
+
+            <div className="bg-blue-900/20 border border-blue-700/30 rounded-xl p-4">
+              <p className="text-xs text-blue-300">
+                💡 <strong>Info:</strong> Custom tabs allow you to create specialized track collections. Enable and name them, then assign tracks to each in the track editor.
+              </p>
+            </div>
+          </div>
+        )}
       </div>
 
       {showModal && (
