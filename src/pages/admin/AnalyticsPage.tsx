@@ -31,6 +31,8 @@ import {
   Tag,
   UserPlus,
   Handshake,
+  Filter,
+  ChevronDown,
 } from 'lucide-react';
 
 const AnalyticsPage: React.FC = () => {
@@ -55,6 +57,10 @@ const AnalyticsPage: React.FC = () => {
   });
   const [artistRoleRequests, setArtistRoleRequests] = useState<any[]>([]);
   const [collabRequests, setCollabRequests] = useState<any[]>([]);
+  const [topContentTypeFilter, setTopContentTypeFilter] = useState<'all' | 'Beat' | 'Track' | 'Remix'>('all');
+  const [topContentMetric, setTopContentMetric] = useState<'plays' | 'downloads'>('plays');
+  const [chatUsers, setChatUsers] = useState<any[]>([]);
+  const [userRoleFilter, setUserRoleFilter] = useState<'all' | 'customer' | 'artist' | 'manager'>('all');
 
   // Artist role requests
   useEffect(() => {
@@ -74,14 +80,14 @@ const AnalyticsPage: React.FC = () => {
     return () => unsub();
   }, []);
 
-  // Load chat statistics
+  // Load chat statistics and build user list
   useEffect(() => {
     const messagesRef = collection(db, 'supportMessages');
     const q = query(messagesRef, orderBy('createdAt', 'desc'));
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const messages = snapshot.docs.map((doc) => doc.data());
-      const uniqueSenders = new Set(messages.map((m: any) => m.senderId));
+      const userMap = new Map<string, any>();
       const roleCount = {
         customer: 0,
         artist: 0,
@@ -94,13 +100,32 @@ const AnalyticsPage: React.FC = () => {
         else if (msg.senderRole === 'artist') roleCount.artist++;
         else if (msg.senderRole === 'manager') roleCount.manager++;
         else if (msg.senderRole === 'admin') roleCount.admin++;
+
+        // Build user list
+        if (!userMap.has(msg.senderId)) {
+          userMap.set(msg.senderId, {
+            userId: msg.senderId,
+            userName: msg.senderName,
+            userEmail: msg.senderEmail,
+            userRole: msg.senderRole,
+            messageCount: 0,
+            lastMessage: msg.createdAt,
+          });
+        }
+        const user = userMap.get(msg.senderId);
+        user.messageCount++;
+        if (!user.lastMessage || (msg.createdAt?.toMillis?.() || 0) > (user.lastMessage?.toMillis?.() || 0)) {
+          user.lastMessage = msg.createdAt;
+        }
       });
 
+      const uniqueSenders = new Set(messages.map((m: any) => m.senderId));
       setChatStats({
         totalMessages: messages.length,
         uniqueConversations: uniqueSenders.size,
         messagesByRole: roleCount,
       });
+      setChatUsers(Array.from(userMap.values()).sort((a, b) => b.messageCount - a.messageCount));
     });
 
     return () => unsubscribe();
@@ -122,30 +147,46 @@ const AnalyticsPage: React.FC = () => {
 
   const filteredOrders = getFilteredOrders();
 
+  // Helper to filter content by date
+  const filterContentByDate = (items: any[]) => {
+    if (dateRange === 'all') return items;
+    const now = new Date();
+    const daysAgo = dateRange === '7d' ? 7 : dateRange === '30d' ? 30 : 90;
+    const cutoffDate = new Date(now.getTime() - daysAgo * 24 * 60 * 60 * 1000);
+    return items.filter((item) => {
+      const itemDate = item.createdAt?.toDate?.() || new Date(0);
+      return itemDate >= cutoffDate;
+    });
+  };
+
+  const filteredBeats = filterContentByDate(beats);
+  const filteredTracks = filterContentByDate(tracks);
+  const filteredRemixes = filterContentByDate(remixes);
+
   // Calculate analytics
   const totalRevenue = filteredOrders.reduce((sum, o) => sum + (o.total || 0), 0);
   const totalOrders = filteredOrders.length;
-  const totalBeats = beats.length;
-  const totalTracks = tracks.length;
-  const totalRemixes = remixes.length;
-  const totalViews = content.reduce((sum, c) => sum + c.views, 0);
+  const totalBeats = filteredBeats.length;
+  const totalTracks = filteredTracks.length;
+  const totalRemixes = filteredRemixes.length;
+  const totalViews = filterContentByDate(content).reduce((sum, c) => sum + c.views, 0);
 
-  // Calculate total plays across all content types
-  const beatPlays = beats.reduce((sum, b) => sum + b.plays, 0);
-  const trackPlays = tracks.reduce((sum, t) => sum + t.plays, 0);
-  const remixPlays = remixes.reduce((sum, r) => sum + r.plays, 0);
+  // Calculate total plays across all content types (filtered by date)
+  const beatPlays = filteredBeats.reduce((sum, b) => sum + b.plays, 0);
+  const trackPlays = filteredTracks.reduce((sum, t) => sum + t.plays, 0);
+  const remixPlays = filteredRemixes.reduce((sum, r) => sum + r.plays, 0);
   const totalPlays = beatPlays + trackPlays + remixPlays;
 
-  // Calculate total downloads across all content types
-  const beatDownloads = beats.reduce((sum, b) => sum + b.downloads, 0);
-  const trackDownloads = tracks.reduce((sum, t) => sum + t.downloads, 0);
-  const remixDownloads = remixes.reduce((sum, r) => sum + r.downloads, 0);
+  // Calculate total downloads across all content types (filtered by date)
+  const beatDownloads = filteredBeats.reduce((sum, b) => sum + b.downloads, 0);
+  const trackDownloads = filteredTracks.reduce((sum, t) => sum + t.downloads, 0);
+  const remixDownloads = filteredRemixes.reduce((sum, r) => sum + r.downloads, 0);
   const totalDownloads = beatDownloads + trackDownloads + remixDownloads;
 
-  // Calculate total likes across all content types
-  const beatLikes = beats.reduce((sum, b) => sum + b.likes, 0);
-  const trackLikes = tracks.reduce((sum, t) => sum + t.likes, 0);
-  const remixLikes = remixes.reduce((sum, r) => sum + r.likes, 0);
+  // Calculate total likes across all content types (filtered by date)
+  const beatLikes = filteredBeats.reduce((sum, b) => sum + b.likes, 0);
+  const trackLikes = filteredTracks.reduce((sum, t) => sum + t.likes, 0);
+  const remixLikes = filteredRemixes.reduce((sum, r) => sum + r.likes, 0);
   const totalLikes = beatLikes + trackLikes + remixLikes;
 
   // Top performing content across all types
@@ -160,7 +201,7 @@ const AnalyticsPage: React.FC = () => {
   }
 
   const allContent: ContentItem[] = [
-    ...beats.map((b) => ({
+    ...filteredBeats.map((b) => ({
       id: b.id,
       title: b.title,
       artist: b.artist,
@@ -169,7 +210,7 @@ const AnalyticsPage: React.FC = () => {
       downloads: b.downloads,
       type: 'Beat' as const,
     })),
-    ...tracks.map((t) => ({
+    ...filteredTracks.map((t) => ({
       id: t.id,
       title: t.title,
       artist: t.artist,
@@ -178,7 +219,7 @@ const AnalyticsPage: React.FC = () => {
       downloads: t.downloads,
       type: 'Track' as const,
     })),
-    ...remixes.map((r) => ({
+    ...filteredRemixes.map((r) => ({
       id: r.id,
       title: r.title,
       artist: r.remixArtist,
@@ -190,8 +231,18 @@ const AnalyticsPage: React.FC = () => {
   ];
 
   const topPerformingContent = [...allContent]
-    .sort((a, b) => b.plays - a.plays)
+    .filter(item => topContentTypeFilter === 'all' || item.type === topContentTypeFilter)
+    .sort((a, b) => {
+      if (topContentMetric === 'plays') {
+        return b.plays - a.plays;
+      } else {
+        return b.downloads - a.downloads;
+      }
+    })
     .slice(0, 5);
+
+  // Get filtered chat users
+  const filteredChatUsers = chatUsers.filter(u => userRoleFilter === 'all' || u.userRole === userRoleFilter);
 
   // Top content by views
   const topContent = [...content]
@@ -589,7 +640,29 @@ const AnalyticsPage: React.FC = () => {
 
         {/* Top Performing Content Across All Types */}
         <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-6">
-          <h3 className="text-lg font-semibold text-white mb-4">Top Performing Content</h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-white">Top Performing Audio</h3>
+            <div className="flex items-center gap-2">
+              <select
+                value={topContentTypeFilter}
+                onChange={(e) => setTopContentTypeFilter(e.target.value as any)}
+                className="bg-white/[0.08] border border-white/[0.06] text-white rounded-lg px-3 py-1 text-sm focus:outline-none focus:border-purple-500"
+              >
+                <option value="all">All Types</option>
+                <option value="Beat">Beats</option>
+                <option value="Track">Tracks</option>
+                <option value="Remix">Remixes</option>
+              </select>
+              <select
+                value={topContentMetric}
+                onChange={(e) => setTopContentMetric(e.target.value as any)}
+                className="bg-white/[0.08] border border-white/[0.06] text-white rounded-lg px-3 py-1 text-sm focus:outline-none focus:border-purple-500"
+              >
+                <option value="plays">By Plays</option>
+                <option value="downloads">By Downloads</option>
+              </select>
+            </div>
+          </div>
           <div className="space-y-3">
             {topPerformingContent.length === 0 ? (
               <p className="text-white/40 text-center py-4">No content available</p>
@@ -627,6 +700,53 @@ const AnalyticsPage: React.FC = () => {
                   <div className="text-right">
                     <p className="font-semibold text-white">{item.plays.toLocaleString()} plays</p>
                     <p className="text-sm text-white/40">{item.downloads} downloads</p>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* Chat Users List with Role Filtering */}
+        <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-white">Active Users</h3>
+            <select
+              value={userRoleFilter}
+              onChange={(e) => setUserRoleFilter(e.target.value as any)}
+              className="bg-white/[0.08] border border-white/[0.06] text-white rounded-lg px-3 py-1 text-sm focus:outline-none focus:border-purple-500"
+            >
+              <option value="all">All Roles</option>
+              <option value="customer">Customers</option>
+              <option value="artist">Artists</option>
+              <option value="manager">Managers</option>
+            </select>
+          </div>
+          <div className="space-y-2">
+            {filteredChatUsers.length === 0 ? (
+              <p className="text-white/40 text-center py-4 text-sm">No users found</p>
+            ) : (
+              filteredChatUsers.slice(0, 10).map((user) => (
+                <div
+                  key={user.userId}
+                  className="flex items-center justify-between p-3 bg-white/[0.06] rounded-lg hover:bg-white/[0.08] transition-colors"
+                >
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <div className={`w-8 h-8 rounded-full bg-gradient-to-br flex items-center justify-center text-white text-xs font-bold flex-shrink-0 ${
+                      user.userRole === 'artist' ? 'from-orange-600 to-red-700' :
+                      user.userRole === 'manager' ? 'from-green-700 to-teal-700' :
+                      'from-blue-700 to-cyan-700'
+                    }`}>
+                      {user.userName[0]?.toUpperCase()}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium text-white text-sm truncate">{user.userName}</p>
+                      <p className="text-xs text-white/40 truncate">{user.userEmail}</p>
+                    </div>
+                  </div>
+                  <div className="text-right flex-shrink-0">
+                    <p className="font-semibold text-white text-sm">{user.messageCount}</p>
+                    <p className="text-xs text-white/40 capitalize">{user.userRole}</p>
                   </div>
                 </div>
               ))

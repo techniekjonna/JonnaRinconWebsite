@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import AdminLayout from '../../components/admin/AdminLayout';
 import { MessageSquare, Send, Check, CheckCheck, Briefcase, Headphones, ArrowLeft, Search, SlidersHorizontal, ChevronDown } from 'lucide-react';
 import { db } from '../../lib/firebase/config';
-import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, Timestamp } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, Timestamp, where, getDocs, updateDoc, doc } from 'firebase/firestore';
 import { useAuth } from '../../contexts/AuthContext';
 
 interface ChatMessage {
@@ -158,12 +158,27 @@ const AdminChat: React.FC = () => {
     setThreads(Array.from(map.values()).sort((a, b) => (b.lastMessageTime?.toMillis?.() || 0) - (a.lastMessageTime?.toMillis?.() || 0)));
   }, [allMessages, selectedUserId, selectedGroup]);
 
+  // Mark messages as read when viewing conversation
   useEffect(() => {
     if (!selectedThread || !selectedUserId || !selectedGroup) { setMessages([]); return; }
     const filtered = allMessages
       .filter((m) => m.category === selectedThread && m.recipientGroup === selectedGroup && (m.senderId === selectedUserId || m.recipientId === selectedUserId || m.senderRole === 'admin'))
       .sort((a, b) => (a.createdAt?.toMillis?.() || 0) - (b.createdAt?.toMillis?.() || 0));
     setMessages(filtered);
+
+    // Mark unread messages from this user/thread as read
+    const markAsRead = async () => {
+      for (const msg of filtered) {
+        if (msg.status !== 'read' && msg.senderRole !== 'admin') {
+          try {
+            await updateDoc(doc(db, 'supportMessages', msg.id!), { status: 'read' });
+          } catch (err) {
+            console.error('Error marking message as read:', err);
+          }
+        }
+      }
+    };
+    markAsRead();
   }, [selectedThread, selectedUserId, selectedGroup, allMessages]);
 
   useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
