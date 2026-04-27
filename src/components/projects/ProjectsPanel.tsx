@@ -85,10 +85,10 @@ const ProjectsPanel: React.FC = () => {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3">
       {/* Header with Filter & Create Button */}
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-white">Projects</h2>
+        <h2 className="text-xl font-bold text-white">Projects</h2>
         <div className="flex items-center gap-3">
           {/* Filter Button */}
           <div className="relative">
@@ -101,7 +101,7 @@ const ProjectsPanel: React.FC = () => {
             </button>
 
             {showFilterMenu && (
-              <div className="absolute right-0 mt-2 w-48 bg-black border border-white/20 rounded-lg p-2 z-50">
+              <div className="absolute right-0 mt-2 w-48 bg-black border border-white/[0.06] rounded-lg p-2 z-50">
                 {filterOptions.map(option => (
                   <button
                     key={option.value}
@@ -109,10 +109,10 @@ const ProjectsPanel: React.FC = () => {
                       setFilter(option.value);
                       setShowFilterMenu(false);
                     }}
-                    className={`w-full text-left px-3 py-2 rounded text-sm transition-colors ${
+                    className={`w-full text-left px-3 py-2 rounded text-xs transition-colors ${
                       filter === option.value
                         ? 'bg-red-600/20 text-red-400'
-                        : 'text-white/70 hover:bg-white/10'
+                        : 'text-white/70 hover:bg-white/[0.08]'
                     }`}
                   >
                     {option.label}
@@ -155,7 +155,7 @@ const ProjectsPanel: React.FC = () => {
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
           {filteredProjects.map(project => (
             <ProjectCard
               key={project.id}

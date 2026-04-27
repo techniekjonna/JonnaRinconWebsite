@@ -23,10 +23,10 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, onSelect, availableD
   return (
     <button
       onClick={() => onSelect(project)}
-      className="group relative bg-white/[0.04] backdrop-blur-md border border-white/[0.06] rounded-3xl p-6 md:p-8 hover:border-white/[0.12] transition-all duration-500 hover:scale-[1.02] hover:bg-white/[0.08] flex flex-col text-left cursor-pointer"
+      className="w-full bg-white/[0.08] border border-white/[0.06] rounded-xl p-4 hover:border-white/[0.12] transition-all flex flex-col text-left cursor-pointer"
     >
       {project.coverUrl ? (
-        <div className="w-14 h-14 rounded-2xl overflow-hidden mb-6 group-hover:scale-110 transition-transform duration-300 flex-shrink-0">
+        <div className="w-12 h-12 rounded-lg overflow-hidden mb-3 flex-shrink-0">
           <img
             src={project.coverUrl}
             alt={project.title}
@@ -34,33 +34,33 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, onSelect, availableD
           />
         </div>
       ) : (
-        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
-          <span className="text-white text-lg font-bold">{project.title.charAt(0).toUpperCase()}</span>
+        <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center mb-3">
+          <span className="text-white text-sm font-bold">{project.title.charAt(0).toUpperCase()}</span>
         </div>
       )}
 
-      <h3 className="text-xl font-black text-white mb-2 uppercase tracking-tight line-clamp-2">
+      <h3 className="text-sm font-semibold text-white mb-1 line-clamp-2">
         {project.title}
       </h3>
 
-      <p className="text-white/50 text-sm leading-relaxed mb-4 flex-1 line-clamp-2">
+      <p className="text-white/50 text-xs leading-relaxed mb-3 flex-1 line-clamp-2">
         {project.description}
       </p>
 
-      <div className="flex items-center justify-between pt-4 border-t border-white/[0.06]">
-        <div className="flex items-center gap-2">
-          <span className={`text-xs font-bold px-2 py-1 rounded ${statusBg}`}>
+      <div className="flex items-center justify-between pt-3 border-t border-white/[0.06]">
+        <div className="flex items-center gap-1.5">
+          <span className={`text-xs px-2 py-0.5 rounded ${statusBg}`}>
             {project.status.replace('-', ' ').toUpperCase()}
           </span>
           {availableDaysCount > 0 && (
-            <span className="text-xs bg-blue-500/20 text-blue-400 px-2 py-1 rounded font-medium">
-              {availableDaysCount} (free)
+            <span className="text-xs bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded">
+              {availableDaysCount}
             </span>
           )}
         </div>
-        <span className="flex items-center gap-2 text-xs text-white/40 group-hover:text-white/60 transition-colors">
+        <span className="flex items-center gap-1 text-xs text-white/40">
           {canEdit && <Edit2 size={14} />}
-          <ChevronRight size={16} />
+          <ChevronRight size={14} />
         </span>
       </div>
     </button>
