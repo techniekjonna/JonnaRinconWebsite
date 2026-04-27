@@ -106,9 +106,25 @@ const AnalyticsPage: React.FC = () => {
     return () => unsubscribe();
   }, []);
 
+  // Filter orders by date range
+  const getFilteredOrders = () => {
+    if (dateRange === 'all') return orders;
+
+    const now = new Date();
+    const daysAgo = dateRange === '7d' ? 7 : dateRange === '30d' ? 30 : 90;
+    const cutoffDate = new Date(now.getTime() - daysAgo * 24 * 60 * 60 * 1000);
+
+    return orders.filter((order) => {
+      const orderDate = order.createdAt?.toDate?.() || new Date(0);
+      return orderDate >= cutoffDate;
+    });
+  };
+
+  const filteredOrders = getFilteredOrders();
+
   // Calculate analytics
-  const totalRevenue = orderStats?.totalRevenue || 0;
-  const totalOrders = orders.length;
+  const totalRevenue = filteredOrders.reduce((sum, o) => sum + (o.total || 0), 0);
+  const totalOrders = filteredOrders.length;
   const totalBeats = beats.length;
   const totalTracks = tracks.length;
   const totalRemixes = remixes.length;
@@ -183,7 +199,7 @@ const AnalyticsPage: React.FC = () => {
     .slice(0, 5);
 
   // Recent activity
-  const recentOrders = [...orders]
+  const recentOrders = [...filteredOrders]
     .sort((a, b) => {
       const dateA = a.createdAt?.toDate?.() || new Date(0);
       const dateB = b.createdAt?.toDate?.() || new Date(0);
@@ -226,8 +242,8 @@ const AnalyticsPage: React.FC = () => {
   const approvedCollabRequests = collabRequests.filter((r) => r.status === 'approved').length;
 
   // Orders breakdown
-  const pendingOrders = orders.filter((o) => o.status === 'pending').length;
-  const completedOrders = orders.filter((o) => o.status === 'completed').length;
+  const pendingOrders = filteredOrders.filter((o) => o.status === 'pending').length;
+  const completedOrders = filteredOrders.filter((o) => o.status === 'completed').length;
 
   // Collaborations
   const activeCollaborations = collaborations.filter((c) =>
@@ -285,7 +301,7 @@ const AnalyticsPage: React.FC = () => {
             </div>
             <p className="text-3xl font-bold text-white">{totalOrders}</p>
             <p className="text-sm text-white/40 mt-2">
-              {orders.filter((o) => o.status === 'completed').length} completed
+              {filteredOrders.filter((o) => o.status === 'completed').length} completed
             </p>
           </div>
 

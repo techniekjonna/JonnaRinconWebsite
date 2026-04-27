@@ -12,7 +12,7 @@ interface ChatMessage {
   senderEmail: string;
   senderRole: string;
   category: string;
-  recipientGroup: 'jonna' | 'manager' | 'support';
+  recipientGroup: 'jonna' | 'manager' | 'support' | 'private';
   recipientId?: string;
   message: string;
   createdAt: Timestamp;
@@ -36,7 +36,7 @@ interface ChatThread {
   lastMessageTime: Timestamp;
 }
 
-type RecipientGroup = 'jonna' | 'manager' | 'support';
+type RecipientGroup = 'jonna' | 'manager' | 'support' | 'private';
 type LeftView = 'contacts' | 'users' | 'threads';
 type SortOrder = 'newest' | 'oldest';
 type CategoryFilter = 'all' | 'CATALOGUE' | 'SHOP' | 'SOCIAL MEDIA' | 'DASHBOARD';
@@ -45,6 +45,7 @@ const contactDefs: Record<RecipientGroup, { name: string; description: string }>
   jonna: { name: 'Jonna Rincon', description: 'Berichten gericht aan Jonna persoonlijk' },
   manager: { name: 'Manager', description: 'Business inquiries & samenwerking' },
   support: { name: 'Support Team', description: 'Vragen, hulp en ondersteuning' },
+  private: { name: 'Prive', description: 'Privé chats tussen admins en managers' },
 };
 
 const categoryGroups: Record<string, string[]> = {
@@ -236,7 +237,8 @@ const AdminChat: React.FC = () => {
               <div className="flex-1 overflow-y-auto py-3 px-3 space-y-2">
                 {(Object.entries(contactDefs) as [RecipientGroup, any][]).map(([key, def]) => {
                   const contactMsgs = allMessages.filter(m => m.recipientGroup === key && m.senderRole !== 'admin' && m.senderRole !== 'manager');
-                  const uniqueUsers = new Set(contactMsgs.map(m => m.senderId)).size;
+                  const unreadMsgs = contactMsgs.filter(m => m.status !== 'read');
+                  const uniqueUsers = new Set(unreadMsgs.map(m => m.senderId)).size;
                   const cats = [...new Set(contactMsgs.map(m => getCategoryGroup(m.category)))].filter(g => g !== 'OVERIG');
                   return (
                     <button key={key} onClick={() => { setSelectedGroup(key); setSelectedUserId(null); setSelectedThread(null); setCategoryFilter('all'); setUserSearch(''); setLeftView('users'); }}
@@ -446,7 +448,7 @@ const AdminChat: React.FC = () => {
   // Desktop layout (original)
   return (
     <AdminLayout>
-      <div className="grid grid-cols-12 max-h-[calc(100vh-140px)] h-[calc(100vh-140px)] gap-3 overflow-hidden">
+      <div className="grid grid-cols-12 gap-3 overflow-hidden" style={{ height: 'calc(100dvh - 140px)', maxHeight: 'calc(100dvh - 140px)' }}>
 
         {/* Left panel */}
         <div className="col-span-4 backdrop-blur-xl bg-gradient-to-b from-white/[0.08] to-white/[0.03] border border-white/[0.12] rounded-xl overflow-hidden flex flex-col">
@@ -460,7 +462,8 @@ const AdminChat: React.FC = () => {
               <div className="flex-1 overflow-y-auto py-3 px-3 space-y-2">
                 {(Object.entries(contactDefs) as [RecipientGroup, any][]).map(([key, def]) => {
                   const contactMsgs = allMessages.filter(m => m.recipientGroup === key && m.senderRole !== 'admin' && m.senderRole !== 'manager');
-                  const uniqueUsers = new Set(contactMsgs.map(m => m.senderId)).size;
+                  const unreadMsgs = contactMsgs.filter(m => m.status !== 'read');
+                  const uniqueUsers = new Set(unreadMsgs.map(m => m.senderId)).size;
                   const cats = [...new Set(contactMsgs.map(m => getCategoryGroup(m.category)))].filter(g => g !== 'OVERIG');
                   return (
                     <button key={key} onClick={() => { setSelectedGroup(key); setSelectedUserId(null); setSelectedThread(null); setCategoryFilter('all'); setUserSearch(''); setLeftView('users'); }}
