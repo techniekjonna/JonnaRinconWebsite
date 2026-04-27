@@ -4,6 +4,7 @@ import { useTrackDetail } from '../contexts/TrackDetailContext';
 import { useBeatDetail } from '../contexts/BeatDetailContext';
 import PlayerModal from './PlayerModal';
 import { formatDuration } from '../lib/utils/audioMetadata';
+import { trackService } from '../lib/firebase/services';
 import './GlobalAudioPlayer.css';
 
 interface Track {
@@ -160,6 +161,7 @@ export function togglePlayPause() {
 
 export default function GlobalAudioPlayer({ onCoverClick }: { onCoverClick?: () => void } = {}) {
   const audioRef = useRef<HTMLAudioElement>(null);
+  const playTrackedRef = useRef<Set<string>>(new Set()); // Track which songs have been tracked
   const [store, setStore] = useState<PlayerStore>(playerStore);
   const { setSelectedTrack, setIsModalOpen } = useTrackDetail();
   const { setSelectedBeat, setIsModalOpen: setBeatModalOpen } = useBeatDetail();
@@ -217,7 +219,17 @@ export default function GlobalAudioPlayer({ onCoverClick }: { onCoverClick?: () 
     const handlePlayPause = () => {
       setIsPlaying(!audio.paused);
     };
-    const handleTimeUpdate = () => setCurrentTime(audio.currentTime);
+    const handleTimeUpdate = () => {
+      setCurrentTime(audio.currentTime);
+      // Track play after 15 seconds
+      if (audio.currentTime >= 15 && store.currentTrack && !playTrackedRef.current.has(store.currentTrack.id)) {
+        playTrackedRef.current.add(store.currentTrack.id);
+        // Record play in Firebase
+        trackService.updateTrack(store.currentTrack.id, {
+          plays: (store.currentTrack as any).plays ? (store.currentTrack as any).plays + 1 : 1
+        }).catch(err => console.error('Error recording play:', err));
+      }
+    };
     const handleLoadedMetadata = () => setDuration(audio.duration);
     const handleEnded = () => {
       if (repeat === 'one') {
@@ -246,7 +258,7 @@ export default function GlobalAudioPlayer({ onCoverClick }: { onCoverClick?: () 
       audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
       audio.removeEventListener('ended', handleEnded);
     };
-  }, [repeat, store.isPlaying]);
+  }, [repeat, store.isPlaying, store.currentTrack]);
 
   // Sync with global player state (play/pause)
   useEffect(() => {
@@ -267,6 +279,10 @@ export default function GlobalAudioPlayer({ onCoverClick }: { onCoverClick?: () 
       if (store.isPlaying) {
         audioRef.current.play().catch(err => console.error('Play error:', err));
       }
+    }
+    // Clear tracked plays for previous track when new track loads
+    if (store.currentTrack) {
+      playTrackedRef.current.clear();
     }
   }, [store.currentTrack?.id]);
 
