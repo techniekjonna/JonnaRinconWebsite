@@ -66,12 +66,13 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     },
     {
       label: 'CATALOGUE',
-      subtitle: 'Tracks, Remixes, Playlists',
-      action: () => setExpandedCatalogue(!expandedCatalogue),
+      subtitle: 'Tracks, Remixes, Playlists & Custom',
+      href: '/admin/tracks',
       submenu: [
         { label: 'Tracks', subtitle: 'Discography', href: '/admin/tracks' },
-        { label: 'Remixes', subtitle: 'Remixes & edits', href: '/admin/remixes' },
-        { label: 'Playlists', subtitle: 'Playlist management', href: '/admin/playlists' },
+        { label: 'Remixes', subtitle: 'Remixes & edits', href: '/admin/tracks' },
+        { label: 'Playlists', subtitle: 'Playlist management', href: '/admin/tracks' },
+        { label: 'Custom', subtitle: 'Custom tabs', href: '/admin/tracks' },
       ],
       expanded: expandedCatalogue,
     },
@@ -239,7 +240,13 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
             {menuItems.map((item) => (
               <div key={item.label}>
                 <button
-                  onClick={item.action}
+                  onClick={() => {
+                    if ('href' in item && item.href) {
+                      navigate(item.href);
+                    } else {
+                      item.action?.();
+                    }
+                  }}
                   className="group w-full text-left px-5 py-3.5 border-b border-white/[0.04] hover:bg-white/[0.04] transition-colors flex items-center justify-between"
                 >
                   <div className="min-w-0">
@@ -247,10 +254,12 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                       {item.label}
                     </span>
                   </div>
-                  <ChevronRight
-                    size={13}
-                    className={`text-white/20 flex-shrink-0 ml-2 transition-transform duration-200 ${item.expanded ? 'rotate-90' : ''}`}
-                  />
+                  {!('href' in item && item.href) && (
+                    <ChevronRight
+                      size={13}
+                      className={`text-white/20 flex-shrink-0 ml-2 transition-transform duration-200 ${item.expanded ? 'rotate-90' : ''}`}
+                    />
+                  )}
                 </button>
                 <div className={`overflow-hidden transition-all duration-200 ease-out ${item.expanded ? 'max-h-96' : 'max-h-0'}`}>
                   {item.submenu.map((sub) => (
@@ -406,13 +415,20 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                 {menuItems.map((item, i) => (
                   <div key={item.label}>
                     <button
-                      onClick={item.action}
+                      onClick={() => {
+                        if ('href' in item && item.href) {
+                          navigate(item.href);
+                          setIsMenuOpen(false);
+                        } else {
+                          item.action?.();
+                        }
+                      }}
                       className="group w-full text-left py-4 md:py-5 cursor-pointer border-b border-white/[0.04]"
                       style={{
                         animation: isMenuClosing ? 'none' : `menu-item-reveal 0.6s cubic-bezier(0.16, 1, 0.3, 1) ${0.15 + i * 0.06}s both`,
                       }}
                     >
-                      <div className={`flex items-center justify-between transition-transform duration-300 ${!item.expanded ? 'group-hover:translate-x-2' : ''}`}>
+                      <div className={`flex items-center justify-between transition-transform duration-300 ${!item.expanded && !('href' in item && item.href) ? 'group-hover:translate-x-2' : ''}`}>
                         <div>
                           <span className="block text-3xl md:text-4xl font-semibold text-white/90 group-hover:text-white transition-colors duration-300 tracking-tight">
                             {item.label}
@@ -421,7 +437,9 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                             {item.subtitle}
                           </span>
                         </div>
-                        <ArrowUpRight className={`w-5 h-5 text-white/10 group-hover:text-red-400/50 transition-all duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 ${item.expanded ? 'rotate-90' : ''}`} />
+                        {!('href' in item && item.href) && (
+                          <ArrowUpRight className={`w-5 h-5 text-white/10 group-hover:text-red-400/50 transition-all duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 ${item.expanded ? 'rotate-90' : ''}`} />
+                        )}
                       </div>
                     </button>
 
