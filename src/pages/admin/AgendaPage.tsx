@@ -233,8 +233,10 @@ const AgendaPage: React.FC = () => {
     calendarDateRange.push(d);
   }
 
-  // Calculate padding to align first day with day of week
-  const firstDayOfWeek = calendarDateRange[0].getDay(); // 0=Sun
+  // Calculate padding to align first day with day of week (Monday = 0)
+  let firstDayOfWeek = calendarDateRange[0].getDay(); // 0=Sun, 1=Mon, etc
+  // Convert to Monday-based: Sun=6, Mon=0, Tue=1, etc
+  firstDayOfWeek = firstDayOfWeek === 0 ? 6 : firstDayOfWeek - 1;
   const paddingDays = firstDayOfWeek; // empty cells before first day
 
   // Date range label
@@ -306,7 +308,7 @@ const AgendaPage: React.FC = () => {
               </div>
             </div>
             <div className="grid grid-cols-7 gap-1 mb-2">
-              {['Zo', 'Ma', 'Di', 'Wo', 'Do', 'Vr', 'Za'].map(d => (
+              {['Ma', 'Di', 'Wo', 'Do', 'Vr', 'Za', 'Zo'].map(d => (
                 <div key={d} className="text-center text-[10px] font-semibold text-white/40 py-1">{d}</div>
               ))}
             </div>

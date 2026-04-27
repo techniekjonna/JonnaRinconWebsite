@@ -26,6 +26,7 @@ import DiscountCodesPage from './pages/admin/DiscountCodesPage';
 import PlaylistsPage from './pages/admin/PlaylistsPage';
 import AgendaPage from './pages/admin/AgendaPage';
 import BackgroundToolPage from './pages/admin/BackgroundToolPage';
+import ProjectsAdminPage from './pages/admin/ProjectsAdminPage';
 
 const AdminApp: React.FC = () => {
   return (
@@ -147,6 +148,14 @@ const AdminApp: React.FC = () => {
             element={
               <ProtectedRoute requireAdmin={true}>
                 <AgendaPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/projects"
+            element={
+              <ProtectedRoute requireAdmin={true}>
+                <ProjectsAdminPage />
               </ProtectedRoute>
             }
           />
