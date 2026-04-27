@@ -122,30 +122,46 @@ const AnalyticsPage: React.FC = () => {
 
   const filteredOrders = getFilteredOrders();
 
+  // Helper to filter content by date
+  const filterContentByDate = (items: any[]) => {
+    if (dateRange === 'all') return items;
+    const now = new Date();
+    const daysAgo = dateRange === '7d' ? 7 : dateRange === '30d' ? 30 : 90;
+    const cutoffDate = new Date(now.getTime() - daysAgo * 24 * 60 * 60 * 1000);
+    return items.filter((item) => {
+      const itemDate = item.createdAt?.toDate?.() || new Date(0);
+      return itemDate >= cutoffDate;
+    });
+  };
+
+  const filteredBeats = filterContentByDate(beats);
+  const filteredTracks = filterContentByDate(tracks);
+  const filteredRemixes = filterContentByDate(remixes);
+
   // Calculate analytics
   const totalRevenue = filteredOrders.reduce((sum, o) => sum + (o.total || 0), 0);
   const totalOrders = filteredOrders.length;
-  const totalBeats = beats.length;
-  const totalTracks = tracks.length;
-  const totalRemixes = remixes.length;
-  const totalViews = content.reduce((sum, c) => sum + c.views, 0);
+  const totalBeats = filteredBeats.length;
+  const totalTracks = filteredTracks.length;
+  const totalRemixes = filteredRemixes.length;
+  const totalViews = filterContentByDate(content).reduce((sum, c) => sum + c.views, 0);
 
-  // Calculate total plays across all content types
-  const beatPlays = beats.reduce((sum, b) => sum + b.plays, 0);
-  const trackPlays = tracks.reduce((sum, t) => sum + t.plays, 0);
-  const remixPlays = remixes.reduce((sum, r) => sum + r.plays, 0);
+  // Calculate total plays across all content types (filtered by date)
+  const beatPlays = filteredBeats.reduce((sum, b) => sum + b.plays, 0);
+  const trackPlays = filteredTracks.reduce((sum, t) => sum + t.plays, 0);
+  const remixPlays = filteredRemixes.reduce((sum, r) => sum + r.plays, 0);
   const totalPlays = beatPlays + trackPlays + remixPlays;
 
-  // Calculate total downloads across all content types
-  const beatDownloads = beats.reduce((sum, b) => sum + b.downloads, 0);
-  const trackDownloads = tracks.reduce((sum, t) => sum + t.downloads, 0);
-  const remixDownloads = remixes.reduce((sum, r) => sum + r.downloads, 0);
+  // Calculate total downloads across all content types (filtered by date)
+  const beatDownloads = filteredBeats.reduce((sum, b) => sum + b.downloads, 0);
+  const trackDownloads = filteredTracks.reduce((sum, t) => sum + t.downloads, 0);
+  const remixDownloads = filteredRemixes.reduce((sum, r) => sum + r.downloads, 0);
   const totalDownloads = beatDownloads + trackDownloads + remixDownloads;
 
-  // Calculate total likes across all content types
-  const beatLikes = beats.reduce((sum, b) => sum + b.likes, 0);
-  const trackLikes = tracks.reduce((sum, t) => sum + t.likes, 0);
-  const remixLikes = remixes.reduce((sum, r) => sum + r.likes, 0);
+  // Calculate total likes across all content types (filtered by date)
+  const beatLikes = filteredBeats.reduce((sum, b) => sum + b.likes, 0);
+  const trackLikes = filteredTracks.reduce((sum, t) => sum + t.likes, 0);
+  const remixLikes = filteredRemixes.reduce((sum, r) => sum + r.likes, 0);
   const totalLikes = beatLikes + trackLikes + remixLikes;
 
   // Top performing content across all types
@@ -160,7 +176,7 @@ const AnalyticsPage: React.FC = () => {
   }
 
   const allContent: ContentItem[] = [
-    ...beats.map((b) => ({
+    ...filteredBeats.map((b) => ({
       id: b.id,
       title: b.title,
       artist: b.artist,
@@ -169,7 +185,7 @@ const AnalyticsPage: React.FC = () => {
       downloads: b.downloads,
       type: 'Beat' as const,
     })),
-    ...tracks.map((t) => ({
+    ...filteredTracks.map((t) => ({
       id: t.id,
       title: t.title,
       artist: t.artist,
@@ -178,7 +194,7 @@ const AnalyticsPage: React.FC = () => {
       downloads: t.downloads,
       type: 'Track' as const,
     })),
-    ...remixes.map((r) => ({
+    ...filteredRemixes.map((r) => ({
       id: r.id,
       title: r.title,
       artist: r.remixArtist,
