@@ -256,37 +256,34 @@ const AgendaPage: React.FC = () => {
 
   return (
     <AdminLayout>
-      <div className="space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-white">Agenda</h1>
-            <p className="text-sm text-white/30 mt-1">Manage your schedule and tasks</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <button onClick={() => setViewMode('calendar')} className={`px-4 py-2 rounded-lg transition-all ${viewMode === 'calendar' ? 'bg-red-600/20 border border-red-600/40 text-red-400' : 'bg-white/[0.04] border border-white/[0.06] text-white/40'}`}>
-              <Calendar size={18} />
+      <div className="space-y-3">
+        <div className="flex items-center justify-between gap-3">
+          <h1 className="text-xl font-bold text-white">Agenda</h1>
+          <div className="flex items-center gap-1.5">
+            <button onClick={() => setViewMode('calendar')} className={`p-1.5 rounded-lg transition-all ${viewMode === 'calendar' ? 'bg-red-600/20 border border-red-600/40 text-red-400' : 'bg-white/[0.04] border border-white/[0.06] text-white/40'}`}>
+              <Calendar size={16} />
             </button>
-            <button onClick={() => setViewMode('list')} className={`px-4 py-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-red-600/20 border border-red-600/40 text-red-400' : 'bg-white/[0.04] border border-white/[0.06] text-white/40'}`}>
-              <List size={18} />
+            <button onClick={() => setViewMode('list')} className={`p-1.5 rounded-lg transition-all ${viewMode === 'list' ? 'bg-red-600/20 border border-red-600/40 text-red-400' : 'bg-white/[0.04] border border-white/[0.06] text-white/40'}`}>
+              <List size={16} />
             </button>
-            <select value={activeFilter} onChange={(e) => setActiveFilter(e.target.value as FilterType)} className="px-4 py-2 rounded-lg bg-white/[0.04] border border-white/[0.06] text-white/40 text-sm">
-              <option value="all">All</option>
-              <option value="available">Available</option>
-              <option value="absent">Absent</option>
+            <select value={activeFilter} onChange={(e) => setActiveFilter(e.target.value as FilterType)} className="px-2 py-1.5 rounded-lg bg-white/[0.04] border border-white/[0.06] text-white/40 text-xs">
+              <option value="all">Alles</option>
+              <option value="available">Beschikbaar</option>
+              <option value="absent">Afwezig</option>
               <option value="studio">Studio</option>
-              <option value="pending">Pending Tasks</option>
-              <option value="completed">Completed</option>
+              <option value="pending">Openstaand</option>
+              <option value="completed">Voltooid</option>
             </select>
           </div>
         </div>
 
         <div className="flex items-center justify-between bg-white/[0.08] border border-white/[0.06] rounded-xl px-3 py-2">
-          <button onClick={handlePrevPeriod} className="p-1.5 rounded-lg hover:bg-white/[0.08]"><ChevronLeft size={18} className="text-white" /></button>
-          <div className="flex items-center gap-3">
-            <button onClick={handleGoToToday} className="text-xs text-red-400 hover:text-red-300 font-semibold px-2 py-1 rounded bg-red-600/10 hover:bg-red-600/20 transition-colors">Today</button>
-            <h2 className="text-sm font-semibold text-white text-center">{monthString}</h2>
+          <button onClick={handlePrevPeriod} className="p-1 rounded-lg hover:bg-white/[0.08]"><ChevronLeft size={16} className="text-white" /></button>
+          <div className="flex items-center gap-2">
+            <button onClick={handleGoToToday} className="text-[11px] text-red-400 hover:text-red-300 font-semibold px-2 py-0.5 rounded bg-red-600/10 hover:bg-red-600/20 transition-colors">Vandaag</button>
+            <h2 className="text-xs font-semibold text-white text-center capitalize">{monthString}</h2>
           </div>
-          <button onClick={handleNextPeriod} className="p-1.5 rounded-lg hover:bg-white/[0.08]"><ChevronRight size={18} className="text-white" /></button>
+          <button onClick={handleNextPeriod} className="p-1 rounded-lg hover:bg-white/[0.08]"><ChevronRight size={16} className="text-white" /></button>
         </div>
 
         {viewMode === 'calendar' && (

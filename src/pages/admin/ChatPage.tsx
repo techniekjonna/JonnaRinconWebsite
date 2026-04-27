@@ -225,7 +225,7 @@ const AdminChat: React.FC = () => {
   if (isMobile) {
     return (
       <AdminLayout>
-        <div className="max-h-[calc(100vh-160px)] h-[calc(100vh-160px)] w-full overflow-hidden flex flex-col">
+        <div className="w-full overflow-hidden flex flex-col" style={{ height: 'calc(100dvh - 220px)', maxHeight: 'calc(100dvh - 220px)' }}>
 
           {/* Contacts view - Mobile */}
           {leftView === 'contacts' && !selectedGroup && (

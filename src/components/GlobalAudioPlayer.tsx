@@ -202,6 +202,13 @@ export default function GlobalAudioPlayer({ onCoverClick }: { onCoverClick?: () 
     }
   }, [volume]);
 
+  // Initialize audio element volume from saved state on mount
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.volume = isMuted ? 0 : volume;
+    }
+  }, []);
+
   // Audio element event listeners
   useEffect(() => {
     const audio = audioRef.current;
@@ -558,11 +565,10 @@ export default function GlobalAudioPlayer({ onCoverClick }: { onCoverClick?: () 
               step="0.01"
               value={isMuted ? 0 : volume}
               onChange={handleVolumeChange}
-              disabled={isMuted}
               className="jonna-volume-slider"
               title="Volume"
               aria-label="Volume"
-              style={{ opacity: isMuted ? 0.5 : 1, cursor: isMuted ? 'not-allowed' : 'pointer' }}
+              style={{ opacity: isMuted ? 0.5 : 1, cursor: 'pointer' }}
             />
             <button
               className="jonna-close-btn"

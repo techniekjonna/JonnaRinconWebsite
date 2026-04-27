@@ -119,41 +119,14 @@ export default function PlayerModal({
                 max={duration || 0}
                 value={currentTime}
                 onChange={onProgressChange}
-                className="w-full h-1 bg-white/20 rounded-full appearance-none cursor-pointer"
+                className="player-modal-range w-full rounded-full cursor-pointer"
                 style={{
                   WebkitAppearance: 'none',
+                  appearance: 'none',
+                  height: '4px',
+                  background: `linear-gradient(to right, rgb(220,38,38) 0%, rgb(220,38,38) ${duration ? (currentTime / duration) * 100 : 0}%, rgba(255,255,255,0.2) ${duration ? (currentTime / duration) * 100 : 0}%, rgba(255,255,255,0.2) 100%)`,
                 }}
               />
-              <style>{`
-                input[type="range"] {
-                  -webkit-appearance: none;
-                  appearance: none;
-                  background: linear-gradient(to right, rgb(220, 38, 38) 0%, rgb(220, 38, 38) ${duration ? (currentTime / duration) * 100 : 0}%, rgba(255, 255, 255, 0.2) ${duration ? (currentTime / duration) * 100 : 0}%, rgba(255, 255, 255, 0.2) 100%);
-                  border-radius: 999px;
-                  width: 100%;
-                  height: 4px;
-                  cursor: pointer;
-                }
-                input[type="range"]::-webkit-slider-thumb {
-                  -webkit-appearance: none;
-                  appearance: none;
-                  width: 14px;
-                  height: 14px;
-                  border-radius: 50%;
-                  background: white;
-                  cursor: pointer;
-                  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-                }
-                input[type="range"]::-moz-range-thumb {
-                  width: 14px;
-                  height: 14px;
-                  border-radius: 50%;
-                  background: white;
-                  cursor: pointer;
-                  border: none;
-                  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-                }
-              `}</style>
               <div className="flex justify-between text-xs text-white/40 mt-2">
                 <span>{formatDuration(currentTime)}</span>
                 <span>{formatDuration(duration)}</span>
@@ -250,41 +223,16 @@ export default function PlayerModal({
                 step="0.01"
                 value={isMuted ? 0 : volume}
                 onChange={onVolumeChange}
-                className="flex-1 h-1 rounded-full appearance-none cursor-pointer"
+                className="player-modal-volume flex-1 rounded-full cursor-pointer"
                 title="Volume"
                 style={{
-                  background: `linear-gradient(to right, rgb(220, 38, 38) 0%, rgb(220, 38, 38) ${(isMuted ? 0 : volume) * 100}%, rgba(255, 255, 255, 0.2) ${(isMuted ? 0 : volume) * 100}%, rgba(255, 255, 255, 0.2) 100%)`,
-                  opacity: isMuted ? 0.5 : 1,
-                  cursor: isMuted ? 'not-allowed' : 'pointer',
                   WebkitAppearance: 'none',
                   appearance: 'none',
+                  height: '4px',
+                  background: `linear-gradient(to right, rgb(220,38,38) 0%, rgb(220,38,38) ${(isMuted ? 0 : volume) * 100}%, rgba(255,255,255,0.2) ${(isMuted ? 0 : volume) * 100}%, rgba(255,255,255,0.2) 100%)`,
+                  opacity: isMuted ? 0.5 : 1,
                 }}
               />
-              <style>{`
-                input[type="range"] {
-                  -webkit-appearance: none;
-                  appearance: none;
-                }
-                input[type="range"]::-webkit-slider-thumb {
-                  -webkit-appearance: none;
-                  appearance: none;
-                  width: 12px;
-                  height: 12px;
-                  border-radius: 50%;
-                  background: rgb(220, 38, 38);
-                  cursor: pointer;
-                  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-                }
-                input[type="range"]::-moz-range-thumb {
-                  width: 12px;
-                  height: 12px;
-                  border-radius: 50%;
-                  background: rgb(220, 38, 38);
-                  cursor: pointer;
-                  border: none;
-                  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-                }
-              `}</style>
             </div>
 
             {/* Queue Info */}

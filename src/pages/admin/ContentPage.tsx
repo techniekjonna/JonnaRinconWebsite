@@ -220,34 +220,34 @@ const ContentPage: React.FC = () => {
 
   return (
     <AdminLayout>
-      <div className="space-y-6">
+      <div className="space-y-4">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-white">Social Media Planner</h1>
-            <p className="text-white/40 mt-2">
+            <h1 className="text-xl font-bold text-white">Social Media Planner</h1>
+            <p className="text-white/40 text-xs mt-0.5">
               {profileUsername ? (
-                <>Schedule and manage posts for <span className="text-purple-400">@{profileUsername}</span></>
+                <>Posts voor <span className="text-purple-400">@{profileUsername}</span></>
               ) : (
-                <>Configure your username to get started</>
+                <>Configureer je gebruikersnaam om te beginnen</>
               )}
             </p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <button
               onClick={() => setShowSettingsModal(true)}
-              className="p-2 bg-white/[0.08] border border-white/[0.06] rounded-lg text-white/40 hover:text-white transition"
+              className="p-1.5 bg-white/[0.08] border border-white/[0.06] rounded-lg text-white/40 hover:text-white transition"
               title="Settings"
             >
-              <Settings size={20} />
+              <Settings size={16} />
             </button>
             <button
               onClick={fetchData}
               disabled={refreshing}
-              className="p-2 bg-white/[0.08] border border-white/[0.06] rounded-lg text-white/40 hover:text-white transition disabled:opacity-50"
+              className="p-1.5 bg-white/[0.08] border border-white/[0.06] rounded-lg text-white/40 hover:text-white transition disabled:opacity-50"
               title="Refresh"
             >
-              <RefreshCw size={20} className={refreshing ? 'animate-spin' : ''} />
+              <RefreshCw size={16} className={refreshing ? 'animate-spin' : ''} />
             </button>
             <button
               onClick={() => {
@@ -258,88 +258,85 @@ const ContentPage: React.FC = () => {
                 setSelectedDate(null);
                 setShowCreateModal(true);
               }}
-              className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-purple-700 hover:to-pink-700 transition-all flex items-center space-x-2"
+              className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-3 py-1.5 rounded-lg text-sm font-semibold hover:from-purple-700 hover:to-pink-700 transition-all flex items-center gap-1.5"
             >
-              <Plus size={20} />
-              <span>Create Post</span>
+              <Plus size={16} />
+              <span>Post</span>
             </button>
           </div>
         </div>
 
         {/* Username Warning */}
         {!profileUsername && (
-          <div className="bg-yellow-900/30 border border-yellow-700 rounded-xl p-4 flex items-center gap-3">
-            <AlertCircle size={24} className="text-yellow-400 flex-shrink-0" />
-            <div className="flex-1">
-              <h3 className="text-yellow-400 font-bold">Username Not Configured</h3>
-              <p className="text-yellow-300/80 text-sm mt-1">
-                Please configure your Upload-Post.com username in settings to start posting.
-              </p>
-            </div>
+          <div className="bg-yellow-900/30 border border-yellow-700 rounded-lg p-3 flex items-center gap-3">
+            <AlertCircle size={18} className="text-yellow-400 flex-shrink-0" />
+            <p className="text-yellow-300/80 text-xs flex-1">
+              Configureer je gebruikersnaam om te beginnen.
+            </p>
             <button
               onClick={() => setShowSettingsModal(true)}
-              className="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg font-semibold transition"
+              className="bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1 rounded text-xs font-semibold transition"
             >
-              Configure
+              Instellen
             </button>
           </div>
         )}
 
         {/* Tabs */}
-        <div className="flex gap-2 border-b border-white/[0.06]">
+        <div className="flex gap-1 border-b border-white/[0.06]">
           <button
             onClick={() => setActiveTab('calendar')}
-            className={`px-4 py-2 font-medium transition flex items-center gap-2 ${
+            className={`px-3 py-1.5 text-sm font-medium transition flex items-center gap-1.5 ${
               activeTab === 'calendar'
                 ? 'text-purple-400 border-b-2 border-purple-400'
                 : 'text-white/40 hover:text-white/60'
             }`}
           >
-            <CalendarIcon size={18} /> Calendar
+            <CalendarIcon size={15} /> Kalender
           </button>
           <button
             onClick={() => setActiveTab('scheduled')}
-            className={`px-4 py-2 font-medium transition flex items-center gap-2 ${
+            className={`px-3 py-1.5 text-sm font-medium transition flex items-center gap-1.5 ${
               activeTab === 'scheduled'
                 ? 'text-purple-400 border-b-2 border-purple-400'
                 : 'text-white/40 hover:text-white/60'
             }`}
           >
-            <Clock size={18} /> Scheduled ({scheduledPosts.length})
+            <Clock size={15} /> Gepland ({scheduledPosts.length})
           </button>
           <button
             onClick={() => setActiveTab('history')}
-            className={`px-4 py-2 font-medium transition flex items-center gap-2 ${
+            className={`px-3 py-1.5 text-sm font-medium transition flex items-center gap-1.5 ${
               activeTab === 'history'
                 ? 'text-purple-400 border-b-2 border-purple-400'
                 : 'text-white/40 hover:text-white/60'
             }`}
           >
-            <CheckCircle size={18} /> History ({historyPosts.length})
+            <CheckCircle size={15} /> Geschiedenis ({historyPosts.length})
           </button>
         </div>
 
         {/* Calendar View */}
         {activeTab === 'calendar' && (
           <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl overflow-hidden">
-            <div className="flex items-center justify-between p-4 border-b border-white/[0.06]">
-              <button onClick={prevMonth} className="p-2 hover:bg-white/[0.06] rounded-lg text-white/40 hover:text-white transition">
-                <ChevronLeft size={20} />
+            <div className="flex items-center justify-between px-3 py-2 border-b border-white/[0.06]">
+              <button onClick={prevMonth} className="p-1.5 hover:bg-white/[0.06] rounded-lg text-white/40 hover:text-white transition">
+                <ChevronLeft size={16} />
               </button>
-              <div className="flex items-center gap-3">
-                <h2 className="text-xl font-bold text-white">{monthName}</h2>
-                <button onClick={goToToday} className="text-xs px-2 py-1 bg-white/[0.06] hover:bg-white/[0.08] text-white/60 rounded transition">
-                  Today
+              <div className="flex items-center gap-2">
+                <h2 className="text-sm font-bold text-white">{monthName}</h2>
+                <button onClick={goToToday} className="text-[10px] px-1.5 py-0.5 bg-white/[0.06] hover:bg-white/[0.08] text-white/60 rounded transition">
+                  Vandaag
                 </button>
               </div>
-              <button onClick={nextMonth} className="p-2 hover:bg-white/[0.06] rounded-lg text-white/40 hover:text-white transition">
-                <ChevronRight size={20} />
+              <button onClick={nextMonth} className="p-1.5 hover:bg-white/[0.06] rounded-lg text-white/40 hover:text-white transition">
+                <ChevronRight size={16} />
               </button>
             </div>
 
             <div className="grid grid-cols-7 bg-white/[0.06]">
-              {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => (
-                <div key={day} className="p-2 text-center text-xs font-semibold text-white/40 uppercase">
+              {['Ma', 'Di', 'Wo', 'Do', 'Vr', 'Za', 'Zo'].map(day => (
+                <div key={day} className="py-1 text-center text-[10px] font-semibold text-white/40 uppercase">
                   {day}
                 </div>
               ))}
@@ -350,7 +347,7 @@ const ContentPage: React.FC = () => {
                 <div
                   key={i}
                   onClick={() => handleCalendarDayClick(day)}
-                  className={`min-h-[100px] border-t border-r border-white/[0.06]/50 p-1.5 transition cursor-pointer ${
+                  className={`min-h-[72px] border-t border-r border-white/[0.06]/50 p-1 transition cursor-pointer ${
                     !day.isCurrentMonth ? 'bg-black/30 opacity-40' :
                     day.isToday ? 'bg-purple-900/20 border-l-2 border-l-purple-500' :
                     'hover:bg-white/[0.06]/30'
@@ -398,16 +395,16 @@ const ContentPage: React.FC = () => {
 
         {/* Scheduled Posts View */}
         {activeTab === 'scheduled' && (
-          <div className="space-y-3">
+          <div className="space-y-2">
             {loading ? (
-              <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-12 text-center text-white/40">
-                Loading scheduled posts...
+              <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-8 text-center text-white/40 text-sm">
+                Laden...
               </div>
             ) : scheduledPosts.length === 0 ? (
-              <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-12 text-center">
-                <Clock size={48} className="mx-auto mb-4 text-white/20" />
-                <h3 className="text-xl font-bold text-white mb-2">No scheduled posts</h3>
-                <p className="text-white/40 mb-4">Create your first scheduled post to get started</p>
+              <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-8 text-center">
+                <Clock size={32} className="mx-auto mb-3 text-white/20" />
+                <h3 className="text-base font-bold text-white mb-1">Geen geplande posts</h3>
+                <p className="text-white/40 text-sm mb-3">Maak je eerste geplande post aan</p>
                 <button
                   onClick={() => {
                     if (!profileUsername) {
@@ -416,32 +413,31 @@ const ContentPage: React.FC = () => {
                     }
                     setShowCreateModal(true);
                   }}
-                  className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-3 rounded-lg font-semibold"
+                  className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-4 py-2 rounded-lg text-sm font-semibold"
                 >
-                  Schedule Post
+                  Post plannen
                 </button>
               </div>
             ) : (
               scheduledPosts.map(post => (
-                <div key={post.id} className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-4">
+                <div key={post.id} className="bg-white/[0.08] border border-white/[0.06] rounded-lg p-3">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4 flex-1 min-w-0">
-                      <div className="w-10 h-10 rounded-lg bg-white/[0.06] flex items-center justify-center flex-shrink-0">
-                        {post.mediaType === 'video' ? <Film size={20} className="text-red-400" /> :
-                         post.mediaType === 'photo' ? <Image size={20} className="text-blue-400" /> :
-                         <Type size={20} className="text-green-400" />}
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <div className="w-8 h-8 rounded-lg bg-white/[0.06] flex items-center justify-center flex-shrink-0">
+                        {post.mediaType === 'video' ? <Film size={16} className="text-red-400" /> :
+                         post.mediaType === 'photo' ? <Image size={16} className="text-blue-400" /> :
+                         <Type size={16} className="text-green-400" />}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <h3 className="font-bold text-white truncate">{post.title}</h3>
-                        <div className="flex items-center gap-3 mt-1">
+                        <h3 className="text-sm font-semibold text-white truncate">{post.title}</h3>
+                        <div className="flex items-center gap-2 mt-0.5">
                           <div className="flex items-center gap-1">
                             {post.platforms.map((p, i) => (
                               <span key={i}>{getPlatformIcon(p)}</span>
                             ))}
                           </div>
-                          <span className="text-xs text-white/40">
-                            <CalendarIcon size={12} className="inline mr-1" />
-                            {new Date(post.scheduledDate).toLocaleString()}
+                          <span className="text-[10px] text-white/40">
+                            {new Date(post.scheduledDate).toLocaleString('nl-NL', { dateStyle: 'short', timeStyle: 'short' })}
                           </span>
                         </div>
                       </div>
@@ -451,10 +447,10 @@ const ContentPage: React.FC = () => {
                       {post.jobId && (
                         <button
                           onClick={() => handleCancelScheduled(post.jobId!)}
-                          className="p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition"
-                          title="Cancel scheduled post"
+                          className="p-1.5 text-red-400 hover:bg-red-500/20 rounded-lg transition"
+                          title="Annuleer geplande post"
                         >
-                          <Trash2 size={18} />
+                          <Trash2 size={14} />
                         </button>
                       )}
                     </div>
