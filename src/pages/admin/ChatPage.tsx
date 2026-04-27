@@ -126,7 +126,12 @@ const AdminChat: React.FC = () => {
 
   useEffect(() => {
     if (!selectedGroup) return;
-    const groupMsgs = allMessages.filter((m) => m.recipientGroup === selectedGroup && m.senderRole !== 'admin' && m.senderRole !== 'manager');
+    // For PRIVATE chats, include manager messages; for others, exclude admin/manager
+    const groupMsgs = allMessages.filter((m) => {
+      if (m.recipientGroup !== selectedGroup) return false;
+      if (selectedGroup === 'private') return m.senderRole === 'manager' || m.senderRole === 'admin';
+      return m.senderRole !== 'admin' && m.senderRole !== 'manager';
+    });
     const map = new Map<string, UserEntry>();
     groupMsgs.forEach((m) => {
       const existing = map.get(m.senderId);
@@ -236,7 +241,9 @@ const AdminChat: React.FC = () => {
               </div>
               <div className="flex-1 overflow-y-auto py-3 px-3 space-y-2">
                 {(Object.entries(contactDefs) as [RecipientGroup, any][]).map(([key, def]) => {
-                  const contactMsgs = allMessages.filter(m => m.recipientGroup === key && m.senderRole !== 'admin' && m.senderRole !== 'manager');
+                  let contactMsgs = key === 'private'
+                    ? allMessages.filter(m => m.recipientGroup === key && (m.senderRole === 'admin' || m.senderRole === 'manager'))
+                    : allMessages.filter(m => m.recipientGroup === key && m.senderRole !== 'admin' && m.senderRole !== 'manager');
                   const unreadMsgs = contactMsgs.filter(m => m.status !== 'read');
                   const uniqueUsers = new Set(unreadMsgs.map(m => m.senderId)).size;
                   const cats = [...new Set(contactMsgs.map(m => getCategoryGroup(m.category)))].filter(g => g !== 'OVERIG');
@@ -461,7 +468,9 @@ const AdminChat: React.FC = () => {
               </div>
               <div className="flex-1 overflow-y-auto py-3 px-3 space-y-2">
                 {(Object.entries(contactDefs) as [RecipientGroup, any][]).map(([key, def]) => {
-                  const contactMsgs = allMessages.filter(m => m.recipientGroup === key && m.senderRole !== 'admin' && m.senderRole !== 'manager');
+                  let contactMsgs = key === 'private'
+                    ? allMessages.filter(m => m.recipientGroup === key && (m.senderRole === 'admin' || m.senderRole === 'manager'))
+                    : allMessages.filter(m => m.recipientGroup === key && m.senderRole !== 'admin' && m.senderRole !== 'manager');
                   const unreadMsgs = contactMsgs.filter(m => m.status !== 'read');
                   const uniqueUsers = new Set(unreadMsgs.map(m => m.senderId)).size;
                   const cats = [...new Set(contactMsgs.map(m => getCategoryGroup(m.category)))].filter(g => g !== 'OVERIG');
