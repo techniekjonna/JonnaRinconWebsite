@@ -1,54 +1,58 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useBackground } from '../contexts/BackgroundContext';
 
 const FALLBACK_URL = '/JEIGHTENESIS.jpg';
 
-const setHtmlBackground = (url: string) => {
-  document.documentElement.style.backgroundImage = `url('${url}')`;
-};
-
 const BackgroundRenderer: React.FC = () => {
   const { activeBackground } = useBackground();
-  const [currentImageUrl, setCurrentImageUrl] = React.useState<string | null>(null);
+  const [imageUrl, setImageUrl] = useState<string>(FALLBACK_URL);
 
-  // Set fallback immediately on mount
-  React.useEffect(() => {
-    if (!document.documentElement.style.backgroundImage) {
-      setHtmlBackground(FALLBACK_URL);
-    }
-  }, []);
-
-  React.useEffect(() => {
-    const imageUrl = activeBackground?.imageUrl || FALLBACK_URL;
-
-    if (imageUrl === currentImageUrl) return;
+  useEffect(() => {
+    const url = activeBackground?.imageUrl || FALLBACK_URL;
+    if (url === imageUrl) return;
 
     const img = new Image();
-
-    img.onload = () => {
-      setHtmlBackground(imageUrl);
-      setCurrentImageUrl(imageUrl);
-    };
-
-    img.onerror = () => {
-      setHtmlBackground(FALLBACK_URL);
-      setCurrentImageUrl(FALLBACK_URL);
-    };
-
-    const timeoutId = setTimeout(() => {
-      setHtmlBackground(FALLBACK_URL);
-    }, 10000);
-
-    img.src = imageUrl;
+    img.onload = () => setImageUrl(url);
+    img.onerror = () => setImageUrl(FALLBACK_URL);
+    img.src = url;
 
     return () => {
-      clearTimeout(timeoutId);
       img.onload = null;
       img.onerror = null;
     };
   }, [activeBackground?.imageUrl]);
 
-  return null;
+  // Clear any inline background-image set by previous approach
+  useEffect(() => {
+    document.documentElement.style.backgroundImage = '';
+  }, []);
+
+  return (
+    <div
+      aria-hidden="true"
+      style={{
+        position: 'fixed',
+        inset: 0,
+        width: '100%',
+        height: '100%',
+        zIndex: -20,
+        pointerEvents: 'none',
+        overflow: 'hidden',
+      }}
+    >
+      <img
+        src={imageUrl}
+        alt=""
+        style={{
+          width: '100%',
+          height: '100%',
+          objectFit: 'cover',
+          objectPosition: 'center',
+          display: 'block',
+        }}
+      />
+    </div>
+  );
 };
 
 export default BackgroundRenderer;

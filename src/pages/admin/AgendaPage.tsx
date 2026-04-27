@@ -25,8 +25,15 @@ interface DayData {
   studioSessionInfo?: AgendaDay['studioSessionInfo'];
 }
 
+// Strip time from date for consistent comparison
+const today = new Date();
+today.setHours(0, 0, 0, 0);
+const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
 const AgendaPage: React.FC = () => {
-  const [currentDate, setCurrentDate] = useState(new Date());
+  const isMobileInit = typeof window !== 'undefined' && window.innerWidth < 768;
+  const [startDate, setStartDate] = useState(today); // start showing from today
+  const [currentDate, setCurrentDate] = useState(new Date()); // still used to trigger data reloads
   const [viewMode, setViewMode] = useState<ViewMode>('calendar');
   const [daysData, setDaysData] = useState<Map<string, DayData>>(new Map());
   const [statuses, setStatuses] = useState<AgendaStatus[]>([]);
@@ -36,8 +43,8 @@ const AgendaPage: React.FC = () => {
   const [editingTask, setEditingTask] = useState<AgendaTask | null>(null);
   const [newStatusName, setNewStatusName] = useState('');
   const [showNewStatusInput, setShowNewStatusInput] = useState(false);
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-  const [daysToShow, setDaysToShow] = useState(isMobile ? 7 : 14);
+  const [isMobile, setIsMobile] = useState(isMobileInit);
+  const [daysToShow, setDaysToShow] = useState(isMobileInit ? 7 : 14);
 
   const [taskForm, setTaskForm] = useState({
     title: '',
@@ -70,77 +77,78 @@ const AgendaPage: React.FC = () => {
   }, [isMobile]);
 
   useEffect(() => {
-    const loadMonthData = async () => {
-      const year = currentDate.getFullYear();
-      const month = currentDate.getMonth();
-      const days = await getAgendaDaysByMonth(year, month);
-      const tasks = await getAgendaTasksByMonth(year, month);
+    const loadRangeData = async () => {
+      // Load data for months that the current view range spans
+      const endDate = new Date(startDate);
+      endDate.setDate(endDate.getDate() + daysToShow - 1);
+
+      const monthsToLoad = new Set<string>();
+      const d = new Date(startDate);
+      while (d <= endDate) {
+        monthsToLoad.add(`${d.getFullYear()}-${d.getMonth()}`);
+        d.setMonth(d.getMonth() + 1);
+      }
 
       const map = new Map<string, DayData>();
 
-      // First, add ALL days of the month (even if empty)
-      const daysInMonth = getDaysInMonth(currentDate);
-      for (let day = 1; day <= daysInMonth; day++) {
-        const dateStr = formatDate(year, month, day);
-        if (!map.has(dateStr)) {
-          map.set(dateStr, {
-            date: dateStr,
-            statusId: undefined,
-            status: undefined,
-            tasks: [],
-            studioSessionInfo: undefined,
-          });
-        }
-      }
+      for (const monthKey of monthsToLoad) {
+        const [year, month] = monthKey.split('-').map(Number);
+        const [days, tasks] = await Promise.all([
+          getAgendaDaysByMonth(year, month),
+          getAgendaTasksByMonth(year, month),
+        ]);
 
-      // Then update with actual day data
-      days.forEach(day => {
-        const dayStatus = day.statusId ? statuses.find(s => s.id === day.statusId) : undefined;
-        map.set(day.date, {
-          date: day.date,
-          statusId: day.statusId || undefined,
-          status: dayStatus,
-          tasks: tasks.filter(t => t.date === day.date),
-          studioSessionInfo: day.studioSessionInfo,
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        for (let day = 1; day <= daysInMonth; day++) {
+          const dateStr = formatDate(year, month, day);
+          if (!map.has(dateStr)) {
+            map.set(dateStr, { date: dateStr, statusId: undefined, status: undefined, tasks: [], studioSessionInfo: undefined });
+          }
+        }
+
+        days.forEach(day => {
+          const dayStatus = day.statusId ? statuses.find(s => s.id === day.statusId) : undefined;
+          map.set(day.date, {
+            date: day.date,
+            statusId: day.statusId || undefined,
+            status: dayStatus,
+            tasks: tasks.filter(t => t.date === day.date),
+            studioSessionInfo: day.studioSessionInfo,
+          });
         });
-      });
 
-      // Add days with only tasks (no status set)
-      tasks.forEach(task => {
-        if (!map.has(task.date!)) {
-          map.set(task.date!, {
-            date: task.date!,
-            statusId: undefined,
-            status: undefined,
-            tasks: [task],
-            studioSessionInfo: undefined,
-          });
-        }
-      });
+        tasks.forEach(task => {
+          if (!map.has(task.date!)) {
+            map.set(task.date!, { date: task.date!, statusId: undefined, status: undefined, tasks: [task], studioSessionInfo: undefined });
+          }
+        });
+      }
 
       setDaysData(map);
     };
 
     if (statuses.length > 0) {
-      loadMonthData();
+      loadRangeData();
     }
-  }, [currentDate, statuses]);
+  }, [startDate, currentDate, daysToShow, statuses]);
 
-  const handlePrevMonth = () => {
-    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1));
+  const handlePrevPeriod = () => {
+    const d = new Date(startDate);
+    d.setDate(d.getDate() - daysToShow);
+    setStartDate(d);
   };
 
-  const handleNextMonth = () => {
-    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1));
+  const handleNextPeriod = () => {
+    const d = new Date(startDate);
+    d.setDate(d.getDate() + daysToShow);
+    setStartDate(d);
   };
 
-  const getDaysInMonth = (date: Date) => {
-    return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+  const handleGoToToday = () => {
+    setStartDate(new Date(today));
   };
 
-  const getFirstDayOfMonth = (date: Date) => {
-    return new Date(date.getFullYear(), date.getMonth(), 1).getDay();
-  };
+
 
   const formatDate = (year: number, month: number, day: number) => {
     return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
@@ -165,21 +173,20 @@ const AgendaPage: React.FC = () => {
 
     if (editingTask) {
       await updateAgendaTask(editingTask.id, {
-        ...editingTask,
         title: taskForm.title,
-        description: taskForm.description,
-        time: taskForm.time,
-        userDisplayName: taskForm.userDisplayName,
-        productType: taskForm.productType,
+        description: taskForm.description || '',
+        time: taskForm.time || '',
+        userDisplayName: taskForm.userDisplayName || '',
+        productType: taskForm.productType || '',
       });
     } else {
       await createAgendaTask({
         title: taskForm.title,
-        description: taskForm.description || undefined,
+        ...(taskForm.description && { description: taskForm.description }),
         date: selectedDay,
-        time: taskForm.time || undefined,
-        userDisplayName: taskForm.userDisplayName || undefined,
-        productType: taskForm.productType || undefined,
+        ...(taskForm.time && { time: taskForm.time }),
+        ...(taskForm.userDisplayName && { userDisplayName: taskForm.userDisplayName }),
+        ...(taskForm.productType && { productType: taskForm.productType }),
         completed: false,
       });
     }
@@ -218,34 +225,21 @@ const AgendaPage: React.FC = () => {
     return abbrevMap[status.type] || status.name.charAt(0).toUpperCase();
   };
 
-  const monthString = currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-  const daysInMonth = getDaysInMonth(currentDate);
-  const firstDay = getFirstDayOfMonth(currentDate);
-
-  const calendarDays = [];
-  let dayCounter = 1;
-  let addedDays = 0;
-
-  // Add empty slots for days before the first day of the month
-  for (let i = 0; i < firstDay && addedDays < daysToShow; i++) {
-    calendarDays.push(null);
-    addedDays++;
+  // Build date range starting from startDate
+  const calendarDateRange: Date[] = [];
+  for (let i = 0; i < daysToShow; i++) {
+    const d = new Date(startDate);
+    d.setDate(d.getDate() + i);
+    calendarDateRange.push(d);
   }
 
-  // Add days up to daysToShow
-  while (dayCounter <= daysInMonth && addedDays < daysToShow) {
-    calendarDays.push(dayCounter);
-    dayCounter++;
-    addedDays++;
-  }
+  // Calculate padding to align first day with day of week
+  const firstDayOfWeek = calendarDateRange[0].getDay(); // 0=Sun
+  const paddingDays = firstDayOfWeek; // empty cells before first day
 
-  // If we haven't reached daysToShow yet, add days from next month
-  let nextMonthDay = 1;
-  while (addedDays < daysToShow) {
-    calendarDays.push(-nextMonthDay); // Use negative to indicate next month days
-    nextMonthDay++;
-    addedDays++;
-  }
+  // Date range label
+  const lastDate = calendarDateRange[calendarDateRange.length - 1];
+  const monthString = startDate.toLocaleDateString('nl-NL', { month: 'long', year: 'numeric' });
 
   const dayData = selectedDay && daysData.has(selectedDay) ? daysData.get(selectedDay)! : null;
 
@@ -262,45 +256,45 @@ const AgendaPage: React.FC = () => {
 
   return (
     <AdminLayout>
-      <div className="space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-white">Agenda</h1>
-            <p className="text-sm text-white/30 mt-1">Manage your schedule and tasks</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <button onClick={() => setViewMode('calendar')} className={`px-4 py-2 rounded-lg transition-all ${viewMode === 'calendar' ? 'bg-red-600/20 border border-red-600/40 text-red-400' : 'bg-white/[0.04] border border-white/[0.06] text-white/40'}`}>
-              <Calendar size={18} />
+      <div className="space-y-3">
+        <div className="flex items-center justify-between gap-3">
+          <h1 className="text-xl font-bold text-white">Agenda</h1>
+          <div className="flex items-center gap-1.5">
+            <button onClick={() => setViewMode('calendar')} className={`p-1.5 rounded-lg transition-all ${viewMode === 'calendar' ? 'bg-red-600/20 border border-red-600/40 text-red-400' : 'bg-white/[0.04] border border-white/[0.06] text-white/40'}`}>
+              <Calendar size={16} />
             </button>
-            <button onClick={() => setViewMode('list')} className={`px-4 py-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-red-600/20 border border-red-600/40 text-red-400' : 'bg-white/[0.04] border border-white/[0.06] text-white/40'}`}>
-              <List size={18} />
+            <button onClick={() => setViewMode('list')} className={`p-1.5 rounded-lg transition-all ${viewMode === 'list' ? 'bg-red-600/20 border border-red-600/40 text-red-400' : 'bg-white/[0.04] border border-white/[0.06] text-white/40'}`}>
+              <List size={16} />
             </button>
-            <select value={activeFilter} onChange={(e) => setActiveFilter(e.target.value as FilterType)} className="px-4 py-2 rounded-lg bg-white/[0.04] border border-white/[0.06] text-white/40 text-sm">
-              <option value="all">All</option>
-              <option value="available">Available</option>
-              <option value="absent">Absent</option>
+            <select value={activeFilter} onChange={(e) => setActiveFilter(e.target.value as FilterType)} className="px-2 py-1.5 rounded-lg bg-white/[0.04] border border-white/[0.06] text-white/40 text-xs">
+              <option value="all">Alles</option>
+              <option value="available">Beschikbaar</option>
+              <option value="absent">Afwezig</option>
               <option value="studio">Studio</option>
-              <option value="pending">Pending Tasks</option>
-              <option value="completed">Completed</option>
+              <option value="pending">Openstaand</option>
+              <option value="completed">Voltooid</option>
             </select>
           </div>
         </div>
 
-        <div className="flex items-center justify-between bg-white/[0.08] border border-white/[0.06] rounded-2xl p-4">
-          <button onClick={handlePrevMonth} className="p-2 rounded-lg hover:bg-white/[0.08]"><ChevronLeft size={20} className="text-white" /></button>
-          <h2 className="text-lg font-semibold text-white min-w-[200px] text-center">{monthString}</h2>
-          <button onClick={handleNextMonth} className="p-2 rounded-lg hover:bg-white/[0.08]"><ChevronRight size={20} className="text-white" /></button>
+        <div className="flex items-center justify-between bg-white/[0.08] border border-white/[0.06] rounded-xl px-3 py-2">
+          <button onClick={handlePrevPeriod} className="p-1 rounded-lg hover:bg-white/[0.08]"><ChevronLeft size={16} className="text-white" /></button>
+          <div className="flex items-center gap-2">
+            <button onClick={handleGoToToday} className="text-[11px] text-red-400 hover:text-red-300 font-semibold px-2 py-0.5 rounded bg-red-600/10 hover:bg-red-600/20 transition-colors">Vandaag</button>
+            <h2 className="text-xs font-semibold text-white text-center capitalize">{monthString}</h2>
+          </div>
+          <button onClick={handleNextPeriod} className="p-1 rounded-lg hover:bg-white/[0.08]"><ChevronRight size={16} className="text-white" /></button>
         </div>
 
         {viewMode === 'calendar' && (
-          <div className="bg-white/[0.08] border border-white/[0.06] rounded-2xl p-4 md:p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex gap-2 flex-wrap">
+          <div className="bg-white/[0.08] border border-white/[0.06] rounded-2xl p-3 md:p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex gap-1.5 flex-wrap">
                 {[7, 14, 30].map(days => (
                   <button
                     key={days}
                     onClick={() => setDaysToShow(days)}
-                    className={`px-3 py-1 rounded text-xs font-semibold transition-all ${
+                    className={`px-2 py-0.5 rounded text-xs font-semibold transition-all ${
                       daysToShow === days
                         ? 'bg-red-600/20 border border-red-600/40 text-red-400'
                         : 'bg-white/[0.04] border border-white/[0.06] text-white/40 hover:text-white/60'
@@ -311,55 +305,45 @@ const AgendaPage: React.FC = () => {
                 ))}
               </div>
             </div>
-            <div className="grid grid-cols-7 gap-2 mb-4">
-              {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => (
-                <div key={d} className="text-center text-xs font-semibold text-white/40 py-2">{d}</div>
+            <div className="grid grid-cols-7 gap-1 mb-2">
+              {['Zo', 'Ma', 'Di', 'Wo', 'Do', 'Vr', 'Za'].map(d => (
+                <div key={d} className="text-center text-[10px] font-semibold text-white/40 py-1">{d}</div>
               ))}
             </div>
-            <div className="grid grid-cols-7 gap-2">
-              {calendarDays.map((day, idx) => {
-                if (day === null) return <div key={`empty-${idx}`} className="aspect-square" />;
-
-                let dateStr: string;
-                let displayDay: number;
-                let isNextMonth = false;
-
-                if (day > 0) {
-                  dateStr = formatDate(currentDate.getFullYear(), currentDate.getMonth(), day);
-                  displayDay = day;
-                } else {
-                  isNextMonth = true;
-                  displayDay = -day;
-                  const nextMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1);
-                  dateStr = formatDate(nextMonth.getFullYear(), nextMonth.getMonth(), displayDay);
-                }
-
+            <div className="grid grid-cols-7 gap-1">
+              {/* Padding cells for alignment */}
+              {Array.from({ length: paddingDays }).map((_, i) => (
+                <div key={`pad-${i}`} />
+              ))}
+              {calendarDateRange.map((date) => {
+                const dateStr = formatDate(date.getFullYear(), date.getMonth(), date.getDate());
+                const isToday = dateStr === todayStr;
                 const data = daysData.get(dateStr);
                 return (
                   <button
-                    key={`${day}-${idx}`}
+                    key={dateStr}
                     onClick={() => {
-                      if (isNextMonth) {
-                        setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1));
-                      }
                       setSelectedDay(dateStr);
                       setTaskForm({ title: '', description: '', time: '', userDisplayName: '', productType: '' });
                       setEditingTask(null);
                       setShowModal(true);
                     }}
-                    className={`aspect-square p-2 rounded-xl border transition-all flex flex-col items-start justify-between text-left ${
-                      isNextMonth
-                        ? 'bg-white/[0.03] border-white/[0.04] hover:border-white/[0.08]'
-                        : 'bg-white/[0.06] border-white/[0.08] hover:border-white/[0.15] hover:bg-white/[0.10]'
+                    className={`relative p-1 rounded-lg border transition-all flex flex-col items-center justify-start text-center min-h-[44px] ${
+                      isToday
+                        ? 'bg-red-600/10 border-red-500/50 hover:bg-red-600/20'
+                        : 'bg-white/[0.04] border-white/[0.06] hover:border-white/[0.15] hover:bg-white/[0.08]'
                     }`}
+                    style={isToday ? { boxShadow: '0 0 8px rgba(220,38,38,0.3), 0 0 16px rgba(220,38,38,0.1)' } : {}}
                   >
                     {data?.status && (
-                      <div className="text-[8px] font-bold px-1 py-0.5 rounded text-white w-full text-center" style={{ backgroundColor: data.status.color + '33', color: data.status.color }}>
+                      <div className="text-[7px] font-bold px-0.5 rounded w-full text-center leading-tight mb-0.5" style={{ backgroundColor: data.status.color + '33', color: data.status.color }}>
                         {getStatusAbbrev(data.status)}
                       </div>
                     )}
-                    <div className={`text-xs md:text-sm font-semibold ${isNextMonth ? 'text-white/30' : 'text-white'} ${!data?.status ? 'pt-1' : ''}`}>{displayDay}</div>
-                    {data?.tasks.length ? <div className="text-[9px] text-white/40">{data.tasks.filter(t => !t.completed).length}</div> : null}
+                    <span className={`text-xs font-bold leading-none ${isToday ? 'text-red-400' : 'text-white/80'}`}>{date.getDate()}</span>
+                    {data?.tasks.length ? (
+                      <span className="text-[7px] text-white/40 mt-0.5 leading-none">{data.tasks.filter(t => !t.completed).length}</span>
+                    ) : null}
                   </button>
                 );
               })}

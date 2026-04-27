@@ -11,20 +11,8 @@
 
   html {
     background-color: #0a0a0a;
-    background-attachment: fixed;
-    background-position: center;
-    background-repeat: no-repeat;
-    background-size: cover;
     image-rendering: -webkit-optimize-contrast;
     min-height: 100vh;
-  }
-
-  /* Mobile background fix - use contain on narrow viewports to prevent zoom */
-  @media (max-width: 768px) {
-    html {
-      background-size: contain;
-      background-position: center center;
-    }
   }
 
   /* FOUC Prevention - Background Container States */
