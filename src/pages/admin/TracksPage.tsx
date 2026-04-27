@@ -310,11 +310,34 @@ const TracksPage: React.FC = () => {
   return (
     <AdminLayout>
       <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold text-white">Catalogus Management</h1>
+          <p className="text-white/40 mt-1 text-sm">Beheer je tracks, remixes, playlists en custom instellingen</p>
+        </div>
+
+        {/* Tab Navigation */}
+        <div className="flex gap-1 border-b border-white/[0.1]">
+          {['TRACKS', 'REMIXES', 'PLAY', 'CUSTOM'].map((tab) => (
+            <button
+              key={tab}
+              className={`px-4 py-2 font-semibold text-sm transition-all relative group ${
+                tab === 'TRACKS'
+                  ? 'text-white'
+                  : 'text-white/40 hover:brightness-110'
+              }`}
+              disabled
+              title="Other tabs coming soon"
+            >
+              <span>{tab}</span>
+              {tab === 'TRACKS' && (
+                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-red-600 to-pink-600" />
+              )}
+            </button>
+          ))}
+        </div>
+
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-white">Tracks Management</h1>
-            <p className="text-white/40 mt-2">Manage your track catalog</p>
-          </div>
+          <div></div>
           <div className="flex items-center gap-2">
             <button
               onClick={handleCreate}
@@ -498,29 +521,7 @@ const TracksPage: React.FC = () => {
                     </button>
 
                     {/* Action Buttons - Album Level */}
-                    <div className="flex items-center space-x-2 flex-shrink-0">
-                      <button
-                        onClick={() => moveAlbumUp(group.albumName)}
-                        disabled={(() => {
-                          const allAlbums = Array.from(new Set(sortedTracks.filter(t => t.type === 'Album' || t.type === 'EP').map(t => t.album || t.title)));
-                          return allAlbums.indexOf(group.albumName) === 0;
-                        })()}
-                        className="p-2 text-white/40 hover:text-white disabled:opacity-30 transition-colors"
-                        title="Move album up"
-                      >
-                        <ArrowUp size={18} />
-                      </button>
-                      <button
-                        onClick={() => moveAlbumDown(group.albumName)}
-                        disabled={(() => {
-                          const allAlbums = Array.from(new Set(sortedTracks.filter(t => t.type === 'Album' || t.type === 'EP').map(t => t.album || t.title)));
-                          return allAlbums.indexOf(group.albumName) === allAlbums.length - 1;
-                        })()}
-                        className="p-2 text-white/40 hover:text-white disabled:opacity-30 transition-colors"
-                        title="Move album down"
-                      >
-                        <ArrowDown size={18} />
-                      </button>
+                    <div className="flex items-center space-x-2 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button
                         onClick={() => handleEditAlbum(group.displayTrack)}
                         className="p-2 text-white/40 hover:text-blue-400 transition-colors"
@@ -584,97 +585,44 @@ const TracksPage: React.FC = () => {
                   )}
                 </div>
               ) : (
-                // Single Track
-                <div key={albumKey} className="bg-white/[0.08] border border-white/[0.06] rounded-xl overflow-hidden">
-                  <div className="overflow-x-auto">
-                    <table className="w-full">
-                      <tbody>
-                        <tr className="hover:bg-white/[0.06]">
-                          <td className="px-6 py-4">
-                            <div className="flex items-center space-x-3">
-                              <img
-                                src={group.displayTrack.artworkUrl}
-                                alt={group.displayTrack.title}
-                                className="w-12 h-12 rounded object-cover"
-                              />
-                              <div>
-                                <p className="font-medium text-white">{group.displayTrack.title}</p>
-                                <p className="text-sm text-white/40">{group.displayTrack.artist}</p>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4">
-                            <span className="px-2 py-1 bg-purple-500/20 text-purple-400 rounded text-sm">
-                              {group.displayTrack.genre}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 text-white/60">
-                            {group.displayTrack.bpm} BPM / {group.displayTrack.key}
-                          </td>
-                          <td className="px-6 py-4">
-                            <span
-                              className={`px-2 py-1 rounded text-sm ${
-                                group.displayTrack.status === 'published'
-                                  ? 'bg-green-500/20 text-green-400'
-                                  : group.displayTrack.status === 'draft'
-                                  ? 'bg-yellow-500/20 text-yellow-400'
-                                  : 'bg-white/[0.06] text-white/40'
-                              }`}
-                            >
-                              {group.displayTrack.status}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 text-white/60">{group.displayTrack.plays}</td>
-                          <td className="px-6 py-4">
-                            <div className="flex items-center justify-end space-x-2">
-                              <button
-                                onClick={() => moveSingleTrackUp(group.displayTrack.id)}
-                                disabled={(() => {
-                                  const singleTracks = sortedTracks.filter(t => !t.album && (t.type === 'Single' || t.type === 'Exclusive'));
-                                  return singleTracks.findIndex(t => t.id === group.displayTrack.id) === 0;
-                                })()}
-                                className="p-2 text-white/40 hover:text-white disabled:opacity-30 transition-colors"
-                                title="Move up"
-                              >
-                                <ArrowUp size={18} />
-                              </button>
-                              <button
-                                onClick={() => moveSingleTrackDown(group.displayTrack.id)}
-                                disabled={(() => {
-                                  const singleTracks = sortedTracks.filter(t => !t.album && (t.type === 'Single' || t.type === 'Exclusive'));
-                                  return singleTracks.findIndex(t => t.id === group.displayTrack.id) === singleTracks.length - 1;
-                                })()}
-                                className="p-2 text-white/40 hover:text-white disabled:opacity-30 transition-colors"
-                                title="Move down"
-                              >
-                                <ArrowDown size={18} />
-                              </button>
-                              <button
-                                onClick={() => togglePlay(group.displayTrack.id)}
-                                className="p-2 text-white/40 hover:text-purple-400 transition-colors"
-                                title="Play preview"
-                              >
-                                {currentlyPlaying === group.displayTrack.id ? <Pause size={18} /> : <Play size={18} />}
-                              </button>
-                              <button
-                                onClick={() => handleEdit(group.displayTrack)}
-                                className="p-2 text-white/40 hover:text-blue-400 transition-colors"
-                                title="Edit"
-                              >
-                                <Edit size={18} />
-                              </button>
-                              <button
-                                onClick={() => handleDelete(group.displayTrack.id)}
-                                className="p-2 text-white/40 hover:text-red-400 transition-colors"
-                                title="Delete"
-                              >
-                                <Trash2 size={18} />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
+                // Single Track - Simplified
+                <div key={albumKey} className="bg-white/[0.05] border border-white/[0.06] rounded-lg p-4 hover:bg-white/[0.08] transition-all flex items-center justify-between group">
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <img
+                      src={group.displayTrack.artworkUrl}
+                      alt={group.displayTrack.title}
+                      className="w-10 h-10 rounded object-cover flex-shrink-0"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-white text-sm truncate">{group.displayTrack.title}</p>
+                      <p className="text-xs text-white/40 truncate">{group.displayTrack.artist}</p>
+                    </div>
+                    <span className="text-xs px-2 py-1 bg-white/[0.06] text-white/60 rounded flex-shrink-0">
+                      {group.displayTrack.type}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                      onClick={() => togglePlay(group.displayTrack.id)}
+                      className="p-1.5 text-white/40 hover:text-purple-400 transition-colors"
+                      title="Play preview"
+                    >
+                      {currentlyPlaying === group.displayTrack.id ? <Pause size={16} /> : <Play size={16} />}
+                    </button>
+                    <button
+                      onClick={() => handleEdit(group.displayTrack)}
+                      className="p-1.5 text-white/40 hover:text-blue-400 transition-colors"
+                      title="Edit"
+                    >
+                      <Edit size={16} />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(group.displayTrack.id)}
+                      className="p-1.5 text-white/40 hover:text-red-400 transition-colors"
+                      title="Delete"
+                    >
+                      <Trash2 size={16} />
+                    </button>
                   </div>
                 </div>
               );
