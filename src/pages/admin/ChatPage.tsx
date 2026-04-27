@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import AdminLayout from '../../components/admin/AdminLayout';
-import { MessageSquare, Send, Check, CheckCheck, Briefcase, Headphones, ArrowLeft, Search, SlidersHorizontal, ChevronDown } from 'lucide-react';
+import { MessageSquare, Send, Check, CheckCheck, Briefcase, Headphones, ArrowLeft, Search, SlidersHorizontal, ChevronDown, Plus, X } from 'lucide-react';
 import { db } from '../../lib/firebase/config';
 import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, Timestamp, where, getDocs, updateDoc, doc } from 'firebase/firestore';
 import { useAuth } from '../../contexts/AuthContext';
@@ -97,6 +97,10 @@ const AdminChat: React.FC = () => {
   const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('all');
   const [showFilter, setShowFilter] = useState(false);
   const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' && window.innerWidth < 1024);
+  const [showNewChatModal, setShowNewChatModal] = useState(false);
+  const [newChatUserSearch, setNewChatUserSearch] = useState('');
+  const [selectedNewChatUser, setSelectedNewChatUser] = useState<UserEntry | null>(null);
+  const [selectedNewChatCategory, setSelectedNewChatCategory] = useState<string | null>(null);
   const filterRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -194,6 +198,18 @@ const AdminChat: React.FC = () => {
       });
       setNewMessage('');
     } catch (err) { console.error(err); }
+  };
+
+  const handleStartNewChat = () => {
+    if (selectedNewChatUser && selectedNewChatCategory && selectedGroup === 'jonna') {
+      setSelectedUserId(selectedNewChatUser.userId);
+      setSelectedThread(selectedNewChatCategory);
+      setLeftView('threads');
+      setShowNewChatModal(false);
+      setNewChatUserSearch('');
+      setSelectedNewChatUser(null);
+      setSelectedNewChatCategory(null);
+    }
   };
 
   const getStatusIcon = (status: string) => {
@@ -298,6 +314,11 @@ const AdminChat: React.FC = () => {
                 </button>
                 <ContactAvatar group={selectedGroup} size="sm" />
                 <p className="text-sm font-semibold text-white flex-1 truncate">{contactDefs[selectedGroup].name}</p>
+                {selectedGroup === 'jonna' && (
+                  <button onClick={() => setShowNewChatModal(true)} className="p-1.5 hover:bg-white/[0.08] rounded-lg transition-colors text-white/60 hover:text-white" title="Start new chat">
+                    <Plus size={18} />
+                  </button>
+                )}
               </div>
 
               {/* Search + Filter */}
@@ -525,6 +546,11 @@ const AdminChat: React.FC = () => {
                 </button>
                 <ContactAvatar group={selectedGroup} size="sm" />
                 <p className="text-sm font-semibold text-white flex-1 truncate">{contactDefs[selectedGroup].name}</p>
+                {selectedGroup === 'jonna' && (
+                  <button onClick={() => setShowNewChatModal(true)} className="p-1.5 hover:bg-white/[0.08] rounded-lg transition-colors text-white/60 hover:text-white" title="Start new chat">
+                    <Plus size={18} />
+                  </button>
+                )}
               </div>
 
               {/* Search + Filter */}
@@ -699,6 +725,95 @@ const AdminChat: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* New Chat Modal */}
+      {showNewChatModal && selectedGroup === 'jonna' && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+          <div className="bg-black/95 border border-white/[0.12] rounded-2xl p-6 max-w-md w-full max-h-96 flex flex-col shadow-2xl">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-white">Nieuw chat starten</h3>
+              <button onClick={() => { setShowNewChatModal(false); setSelectedNewChatUser(null); setSelectedNewChatCategory(null); setNewChatUserSearch(''); }}
+                className="text-white/40 hover:text-white transition-colors">
+                <X size={20} />
+              </button>
+            </div>
+
+            {!selectedNewChatUser ? (
+              <>
+                <div className="relative mb-4 flex-shrink-0">
+                  <Search size={14} className="absolute left-3 top-3 text-white/30" />
+                  <input type="text" value={newChatUserSearch} onChange={(e) => setNewChatUserSearch(e.target.value)} placeholder="Zoek gebruiker..."
+                    className="w-full pl-10 pr-3 py-2 bg-white/[0.06] border border-white/[0.1] rounded-lg text-sm text-white placeholder-white/30 focus:outline-none focus:border-white/[0.2]" />
+                </div>
+
+                <div className="flex-1 overflow-y-auto space-y-2 min-h-0">
+                  {filteredUsers
+                    .filter(u => u.userName.toLowerCase().includes(newChatUserSearch.toLowerCase()) || u.userEmail.toLowerCase().includes(newChatUserSearch.toLowerCase()))
+                    .map((u) => (
+                      <button key={u.userId} onClick={() => setSelectedNewChatUser(u)}
+                        className="w-full p-3 rounded-lg bg-white/[0.05] hover:bg-white/[0.08] border border-white/[0.08] text-left transition-colors">
+                        <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${getRoleColor(u.userRole)} flex items-center justify-center text-white text-xs font-bold flex-shrink-0 mb-2`}>
+                          {u.userName[0]?.toUpperCase()}
+                        </div>
+                        <p className="text-sm font-semibold text-white">{u.userName}</p>
+                        <p className="text-xs text-white/40">{u.userEmail}</p>
+                      </button>
+                    ))}
+                  {filteredUsers.filter(u => u.userName.toLowerCase().includes(newChatUserSearch.toLowerCase()) || u.userEmail.toLowerCase().includes(newChatUserSearch.toLowerCase())).length === 0 && (
+                    <div className="text-center py-8 text-white/30">
+                      <p className="text-sm">Geen gebruikers gevonden</p>
+                    </div>
+                  )}
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="mb-4 p-3 rounded-lg bg-white/[0.05] border border-white/[0.08] flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${getRoleColor(selectedNewChatUser.userRole)} flex items-center justify-center text-white text-xs font-bold flex-shrink-0`}>
+                      {selectedNewChatUser.userName[0]?.toUpperCase()}
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-white">{selectedNewChatUser.userName}</p>
+                      <p className="text-xs text-white/40">{selectedNewChatUser.userEmail}</p>
+                    </div>
+                  </div>
+                  <button onClick={() => { setSelectedNewChatUser(null); setSelectedNewChatCategory(null); }}
+                    className="text-white/40 hover:text-white transition-colors">
+                    <X size={16} />
+                  </button>
+                </div>
+
+                <p className="text-xs text-white/40 uppercase tracking-widest font-semibold mb-2">Kies categorie</p>
+                <div className="flex-1 overflow-y-auto space-y-2 min-h-0">
+                  {['Tracks', 'Remixes', 'Support', 'Beats', 'Services', 'Merchandise', 'Art', 'Content', 'Collaboration', 'Orders', 'Downloads'].map((cat) => (
+                    <button key={cat} onClick={() => setSelectedNewChatCategory(cat)}
+                      className={`w-full px-3 py-2 rounded-lg text-sm transition-colors ${
+                        selectedNewChatCategory === cat
+                          ? 'bg-red-600/20 border border-red-600/40 text-red-400'
+                          : 'bg-white/[0.05] border border-white/[0.08] text-white/70 hover:bg-white/[0.08]'
+                      }`}>
+                      {cat}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="flex gap-2 mt-4 flex-shrink-0">
+                  <button onClick={() => { setSelectedNewChatUser(null); setSelectedNewChatCategory(null); }}
+                    className="flex-1 px-4 py-2 rounded-lg bg-white/[0.06] border border-white/[0.1] text-white/70 hover:text-white hover:bg-white/[0.08] transition-colors text-sm font-medium">
+                    Terug
+                  </button>
+                  <button onClick={handleStartNewChat}
+                    disabled={!selectedNewChatCategory}
+                    className="flex-1 px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 disabled:bg-white/[0.06] disabled:text-white/40 text-white transition-colors text-sm font-medium">
+                    Chat starten
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </AdminLayout>
   );
 };
