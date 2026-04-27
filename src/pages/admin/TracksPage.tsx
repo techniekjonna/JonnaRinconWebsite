@@ -97,23 +97,38 @@ const TracksPage: React.FC = () => {
   };
 
   const handleSavePlaylist = async () => {
-    if (!editingPlaylist || !playlistEditForm.name.trim()) {
+    if (!playlistEditForm.name.trim()) {
       alert('Playlist name is required');
       return;
     }
     try {
-      await playlistService.updatePlaylist(editingPlaylist.id, {
-        name: playlistEditForm.name.trim(),
-        description: playlistEditForm.description,
-        isPublic: playlistEditForm.isPublic,
-        isFeatured: playlistEditForm.isFeatured,
-      });
-      alert('Playlist updated successfully');
+      if (editingPlaylist) {
+        // Update existing playlist
+        await playlistService.updatePlaylist(editingPlaylist.id, {
+          name: playlistEditForm.name.trim(),
+          description: playlistEditForm.description,
+          isPublic: playlistEditForm.isPublic,
+          isFeatured: playlistEditForm.isFeatured,
+        });
+        alert('Playlist updated successfully');
+      } else {
+        // Create new playlist
+        const { user } = require('../../contexts/AuthContext');
+        await playlistService.createPlaylist(playlistEditForm.name.trim(), user.uid, [], playlistEditForm.description);
+        alert('Playlist created successfully');
+      }
       setShowPlaylistEditModal(false);
       setEditingPlaylist(null);
+      setPlaylistEditForm({ name: '', description: '', isPublic: false, isFeatured: false });
     } catch (error: any) {
-      alert(error.message || 'Failed to update playlist');
+      alert(error.message || 'Failed to save playlist');
     }
+  };
+
+  const handleCreatePlaylist = () => {
+    setEditingPlaylist(null);
+    setPlaylistEditForm({ name: '', description: '', isPublic: false, isFeatured: false });
+    setShowPlaylistEditModal(true);
   };
 
   const handleEditAlbum = (track: Track) => {
@@ -464,6 +479,24 @@ const TracksPage: React.FC = () => {
               >
                 <Plus size={20} />
                 <span>Add Remix</span>
+              </button>
+            )}
+            {activeTab === 'playlists' && (
+              <button
+                onClick={handleCreatePlaylist}
+                className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-indigo-700 hover:to-purple-700 transition-all flex items-center space-x-2"
+              >
+                <Plus size={20} />
+                <span>Add Playlist</span>
+              </button>
+            )}
+            {activeTab === 'custom' && (
+              <button
+                onClick={() => document.getElementById('custom-settings')?.scrollIntoView({ behavior: 'smooth' })}
+                className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-blue-700 hover:to-cyan-700 transition-all flex items-center space-x-2"
+              >
+                <Plus size={20} />
+                <span>Add Custom Tab</span>
               </button>
             )}
             {(activeTab === 'tracks' || activeTab === 'remixes') && (
@@ -882,24 +915,16 @@ const TracksPage: React.FC = () => {
 
         {/* CUSTOM TAB */}
         {activeTab === 'custom' && (
-          <div className="space-y-6">
-            <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-6">
-              <h2 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
-                <Music size={20} className="text-blue-400" />
-                Custom Track Tabs
-              </h2>
+          <div className="space-y-3" id="custom-settings">
+            <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-4">
               {loadingSettings ? (
                 <LoadingSpinner text="Loading settings..." />
               ) : trackSettings ? (
-                <div className="space-y-6">
+                <div className="space-y-3">
                   {/* Custom Tab 1 */}
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between p-4 bg-white/[0.06] rounded-lg">
-                      <div>
-                        <p className="font-medium text-white text-sm">Enable Custom Tab 1</p>
-                        <p className="text-xs text-white/40 mt-1">Show a custom tab in the tracks section</p>
-                      </div>
-                      <label className="relative inline-flex items-center cursor-pointer">
+                  <div className="flex items-center justify-between p-3 bg-white/[0.06] rounded-lg">
+                    <div className="flex-1">
+                      <label className="flex items-center gap-2">
                         <input
                           type="checkbox"
                           checked={trackSettings.customTab1Enabled}
@@ -909,40 +934,31 @@ const TracksPage: React.FC = () => {
                               customTab1Enabled: e.target.checked,
                             })
                           }
-                          className="sr-only peer"
+                          className="rounded"
                         />
-                        <div className="w-9 h-5 bg-white/[0.08] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-white/20 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
+                        <span className="text-sm font-semibold text-white">Custom Tab 1</span>
                       </label>
                     </div>
                     {trackSettings.customTab1Enabled && (
-                      <div>
-                        <label className="block text-xs font-medium text-white/60 mb-2">
-                          Custom Tab 1 Label
-                        </label>
-                        <input
-                          type="text"
-                          value={trackSettings.customTab1Label}
-                          onChange={(e) =>
-                            setTrackSettings({
-                              ...trackSettings,
-                              customTab1Label: e.target.value,
-                            })
-                          }
-                          placeholder="e.g., Favorites, Trending, etc."
-                          className="w-full bg-white/[0.06] border border-white/[0.08] rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500"
-                        />
-                      </div>
+                      <input
+                        type="text"
+                        value={trackSettings.customTab1Label}
+                        onChange={(e) =>
+                          setTrackSettings({
+                            ...trackSettings,
+                            customTab1Label: e.target.value,
+                          })
+                        }
+                        placeholder="Label"
+                        className="w-32 px-2 py-1 rounded bg-white/[0.06] border border-white/[0.06] text-white text-xs focus:outline-none focus:border-blue-500"
+                      />
                     )}
                   </div>
 
                   {/* Custom Tab 2 */}
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between p-4 bg-white/[0.06] rounded-lg">
-                      <div>
-                        <p className="font-medium text-white text-sm">Enable Custom Tab 2</p>
-                        <p className="text-xs text-white/40 mt-1">Show another custom tab in the tracks section</p>
-                      </div>
-                      <label className="relative inline-flex items-center cursor-pointer">
+                  <div className="flex items-center justify-between p-3 bg-white/[0.06] rounded-lg">
+                    <div className="flex-1">
+                      <label className="flex items-center gap-2">
                         <input
                           type="checkbox"
                           checked={trackSettings.customTab2Enabled}
@@ -952,48 +968,43 @@ const TracksPage: React.FC = () => {
                               customTab2Enabled: e.target.checked,
                             })
                           }
-                          className="sr-only peer"
+                          className="rounded"
                         />
-                        <div className="w-9 h-5 bg-white/[0.08] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-white/20 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
+                        <span className="text-sm font-semibold text-white">Custom Tab 2</span>
                       </label>
                     </div>
                     {trackSettings.customTab2Enabled && (
-                      <div>
-                        <label className="block text-xs font-medium text-white/60 mb-2">
-                          Custom Tab 2 Label
-                        </label>
-                        <input
-                          type="text"
-                          value={trackSettings.customTab2Label}
-                          onChange={(e) =>
-                            setTrackSettings({
-                              ...trackSettings,
-                              customTab2Label: e.target.value,
-                            })
-                          }
-                          placeholder="e.g., New Releases, Exclusive, etc."
-                          className="w-full bg-white/[0.06] border border-white/[0.08] rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500"
-                        />
-                      </div>
+                      <input
+                        type="text"
+                        value={trackSettings.customTab2Label}
+                        onChange={(e) =>
+                          setTrackSettings({
+                            ...trackSettings,
+                            customTab2Label: e.target.value,
+                          })
+                        }
+                        placeholder="Label"
+                        className="w-32 px-2 py-1 rounded bg-white/[0.06] border border-white/[0.06] text-white text-xs focus:outline-none focus:border-blue-500"
+                      />
                     )}
                   </div>
 
-                  <div className="flex justify-end pt-4">
+                  <div className="flex justify-end pt-2">
                     <button
                       onClick={handleSaveTrackSettings}
-                      className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 px-4 py-2 rounded-lg text-white font-medium transition-all text-sm"
+                      className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 px-3 py-1.5 rounded-lg text-white font-medium transition-all text-sm"
                     >
-                      <Save size={16} />
-                      Save Settings
+                      <Save size={14} />
+                      Save
                     </button>
                   </div>
                 </div>
               ) : null}
             </div>
 
-            <div className="bg-blue-900/20 border border-blue-700/30 rounded-xl p-4">
+            <div className="bg-blue-900/20 border border-blue-700/30 rounded-xl p-3">
               <p className="text-xs text-blue-300">
-                💡 <strong>Info:</strong> Custom tabs allow you to create specialized track collections. Enable and name them, then assign tracks to each in the track editor.
+                💡 Enable and name custom tabs to create specialized track collections
               </p>
             </div>
           </div>
@@ -1011,12 +1022,12 @@ const TracksPage: React.FC = () => {
         />
       )}
 
-      {showPlaylistEditModal && editingPlaylist && (
+      {showPlaylistEditModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowPlaylistEditModal(false)} />
           <div className="relative bg-black border border-white/[0.06] rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
             <div className="sticky top-0 bg-black/80 backdrop-blur-sm border-b border-white/[0.06] px-5 py-4 flex items-center justify-between z-10">
-              <h2 className="text-lg font-bold text-white">Edit Playlist</h2>
+              <h2 className="text-lg font-bold text-white">{editingPlaylist ? 'Edit Playlist' : 'Create Playlist'}</h2>
               <button onClick={() => setShowPlaylistEditModal(false)} className="text-white/40 hover:text-white"><Plus size={20} className="rotate-45" /></button>
             </div>
             <div className="px-5 py-4 space-y-4">
