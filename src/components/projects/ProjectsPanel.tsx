@@ -94,10 +94,10 @@ const ProjectsPanel: React.FC = () => {
           <div className="relative">
             <button
               onClick={() => setShowFilterMenu(!showFilterMenu)}
-              className="p-2 hover:bg-white/10 rounded-lg border border-white/10 transition-colors"
+              className="p-1.5 hover:bg-white/[0.08] rounded-lg border border-white/[0.06] transition-colors"
               title="Filter projects"
             >
-              <Filter size={20} className="text-white/60" />
+              <Filter size={18} className="text-white/60" />
             </button>
 
             {showFilterMenu && (
@@ -126,9 +126,9 @@ const ProjectsPanel: React.FC = () => {
           {canEdit && (
             <button
               onClick={handleCreateProject}
-              className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold transition-all"
+              className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold transition-all text-sm"
             >
-              <Plus size={18} />
+              <Plus size={16} />
               New Project
             </button>
           )}
