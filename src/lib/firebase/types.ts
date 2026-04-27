@@ -1261,6 +1261,7 @@ export interface Project {
   title: string;
   description: string;
   status: ProjectStatus;
+  category?: 'artist' | 'producer' | 'other';
   coverUrl?: string;
   internalDataLink?: string;
   downloadSuffix?: string;
