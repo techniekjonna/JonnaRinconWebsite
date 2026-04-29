@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import {
   LayoutDashboard,
+  Calendar,
   Handshake,
   Music,
   ShoppingCart,
@@ -35,8 +36,8 @@ const ArtistLayout: React.FC<ArtistLayoutProps> = ({ children }) => {
 
   const navigation = [
     { name: 'Dashboard', href: '/artist/dashboard', icon: LayoutDashboard },
+    { name: 'Agenda', href: '/artist/agenda', icon: Calendar },
     { name: 'Collaborations', href: '/artist/collaborations', icon: Handshake },
-    { name: 'Request Collab', href: '/artist/request-collab', icon: Plus },
     { name: 'Shop Beats', href: '/artist/beats', icon: Music },
     { name: 'My Purchases', href: '/artist/orders', icon: ShoppingCart },
     { name: 'My Products', href: '/artist/my-products', icon: Download },
