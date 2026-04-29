@@ -8,6 +8,14 @@ const Header: React.FC = () => {
   const location = useLocation();
   const menuRef = useRef<HTMLDivElement>(null);
 
+  // Hide header on protected/admin routes
+  const isProtectedRoute = location.pathname.startsWith('/admin') ||
+    location.pathname.startsWith('/manager') ||
+    location.pathname.startsWith('/artist') ||
+    location.pathname.startsWith('/customer');
+
+  if (isProtectedRoute) return null;
+
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
@@ -33,25 +41,14 @@ const Header: React.FC = () => {
     <header className="fixed top-0 left-0 right-0 z-40 pt-3 px-4 sm:px-6 lg:px-8">
       <div className="backdrop-blur-xl bg-black/30 border border-white/[0.08] rounded-2xl">
         <div className="flex items-center justify-between px-6 py-4 h-20">
-          {/* Logo */}
-          <Link to="/" className="flex-shrink-0 group">
-            <div className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-              <div className="w-10 h-10 rounded-lg overflow-hidden border border-white/[0.1] group-hover:border-white/[0.2] transition-colors">
-                <img
-                  src="/JEIGHTENESIS.jpg"
-                  alt="Jonna Rincon"
-                  className="w-full h-full object-cover object-top"
-                />
-              </div>
-              <span className="text-xs font-bold text-white/40 group-hover:text-white/60 transition-colors hidden sm:inline">JONNA</span>
-            </div>
-          </Link>
+          {/* Spacer left */}
+          <div className="w-10 flex-shrink-0" />
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center justify-center flex-1">
-            <div className="flex items-center gap-8">
+            <div className="flex items-center gap-12">
               {/* Left items */}
-              <div className="flex gap-6">
+              <div className="flex gap-8">
                 {navItems
                   .filter(item => item.position === 'left')
                   .map(item => (
@@ -73,13 +70,12 @@ const Header: React.FC = () => {
               </div>
 
               {/* Center Logo/Title */}
-              <div className="text-center px-8 border-x border-white/[0.08]">
-                <h1 className="text-lg font-black text-white tracking-tighter">JONNA</h1>
-                <p className="text-[10px] text-white/30 tracking-widest mt-0.5">RINCON</p>
+              <div className="text-center px-12 border-x border-white/[0.08] flex-shrink-0">
+                <h1 className="text-lg font-black text-white tracking-tighter">JONNA RINCON</h1>
               </div>
 
               {/* Right items */}
-              <div className="flex gap-6">
+              <div className="flex gap-8">
                 {navItems
                   .filter(item => item.position === 'right')
                   .map(item => (
