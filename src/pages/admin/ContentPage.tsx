@@ -62,7 +62,7 @@ const apiCall = async (endpoint: string, options?: RequestInit) => {
 };
 
 // ======================= MAIN COMPONENT =======================
-const ContentPage: React.FC = () => {
+export const SocialPlannerContent: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'calendar' | 'scheduled' | 'history'>('calendar');
   const [currentDate, setCurrentDate] = useState(new Date());
   const [scheduledPosts, setScheduledPosts] = useState<ScheduledPost[]>([]);
@@ -219,7 +219,7 @@ const ContentPage: React.FC = () => {
   };
 
   return (
-    <AdminLayout>
+    <>
       <div className="space-y-4">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -537,7 +537,7 @@ const ContentPage: React.FC = () => {
           preselectedDate={selectedDate}
         />
       )}
-    </AdminLayout>
+    </>
   );
 };
 
@@ -1055,5 +1055,12 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ profileUsername, onCl
     </div>
   );
 };
+
+// ContentPage wraps SocialPlannerContent with AdminLayout for the standalone route
+const ContentPage: React.FC = () => (
+  <AdminLayout>
+    <SocialPlannerContent />
+  </AdminLayout>
+);
 
 export default ContentPage;
