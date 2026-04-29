@@ -56,7 +56,16 @@ export default function LoadingScreen({ onLoadingComplete }: LoadingScreenProps)
   const [isVisible, setIsVisible] = useState(true);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [isGlitching, setIsGlitching] = useState(false);
+  const [showSkip, setShowSkip] = useState(false);
   const { display, done } = useCyberDecode(TARGET_TEXT);
+
+  const handleSkip = () => {
+    setIsTransitioning(true);
+    setTimeout(() => {
+      setIsVisible(false);
+      onLoadingComplete();
+    }, 800);
+  };
 
   useEffect(() => {
     if (!done) return;
@@ -65,17 +74,22 @@ export default function LoadingScreen({ onLoadingComplete }: LoadingScreenProps)
       setIsGlitching(true);
     }, 300);
 
+    const skipTimer = setTimeout(() => {
+      setShowSkip(true);
+    }, 700);
+
     const transitionTimer = setTimeout(() => {
       setIsTransitioning(true);
-    }, 500);
+    }, 2500);
 
     const completeTimer = setTimeout(() => {
       setIsVisible(false);
       onLoadingComplete();
-    }, 1500);
+    }, 3300);
 
     return () => {
       clearTimeout(glitchTimer);
+      clearTimeout(skipTimer);
       clearTimeout(transitionTimer);
       clearTimeout(completeTimer);
     };
@@ -89,8 +103,9 @@ export default function LoadingScreen({ onLoadingComplete }: LoadingScreenProps)
     <div
       className={`fixed inset-0 z-50 flex flex-col items-center justify-center bg-black transition-opacity duration-1000 ${
         isTransitioning ? 'opacity-0' : 'opacity-100'
-      } ${isGlitching ? 'screen-glitch' : ''}`}
+      } ${isGlitching ? 'screen-glitch' : ''} cursor-pointer`}
       style={{ pointerEvents: isTransitioning ? 'none' : 'auto' }}
+      onClick={showSkip ? handleSkip : undefined}
     >
       {/* Background Image */}
       <img
@@ -104,6 +119,18 @@ export default function LoadingScreen({ onLoadingComplete }: LoadingScreenProps)
 
       {/* Dark Overlay - 70% black like other public pages */}
       <div className={`absolute inset-0 bg-black/70 ${isGlitching ? 'glitch-screen' : ''}`} />
+
+      {/* Skip Button */}
+      {showSkip && (
+        <button
+          onClick={handleSkip}
+          className={`absolute bottom-10 left-1/2 -translate-x-1/2 z-20 px-4 py-2 rounded-full border border-white/30 text-white/40 hover:text-white hover:border-white/60 text-xs font-semibold uppercase tracking-widest transition-all duration-700 ${
+            isTransitioning ? 'opacity-0' : 'opacity-100'
+          }`}
+        >
+          Click to continue
+        </button>
+      )}
 
       {/* Content - centered */}
       <div

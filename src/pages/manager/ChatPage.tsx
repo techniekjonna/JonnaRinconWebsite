@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import ManagerLayout from '../../components/manager/ManagerLayout';
-import { MessageSquare, Send, Check, CheckCheck, Briefcase, Headphones, ArrowLeft, Search, SlidersHorizontal, ChevronDown } from 'lucide-react';
+import { MessageSquare, Send, Check, CheckCheck, Briefcase, Headphones, ArrowLeft, Search, SlidersHorizontal, ChevronDown, Plus, X, Edit2 } from 'lucide-react';
 import { db } from '../../lib/firebase/config';
-import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, Timestamp } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, Timestamp, where, updateDoc, doc } from 'firebase/firestore';
 import { useAuth } from '../../contexts/AuthContext';
 
 interface ChatMessage {
@@ -12,7 +12,7 @@ interface ChatMessage {
   senderEmail: string;
   senderRole: string;
   category: string;
-  recipientGroup: 'jonna' | 'manager' | 'support';
+  recipientGroup: 'jonna' | 'manager' | 'support' | 'private';
   recipientId?: string;
   message: string;
   createdAt: Timestamp;
@@ -36,7 +36,7 @@ interface ChatThread {
   lastMessageTime: Timestamp;
 }
 
-type RecipientGroup = 'manager' | 'support';
+type RecipientGroup = 'manager' | 'support' | 'private';
 type LeftView = 'contacts' | 'users' | 'threads';
 type SortOrder = 'newest' | 'oldest';
 type CategoryFilter = 'all' | 'CATALOGUE' | 'SHOP' | 'SOCIAL MEDIA' | 'DASHBOARD';
@@ -44,6 +44,7 @@ type CategoryFilter = 'all' | 'CATALOGUE' | 'SHOP' | 'SOCIAL MEDIA' | 'DASHBOARD
 const contactDefs: Record<RecipientGroup, { name: string; description: string }> = {
   manager: { name: 'Manager', description: 'Business inquiries & samenwerking' },
   support: { name: 'Support Team', description: 'Vragen, hulp en ondersteuning' },
+  private: { name: 'Privé', description: 'Privé chats' },
 };
 
 const categoryGroups: Record<string, string[]> = {
@@ -90,6 +91,9 @@ const ManagerChat: React.FC = () => {
   const [sortOrder, setSortOrder] = useState<SortOrder>('newest');
   const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('all');
   const [showFilter, setShowFilter] = useState(false);
+  const [showPrivateChatModal, setShowPrivateChatModal] = useState(false);
+  const [editingThreadTitle, setEditingThreadTitle] = useState<string | null>(null);
+  const [editingThreadValue, setEditingThreadValue] = useState('');
   const filterRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -157,6 +161,43 @@ const ManagerChat: React.FC = () => {
         message: newMessage.trim(), createdAt: serverTimestamp(), status: 'sent',
       });
       setNewMessage('');
+    } catch (err) { console.error(err); }
+  };
+
+  const startPrivateChat = async (adminName: string) => {
+    if (!user) return;
+    try {
+      await addDoc(collection(db, 'supportMessages'), {
+        senderId: user.uid,
+        senderName: user.displayName || 'Manager',
+        senderEmail: user.email,
+        senderRole: 'manager',
+        recipientGroup: 'private',
+        recipientId: adminName,
+        category: `chat-${user.uid}-${adminName}`,
+        message: '👋',
+        createdAt: serverTimestamp(),
+        status: 'sent',
+      });
+      setSelectedGroup('private');
+      setSelectedUserId(adminName);
+      setSelectedThread(`chat-${user.uid}-${adminName}`);
+      setLeftView('threads');
+      setShowPrivateChatModal(false);
+    } catch (err) { console.error(err); }
+  };
+
+  const updateThreadTitle = async (oldTitle: string, newTitle: string) => {
+    if (!newTitle.trim() || !user) return;
+    try {
+      const q = query(collection(db, 'supportMessages'), where('category', '==', oldTitle));
+      const snap = await onSnapshot(q, async (snapshot) => {
+        for (const docSnap of snapshot.docs) {
+          await updateDoc(doc(db, 'supportMessages', docSnap.id), { category: newTitle.trim() });
+        }
+      });
+      setEditingThreadTitle(null);
+      setSelectedThread(newTitle.trim());
     } catch (err) { console.error(err); }
   };
 

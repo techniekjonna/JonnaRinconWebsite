@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import CustomerLayout from '../../components/customer/CustomerLayout';
-import { MessageSquare, Send, Plus, Check, CheckCheck, Info, Briefcase, Headphones, ArrowLeft } from 'lucide-react';
+import { MessageSquare, Send, Plus, Check, CheckCheck, Info, Briefcase, Headphones, ArrowLeft, Edit2, X } from 'lucide-react';
 import { db } from '../../lib/firebase/config';
-import { collection, query, where, orderBy, onSnapshot, addDoc, serverTimestamp, Timestamp, or } from 'firebase/firestore';
+import { collection, query, where, orderBy, onSnapshot, addDoc, serverTimestamp, Timestamp, or, updateDoc, doc } from 'firebase/firestore';
 import { useAuth } from '../../contexts/AuthContext';
 
 interface ChatMessage {
@@ -25,7 +25,7 @@ interface ChatThread {
   lastMessageTime: Timestamp;
 }
 
-type RecipientGroup = 'jonna' | 'manager' | 'support';
+type RecipientGroup = 'jonna' | 'manager' | 'support' | 'private';
 type LeftView = 'contacts' | 'threads';
 
 const recipientGroups: Record<RecipientGroup, { name: string; description: string }> = {
@@ -40,6 +40,10 @@ const recipientGroups: Record<RecipientGroup, { name: string; description: strin
   support: {
     name: 'Support Team',
     description: 'Questions, help and support',
+  },
+  private: {
+    name: 'Privé',
+    description: 'Privé chats met admins',
   },
 };
 
@@ -85,6 +89,9 @@ const CustomerChat: React.FC = () => {
   const [showCategoryPicker, setShowCategoryPicker] = useState(false);
   const [allMessages, setAllMessages] = useState<ChatMessage[]>([]);
   const [tooltipOpen, setTooltipOpen] = useState<RecipientGroup | null>(null);
+  const [showPrivateChatModal, setShowPrivateChatModal] = useState(false);
+  const [editingThreadTitle, setEditingThreadTitle] = useState<string | null>(null);
+  const [editingThreadValue, setEditingThreadValue] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const pickerRef = useRef<HTMLDivElement>(null);
 
@@ -156,6 +163,43 @@ const CustomerChat: React.FC = () => {
     } catch (err) { console.error(err); }
   };
 
+  const startPrivateChat = async (adminName: string) => {
+    if (!user) return;
+    try {
+      const timestamp = serverTimestamp();
+      await addDoc(collection(db, 'supportMessages'), {
+        senderId: user.uid,
+        senderName: user.displayName || 'Customer',
+        senderEmail: user.email,
+        senderRole: 'customer',
+        recipientGroup: 'private',
+        recipientId: adminName,
+        category: `chat-${user.uid}-${adminName}`,
+        message: '👋',
+        createdAt: timestamp,
+        status: 'sent',
+      });
+      setSelectedGroup('private');
+      setSelectedThread(`chat-${user.uid}-${adminName}`);
+      setLeftView('threads');
+      setShowPrivateChatModal(false);
+    } catch (err) { console.error(err); }
+  };
+
+  const updateThreadTitle = async (oldTitle: string, newTitle: string) => {
+    if (!newTitle.trim() || !user) return;
+    try {
+      const q = query(collection(db, 'supportMessages'), where('category', '==', oldTitle));
+      const snap = await onSnapshot(q, async (snapshot) => {
+        for (const docSnap of snapshot.docs) {
+          await updateDoc(doc(db, 'supportMessages', docSnap.id), { category: newTitle.trim() });
+        }
+      });
+      setEditingThreadTitle(null);
+      setSelectedThread(newTitle.trim());
+    } catch (err) { console.error(err); }
+  };
+
   const getStatusIcon = (status: string) => {
     if (status === 'read') return <CheckCheck size={12} className="text-blue-400" />;
     if (status === 'delivered') return <CheckCheck size={12} className="text-white/60" />;
@@ -217,12 +261,18 @@ const CustomerChat: React.FC = () => {
                 <p className="text-sm font-semibold text-white flex-1 truncate">{recipientGroups[selectedGroup].name}</p>
                 <div className="relative" ref={pickerRef}>
                   <button
-                    onClick={() => setShowCategoryPicker(!showCategoryPicker)}
+                    onClick={() => {
+                      if (selectedGroup === 'private') {
+                        setShowPrivateChatModal(true);
+                      } else {
+                        setShowCategoryPicker(!showCategoryPicker);
+                      }
+                    }}
                     className="w-7 h-7 rounded-full bg-red-600/20 hover:bg-red-600/40 border border-red-600/30 flex items-center justify-center transition-colors"
                   >
                     <Plus size={14} className="text-red-400" />
                   </button>
-                  {showCategoryPicker && (
+                  {showCategoryPicker && selectedGroup !== 'private' && (
                     <div className="absolute top-full right-0 mt-2 bg-black/95 backdrop-blur-xl border border-white/[0.15] rounded-xl p-2 z-50 w-44 shadow-2xl">
                       {Object.entries(categoryOptions).map(([grp, items]) => (
                         <div key={grp}>
@@ -270,9 +320,46 @@ const CustomerChat: React.FC = () => {
           <div className="col-span-8 backdrop-blur-xl bg-gradient-to-br from-white/[0.08] to-white/[0.03] border border-white/[0.12] rounded-xl overflow-hidden flex flex-col">
             <div className="px-4 py-3 border-b border-white/[0.08] flex items-center gap-3 flex-shrink-0 bg-white/[0.04]">
               <ContactAvatar group={selectedGroup} size="sm" />
-              <div>
+              <div className="flex-1 min-w-0">
                 <p className="font-semibold text-white text-sm">{recipientGroups[selectedGroup].name}</p>
-                <p className="text-[11px] text-white/40">{selectedThread}</p>
+                {editingThreadTitle === selectedThread ? (
+                  <div className="flex gap-1 mt-1">
+                    <input
+                      type="text"
+                      value={editingThreadValue}
+                      onChange={(e) => setEditingThreadValue(e.target.value)}
+                      className="flex-1 px-2 py-1 rounded text-xs bg-white/[0.08] border border-white/[0.12] text-white focus:outline-none focus:border-red-500/40"
+                      autoFocus
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') updateThreadTitle(selectedThread, editingThreadValue);
+                        if (e.key === 'Escape') setEditingThreadTitle(null);
+                      }}
+                    />
+                    <button
+                      onClick={() => setEditingThreadTitle(null)}
+                      className="p-1 text-white/40 hover:text-white"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                ) : (
+                  <p className="text-[11px] text-white/40 flex items-center gap-1 group">
+                    {selectedThread}
+                    {/* Title edit button - only for private chats for now */}
+                    {selectedGroup === 'private' && (
+                      <button
+                        onClick={() => {
+                          setEditingThreadTitle(selectedThread);
+                          setEditingThreadValue(selectedThread);
+                        }}
+                        className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5"
+                        title="Edit title"
+                      >
+                        <Edit2 size={11} className="text-white/30 hover:text-white/60" />
+                      </button>
+                    )}
+                  </p>
+                )}
               </div>
             </div>
             <div className="flex-1 overflow-y-auto px-4 py-4 space-y-2">
@@ -314,6 +401,32 @@ const CustomerChat: React.FC = () => {
             <div className="text-center">
               <MessageSquare size={40} className="mx-auto mb-3 text-white/10" />
               <p className="text-white/30 text-sm">{leftView === 'contacts' ? 'Kies een contact om te chatten' : 'Kies een chat of start een nieuwe'}</p>
+            </div>
+          </div>
+        )}
+
+        {/* Private Chat Modal */}
+        {showPrivateChatModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowPrivateChatModal(false)} />
+            <div className="relative bg-black border border-white/[0.08] rounded-2xl w-full max-w-sm p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold text-white">Kies een admin</h3>
+                <button onClick={() => setShowPrivateChatModal(false)} className="text-white/40 hover:text-white">
+                  <X size={20} />
+                </button>
+              </div>
+              <div className="space-y-2">
+                {['Admin', 'Support Team'].map((admin) => (
+                  <button
+                    key={admin}
+                    onClick={() => startPrivateChat(admin)}
+                    className="w-full px-4 py-3 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] border border-white/[0.08] text-white text-left transition-all"
+                  >
+                    <p className="font-semibold">{admin}</p>
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         )}
