@@ -127,8 +127,12 @@ const Header: React.FC = () => {
             className="md:hidden flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-white/[0.08] transition-colors text-white/40 hover:text-white group"
             title="Menu"
           >
-            {showMobileMenu ? <X size={18} /> : <Menu size={18} />}
-            <span className={`text-xs font-semibold uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity duration-200 ${showMenuLabel || showMobileMenu ? 'opacity-100' : ''}`}>
+            <div className="transition-transform duration-300">{showMobileMenu ? <X size={18} /> : <Menu size={18} />}</div>
+            <span className={`text-xs font-semibold uppercase tracking-widest transition-all duration-300 ${
+              showMenuLabel || showMobileMenu
+                ? 'opacity-100 translate-x-0'
+                : 'opacity-0 -translate-x-2'
+            }`}>
               Menu
             </span>
           </button>

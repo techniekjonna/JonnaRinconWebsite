@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import Navigation from './components/Navigation';
 import Hero from './components/Hero';
 import BeatStore from './components/BeatStore';
 import Music from './components/Music';
@@ -82,14 +81,6 @@ function App() {
     <div className="min-h-screen text-white">
       <LoadingScreen onLoadingComplete={() => setLoadingComplete(true)} />
 
-      <Navigation
-        cartItemCount={cartItems.length}
-        onCartClick={() => setIsCartOpen(true)}
-        isDarkOverlay={isDarkOverlay}
-        isLightMode={false}
-        onMenuToggle={setIsMenuOpen}
-      />
-
       <ShoppingCart
         isOpen={isCartOpen}
         onClose={() => setIsCartOpen(false)}
@@ -97,7 +88,6 @@ function App() {
         onRemoveItem={handleRemoveItem}
         onCheckout={handleCheckout}
       />
-
 
       <main className="pt-20">
         {/* === HERO + DARK SECTIONS === */}
