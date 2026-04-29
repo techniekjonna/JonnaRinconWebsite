@@ -12,7 +12,11 @@ const Header: React.FC = () => {
   const logoRef = useRef<HTMLDivElement>(null);
   const [logoScale, setLogoScale] = useState(1);
   const [headerOpacity, setHeaderOpacity] = useState(1);
-  const { cartItems, setIsOpen: setCartOpen } = useCartContext();
+  const { cartItems } = useCartContext();
+
+  const openCart = () => {
+    window.dispatchEvent(new CustomEvent('open-cart'));
+  };
 
   // Hide header on protected/admin routes
   const isProtectedRoute = location.pathname.startsWith('/admin') ||
@@ -64,7 +68,7 @@ const Header: React.FC = () => {
       <div className="backdrop-blur-xl bg-black/30 border border-white/[0.08] rounded-2xl">
         <div className="flex items-center justify-between px-6 py-4 h-20">
           {/* Desktop Logo - Left */}
-          <Link to="/" className="hidden md:flex items-center justify-center flex-shrink-0 w-10 h-10">
+          <Link to="/" className="hidden md:flex items-center justify-center flex-shrink-0 w-12 h-12">
             <img src="/Jonna Rincon Logo WH.png" alt="JR" className="w-full h-full object-contain" />
           </Link>
 
@@ -129,7 +133,7 @@ const Header: React.FC = () => {
           {/* Desktop Cart - Right */}
           {cartItems.length > 0 && (
             <button
-              onClick={() => setCartOpen(true)}
+              onClick={openCart}
               className="hidden md:flex items-center justify-center flex-shrink-0 relative w-10 h-10 rounded-lg bg-white/[0.08] hover:bg-white/[0.12] transition-colors group"
               title="Shopping Cart"
             >
@@ -141,32 +145,17 @@ const Header: React.FC = () => {
           )}
 
           {/* Mobile: JR Logo - Left */}
-          <Link to="/" className="md:hidden flex items-center justify-center flex-shrink-0 w-8 h-8">
+          <Link to="/" className="md:hidden flex items-center justify-center flex-shrink-0 w-10 h-10">
             <img src="/Jonna Rincon Logo WH.png" alt="JR" className="w-full h-full object-contain" />
           </Link>
 
-          {/* Mobile Menu Button - Center */}
-          <button
-            onClick={() => setShowMobileMenu(!showMobileMenu)}
-            onMouseEnter={() => setShowMenuLabel(true)}
-            onMouseLeave={() => setShowMenuLabel(false)}
-            className="md:hidden flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-white/[0.08] transition-colors text-white/40 hover:text-white group flex-1 justify-center"
-            title="Menu"
-          >
-            <div className="transition-transform duration-300">{showMobileMenu ? <X size={18} /> : <Menu size={18} />}</div>
-            <span className={`text-xs font-semibold uppercase tracking-widest transition-all duration-300 ${
-              showMenuLabel || showMobileMenu
-                ? 'opacity-100 translate-x-0'
-                : 'opacity-0 -translate-x-2'
-            }`}>
-              Menu
-            </span>
-          </button>
+          {/* Mobile: Spacer to push items right */}
+          <div className="md:hidden flex-1" />
 
-          {/* Mobile Cart - Right */}
+          {/* Mobile Cart - Right (before menu) */}
           {cartItems.length > 0 && (
             <button
-              onClick={() => setCartOpen(true)}
+              onClick={openCart}
               className="md:hidden flex items-center justify-center flex-shrink-0 relative w-10 h-10 rounded-lg bg-white/[0.08] hover:bg-white/[0.12] transition-colors group"
               title="Shopping Cart"
             >
@@ -176,6 +165,24 @@ const Header: React.FC = () => {
               </span>
             </button>
           )}
+
+          {/* Mobile Menu Button - Far Right */}
+          <button
+            onClick={() => setShowMobileMenu(!showMobileMenu)}
+            onMouseEnter={() => setShowMenuLabel(true)}
+            onMouseLeave={() => setShowMenuLabel(false)}
+            className="md:hidden flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-white/[0.08] transition-colors text-white/40 hover:text-white group flex-shrink-0"
+            title="Menu"
+          >
+            <div className="transition-transform duration-300">{showMobileMenu ? <X size={18} /> : <Menu size={18} />}</div>
+            <span className={`text-xs font-semibold uppercase tracking-widest transition-all duration-300 hidden sm:inline ${
+              showMenuLabel || showMobileMenu
+                ? 'opacity-100 translate-x-0'
+                : 'opacity-0 -translate-x-2'
+            }`}>
+              Menu
+            </span>
+          </button>
 
           {/* Mobile Sidebar Menu - appears over header */}
           {showMobileMenu && (
