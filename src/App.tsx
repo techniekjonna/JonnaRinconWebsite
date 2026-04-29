@@ -64,6 +64,15 @@ function App() {
   };
 
 
+  // Listen for cart open event from Header
+  useEffect(() => {
+    const handleOpenCart = () => {
+      setIsCartOpen(true);
+    };
+    window.addEventListener('open-cart', handleOpenCart);
+    return () => window.removeEventListener('open-cart', handleOpenCart);
+  }, []);
+
   // Detect scroll position for dark overlay
   useEffect(() => {
     const handleScroll = () => {
