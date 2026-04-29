@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import {
@@ -29,6 +29,14 @@ const ManagerLayout: React.FC<ManagerLayoutProps> = ({ children }) => {
     await signOut();
     navigate('/');
   };
+
+  // Dispatch sidebar state change event for header animation
+  useEffect(() => {
+    const event = new CustomEvent('sidebar-state-change', {
+      detail: { isOpen: !sidebarOpen }
+    });
+    window.dispatchEvent(event);
+  }, [sidebarOpen]);
 
   const navigation = [
     { name: 'Dashboard', href: '/manager/dashboard', icon: LayoutDashboard },
