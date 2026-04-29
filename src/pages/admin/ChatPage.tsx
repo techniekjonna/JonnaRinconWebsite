@@ -53,6 +53,7 @@ const categoryGroups: Record<string, string[]> = {
   SHOP: ['Beats', 'Services', 'Merchandise', 'Art'],
   'SOCIAL MEDIA': ['Content', 'Collaboration'],
   DASHBOARD: ['Orders', 'Downloads'],
+  SUPPORT: ['Support', 'Overig'],
 };
 
 const getCategoryGroup = (category: string): string => {
