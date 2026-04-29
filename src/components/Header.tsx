@@ -7,6 +7,9 @@ const Header: React.FC = () => {
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const location = useLocation();
   const menuRef = useRef<HTMLDivElement>(null);
+  const logoRef = useRef<HTMLDivElement>(null);
+  const [logoScale, setLogoScale] = useState(1);
+  const [headerOpacity, setHeaderOpacity] = useState(1);
 
   // Hide header on protected/admin routes
   const isProtectedRoute = location.pathname.startsWith('/admin') ||
@@ -15,6 +18,19 @@ const Header: React.FC = () => {
     location.pathname.startsWith('/customer');
 
   if (isProtectedRoute) return null;
+
+  // Listen for sidebar open event
+  useEffect(() => {
+    const handleSidebarStateChange = (e: CustomEvent) => {
+      const { isOpen } = e.detail;
+      // Subtle animation: slightly fade out header when sidebar opens
+      setHeaderOpacity(isOpen ? 0.4 : 1);
+      setLogoScale(isOpen ? 0.8 : 1);
+    };
+
+    window.addEventListener('sidebar-state-change', handleSidebarStateChange as EventListener);
+    return () => window.removeEventListener('sidebar-state-change', handleSidebarStateChange as EventListener);
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -38,7 +54,10 @@ const Header: React.FC = () => {
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-40 pt-3 px-4 sm:px-6 lg:px-8">
+    <header
+      className="fixed top-0 left-0 right-0 z-40 pt-3 px-4 sm:px-6 lg:px-8 transition-opacity duration-300"
+      style={{ opacity: headerOpacity }}
+    >
       <div className="backdrop-blur-xl bg-black/30 border border-white/[0.08] rounded-2xl">
         <div className="flex items-center justify-between px-6 py-4 h-20">
           {/* Spacer left */}
@@ -70,7 +89,11 @@ const Header: React.FC = () => {
               </div>
 
               {/* Center Logo/Title */}
-              <div className="text-center px-12 border-x border-white/[0.08] flex-shrink-0">
+              <div
+                ref={logoRef}
+                className="text-center px-12 border-x border-white/[0.08] flex-shrink-0 transition-transform duration-300"
+                style={{ transform: `scale(${logoScale})` }}
+              >
                 <h1 className="text-lg font-black text-white tracking-tighter">JONNA RINCON</h1>
               </div>
 
