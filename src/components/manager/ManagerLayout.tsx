@@ -12,6 +12,7 @@ import {
   Home,
   ArrowLeft,
   CalendarDays,
+  FolderKanban,
 } from 'lucide-react';
 
 interface ManagerLayoutProps {
@@ -32,10 +33,10 @@ const ManagerLayout: React.FC<ManagerLayoutProps> = ({ children }) => {
   const navigation = [
     { name: 'Dashboard', href: '/manager/dashboard', icon: LayoutDashboard },
     { name: 'Agenda', href: '/manager/agenda', icon: CalendarDays },
+    { name: 'Projects', href: '/manager/projects', icon: FolderKanban },
     { name: 'Beats', href: '/manager/beats', icon: Music },
     { name: 'Collaborations', href: '/manager/collaborations', icon: Handshake },
     { name: 'Chat', href: '/manager/chat', icon: MessageSquare },
-    { name: 'Agenda', href: '/manager/agenda', icon: CalendarDays },
   ];
 
   const isActive = (path: string) => location.pathname === path;

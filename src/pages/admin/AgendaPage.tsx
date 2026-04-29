@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Plus, Calendar, List, Filter, Trash2, Edit2, CheckCircle2, Circle, ChevronDown } from 'lucide-react';
 import AdminLayout from '../../components/admin/AdminLayout';
+import { SocialPlannerContent } from './ContentPage';
+import TaskBoard from '../../components/admin/TaskBoard';
+import ComingUpTab from '../../components/admin/ComingUpTab';
 import {
   getAgendaDaysByMonth,
   getAgendaTasksByMonth,
@@ -480,55 +483,17 @@ const AgendaPage: React.FC = () => {
 
         {/* SOCIAL PLANNER TAB */}
         {activeTab === 'social' && (
-          <div className="bg-white/[0.08] border border-white/[0.06] rounded-2xl p-6">
-            <div className="text-center py-12">
-              <p className="text-white/50 mb-2">Social Media Planner</p>
-              <p className="text-white/30 text-sm">Content planning tools coming soon</p>
-            </div>
-          </div>
+          <SocialPlannerContent />
         )}
 
         {/* TASKS TAB */}
         {activeTab === 'tasks' && (
-          <div className="space-y-3">
-            <p className="text-white/50 text-sm">All tasks across the calendar</p>
-            <div className="space-y-2">
-              {Array.from(daysData.entries())
-                .sort(([dateA], [dateB]) => dateA.localeCompare(dateB))
-                .flatMap(([date, data]) =>
-                  data.tasks.map(task => ({
-                    date,
-                    task,
-                  }))
-                )
-                .map(({ date, task }) => (
-                  <div key={task.id} className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-4 hover:border-white/[0.12] transition-all">
-                    <div className="flex items-start gap-3">
-                      <button onClick={() => handleToggleTaskComplete(task)} className="mt-0.5 flex-shrink-0">{task.completed ? <CheckCircle2 size={18} className="text-emerald-400" /> : <Circle size={18} className="text-white/30" />}</button>
-                      <div className="flex-1 min-w-0">
-                        <p className={`font-semibold ${task.completed ? 'text-white/40 line-through' : 'text-white'}`}>{task.title}</p>
-                        <p className="text-xs text-white/40 mt-1">{date}</p>
-                        {task.time && <p className="text-xs text-white/30">⏰ {task.time}</p>}
-                        {task.description && <p className="text-xs text-white/40 mt-1">{task.description}</p>}
-                      </div>
-                      <div className="flex gap-1 flex-shrink-0">
-                        <button onClick={() => handleDeleteTask(task.id)} className="p-1.5 text-white/40 hover:text-red-400 transition-colors"><Trash2 size={14} /></button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-            </div>
-          </div>
+          <TaskBoard />
         )}
 
         {/* COMING UP TAB */}
         {activeTab === 'coming-up' && (
-          <div className="bg-white/[0.08] border border-white/[0.06] rounded-2xl p-6">
-            <div className="text-center py-12">
-              <p className="text-white/50 mb-2">Coming Up</p>
-              <p className="text-white/30 text-sm">Upcoming releases, videos, merch drops & updates</p>
-            </div>
-          </div>
+          <ComingUpTab />
         )}
       </div>
 
