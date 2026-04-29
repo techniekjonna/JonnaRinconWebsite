@@ -1,0 +1,146 @@
+import React, { useState, useRef, useEffect } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { Menu, X } from 'lucide-react';
+
+const Header: React.FC = () => {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const location = useLocation();
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setShowMobileMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const closeMenu = () => setShowMobileMenu(false);
+
+  const navItems = [
+    { label: 'Shop', href: '/shop', position: 'left' },
+    { label: 'Catalogue', href: '/catalogue', position: 'left' },
+    { label: 'Socials', href: '/socials', position: 'right' },
+    { label: 'About Me', href: '/#about', position: 'right' },
+  ];
+
+  const isActive = (path: string) => location.pathname === path;
+
+  return (
+    <header className="fixed top-0 left-0 right-0 z-40 pt-3 px-4 sm:px-6 lg:px-8">
+      <div className="backdrop-blur-xl bg-black/30 border border-white/[0.08] rounded-2xl">
+        <div className="flex items-center justify-between px-6 py-4 h-20">
+          {/* Logo */}
+          <Link to="/" className="flex-shrink-0 group">
+            <div className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+              <div className="w-10 h-10 rounded-lg overflow-hidden border border-white/[0.1] group-hover:border-white/[0.2] transition-colors">
+                <img
+                  src="/JEIGHTENESIS.jpg"
+                  alt="Jonna Rincon"
+                  className="w-full h-full object-cover object-top"
+                />
+              </div>
+              <span className="text-xs font-bold text-white/40 group-hover:text-white/60 transition-colors hidden sm:inline">JONNA</span>
+            </div>
+          </Link>
+
+          {/* Desktop Navigation */}
+          <nav className="hidden md:flex items-center justify-center flex-1">
+            <div className="flex items-center gap-8">
+              {/* Left items */}
+              <div className="flex gap-6">
+                {navItems
+                  .filter(item => item.position === 'left')
+                  .map(item => (
+                    <Link
+                      key={item.label}
+                      to={item.href}
+                      className={`text-sm font-semibold transition-all duration-200 relative group ${
+                        isActive(item.href)
+                          ? 'text-white'
+                          : 'text-white/50 hover:text-white/80'
+                      }`}
+                    >
+                      {item.label}
+                      <span className={`absolute bottom-0 left-0 w-full h-0.5 bg-red-500 transition-all duration-200 ${
+                        isActive(item.href) ? 'opacity-100' : 'opacity-0 group-hover:opacity-50'
+                      }`} />
+                    </Link>
+                  ))}
+              </div>
+
+              {/* Center Logo/Title */}
+              <div className="text-center px-8 border-x border-white/[0.08]">
+                <h1 className="text-lg font-black text-white tracking-tighter">JONNA</h1>
+                <p className="text-[10px] text-white/30 tracking-widest mt-0.5">RINCON</p>
+              </div>
+
+              {/* Right items */}
+              <div className="flex gap-6">
+                {navItems
+                  .filter(item => item.position === 'right')
+                  .map(item => (
+                    <Link
+                      key={item.label}
+                      to={item.href}
+                      className={`text-sm font-semibold transition-all duration-200 relative group ${
+                        isActive(item.href)
+                          ? 'text-white'
+                          : 'text-white/50 hover:text-white/80'
+                      }`}
+                    >
+                      {item.label}
+                      <span className={`absolute bottom-0 left-0 w-full h-0.5 bg-red-500 transition-all duration-200 ${
+                        isActive(item.href) ? 'opacity-100' : 'opacity-0 group-hover:opacity-50'
+                      }`} />
+                    </Link>
+                  ))}
+              </div>
+            </div>
+          </nav>
+
+          {/* Mobile Menu Button */}
+          <button
+            onClick={() => setShowMobileMenu(!showMobileMenu)}
+            onMouseEnter={() => setMenuOpen(true)}
+            onMouseLeave={() => setMenuOpen(false)}
+            className="md:hidden p-2 rounded-lg hover:bg-white/[0.08] transition-colors text-white/40 hover:text-white"
+            title="Menu"
+          >
+            {showMobileMenu ? <X size={20} /> : <Menu size={20} />}
+          </button>
+
+          {/* Mobile Menu Dropdown */}
+          {showMobileMenu && (
+            <div
+              ref={menuRef}
+              className="absolute top-full right-4 mt-2 w-48 bg-black/95 backdrop-blur-xl border border-white/[0.08] rounded-xl overflow-hidden z-50 md:hidden"
+            >
+              <nav className="py-3 space-y-1">
+                {navItems.map(item => (
+                  <Link
+                    key={item.label}
+                    to={item.href}
+                    onClick={closeMenu}
+                    className={`block px-4 py-2.5 text-sm font-semibold transition-all ${
+                      isActive(item.href)
+                        ? 'bg-white/[0.1] text-white border-l-2 border-red-500'
+                        : 'text-white/60 hover:text-white hover:bg-white/[0.06]'
+                    }`}
+                  >
+                    {item.label}
+                  </Link>
+                ))}
+              </nav>
+            </div>
+          )}
+        </div>
+      </div>
+    </header>
+  );
+};
+
+export default Header;

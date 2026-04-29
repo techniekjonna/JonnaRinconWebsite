@@ -11,6 +11,7 @@ import GlobalAudioPlayer from './components/GlobalAudioPlayer';
 import GlobalBeatDetailModal from './components/GlobalBeatDetailModal';
 import BackgroundRenderer from './components/BackgroundRenderer';
 import BackgroundOverlay from './components/BackgroundOverlay';
+import Header from './components/Header';
 
 // Public pages
 import HomePage from './App';
@@ -110,10 +111,12 @@ const MainApp: React.FC = () => {
           <TrackDetailProvider>
             <BeatDetailProvider>
               <BrowserRouter>
+                <Header />
                 <ScrollToTopWrapper>
                   <BackgroundOverlay />
                   <GlobalAudioPlayer />
                   <GlobalBeatDetailModal />
+                  <div className="pt-28 sm:pt-32">
                 <Routes>
                   {/* Public Routes */}
                   <Route path="/" element={<HomePage />} />
@@ -516,6 +519,7 @@ const MainApp: React.FC = () => {
           {/* 404 */}
           <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
+                  </div>
                 </ScrollToTopWrapper>
               </BrowserRouter>
             </BeatDetailProvider>
