@@ -219,6 +219,7 @@ export const SocialPlannerContent: React.FC = () => {
   };
 
   return (
+    <>
       <div className="space-y-4">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -536,6 +537,7 @@ export const SocialPlannerContent: React.FC = () => {
           preselectedDate={selectedDate}
         />
       )}
+    </>
   );
 };
 
