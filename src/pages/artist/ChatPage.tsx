@@ -48,6 +48,7 @@ const categoryOptions: Record<string, string[]> = {
   SHOP: ['Beats', 'Services', 'Merchandise', 'Art'],
   'SOCIAL MEDIA': ['Content', 'Collaboration'],
   DASHBOARD: ['Orders', 'Downloads'],
+  SUPPORT: ['Support', 'Overig'],
 };
 
 const ContactAvatar = ({ group, size = 'md' }: { group: RecipientGroup; size?: 'sm' | 'md' }) => {

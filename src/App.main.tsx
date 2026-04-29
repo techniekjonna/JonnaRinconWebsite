@@ -52,8 +52,8 @@ import CustomerMyProducts from './pages/customer/MyProductsPage';
 
 // Artist pages (protected - artist role)
 import ArtistDashboard from './pages/artist/DashboardPage';
+import ArtistAgenda from './pages/artist/AgendaPage';
 import ArtistCollaborations from './pages/artist/CollaborationsPage';
-import ArtistRequestCollab from './pages/artist/RequestCollabPage';
 import ArtistShop from './pages/artist/ShopPage';
 import ArtistOrders from './pages/artist/OrdersPage';
 import ArtistFreeDownloads from './pages/artist/FreeDownloadsPage';
@@ -237,18 +237,18 @@ const MainApp: React.FC = () => {
             }
           />
           <Route
-            path="/artist/collaborations"
+            path="/artist/agenda"
             element={
               <ProtectedRoute allowedRoles={['artist']}>
-                <ArtistCollaborations />
+                <ArtistAgenda />
               </ProtectedRoute>
             }
           />
           <Route
-            path="/artist/request-collab"
+            path="/artist/collaborations"
             element={
               <ProtectedRoute allowedRoles={['artist']}>
-                <ArtistRequestCollab />
+                <ArtistCollaborations />
               </ProtectedRoute>
             }
           />
