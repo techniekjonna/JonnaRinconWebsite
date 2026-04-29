@@ -25,7 +25,7 @@ interface ChatThread {
   lastMessageTime: Timestamp;
 }
 
-type RecipientGroup = 'jonna' | 'manager' | 'support';
+type RecipientGroup = 'jonna' | 'manager' | 'support' | 'private';
 type LeftView = 'contacts' | 'threads';
 
 const recipientGroups: Record<RecipientGroup, { name: string; description: string }> = {
@@ -40,6 +40,10 @@ const recipientGroups: Record<RecipientGroup, { name: string; description: strin
   support: {
     name: 'Support Team',
     description: 'Questions, help and support',
+  },
+  private: {
+    name: 'Privé',
+    description: 'Privé chats met admins',
   },
 };
 
