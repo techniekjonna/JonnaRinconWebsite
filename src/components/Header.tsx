@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, ShoppingBag } from 'lucide-react';
+import { useCartContext } from '../contexts/CartContext';
 
 const Header: React.FC = () => {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -11,6 +12,7 @@ const Header: React.FC = () => {
   const logoRef = useRef<HTMLDivElement>(null);
   const [logoScale, setLogoScale] = useState(1);
   const [headerOpacity, setHeaderOpacity] = useState(1);
+  const { cartItems, setIsOpen: setCartOpen } = useCartContext();
 
   // Hide header on protected/admin routes
   const isProtectedRoute = location.pathname.startsWith('/admin') ||
@@ -61,6 +63,11 @@ const Header: React.FC = () => {
     >
       <div className="backdrop-blur-xl bg-black/30 border border-white/[0.08] rounded-2xl">
         <div className="flex items-center justify-between px-6 py-4 h-20">
+          {/* Desktop Logo - Left */}
+          <Link to="/" className="hidden md:flex items-center justify-center flex-shrink-0 w-10 h-10 rounded-lg bg-white/[0.08] hover:bg-white/[0.12] transition-colors group">
+            <span className="text-xs font-black text-white tracking-tighter">JR</span>
+          </Link>
+
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center justify-center flex-1">
             <div className="flex items-center gap-12">
@@ -119,12 +126,31 @@ const Header: React.FC = () => {
             </div>
           </nav>
 
-          {/* Mobile Menu Button */}
+          {/* Desktop Cart - Right */}
+          {cartItems.length > 0 && (
+            <button
+              onClick={() => setCartOpen(true)}
+              className="hidden md:flex items-center justify-center flex-shrink-0 relative w-10 h-10 rounded-lg bg-white/[0.08] hover:bg-white/[0.12] transition-colors group"
+              title="Shopping Cart"
+            >
+              <ShoppingBag size={18} className="text-white/70 group-hover:text-white transition-colors" />
+              <span className="absolute -top-2 -right-2 flex items-center justify-center w-5 h-5 bg-red-500 text-white text-xs font-bold rounded-full">
+                {cartItems.length}
+              </span>
+            </button>
+          )}
+
+          {/* Mobile: JR Logo - Left */}
+          <Link to="/" className="md:hidden flex items-center justify-center flex-shrink-0 w-10 h-10 rounded-lg bg-white/[0.08] hover:bg-white/[0.12] transition-colors">
+            <span className="text-xs font-black text-white tracking-tighter">JR</span>
+          </Link>
+
+          {/* Mobile Menu Button - Center */}
           <button
             onClick={() => setShowMobileMenu(!showMobileMenu)}
             onMouseEnter={() => setShowMenuLabel(true)}
             onMouseLeave={() => setShowMenuLabel(false)}
-            className="md:hidden flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-white/[0.08] transition-colors text-white/40 hover:text-white group"
+            className="md:hidden flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-white/[0.08] transition-colors text-white/40 hover:text-white group flex-1 justify-center"
             title="Menu"
           >
             <div className="transition-transform duration-300">{showMobileMenu ? <X size={18} /> : <Menu size={18} />}</div>
@@ -136,6 +162,20 @@ const Header: React.FC = () => {
               Menu
             </span>
           </button>
+
+          {/* Mobile Cart - Right */}
+          {cartItems.length > 0 && (
+            <button
+              onClick={() => setCartOpen(true)}
+              className="md:hidden flex items-center justify-center flex-shrink-0 relative w-10 h-10 rounded-lg bg-white/[0.08] hover:bg-white/[0.12] transition-colors group"
+              title="Shopping Cart"
+            >
+              <ShoppingBag size={18} className="text-white/70 group-hover:text-white transition-colors" />
+              <span className="absolute -top-2 -right-2 flex items-center justify-center w-5 h-5 bg-red-500 text-white text-xs font-bold rounded-full">
+                {cartItems.length}
+              </span>
+            </button>
+          )}
 
           {/* Mobile Menu Dropdown */}
           {showMobileMenu && (
