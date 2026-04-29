@@ -534,3 +534,84 @@ const AgendaPage: React.FC = () => {
 
       {/* Modal stays outside tabs */}
       {showModal && dayData && activeTab === 'agenda' && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowModal(false)} />
+          <div className="relative bg-black border border-white/[0.06] rounded-2xl max-w-sm w-full max-h-[85vh] overflow-y-auto">
+            {/* Header */}
+            <div className="sticky top-0 bg-black/80 backdrop-blur-sm border-b border-white/[0.06] px-5 py-4 flex items-center justify-between z-10">
+              <h2 className="text-lg font-bold text-white">{selectedDay}</h2>
+              <button onClick={() => setShowModal(false)} className="text-white/40 hover:text-white"><Plus size={20} className="rotate-45" /></button>
+            </div>
+
+            <div className="px-5 py-4 space-y-3">
+              {/* Status Section */}
+              <div className="bg-white/[0.04] border border-white/[0.06] rounded-lg overflow-hidden">
+                <button onClick={() => setExpandedStatus(!expandedStatus)} className="w-full flex items-center justify-between px-4 py-3 hover:bg-white/[0.06]">
+                  <span className="text-xs font-semibold text-white/60 uppercase">Status</span>
+                  <ChevronDown size={16} className={`text-white/40 transition-transform ${expandedStatus ? 'rotate-180' : ''}`} />
+                </button>
+                {expandedStatus && (
+                  <div className="border-t border-white/[0.06] px-4 py-3 space-y-1.5 max-h-48 overflow-y-auto">
+                    {statuses.map(s => (
+                      <button key={s.id} onClick={() => handleStatusChange(s.id)} className={`w-full text-left px-2 py-1.5 rounded text-xs transition-all flex items-center gap-2 ${dayData.statusId === s.id ? 'bg-white/[0.12] text-white' : 'text-white/50 hover:text-white/70'}`}>
+                        <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: s.color }} />
+                        <span>{s.name}</span>
+                      </button>
+                    ))}
+                    {!showNewStatusInput ? (
+                      <button onClick={() => setShowNewStatusInput(true)} className="w-full text-left px-2 py-1.5 text-xs text-white/40 hover:text-white/60 rounded">+ Add Custom</button>
+                    ) : (
+                      <div className="flex gap-1.5 mt-2">
+                        <input value={newStatusName} onChange={(e) => setNewStatusName(e.target.value)} placeholder="Status name" className="flex-1 px-2 py-1 rounded bg-white/[0.08] border border-white/[0.06] text-white text-xs" />
+                        <button onClick={handleCreateStatus} className="px-2 py-1 rounded bg-red-600/20 text-red-400 text-xs">Save</button>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Tasks Section */}
+              <div className="bg-white/[0.04] border border-white/[0.06] rounded-lg overflow-hidden">
+                <button onClick={() => setExpandedTasks(!expandedTasks)} className="w-full flex items-center justify-between px-4 py-3 hover:bg-white/[0.06]">
+                  <span className="text-xs font-semibold text-white/60 uppercase">Tasks {dayData.tasks.length > 0 && <span className="ml-1 text-red-400">({dayData.tasks.filter(t => !t.completed).length})</span>}</span>
+                  <ChevronDown size={16} className={`text-white/40 transition-transform ${expandedTasks ? 'rotate-180' : ''}`} />
+                </button>
+                {expandedTasks && (
+                  <div className="border-t border-white/[0.06] px-4 py-3 space-y-2 max-h-60 overflow-y-auto">
+                    {dayData.tasks.map(task => (
+                      <div key={task.id} className="flex items-start gap-2 p-2 rounded bg-white/[0.02] group">
+                        <button onClick={() => handleToggleTaskComplete(task)} className="mt-0.5 flex-shrink-0">{task.completed ? <CheckCircle2 size={14} className="text-emerald-400" /> : <Circle size={14} className="text-white/30" />}</button>
+                        <div className="flex-1 min-w-0">
+                          <p className={`text-xs font-medium ${task.completed ? 'text-white/40 line-through' : 'text-white'}`}>{task.title}</p>
+                          {task.time && <p className="text-[10px] text-white/30">⏰ {task.time}</p>}
+                        </div>
+                        <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button onClick={() => setEditingTask(task)} className="p-0.5 text-white/40 hover:text-white"><Edit2 size={12} /></button>
+                          <button onClick={() => handleDeleteTask(task.id)} className="p-0.5 text-white/40 hover:text-red-400"><Trash2 size={12} /></button>
+                        </div>
+                      </div>
+                    ))}
+
+                    {/* Task Form */}
+                    <div className="border-t border-white/[0.06] pt-2 mt-2 space-y-1.5">
+                      <input value={taskForm.title} onChange={(e) => setTaskForm({ ...taskForm, title: e.target.value })} placeholder="New task" className="w-full px-2 py-1.5 rounded bg-white/[0.08] border border-white/[0.06] text-white text-xs" />
+                      <div className="grid grid-cols-2 gap-1.5">
+                        <input value={taskForm.time} onChange={(e) => setTaskForm({ ...taskForm, time: e.target.value })} placeholder="Time" className="px-2 py-1 rounded bg-white/[0.08] border border-white/[0.06] text-white text-xs" />
+                        <input value={taskForm.userDisplayName} onChange={(e) => setTaskForm({ ...taskForm, userDisplayName: e.target.value })} placeholder="Assign" className="px-2 py-1 rounded bg-white/[0.08] border border-white/[0.06] text-white text-xs" />
+                      </div>
+                      <button onClick={handleSaveTask} className="w-full py-1.5 rounded bg-red-600/20 border border-red-600/40 text-red-400 hover:bg-red-600/30 text-xs font-medium">
+                        {editingTask ? 'Update' : '+ Task'}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </AdminLayout>
+  );
+};
+
+export default AgendaPage;
