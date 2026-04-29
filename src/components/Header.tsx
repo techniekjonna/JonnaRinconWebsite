@@ -64,8 +64,8 @@ const Header: React.FC = () => {
       <div className="backdrop-blur-xl bg-black/30 border border-white/[0.08] rounded-2xl">
         <div className="flex items-center justify-between px-6 py-4 h-20">
           {/* Desktop Logo - Left */}
-          <Link to="/" className="hidden md:flex items-center justify-center flex-shrink-0 w-10 h-10 rounded-lg bg-white/[0.08] hover:bg-white/[0.12] transition-colors group">
-            <span className="text-xs font-black text-white tracking-tighter">JR</span>
+          <Link to="/" className="hidden md:flex items-center justify-center flex-shrink-0 w-10 h-10">
+            <img src="/Jonna Rincon Logo WH.png" alt="JR" className="w-full h-full object-contain" />
           </Link>
 
           {/* Desktop Navigation */}
@@ -141,8 +141,8 @@ const Header: React.FC = () => {
           )}
 
           {/* Mobile: JR Logo - Left */}
-          <Link to="/" className="md:hidden flex items-center justify-center flex-shrink-0 w-10 h-10 rounded-lg bg-white/[0.08] hover:bg-white/[0.12] transition-colors">
-            <span className="text-xs font-black text-white tracking-tighter">JR</span>
+          <Link to="/" className="md:hidden flex items-center justify-center flex-shrink-0 w-8 h-8">
+            <img src="/Jonna Rincon Logo WH.png" alt="JR" className="w-full h-full object-contain" />
           </Link>
 
           {/* Mobile Menu Button - Center */}
@@ -177,29 +177,52 @@ const Header: React.FC = () => {
             </button>
           )}
 
-          {/* Mobile Menu Dropdown */}
+          {/* Mobile Sidebar Menu - appears over header */}
           {showMobileMenu && (
-            <div
-              ref={menuRef}
-              className="absolute top-full right-4 mt-2 w-48 bg-black/95 backdrop-blur-xl border border-white/[0.08] rounded-xl overflow-hidden z-50 md:hidden"
-            >
-              <nav className="py-3 space-y-1">
-                {navItems.map(item => (
-                  <Link
-                    key={item.label}
-                    to={item.href}
+            <>
+              {/* Backdrop */}
+              <div
+                className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 md:hidden"
+                onClick={closeMenu}
+              />
+
+              {/* Sidebar */}
+              <div
+                ref={menuRef}
+                className="fixed left-0 top-0 h-full w-64 bg-neutral-950/95 backdrop-blur-xl border-r border-white/[0.08] z-50 md:hidden flex flex-col"
+              >
+                {/* Sidebar Header */}
+                <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.06]">
+                  <div className="flex items-center justify-center w-8 h-8">
+                    <img src="/Jonna Rincon Logo WH.png" alt="JR" className="w-full h-full object-contain" />
+                  </div>
+                  <button
                     onClick={closeMenu}
-                    className={`block px-4 py-2.5 text-sm font-semibold transition-all ${
-                      isActive(item.href)
-                        ? 'bg-white/[0.1] text-white border-l-2 border-red-500'
-                        : 'text-white/60 hover:text-white hover:bg-white/[0.06]'
-                    }`}
+                    className="text-white/40 hover:text-white transition-colors"
                   >
-                    {item.label}
-                  </Link>
-                ))}
-              </nav>
-            </div>
+                    <X size={20} />
+                  </button>
+                </div>
+
+                {/* Sidebar Navigation */}
+                <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+                  {navItems.map(item => (
+                    <Link
+                      key={item.label}
+                      to={item.href}
+                      onClick={closeMenu}
+                      className={`block px-4 py-3 rounded-lg text-sm font-semibold transition-all ${
+                        isActive(item.href)
+                          ? 'bg-white/[0.1] text-white'
+                          : 'text-white/60 hover:text-white hover:bg-white/[0.06]'
+                      }`}
+                    >
+                      {item.label}
+                    </Link>
+                  ))}
+                </nav>
+              </div>
+            </>
           )}
         </div>
       </div>
