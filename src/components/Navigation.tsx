@@ -221,8 +221,53 @@ export default function Navigation({ cartItemCount = 0, onCartClick, isDarkOverl
   const menuVisible = isMenuOpen || isMenuClosing;
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-[60] pointer-events-none">
-      <div className="w-full pointer-events-auto">
+    <nav className="fixed top-0 left-0 right-0 z-30">
+      {/* Top bar — logo left, MENU right */}
+      <div className="fixed top-0 left-0 right-0 z-30 flex items-center justify-between px-6 md:px-10 py-4 md:py-5">
+        {/* Logo — top-left */}
+        <Link to="/" className="block flex-shrink-0">
+          <div className="relative h-[140px] md:h-[160px]">
+            <img
+              src="/Jonna Rincon Logo BL.png"
+              alt="Jonna Rincon"
+              className="h-full w-auto transition-opacity duration-500"
+              style={{ opacity: useWhiteNav ? 0 : 1 }}
+            />
+            <img
+              src="/Jonna Rincon Logo WH.png"
+              alt="Jonna Rincon"
+              className="absolute top-0 left-0 h-full w-auto transition-opacity duration-500"
+              style={{ opacity: useWhiteNav ? 1 : 0 }}
+            />
+          </div>
+        </Link>
+
+        {/* Right side — Cart + MENU */}
+        <div className="flex items-center gap-5 md:gap-6">
+          {/* Cart icon */}
+          {cartItems.length > 0 && (
+            <button
+              onClick={() => setIsCartOpen(true)}
+              className={`relative transition-all duration-300 hover:scale-110 cursor-pointer ${navTextColor}`}
+            >
+              <ShoppingBag className="w-5 h-5" strokeWidth={1.5} />
+              <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-red-600 rounded-full flex items-center justify-center text-[9px] font-bold text-white">
+                {cartItems.length}
+              </span>
+            </button>
+          )}
+
+          {/* MENU button */}
+          <button
+            onClick={openMenu}
+            className={`text-lg md:text-xl font-black uppercase tracking-[0.3em] transition-all duration-500 hover:opacity-60 cursor-pointer ${navTextColor}`}
+          >
+            Menu
+          </button>
+        </div>
+      </div>
+
+      <div className="w-full">
 
         {/* Auth Modal */}
         {isAuthModalOpen && (
@@ -365,7 +410,7 @@ export default function Navigation({ cartItemCount = 0, onCartClick, isDarkOverl
                     <img
                       src="/Jonna Rincon Logo WH.png"
                       alt="Jonna Rincon"
-                      className="h-[80px] md:h-[110px] w-auto opacity-50 hover:opacity-100 transition-opacity duration-300"
+                      className="h-[100px] md:h-[110px] w-auto opacity-50 hover:opacity-100 transition-opacity duration-300"
                     />
                   </button>
 
