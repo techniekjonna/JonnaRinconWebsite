@@ -211,7 +211,7 @@ export default function Navigation({ cartItemCount = 0, onCartClick, isDarkOverl
   const menuItems: { label: string; subtitle: string; href?: string; action?: () => void; submenu?: Array<{ label: string; subtitle: string; href: string; action?: () => void }>; expanded?: boolean }[] = [
     { label: 'SHOP', subtitle: 'Browse our catalog', action: () => setExpandedShop(!expandedShop), submenu: shopSubmenu, expanded: expandedShop },
     { label: 'CATALOGUE', subtitle: 'Tracks, remixes & DJ sets', action: () => setExpandedCatalogue(!expandedCatalogue), submenu: catalogueSubmenu, expanded: expandedCatalogue },
-    { label: 'ABOUT ME', subtitle: 'Productions, streams & community', action: () => setExpandedAboutMe(!expandedAboutMe), submenu: aboutMeSubmenu, expanded: expandedAboutMe },
+    { label: 'ABOUT ME', subtitle: 'Productions, streams & community', action: () => { closeMenu(); navigate('/about'); } },
     { label: 'GET IN TOUCH', subtitle: 'Connect with Jonna', action: () => setExpandedGetInTouch(!expandedGetInTouch), submenu: getInTouchSubmenu, expanded: expandedGetInTouch },
   ];
 
