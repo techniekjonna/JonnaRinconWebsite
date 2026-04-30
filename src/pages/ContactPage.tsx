@@ -1,179 +1,222 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
-import { Mail, Instagram, Youtube, Music, Cloud as CloudIcon, ArrowUpRight } from 'lucide-react';
-import { useCyberDecodeInView } from '../hooks/useCyberDecode';
-
-const socialLinks = [
-  { name: 'Instagram', icon: Instagram, url: 'https://www.instagram.com/jonnarincon/' },
-  { name: 'YouTube', icon: Youtube, url: 'https://www.youtube.com/jonnarincon' },
-  { name: 'SoundCloud', icon: CloudIcon, url: 'https://soundcloud.com/jonnarincon' },
-  { name: 'Spotify', icon: Music, url: 'https://open.spotify.com/artist/6o3BlWTeK4EKUyByo35y6F' },
-];
+import { Mail, Phone, MapPin, ArrowUpRight } from 'lucide-react';
+import { useScrollToTop } from '../hooks/useScrollToTop';
 
 export default function ContactPage() {
-  const [formData, setFormData] = useState({ name: '', email: '', subject: 'commission', message: '' });
-  const heroTitle = useCyberDecodeInView('Contact');
+  useScrollToTop();
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    subject: '',
+    category: 'general',
+    message: '',
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Form submitted:', formData);
+    setIsSubmitting(true);
+
+    try {
+      console.log('Form submitted:', formData);
+      setSubmitStatus('success');
+      setTimeout(() => {
+        setFormData({
+          name: '',
+          email: '',
+          subject: '',
+          category: 'general',
+          message: '',
+        });
+        setSubmitStatus('idle');
+      }, 3000);
+    } catch (error) {
+      setSubmitStatus('error');
+      console.error('Form submission error:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <div className="min-h-screen text-white">
-      {/* Fixed JEIGHTENESIS Background */}
-      <div className="fixed inset-0 w-full h-screen -z-10">
-        <img src="/JEIGHTENESIS.jpg" alt="" className="w-full h-full object-cover" style={{objectPosition: 'center'}} />
-        <div className="absolute inset-0 bg-black/80" />
-      </div>
-
+      {/* Fixed Dark Overlay — lets the site background show through */}
+      <div className="fixed inset-0 w-full h-screen -z-10 bg-black/20" />
       <Navigation isDarkOverlay={true} isLightMode={false} />
 
-      {/* Hero */}
-      <section className="relative min-h-[60vh] flex items-end pb-16 md:pb-24 pt-40 px-6 md:px-12">
-        <div className="relative z-10 max-w-7xl mx-auto w-full">
-          <p className="text-[10px] md:text-xs text-red-500/60 uppercase tracking-[0.4em] mb-4">Reach Out</p>
-          <h1 ref={heroTitle.ref as React.RefObject<HTMLHeadingElement>} className="text-6xl md:text-[8rem] lg:text-[10rem] font-black uppercase leading-[0.85] tracking-tighter whitespace-nowrap neon-glow">
-            {heroTitle.display}
+      <div className="relative pt-[120px] md:pt-[160px] pb-12 px-6 md:px-10">
+        <div className="max-w-4xl mx-auto">
+          <h1 className="text-4xl md:text-6xl font-black uppercase mb-4 tracking-tight">
+            Get In Touch
           </h1>
-          <p className="text-white/30 text-sm md:text-base mt-6 max-w-md">
-            Let's create something amazing together. Get in touch for collaborations, commissions, or bookings.
+          <p className="text-white/60 text-lg md:text-xl mb-12">
+            Have a serious inquiry? Fill out the form below and we'll get back to you as soon as possible.
           </p>
-        </div>
-      </section>
 
-      {/* Contact Grid */}
-      <section className="px-6 md:px-12 py-16 md:py-24">
-        <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-6 md:gap-10">
-
-          {/* Left - Info */}
-          <div className="space-y-5">
-            <div className="bg-white/[0.04] backdrop-blur-md border border-white/[0.06] rounded-3xl p-6 md:p-8">
-              <h3 className="text-2xl font-black uppercase tracking-tight mb-6">Info</h3>
-              <div className="space-y-6">
-                <div className="flex items-start gap-4">
-                  <div className="w-10 h-10 rounded-2xl bg-white/[0.06] flex items-center justify-center flex-shrink-0">
-                    <Mail size={18} className="text-white/30" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+            {[
+              {
+                icon: Mail,
+                label: 'Email',
+                value: 'contact@jonnarincon.com',
+                href: 'mailto:contact@jonnarincon.com',
+              },
+              {
+                icon: Phone,
+                label: 'Phone',
+                value: '+31 (0) 6 123 456 78',
+                href: 'tel:+31612345678',
+              },
+              {
+                icon: MapPin,
+                label: 'Location',
+                value: 'Netherlands',
+                href: '#',
+              },
+            ].map((item, idx) => {
+              const Icon = item.icon;
+              return (
+                <a
+                  key={idx}
+                  href={item.href}
+                  className="group p-6 bg-white/[0.02] border border-white/10 rounded-2xl hover:bg-white/[0.05] transition-all duration-300"
+                >
+                  <div className="flex items-center gap-4 mb-2">
+                    <div className="p-3 bg-red-600/20 rounded-lg group-hover:bg-red-600/30 transition-colors">
+                      <Icon className="w-5 h-5 text-red-500" />
+                    </div>
+                    <span className="text-white/60 text-sm uppercase tracking-wider">{item.label}</span>
                   </div>
-                  <div>
-                    <p className="font-bold text-sm text-white mb-0.5">Email</p>
-                    <a href="mailto:contact@jonnarincon.com" className="text-white/30 hover:text-white transition-colors text-sm">
-                      contact@jonnarincon.com
-                    </a>
-                  </div>
-                </div>
-                <div className="flex items-start gap-4">
-                  <div className="w-10 h-10 rounded-2xl bg-white/[0.06] flex items-center justify-center flex-shrink-0">
-                    <Music size={18} className="text-white/30" />
-                  </div>
-                  <div>
-                    <p className="font-bold text-sm text-white mb-0.5">Response Time</p>
-                    <p className="text-white/30 text-sm">Usually within 24 hours</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white/[0.04] backdrop-blur-md border border-white/[0.06] rounded-3xl p-6 md:p-8">
-              <h3 className="text-xl font-black uppercase tracking-tight mb-5">Connect</h3>
-              <div className="space-y-2">
-                {socialLinks.map((link) => {
-                  const Icon = link.icon;
-                  return (
-                    <a
-                      key={link.name}
-                      href={link.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="group flex items-center justify-between p-3.5 bg-white/[0.03] hover:bg-white/[0.06] rounded-2xl transition-all"
-                    >
-                      <div className="flex items-center gap-3">
-                        <Icon size={18} className="text-white/25" />
-                        <span className="font-bold text-sm text-white">{link.name}</span>
-                      </div>
-                      <ArrowUpRight size={14} className="text-white/10 group-hover:text-white/40 transition-colors" />
-                    </a>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Services */}
-            <div className="bg-white/[0.04] backdrop-blur-md border border-white/[0.06] rounded-3xl p-6 md:p-8">
-              <h3 className="text-xl font-black uppercase tracking-tight mb-5">Services</h3>
-              <div className="grid grid-cols-2 gap-2">
-                {['Beat Production', 'Mixing & Mastering', 'Collaborations', 'DJ Bookings', 'Custom Beats', 'Sound Design'].map((service) => (
-                  <div key={service} className="px-3 py-2.5 bg-white/[0.03] rounded-xl text-center">
-                    <span className="text-xs font-bold text-white/50 uppercase tracking-wider">{service}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
+                  <p className="text-white font-semibold group-hover:text-red-400 transition-colors">
+                    {item.value}
+                  </p>
+                </a>
+              );
+            })}
           </div>
+        </div>
+      </div>
 
-          {/* Right - Form */}
-          <div className="bg-white/[0.04] backdrop-blur-md border border-white/[0.06] rounded-3xl p-6 md:p-8 h-fit">
-            <h3 className="text-2xl font-black uppercase tracking-tight mb-6">Send a Message</h3>
+      <div className="relative px-6 md:px-10 pb-12">
+        <div className="max-w-4xl mx-auto">
+          <div className="bg-gradient-to-br from-white/[0.08] to-white/[0.02] border border-white/10 rounded-3xl p-8 md:p-12">
+            <h2 className="text-3xl font-bold mb-8 uppercase tracking-tight">Send us a message</h2>
 
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form onSubmit={handleSubmit} className="space-y-6">
               <div>
-                <label className="block text-[10px] font-bold mb-2 text-white/30 uppercase tracking-[0.2em]">Name</label>
+                <label htmlFor="name" className="block text-sm font-semibold text-white/80 mb-2 uppercase tracking-wider">
+                  Full Name
+                </label>
                 <input
                   type="text"
-                  required
+                  id="name"
+                  name="name"
                   value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-4 py-3.5 bg-white/[0.05] border border-white/[0.08] text-white placeholder-white/15 rounded-2xl focus:outline-none focus:border-red-500/40 transition-all"
+                  onChange={handleInputChange}
+                  required
+                  className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/30 focus:outline-none focus:border-white/30 focus:bg-white/10 transition-all"
                   placeholder="Your name"
                 />
               </div>
+
               <div>
-                <label className="block text-[10px] font-bold mb-2 text-white/30 uppercase tracking-[0.2em]">Email</label>
+                <label htmlFor="email" className="block text-sm font-semibold text-white/80 mb-2 uppercase tracking-wider">
+                  Email Address
+                </label>
                 <input
                   type="email"
-                  required
+                  id="email"
+                  name="email"
                   value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full px-4 py-3.5 bg-white/[0.05] border border-white/[0.08] text-white placeholder-white/15 rounded-2xl focus:outline-none focus:border-red-500/40 transition-all"
+                  onChange={handleInputChange}
+                  required
+                  className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/30 focus:outline-none focus:border-white/30 focus:bg-white/10 transition-all"
                   placeholder="your@email.com"
                 />
               </div>
+
               <div>
-                <label className="block text-[10px] font-bold mb-2 text-white/30 uppercase tracking-[0.2em]">Subject</label>
-                <select
+                <label htmlFor="subject" className="block text-sm font-semibold text-white/80 mb-2 uppercase tracking-wider">
+                  Subject
+                </label>
+                <input
+                  type="text"
+                  id="subject"
+                  name="subject"
                   value={formData.subject}
-                  onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-                  className="w-full px-4 py-3.5 bg-white/[0.05] border border-white/[0.08] text-white rounded-2xl focus:outline-none focus:border-red-500/40 transition-all appearance-none cursor-pointer"
-                >
-                  <option value="commission">Beat Commission</option>
-                  <option value="collaboration">Collaboration</option>
-                  <option value="booking">Booking</option>
-                  <option value="general">General Inquiry</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-[10px] font-bold mb-2 text-white/30 uppercase tracking-[0.2em]">Message</label>
-                <textarea
+                  onChange={handleInputChange}
                   required
-                  value={formData.message}
-                  onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                  rows={5}
-                  className="w-full px-4 py-3.5 bg-white/[0.05] border border-white/[0.08] text-white placeholder-white/15 rounded-2xl focus:outline-none focus:border-red-500/40 transition-all resize-none"
-                  placeholder="Tell me about your project..."
+                  className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/30 focus:outline-none focus:border-white/30 focus:bg-white/10 transition-all"
+                  placeholder="What is this about?"
                 />
               </div>
+
+              <div>
+                <label htmlFor="category" className="block text-sm font-semibold text-white/80 mb-2 uppercase tracking-wider">
+                  Category
+                </label>
+                <select
+                  id="category"
+                  name="category"
+                  value={formData.category}
+                  onChange={handleInputChange}
+                  className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-white/30 focus:bg-white/10 transition-all cursor-pointer"
+                >
+                  <option value="general" className="bg-black">General Inquiry</option>
+                  <option value="booking" className="bg-black">Booking Request</option>
+                  <option value="collaboration" className="bg-black">Collaboration</option>
+                  <option value="business" className="bg-black">Business Proposal</option>
+                  <option value="other" className="bg-black">Other</option>
+                </select>
+              </div>
+
+              <div>
+                <label htmlFor="message" className="block text-sm font-semibold text-white/80 mb-2 uppercase tracking-wider">
+                  Message
+                </label>
+                <textarea
+                  id="message"
+                  name="message"
+                  value={formData.message}
+                  onChange={handleInputChange}
+                  required
+                  rows={6}
+                  className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/30 focus:outline-none focus:border-white/30 focus:bg-white/10 transition-all resize-none"
+                  placeholder="Tell us more about your inquiry..."
+                />
+              </div>
+
+              {submitStatus === 'success' && (
+                <div className="p-4 bg-green-500/10 border border-green-500/30 rounded-xl text-green-400 text-sm">
+                  ✓ Your message has been sent successfully! We'll be in touch soon.
+                </div>
+              )}
+              {submitStatus === 'error' && (
+                <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-sm">
+                  ✗ Something went wrong. Please try again or contact us directly.
+                </div>
+              )}
+
               <button
                 type="submit"
-                className="w-full py-4 bg-white text-black rounded-2xl font-black text-sm uppercase tracking-widest transition-all hover:bg-white/90 hover:scale-[1.02]"
+                disabled={isSubmitting}
+                className="w-full px-8 py-4 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold uppercase tracking-wider rounded-xl transition-all duration-300 flex items-center justify-center gap-2 group"
               >
-                Send Message
+                <span>{isSubmitting ? 'Sending...' : 'Send Message'}</span>
+                <ArrowUpRight className="w-5 h-5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
               </button>
             </form>
           </div>
         </div>
-      </section>
+      </div>
 
       <Footer />
     </div>

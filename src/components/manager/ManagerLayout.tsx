@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import {
@@ -10,6 +10,9 @@ import {
   X,
   Handshake,
   Home,
+  ArrowLeft,
+  CalendarDays,
+  FolderKanban,
 } from 'lucide-react';
 
 interface ManagerLayoutProps {
@@ -27,8 +30,18 @@ const ManagerLayout: React.FC<ManagerLayoutProps> = ({ children }) => {
     navigate('/');
   };
 
+  // Dispatch sidebar state change event for header animation
+  useEffect(() => {
+    const event = new CustomEvent('sidebar-state-change', {
+      detail: { isOpen: !sidebarOpen }
+    });
+    window.dispatchEvent(event);
+  }, [sidebarOpen]);
+
   const navigation = [
     { name: 'Dashboard', href: '/manager/dashboard', icon: LayoutDashboard },
+    { name: 'Agenda', href: '/manager/agenda', icon: CalendarDays },
+    { name: 'Projects', href: '/manager/projects', icon: FolderKanban },
     { name: 'Beats', href: '/manager/beats', icon: Music },
     { name: 'Collaborations', href: '/manager/collaborations', icon: Handshake },
     { name: 'Chat', href: '/manager/chat', icon: MessageSquare },
@@ -43,15 +56,15 @@ const ManagerLayout: React.FC<ManagerLayoutProps> = ({ children }) => {
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        <div className="flex items-center justify-between px-4 py-4 border-b border-white/[0.06] flex-shrink-0">
+        <Link to="/" className="flex items-center justify-between px-4 py-4 border-b border-white/[0.06] flex-shrink-0 hover:bg-white/[0.04] transition-colors">
           <div className="min-w-0">
             <h1 className="text-lg font-bold text-white truncate">Jonna Rincon</h1>
             <p className="text-[10px] text-white/30 uppercase tracking-widest">Manager</p>
           </div>
-          <button onClick={() => setSidebarOpen(false)} className="lg:hidden text-white/40 hover:text-white flex-shrink-0 ml-2">
+          <button onClick={(e) => { e.preventDefault(); setSidebarOpen(false); }} className="lg:hidden text-white/40 hover:text-white flex-shrink-0 ml-2">
             <X size={20} />
           </button>
-        </div>
+        </Link>
 
         <div className="px-4 py-4 border-b border-white/[0.06] flex-shrink-0">
           <div className="flex items-center space-x-3">
@@ -97,9 +110,14 @@ const ManagerLayout: React.FC<ManagerLayoutProps> = ({ children }) => {
       <div className={`transition-all duration-300 ${sidebarOpen ? 'lg:pl-64' : 'pl-0'}`}>
         <div className="sticky top-0 z-40 bg-black/80 backdrop-blur-xl border-b border-white/[0.06]">
           <div className="flex items-center justify-between px-4 py-3 sm:px-6">
-            <button onClick={() => setSidebarOpen(!sidebarOpen)} className="text-white/40 hover:text-white lg:hidden">
-              <Menu size={22} />
-            </button>
+            <div className="flex items-center gap-3">
+              <button onClick={() => navigate(-1)} className="text-white/40 hover:text-white transition-colors" title="Go back">
+                <ArrowLeft size={22} />
+              </button>
+              <button onClick={() => setSidebarOpen(!sidebarOpen)} className="text-white/40 hover:text-white lg:hidden">
+                <Menu size={22} />
+              </button>
+            </div>
             <div className="hidden sm:block">
               <p className="text-xs text-white/30">
                 {new Date().toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}

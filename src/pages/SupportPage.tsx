@@ -3,6 +3,7 @@ import { Heart } from 'lucide-react';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
 import { useCyberDecodeInView } from '../hooks/useCyberDecode';
+import { useScrollToTop } from '../hooks/useScrollToTop';
 
 interface SupportMention {
   name: string;
@@ -11,6 +12,7 @@ interface SupportMention {
 }
 
 const SupportPage: React.FC = () => {
+  useScrollToTop();
   const heroTitle = useCyberDecodeInView('SUPPORT');
   const [selectedType, setSelectedType] = useState<string>('All');
 
@@ -49,17 +51,8 @@ const SupportPage: React.FC = () => {
 
   return (
     <div className="min-h-screen text-white">
-      {/* Fixed JEIGHTENESIS Background */}
-      <div className="fixed inset-0 w-full h-screen -z-10">
-        <img
-          src="/JEIGHTENESIS.jpg"
-          alt=""
-          className="w-full h-full object-cover"
-          style={{ objectPosition: 'center' }}
-        />
-        <div className="absolute inset-0 bg-black/80" />
-      </div>
-
+      {/* Fixed Dark Overlay */}
+      <div className="fixed inset-0 w-full h-screen -z-10 bg-black/20" />
       <Navigation isDarkOverlay={true} />
 
       {/* Hero Section */}
@@ -67,7 +60,7 @@ const SupportPage: React.FC = () => {
         <div className="relative z-10 max-w-7xl mx-auto w-full text-center">
           <h1
             ref={heroTitle.ref as React.RefObject<HTMLHeadingElement>}
-            className="text-6xl md:text-8xl lg:text-9xl font-black uppercase leading-[0.85] tracking-tighter mb-8"
+            style={{fontSize: 'clamp(1.875rem, 8vw, 10.2rem)'}} className="font-black uppercase leading-[0.85] tracking-tighter mb-8"
           >
             {heroTitle.display}
           </h1>

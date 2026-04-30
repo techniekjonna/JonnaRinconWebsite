@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import {
   LayoutDashboard,
+  Calendar,
   Handshake,
   Music,
   ShoppingCart,
@@ -15,6 +16,7 @@ import {
   MessageSquare,
   Download,
   Home,
+  ArrowLeft,
 } from 'lucide-react';
 
 interface ArtistLayoutProps {
@@ -34,8 +36,8 @@ const ArtistLayout: React.FC<ArtistLayoutProps> = ({ children }) => {
 
   const navigation = [
     { name: 'Dashboard', href: '/artist/dashboard', icon: LayoutDashboard },
+    { name: 'Agenda', href: '/artist/agenda', icon: Calendar },
     { name: 'Collaborations', href: '/artist/collaborations', icon: Handshake },
-    { name: 'Request Collab', href: '/artist/request-collab', icon: Plus },
     { name: 'Shop Beats', href: '/artist/beats', icon: Music },
     { name: 'My Purchases', href: '/artist/orders', icon: ShoppingCart },
     { name: 'My Products', href: '/artist/my-products', icon: Download },
@@ -53,15 +55,15 @@ const ArtistLayout: React.FC<ArtistLayoutProps> = ({ children }) => {
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        <div className="flex items-center justify-between px-4 py-4 border-b border-white/[0.06] flex-shrink-0">
+        <Link to="/" className="flex items-center justify-between px-4 py-4 border-b border-white/[0.06] flex-shrink-0 hover:bg-white/[0.04] transition-colors">
           <div className="min-w-0">
             <h1 className="text-lg font-bold text-white truncate">Jonna Rincon</h1>
             <p className="text-[10px] text-white/30 uppercase tracking-widest">Artist Portal</p>
           </div>
-          <button onClick={() => setSidebarOpen(false)} className="lg:hidden text-white/40 hover:text-white flex-shrink-0 ml-2">
+          <button onClick={(e) => { e.preventDefault(); setSidebarOpen(false); }} className="lg:hidden text-white/40 hover:text-white flex-shrink-0 ml-2">
             <X size={20} />
           </button>
-        </div>
+        </Link>
 
         <div className="px-4 py-4 border-b border-white/[0.06] flex-shrink-0">
           <div className="flex items-center space-x-3">
@@ -107,9 +109,14 @@ const ArtistLayout: React.FC<ArtistLayoutProps> = ({ children }) => {
       <div className={`transition-all duration-300 ${sidebarOpen ? 'lg:pl-64' : 'pl-0'}`}>
         <div className="sticky top-0 z-40 bg-black/80 backdrop-blur-xl border-b border-white/[0.06]">
           <div className="flex items-center justify-between px-4 py-3 sm:px-6">
-            <button onClick={() => setSidebarOpen(!sidebarOpen)} className="text-white/40 hover:text-white lg:hidden">
-              <Menu size={22} />
-            </button>
+            <div className="flex items-center gap-3">
+              <button onClick={() => navigate(-1)} className="text-white/40 hover:text-white transition-colors" title="Go back">
+                <ArrowLeft size={22} />
+              </button>
+              <button onClick={() => setSidebarOpen(!sidebarOpen)} className="text-white/40 hover:text-white lg:hidden">
+                <Menu size={22} />
+              </button>
+            </div>
             <div className="hidden sm:block">
               <p className="text-xs text-white/30">
                 {new Date().toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}

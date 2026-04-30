@@ -257,6 +257,44 @@ class ArtService {
       console.error('Increment likes error:', error);
     }
   }
+
+  /**
+   * Get art pieces purchased by a user
+   */
+  async getUserPurchasedArt(userId: string): Promise<Art[]> {
+    try {
+      const q = query(
+        collection(db, this.collectionName),
+        where('soldToUserId', '==', userId),
+        orderBy('soldAt', 'desc')
+      );
+      const querySnapshot = await getDocs(q);
+      const art: Art[] = [];
+      querySnapshot.forEach((doc) => {
+        art.push({ id: doc.id, ...doc.data() } as Art);
+      });
+      return art;
+    } catch (error) {
+      console.error('Get user purchased art error:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Mark art as sold and set buyer
+   */
+  async markAsSold(id: string, userId: string): Promise<void> {
+    try {
+      await updateDoc(doc(db, this.collectionName, id), {
+        sold: true,
+        soldAt: serverTimestamp(),
+        soldToUserId: userId,
+      });
+    } catch (error: any) {
+      console.error('Mark as sold error:', error);
+      throw new Error(error.message || 'Failed to mark art as sold');
+    }
+  }
 }
 
 export const artService = new ArtService();

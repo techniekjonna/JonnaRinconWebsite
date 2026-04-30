@@ -4,6 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { orderService } from '../../lib/firebase/services/orderService';
 import { Order, OrderItem } from '../../lib/firebase/types';
 import CustomerLayout from '../../components/customer/CustomerLayout';
+import LoadingSpinner from '../../components/LoadingSpinner';
 import { Download, FileText, Mail } from 'lucide-react';
 
 interface DownloadableItem extends OrderItem {
@@ -72,7 +73,7 @@ const CustomerDownloads: React.FC = () => {
     return (
       <CustomerLayout>
         <div className="flex justify-center items-center h-64">
-          <div className="text-xl text-white">Loading downloads...</div>
+          <LoadingSpinner text="Loading downloads..." />
         </div>
       </CustomerLayout>
     );

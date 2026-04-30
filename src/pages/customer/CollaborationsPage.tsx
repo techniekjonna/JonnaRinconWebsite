@@ -4,6 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { db } from '../../lib/firebase/config';
 import { collection, query, where, orderBy, onSnapshot, addDoc, serverTimestamp, Timestamp } from 'firebase/firestore';
 import { Handshake, MessageSquare, Send, ChevronDown, ChevronUp } from 'lucide-react';
+import LoadingSpinner from '../../components/LoadingSpinner';
 import { Collaboration } from '../../lib/firebase/types';
 
 interface CollabMessage {
@@ -91,7 +92,7 @@ const CustomerCollaborations: React.FC = () => {
     return (
       <CustomerLayout>
         <div className="flex justify-center items-center h-64">
-          <div className="text-xl text-white">Loading collaborations...</div>
+          <LoadingSpinner text="Loading collaborations..." />
         </div>
       </CustomerLayout>
     );

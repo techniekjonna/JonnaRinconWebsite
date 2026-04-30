@@ -1,17 +1,24 @@
 import { useState, useEffect, useMemo } from 'react';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
-import { Sliders } from 'lucide-react';
+import { Sliders, Music } from 'lucide-react';
 import { useCyberDecodeInView } from '../hooks/useCyberDecode';
 import { useAuth } from '../hooks/useAuth';
+import { useTrackDetail } from '../contexts/TrackDetailContext';
+import { useScrollToTop } from '../hooks/useScrollToTop';
 import { setCurrentTrack, getCurrentTrack } from '../components/GlobalAudioPlayer';
 import TrackListItem from '../components/TrackListItem';
 import { useRemixes } from '../hooks/useRemixes';
+import { useRelatedTracks } from '../hooks/useRelatedTracks';
 import FilterModal from '../components/FilterModal';
 import TrackDetailModal from '../components/TrackDetailModal';
 import LoginModal from '../components/LoginModal';
+import LoadingSpinner from '../components/LoadingSpinner';
+import PlaylistModal from '../components/PlaylistModal';
+import PlaylistDetailView from '../components/PlaylistDetailView';
 import { extractUniqueGenres } from '../lib/utils/genreExtractor';
-import { remixService } from '../lib/firebase/services';
+import { remixService, playlistService } from '../lib/firebase/services';
+import { Playlist, Track as FirebaseTrack } from '../lib/firebase/types';
 
 // Track data structure
 interface Track {
@@ -40,11 +47,8 @@ interface RemixTrack extends Track {
   coverArtUrl?: string;
 }
 
-const stats = [
-  { value: '100+', label: 'Remixes & Edits' },
-];
-
 export default function RemixesPage() {
+  useScrollToTop();
   const { isAuthenticated, isLoading } = useAuth();
   const { remixes: firebaseRemixes, loading: remixesLoading } = useRemixes({ status: 'published' });
   const [selectedRemixType, setSelectedRemixType] = useState<'Remix' | 'Edit' | 'Bootleg' | 'All'>('All');
@@ -53,9 +57,12 @@ export default function RemixesPage() {
   const [selectedRemixGenre, setSelectedRemixGenre] = useState<string>('All');
   const [selectedRemixSort, setSelectedRemixSort] = useState<'newest' | 'oldest'>('newest');
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
-  const [selectedTrack, setSelectedTrack] = useState<RemixTrack | null>(null);
+  const { selectedTrack, setSelectedTrack, isModalOpen, setIsModalOpen } = useTrackDetail() as any;
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isPlaylistModalOpen, setIsPlaylistModalOpen] = useState(false);
+  const [selectedPlaylist, setSelectedPlaylist] = useState<Playlist | null>(null);
+  const [isPlaylistDetailOpen, setIsPlaylistDetailOpen] = useState(false);
   const heroTitle = useCyberDecodeInView('REMIXES');
 
   // Convert Firebase remixes to local RemixTrack interface
@@ -75,7 +82,7 @@ export default function RemixesPage() {
     audioUrl: r.audioUrl,
     coverArt: r.artworkUrl,
     coverArtUrl: r.artworkUrl,
-    createdAt: r.createdAt.toMillis?.() || Date.now(),
+    createdAt: r.createdAt?.toMillis?.() || Date.now(),
   }));
 
   // Helper function to check if a remix matches a genre (handles comma-separated)
@@ -94,11 +101,13 @@ export default function RemixesPage() {
       return;
     }
 
-    // Increment plays counter for this remix
+    // Register play after 15 seconds of playback
     if (remix.id) {
-      await remixService.incrementPlays(remix.id).catch((error) => {
-        console.error('Failed to increment remix plays:', error);
-      });
+      setTimeout(() => {
+        remixService.incrementPlays(remix.id!).catch((error) => {
+          console.error('Failed to increment remix plays:', error);
+        });
+      }, 15000);
     }
 
     // Filter remixes matching current filters and create queue
@@ -136,6 +145,50 @@ export default function RemixesPage() {
     }
   };
 
+  const handlePlaylistSelect = (playlist: Playlist) => {
+    setSelectedPlaylist(playlist);
+    setIsPlaylistDetailOpen(true);
+  };
+
+  const handleAddToPlaylist = async (trackId: string, playlistId: string) => {
+    try {
+      await playlistService.addTrackToPlaylist(playlistId, trackId);
+      // Show success feedback
+      console.log('Remix added to playlist');
+    } catch (error) {
+      console.error('Error adding to playlist:', error);
+    }
+  };
+
+  const handlePlayPlaylistTracks = (playlistTracks: FirebaseTrack[], startIndex: number = 0) => {
+    if (playlistTracks.length === 0) return;
+
+    // Convert Firebase tracks/remixes to local RemixTrack interface
+    const tracksToPlay = playlistTracks.map(t => ({
+      id: t.id,
+      title: t.title,
+      artist: t.artist,
+      duration: t.duration || '0:00',
+      genre: t.genre,
+      bpm: t.bpm,
+      key: t.key,
+      year: t.year,
+      collab: t.collab,
+      audioUrl: t.audioUrl,
+      coverArt: t.artworkUrl,
+      createdAt: t.createdAt?.toMillis?.() || Date.now(),
+      remixType: (t as any).remixType,
+      remixArtist: (t as any).remixArtist || t.artist,
+      sortOrder: (t as any).sortOrder,
+    } as RemixTrack));
+
+    if (tracksToPlay.length > 0) {
+      const trackToPlay = tracksToPlay[startIndex] || tracksToPlay[0];
+      setCurrentTrack(trackToPlay, tracksToPlay);
+      setIsPlaying(true);
+    }
+  };
+
   const filteredRemixes = remixTracks.filter(remix => {
     const typeMatch = selectedRemixType === 'All' || remix.remixType === selectedRemixType;
     const yearMatch = selectedRemixYear === 'All' || remix.year === selectedRemixYear;
@@ -144,6 +197,12 @@ export default function RemixesPage() {
     return typeMatch && yearMatch && collabMatch && genreMatch;
   });
 
+  // Handler to open remix detail modal when clicking on a remix
+  const handleRemixClick = (remix: RemixTrack) => {
+    setSelectedTrack(remix as any);
+    setIsModalOpen(true);
+  };
+
   const years = Array.from(new Set(remixTracks.map(r => r.year).filter(Boolean))).sort((a, b) => b - a) as number[];
 
   // Extract dynamic genres for remixes
@@ -151,29 +210,10 @@ export default function RemixesPage() {
     return extractUniqueGenres(remixTracks, { sort: true });
   }, [remixTracks]);
 
-  // Show login modal if not authenticated
-  if (!isLoading && !isAuthenticated) {
-    return (
-      <div className="min-h-screen text-white">
-        {/* Fixed JEIGHTENESIS Background */}
-        <div className="fixed inset-0 w-full h-screen -z-10">
-          <img src="/JEIGHTENESIS.jpg" alt="" className="w-full h-full object-cover" style={{objectPosition: 'center'}} />
-          <div className="absolute inset-0 bg-black/75" />
-        </div>
-
-        <Navigation isDarkOverlay={true} isLightMode={false} />
-        <LoginModal isOpen={true} onClose={() => {}} />
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen text-white">
-      {/* Fixed JEIGHTENESIS Background */}
-      <div className="fixed inset-0 w-full h-screen -z-10">
-        <img src="/JEIGHTENESIS.jpg" alt="" className="w-full h-full object-cover" style={{objectPosition: 'center'}} />
-        <div className="absolute inset-0 bg-black/75" />
-      </div>
+      {/* Fixed Dark Overlay */}
+      <div className="fixed inset-0 w-full h-screen -z-10 bg-black/20" />
 
       <Navigation isDarkOverlay={true} isLightMode={false} />
 
@@ -183,37 +223,71 @@ export default function RemixesPage() {
       {/* Remix Detail Modal */}
       <TrackDetailModal
         track={selectedTrack}
-        isOpen={!!selectedTrack}
-        onClose={() => setSelectedTrack(null)}
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
         isPlaying={selectedTrack ? false : false}
         onPlay={handlePlayRemix}
+        relatedTracks={useRelatedTracks(selectedTrack, [])}
+        onAddToPlaylist={handleAddToPlaylist}
       />
+
+      {/* Playlist Modal */}
+      <PlaylistModal
+        isOpen={isPlaylistModalOpen}
+        onClose={() => setIsPlaylistModalOpen(false)}
+        onPlaylistSelect={handlePlaylistSelect}
+      />
+
+      {/* Playlist Detail View */}
+      {selectedPlaylist && (
+        <PlaylistDetailView
+          playlist={selectedPlaylist}
+          isOpen={isPlaylistDetailOpen}
+          onClose={() => {
+            setIsPlaylistDetailOpen(false);
+            setSelectedPlaylist(null);
+          }}
+          onPlayTracks={handlePlayPlaylistTracks}
+          isPlaying={isPlaying}
+        />
+      )}
 
       {/* Hero Section - Compact */}
       <section className="relative pt-40 px-6 md:px-12 pb-4">
         <div className="relative z-10 max-w-7xl mx-auto w-full">
-          <h1 ref={heroTitle.ref as React.RefObject<HTMLHeadingElement>} className="text-6xl md:text-8xl lg:text-9xl font-black uppercase leading-[0.85] tracking-tighter mb-8 text-center">
+          <h1 ref={heroTitle.ref as React.RefObject<HTMLHeadingElement>} style={{fontSize: 'clamp(1.875rem, 8vw, 10.2rem)'}} className="font-black uppercase leading-[0.85] tracking-tighter mb-8 text-center">
             {heroTitle.display}
           </h1>
 
           {/* Page Title */}
           <div className="flex flex-col items-center gap-6 mb-8">
             <h2 className="text-3xl md:text-4xl font-black uppercase tracking-tight text-white">
-              REMIXES
+              REMIXES, EDITS, BOOTLEGS
             </h2>
 
-            {/* Filter Button - Mobile only */}
-            <button
-              onClick={() => setIsFilterModalOpen(true)}
-              className="md:hidden flex items-center gap-2 px-4 py-2.5 bg-white/[0.06] border border-white/[0.1] rounded-lg text-xs font-bold uppercase tracking-wider text-white/60 hover:text-white hover:bg-white/[0.12] transition-all"
-            >
-              <Sliders size={16} />
-              Filters
-            </button>
+            {/* Filter & Playlist Buttons - Mobile only */}
+            <div className="md:hidden flex items-center gap-2">
+              <button
+                onClick={() => setIsFilterModalOpen(true)}
+                className="flex items-center gap-2 px-4 py-2.5 bg-white/[0.06] border border-white/[0.1] rounded-lg text-xs font-bold uppercase tracking-wider text-white/60 hover:text-white hover:bg-white/[0.12] transition-all"
+              >
+                <Sliders size={16} />
+                Filters
+              </button>
+              {isAuthenticated && (
+                <button
+                  onClick={() => setIsPlaylistModalOpen(true)}
+                  className="flex items-center gap-2 px-4 py-2.5 bg-white/[0.06] border border-white/[0.1] rounded-lg text-xs font-bold uppercase tracking-wider text-white/60 hover:text-white hover:bg-white/[0.12] transition-all"
+                >
+                  <Music size={16} />
+                  Playlists
+                </button>
+              )}
+            </div>
           </div>
 
-          {/* Filter Button - Desktop only */}
-          <div className="hidden md:flex justify-center mb-8">
+          {/* Filter & Playlist Buttons - Desktop only */}
+          <div className="hidden md:flex justify-center gap-3 mb-8">
             <button
               onClick={() => setIsFilterModalOpen(true)}
               className="flex items-center gap-2 px-4 py-2.5 bg-white/[0.06] border border-white/[0.1] rounded-lg text-xs font-bold uppercase tracking-wider text-white/60 hover:text-white hover:bg-white/[0.12] transition-all"
@@ -221,21 +295,20 @@ export default function RemixesPage() {
               <Sliders size={16} />
               Filters
             </button>
-          </div>
-
-          {/* Stats - Compact, Single Row */}
-          <div className="flex justify-between gap-4 md:gap-8 mb-8">
-            {stats.map((stat) => (
-              <div key={stat.label} className="flex-1 min-w-0">
-                <p className="text-lg md:text-2xl font-black text-white truncate">{stat.value}</p>
-                <p className="text-[9px] md:text-[10px] text-white/30 uppercase tracking-wider mt-0.5 truncate">{stat.label}</p>
-              </div>
-            ))}
+            {isAuthenticated && (
+              <button
+                onClick={() => setIsPlaylistModalOpen(true)}
+                className="flex items-center gap-2 px-4 py-2.5 bg-white/[0.06] border border-white/[0.1] rounded-lg text-xs font-bold uppercase tracking-wider text-white/60 hover:text-white hover:bg-white/[0.12] transition-all"
+              >
+                <Music size={16} />
+                Playlists
+              </button>
+            )}
           </div>
 
           {/* Subtitle */}
           <p className="text-center text-white/50 text-sm md:text-base max-w-2xl mx-auto">
-            Original remixes, edits, and bootleg versions of tracks across multiple genres. Discover reinterpretations and creative takes on popular music.
+            Original remixes, edits, and bootleg versions of tracks across multiple genres. Discover reinterpretations and creative takes on popular music. All tracks are downloadable.
           </p>
         </div>
       </section>
@@ -291,10 +364,20 @@ export default function RemixesPage() {
         </div>
       </section>
 
+      {/* Loading Spinner */}
+      {remixesLoading && (
+        <section className="px-6 md:px-12 py-16">
+          <div className="max-w-7xl mx-auto">
+            <LoadingSpinner text="Loading remixes..." />
+          </div>
+        </section>
+      )}
+
       {/* Remix Tracks List */}
-      <section className="px-6 md:px-12 py-2 md:py-4">
-        <div className="max-w-7xl mx-auto">
-          <div className="space-y-3">
+      {!remixesLoading && (
+        <section className="px-6 md:px-12 py-2 md:py-4">
+          <div className="max-w-7xl mx-auto">
+            <div className="space-y-3">
             {filteredRemixes
               .sort((a, b) => {
                 // Sort by sortOrder first (if set in admin), then by createdAt
@@ -312,11 +395,12 @@ export default function RemixesPage() {
                 <TrackListItem
                   key={remix.id}
                   track={remix}
-                  onClickTrack={setSelectedTrack}
+                  onClickTrack={handleRemixClick}
                   onPlay={handlePlayRemix}
                   onTogglePlay={handleTogglePlayRemix}
                   showType={false}
                   showMetadata={true}
+                  showDownload={true}
                   isPlaying={isPlaying}
                 />
               ))}
@@ -330,7 +414,8 @@ export default function RemixesPage() {
             </p>
           </div>
         </div>
-      </section>
+        </section>
+      )}
 
       {/* Footer */}
       <Footer />

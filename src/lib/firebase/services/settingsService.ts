@@ -432,7 +432,7 @@ class SettingsService {
           ...doc.data(),
         })) as SiteBackground[];
         // Sort client-side instead
-        backgrounds.sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
+        backgrounds.sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0));
         callback(backgrounds);
       },
       (error) => {

@@ -1,25 +1,69 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import AdminLayout from '../../components/admin/AdminLayout';
 import LinkInput from '../../components/admin/LinkInput';
-import CustomTrackLinksEditor from '../../components/admin/CustomTrackLinksEditor';
-import CustomButtonConfig from '../../components/admin/CustomButtonConfig';
+import LoadingSpinner from '../../components/LoadingSpinner';
 import { useTracks } from '../../hooks/useTracks';
-import { trackService } from '../../lib/firebase/services';
-import { Track, CustomTrackLink } from '../../lib/firebase/types';
-import { Plus, Edit, Trash2, Play, Pause, ChevronDown, GripVertical, ArrowUp, ArrowDown, Link as LinkIcon, AlertCircle } from 'lucide-react';
+import { useRemixes } from '../../hooks/useRemixes';
+import { usePlaylists } from '../../hooks/usePlaylists';
+import { trackService, remixService, playlistService, settingsService } from '../../lib/firebase/services';
+import { Track, Remix, Playlist } from '../../lib/firebase/types';
+import { Plus, Edit, Trash2, Play, Pause, ChevronDown, Music, Save, Globe, Lock, Star, Filter as FilterIcon } from 'lucide-react';
 import { toDirectUrl, detectUrlType, isValidUrl } from '../../lib/utils/urlUtils';
 
+type CatalogueTab = 'tracks' | 'remixes' | 'playlists' | 'custom';
+
 const TracksPage: React.FC = () => {
-  const { tracks, loading, error } = useTracks();
+  const { tracks, loading: tracksLoading, error } = useTracks();
+  const { remixes, loading: remixesLoading } = useRemixes();
+  const { playlists, loading: playlistsLoading } = usePlaylists();
+
+  const [activeTab, setActiveTab] = useState<CatalogueTab>('tracks');
   const [showModal, setShowModal] = useState(false);
   const [editingTrack, setEditingTrack] = useState<Track | null>(null);
+  const [editingRemix, setEditingRemix] = useState<Remix | null>(null);
   const [currentlyPlaying, setCurrentlyPlaying] = useState<string | null>(null);
   const [expandedAlbums, setExpandedAlbums] = useState<Set<string>>(new Set());
+  const [editingPlaylist, setEditingPlaylist] = useState<Playlist | null>(null);
+  const [showPlaylistEditModal, setShowPlaylistEditModal] = useState(false);
+  const [playlistEditForm, setPlaylistEditForm] = useState({ name: '', description: '', isPublic: false, isFeatured: false });
+
+  // Track settings state
+  const [trackSettings, setTrackSettings] = useState<any>(null);
+  const [loadingSettings, setLoadingSettings] = useState(true);
+
+  // Load track settings
+  useEffect(() => {
+    const loadSettings = async () => {
+      try {
+        const data = await settingsService.getTrackSettings();
+        if (data) setTrackSettings(data);
+      } catch (error) {
+        console.error('Failed to load track settings:', error);
+      } finally {
+        setLoadingSettings(false);
+      }
+    };
+    loadSettings();
+  }, []);
 
   // Filter state
   const [selectedTypes, setSelectedTypes] = useState<Set<string>>(new Set());
   const [selectedYear, setSelectedYear] = useState<number | null>(null);
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
+  const [showFilters, setShowFilters] = useState(false);
+  const filterRef = useRef<HTMLDivElement>(null);
+
+  // Close the filter dropdown when clicking outside
+  useEffect(() => {
+    if (!showFilters) return;
+    const handleDocClick = (e: MouseEvent) => {
+      if (filterRef.current && !filterRef.current.contains(e.target as Node)) {
+        setShowFilters(false);
+      }
+    };
+    document.addEventListener('mousedown', handleDocClick);
+    return () => document.removeEventListener('mousedown', handleDocClick);
+  }, [showFilters]);
 
   const handleCreate = () => {
     setEditingTrack(null);
@@ -39,6 +83,52 @@ const TracksPage: React.FC = () => {
     } catch (error: any) {
       alert(error.message);
     }
+  };
+
+  const handleEditPlaylist = (playlist: Playlist) => {
+    setEditingPlaylist(playlist);
+    setPlaylistEditForm({
+      name: playlist.name,
+      description: playlist.description || '',
+      isPublic: playlist.isPublic || false,
+      isFeatured: playlist.isFeatured || false,
+    });
+    setShowPlaylistEditModal(true);
+  };
+
+  const handleSavePlaylist = async () => {
+    if (!playlistEditForm.name.trim()) {
+      alert('Playlist name is required');
+      return;
+    }
+    try {
+      if (editingPlaylist) {
+        // Update existing playlist
+        await playlistService.updatePlaylist(editingPlaylist.id, {
+          name: playlistEditForm.name.trim(),
+          description: playlistEditForm.description,
+          isPublic: playlistEditForm.isPublic,
+          isFeatured: playlistEditForm.isFeatured,
+        });
+        alert('Playlist updated successfully');
+      } else {
+        // Create new playlist
+        const { user } = require('../../contexts/AuthContext');
+        await playlistService.createPlaylist(playlistEditForm.name.trim(), user.uid, [], playlistEditForm.description);
+        alert('Playlist created successfully');
+      }
+      setShowPlaylistEditModal(false);
+      setEditingPlaylist(null);
+      setPlaylistEditForm({ name: '', description: '', isPublic: false, isFeatured: false });
+    } catch (error: any) {
+      alert(error.message || 'Failed to save playlist');
+    }
+  };
+
+  const handleCreatePlaylist = () => {
+    setEditingPlaylist(null);
+    setPlaylistEditForm({ name: '', description: '', isPublic: false, isFeatured: false });
+    setShowPlaylistEditModal(true);
   };
 
   const handleEditAlbum = (track: Track) => {
@@ -83,6 +173,50 @@ const TracksPage: React.FC = () => {
       newExpanded.add(albumKey);
     }
     setExpandedAlbums(newExpanded);
+  };
+
+  // Remixes handlers
+  const handleCreateRemix = () => {
+    setEditingRemix(null);
+    setShowModal(true);
+  };
+
+  const handleEditRemix = (remix: Remix) => {
+    setEditingRemix(remix);
+    setShowModal(true);
+  };
+
+  const handleDeleteRemix = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this remix?')) return;
+    try {
+      await remixService.deleteRemix(id);
+      alert('Remix deleted successfully');
+    } catch (error: any) {
+      alert(error.message);
+    }
+  };
+
+  // Playlists handlers
+  const handleDeletePlaylist = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this playlist?')) return;
+    try {
+      await playlistService.deletePlaylist(id);
+      alert('Playlist deleted successfully');
+    } catch (error: any) {
+      alert(error.message);
+    }
+  };
+
+  // Custom settings handler
+  const handleSaveTrackSettings = async () => {
+    if (!trackSettings) return;
+    try {
+      await settingsService.saveTrackSettings(trackSettings);
+      alert('Custom track settings saved successfully!');
+    } catch (error) {
+      console.error('Failed to save settings:', error);
+      alert('Failed to save settings');
+    }
   };
 
   // Filter toggle functions
@@ -297,150 +431,217 @@ const TracksPage: React.FC = () => {
   return (
     <AdminLayout>
       <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold text-white">Catalogus Management</h1>
+          <p className="text-white/40 mt-1 text-sm">Beheer je tracks, remixes, playlists en custom instellingen</p>
+        </div>
+
+        {/* Tab Navigation */}
+        <div className="flex gap-1 border-b border-white/[0.1]">
+          {(['tracks', 'remixes', 'playlists', 'custom'] as CatalogueTab[]).map((tab) => {
+            const label = tab === 'tracks' ? 'TRACKS' : tab === 'remixes' ? 'REMIXES' : tab === 'playlists' ? 'PLAY' : 'CUSTOM';
+            const isActive = activeTab === tab;
+            return (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`px-4 py-2 font-semibold text-sm transition-all relative group ${
+                  isActive
+                    ? 'text-white'
+                    : 'text-white/40 hover:text-white hover:brightness-110'
+                }`}
+              >
+                <span>{label}</span>
+                {isActive && (
+                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-red-600 to-pink-600" />
+                )}
+              </button>
+            );
+          })}
+        </div>
+
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-white">Tracks Management</h1>
-            <p className="text-white/40 mt-2">Manage your track catalog</p>
-          </div>
-          <button
-            onClick={handleCreate}
-            className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-purple-700 hover:to-pink-700 transition-all flex items-center space-x-2"
-          >
-            <Plus size={20} />
-            <span>Add Track</span>
-          </button>
-        </div>
-
-        {error && (
-          <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl">
-            <p className="text-red-400 text-sm font-semibold">
-              ⚠️ {error}
-            </p>
-          </div>
-        )}
-
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-4">
-            <p className="text-white/40 text-sm">Total Tracks</p>
-            <p className="text-2xl font-bold text-white mt-1">{tracks.length}</p>
-          </div>
-          <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-4">
-            <p className="text-white/40 text-sm">Published</p>
-            <p className="text-2xl font-bold text-white mt-1">
-              {tracks.filter((t) => t.status === 'published').length}
-            </p>
-          </div>
-          <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-4">
-            <p className="text-white/40 text-sm">Featured</p>
-            <p className="text-2xl font-bold text-white mt-1">
-              {tracks.filter((t) => t.featured).length}
-            </p>
-          </div>
-          <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-4">
-            <p className="text-white/40 text-sm">Total Plays</p>
-            <p className="text-2xl font-bold text-white mt-1">
-              {tracks.reduce((sum, t) => sum + t.plays, 0)}
-            </p>
-          </div>
-        </div>
-
-        {/* Filter and Custom Button Configuration Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Filter Section */}
-          <div className="lg:col-span-1 bg-white/[0.08] border border-white/[0.06] rounded-xl p-6">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-white">Filters</h3>
-              </div>
-
-              {/* Type Buttons */}
-              <div className="flex flex-wrap gap-2">
-                {['Singles', 'Albums', 'EPs'].map((type) => {
-                  const actualType = type === 'Singles' ? 'Single' : type === 'EPs' ? 'EP' : 'Album';
-                  const isActive = selectedTypes.has(actualType);
-                  return (
-                    <button
-                      key={type}
-                      onClick={() => toggleTypeFilter(actualType)}
-                      className={`px-4 py-2 rounded-lg font-medium transition-all ${
-                        isActive
-                          ? 'bg-red-600 text-white shadow-lg'
-                          : 'bg-white/[0.06] text-white/60 hover:bg-white/[0.12]'
-                      }`}
-                    >
-                      {type}
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* Year and Status Dropdowns */}
-              <div className="flex flex-col gap-3">
-                <select
-                  value={selectedYear ?? ''}
-                  onChange={(e) => setSelectedYear(e.target.value ? parseInt(e.target.value) : null)}
-                  className={`px-4 py-2 rounded-lg font-medium transition-all ${
-                    selectedYear !== null
-                      ? 'bg-red-600 text-white'
-                      : 'bg-white/[0.06] text-white/60 hover:bg-white/[0.12]'
-                  } focus:outline-none`}
+          <div></div>
+          <div className="flex items-center gap-2">
+            {activeTab === 'tracks' && (
+              <button
+                onClick={handleCreate}
+                className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-purple-700 hover:to-pink-700 transition-all flex items-center space-x-2"
+              >
+                <Plus size={20} />
+                <span>Add Track</span>
+              </button>
+            )}
+            {activeTab === 'remixes' && (
+              <button
+                onClick={handleCreateRemix}
+                className="bg-gradient-to-r from-red-600 to-pink-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-red-700 hover:to-pink-700 transition-all flex items-center space-x-2"
+              >
+                <Plus size={20} />
+                <span>Add Remix</span>
+              </button>
+            )}
+            {activeTab === 'playlists' && (
+              <button
+                onClick={handleCreatePlaylist}
+                className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-indigo-700 hover:to-purple-700 transition-all flex items-center space-x-2"
+              >
+                <Plus size={20} />
+                <span>Add Playlist</span>
+              </button>
+            )}
+            {activeTab === 'custom' && (
+              <button
+                onClick={() => document.getElementById('custom-settings')?.scrollIntoView({ behavior: 'smooth' })}
+                className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-blue-700 hover:to-cyan-700 transition-all flex items-center space-x-2"
+              >
+                <Plus size={20} />
+                <span>Add Custom Tab</span>
+              </button>
+            )}
+            {(activeTab === 'tracks' || activeTab === 'remixes') && (
+              <div className="relative" ref={filterRef}>
+                <button
+                  onClick={() => setShowFilters((v) => !v)}
+                  className={`p-3 rounded-lg border transition-all ${
+                    hasActiveFilters
+                      ? 'bg-red-600 border-red-600 text-white'
+                      : 'bg-white/[0.06] border-white/[0.08] text-white/60 hover:text-white hover:bg-white/[0.12]'
+                  }`}
+                  title={showFilters ? 'Hide filters' : 'Show filters'}
+                  aria-label="Toggle filters"
+                  aria-expanded={showFilters}
                 >
-                  <option value="">Year</option>
-                  {availableYears.map((year) => (
-                    <option key={year} value={year}>
-                      {year}
-                    </option>
-                  ))}
-                </select>
+                  <FilterIcon size={20} />
+                </button>
 
-                <select
-                  value={selectedStatus ?? ''}
-                  onChange={(e) => setSelectedStatus(e.target.value || null)}
-                  className={`px-4 py-2 rounded-lg font-medium transition-all ${
-                    selectedStatus !== null
-                      ? 'bg-red-600 text-white'
-                      : 'bg-white/[0.06] text-white/60 hover:bg-white/[0.12]'
-                  } focus:outline-none`}
-                >
-                  <option value="">Status</option>
-                  <option value="published">Published</option>
-                  <option value="draft">Draft</option>
-                  <option value="archived">Archived</option>
-                </select>
-              </div>
+              {showFilters && (
+                <div className="absolute right-0 top-full mt-2 w-72 bg-black/90 backdrop-blur-xl border border-white/[0.08] rounded-xl p-4 shadow-2xl z-50">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-sm font-semibold text-white">Filters</h3>
+                    {hasActiveFilters && (
+                      <button
+                        onClick={clearAllFilters}
+                        className="text-xs text-red-400 hover:text-red-300 transition"
+                      >
+                        Clear all
+                      </button>
+                    )}
+                  </div>
 
-              {/* Results Counter */}
-              {hasActiveFilters && (
-                <div className="text-sm text-white/60 pt-2">
-                  Showing <span className="font-semibold text-white">{Object.keys(groupedTracks).length}</span> of{' '}
-                  <span className="font-semibold text-white">{Object.keys(
-                    sortedTracks.reduce((acc, track) => {
-                      if (track.type === 'Album' || track.type === 'EP') {
-                        const albumName = track.album || track.title;
-                        const albumKey = `${track.type}:${albumName}`;
-                        if (!acc[albumKey]) acc[albumKey] = true;
-                      } else {
-                        const singleKey = `single:${track.id}`;
-                        if (!acc[singleKey]) acc[singleKey] = true;
-                      }
-                      return acc;
-                    }, {} as Record<string, boolean>)
-                  ).length}</span> items
+                  <div className="space-y-3">
+                    {/* Type Buttons */}
+                    <div>
+                      <p className="text-[11px] uppercase tracking-wider text-white/40 mb-1.5">Type</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {['Singles', 'Albums', 'EPs'].map((type) => {
+                          const actualType = type === 'Singles' ? 'Single' : type === 'EPs' ? 'EP' : 'Album';
+                          const isActive = selectedTypes.has(actualType);
+                          return (
+                            <button
+                              key={type}
+                              onClick={() => toggleTypeFilter(actualType)}
+                              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                                isActive
+                                  ? 'bg-red-600 text-white'
+                                  : 'bg-white/[0.06] text-white/60 hover:bg-white/[0.12]'
+                              }`}
+                            >
+                              {type}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Year */}
+                    <div>
+                      <p className="text-[11px] uppercase tracking-wider text-white/40 mb-1.5">Year</p>
+                      <select
+                        value={selectedYear ?? ''}
+                        onChange={(e) => setSelectedYear(e.target.value ? parseInt(e.target.value) : null)}
+                        className={`w-full px-3 py-2 rounded-lg text-sm transition-all ${
+                          selectedYear !== null
+                            ? 'bg-red-600 text-white'
+                            : 'bg-white/[0.06] text-white/60 hover:bg-white/[0.12]'
+                        } focus:outline-none`}
+                      >
+                        <option value="">All years</option>
+                        {availableYears.map((year) => (
+                          <option key={year} value={year}>
+                            {year}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Status */}
+                    <div>
+                      <p className="text-[11px] uppercase tracking-wider text-white/40 mb-1.5">Status</p>
+                      <select
+                        value={selectedStatus ?? ''}
+                        onChange={(e) => setSelectedStatus(e.target.value || null)}
+                        className={`w-full px-3 py-2 rounded-lg text-sm transition-all ${
+                          selectedStatus !== null
+                            ? 'bg-red-600 text-white'
+                            : 'bg-white/[0.06] text-white/60 hover:bg-white/[0.12]'
+                        } focus:outline-none`}
+                      >
+                        <option value="">All statuses</option>
+                        <option value="published">Published</option>
+                        <option value="draft">Draft</option>
+                        <option value="archived">Archived</option>
+                      </select>
+                    </div>
+
+                    {hasActiveFilters && (
+                      <div className="text-xs text-white/60 pt-2 border-t border-white/[0.06]">
+                        Showing{' '}
+                        <span className="font-semibold text-white">
+                          {Object.keys(groupedTracks).length}
+                        </span>{' '}
+                        of{' '}
+                        <span className="font-semibold text-white">
+                          {Object.keys(
+                            sortedTracks.reduce((acc, track) => {
+                              if (track.type === 'Album' || track.type === 'EP') {
+                                const albumName = track.album || track.title;
+                                const albumKey = `${track.type}:${albumName}`;
+                                if (!acc[albumKey]) acc[albumKey] = true;
+                              } else {
+                                const singleKey = `single:${track.id}`;
+                                if (!acc[singleKey]) acc[singleKey] = true;
+                              }
+                              return acc;
+                            }, {} as Record<string, boolean>)
+                          ).length}
+                        </span>{' '}
+                        items
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
-            </div>
-          </div>
-
-          {/* Custom Button Configuration */}
-          <div className="lg:col-span-2">
-            <CustomButtonConfig isExpanded={true} />
+              </div>
+            )}
           </div>
         </div>
 
-        <div className="space-y-3">
-          {loading ? (
-            <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-12 text-center text-white/40">
-              Loading tracks...
+        {/* TRACKS TAB */}
+        {activeTab === 'tracks' && (
+          <div className="space-y-4">
+            {error && (
+              <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl">
+                <p className="text-red-400 text-sm font-semibold">
+                  ⚠️ {error}
+                </p>
+              </div>
+            )}
+
+            <div className="space-y-3">
+              {tracksLoading ? (
+            <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-12">
+              <LoadingSpinner text="Loading tracks..." />
             </div>
           ) : tracks.length === 0 ? (
             <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-12 text-center text-white/40">
@@ -478,29 +679,7 @@ const TracksPage: React.FC = () => {
                     </button>
 
                     {/* Action Buttons - Album Level */}
-                    <div className="flex items-center space-x-2 flex-shrink-0">
-                      <button
-                        onClick={() => moveAlbumUp(group.albumName)}
-                        disabled={(() => {
-                          const allAlbums = Array.from(new Set(sortedTracks.filter(t => t.type === 'Album' || t.type === 'EP').map(t => t.album || t.title)));
-                          return allAlbums.indexOf(group.albumName) === 0;
-                        })()}
-                        className="p-2 text-white/40 hover:text-white disabled:opacity-30 transition-colors"
-                        title="Move album up"
-                      >
-                        <ArrowUp size={18} />
-                      </button>
-                      <button
-                        onClick={() => moveAlbumDown(group.albumName)}
-                        disabled={(() => {
-                          const allAlbums = Array.from(new Set(sortedTracks.filter(t => t.type === 'Album' || t.type === 'EP').map(t => t.album || t.title)));
-                          return allAlbums.indexOf(group.albumName) === allAlbums.length - 1;
-                        })()}
-                        className="p-2 text-white/40 hover:text-white disabled:opacity-30 transition-colors"
-                        title="Move album down"
-                      >
-                        <ArrowDown size={18} />
-                      </button>
+                    <div className="flex items-center space-x-2 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button
                         onClick={() => handleEditAlbum(group.displayTrack)}
                         className="p-2 text-white/40 hover:text-blue-400 transition-colors"
@@ -564,103 +743,272 @@ const TracksPage: React.FC = () => {
                   )}
                 </div>
               ) : (
-                // Single Track
-                <div key={albumKey} className="bg-white/[0.08] border border-white/[0.06] rounded-xl overflow-hidden">
-                  <div className="overflow-x-auto">
-                    <table className="w-full">
-                      <tbody>
-                        <tr className="hover:bg-white/[0.06]">
-                          <td className="px-6 py-4">
-                            <div className="flex items-center space-x-3">
-                              <img
-                                src={group.displayTrack.artworkUrl}
-                                alt={group.displayTrack.title}
-                                className="w-12 h-12 rounded object-cover"
-                              />
-                              <div>
-                                <p className="font-medium text-white">{group.displayTrack.title}</p>
-                                <p className="text-sm text-white/40">{group.displayTrack.artist}</p>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4">
-                            <span className="px-2 py-1 bg-purple-500/20 text-purple-400 rounded text-sm">
-                              {group.displayTrack.genre}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 text-white/60">
-                            {group.displayTrack.bpm} BPM / {group.displayTrack.key}
-                          </td>
-                          <td className="px-6 py-4">
-                            <span
-                              className={`px-2 py-1 rounded text-sm ${
-                                group.displayTrack.status === 'published'
-                                  ? 'bg-green-500/20 text-green-400'
-                                  : group.displayTrack.status === 'draft'
-                                  ? 'bg-yellow-500/20 text-yellow-400'
-                                  : 'bg-white/[0.06] text-white/40'
-                              }`}
-                            >
-                              {group.displayTrack.status}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 text-white/60">{group.displayTrack.plays}</td>
-                          <td className="px-6 py-4">
-                            <div className="flex items-center justify-end space-x-2">
-                              <button
-                                onClick={() => moveSingleTrackUp(group.displayTrack.id)}
-                                disabled={(() => {
-                                  const singleTracks = sortedTracks.filter(t => !t.album && (t.type === 'Single' || t.type === 'Exclusive'));
-                                  return singleTracks.findIndex(t => t.id === group.displayTrack.id) === 0;
-                                })()}
-                                className="p-2 text-white/40 hover:text-white disabled:opacity-30 transition-colors"
-                                title="Move up"
-                              >
-                                <ArrowUp size={18} />
-                              </button>
-                              <button
-                                onClick={() => moveSingleTrackDown(group.displayTrack.id)}
-                                disabled={(() => {
-                                  const singleTracks = sortedTracks.filter(t => !t.album && (t.type === 'Single' || t.type === 'Exclusive'));
-                                  return singleTracks.findIndex(t => t.id === group.displayTrack.id) === singleTracks.length - 1;
-                                })()}
-                                className="p-2 text-white/40 hover:text-white disabled:opacity-30 transition-colors"
-                                title="Move down"
-                              >
-                                <ArrowDown size={18} />
-                              </button>
-                              <button
-                                onClick={() => togglePlay(group.displayTrack.id)}
-                                className="p-2 text-white/40 hover:text-purple-400 transition-colors"
-                                title="Play preview"
-                              >
-                                {currentlyPlaying === group.displayTrack.id ? <Pause size={18} /> : <Play size={18} />}
-                              </button>
-                              <button
-                                onClick={() => handleEdit(group.displayTrack)}
-                                className="p-2 text-white/40 hover:text-blue-400 transition-colors"
-                                title="Edit"
-                              >
-                                <Edit size={18} />
-                              </button>
-                              <button
-                                onClick={() => handleDelete(group.displayTrack.id)}
-                                className="p-2 text-white/40 hover:text-red-400 transition-colors"
-                                title="Delete"
-                              >
-                                <Trash2 size={18} />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
+                // Single Track - Simplified
+                <div key={albumKey} className="bg-white/[0.05] border border-white/[0.06] rounded-lg p-4 hover:bg-white/[0.08] transition-all flex items-center justify-between group">
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <img
+                      src={group.displayTrack.artworkUrl}
+                      alt={group.displayTrack.title}
+                      className="w-10 h-10 rounded object-cover flex-shrink-0"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-white text-sm truncate">{group.displayTrack.title}</p>
+                      <p className="text-xs text-white/40 truncate">{group.displayTrack.artist}</p>
+                    </div>
+                    <span className="text-xs px-2 py-1 bg-white/[0.06] text-white/60 rounded flex-shrink-0">
+                      {group.displayTrack.type}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                      onClick={() => togglePlay(group.displayTrack.id)}
+                      className="p-1.5 text-white/40 hover:text-purple-400 transition-colors"
+                      title="Play preview"
+                    >
+                      {currentlyPlaying === group.displayTrack.id ? <Pause size={16} /> : <Play size={16} />}
+                    </button>
+                    <button
+                      onClick={() => handleEdit(group.displayTrack)}
+                      className="p-1.5 text-white/40 hover:text-blue-400 transition-colors"
+                      title="Edit"
+                    >
+                      <Edit size={16} />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(group.displayTrack.id)}
+                      className="p-1.5 text-white/40 hover:text-red-400 transition-colors"
+                      title="Delete"
+                    >
+                      <Trash2 size={16} />
+                    </button>
                   </div>
                 </div>
               );
             })
           )}
-        </div>
+            </div>
+          </div>
+        )}
+
+        {/* REMIXES TAB */}
+        {activeTab === 'remixes' && (
+          <div className="space-y-4">
+            <div>
+              <h2 className="text-xl font-bold text-white">Remixes</h2>
+              <p className="text-white/40 text-sm mt-1">{remixes.length} remix(es)</p>
+            </div>
+
+            {remixesLoading ? (
+              <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-8">
+                <LoadingSpinner text="Loading remixes..." />
+              </div>
+            ) : remixes.length === 0 ? (
+              <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-8 text-center text-white/40">
+                No remixes found
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {remixes.map((remix) => (
+                  <div key={remix.id} className="bg-white/[0.05] border border-white/[0.06] rounded-lg p-4 hover:bg-white/[0.08] transition-all flex items-center justify-between group">
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <div className="w-10 h-10 rounded bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center flex-shrink-0">
+                        <Music size={16} className="text-white" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-white text-sm truncate">{remix.title}</p>
+                        <p className="text-xs text-white/40 truncate">{remix.originalArtist || 'Unknown Artist'}</p>
+                      </div>
+                      <span className="text-xs px-2 py-1 bg-white/[0.06] text-white/60 rounded flex-shrink-0">
+                        Remix
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        onClick={() => handleEditRemix(remix)}
+                        className="p-1.5 text-white/40 hover:text-blue-400 transition-colors"
+                        title="Edit"
+                      >
+                        <Edit size={16} />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteRemix(remix.id)}
+                        className="p-1.5 text-white/40 hover:text-red-400 transition-colors"
+                        title="Delete"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* PLAYLISTS TAB */}
+        {activeTab === 'playlists' && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-bold text-white">Playlists</h2>
+                <p className="text-white/40 text-sm mt-1">{playlists.length} playlist(s)</p>
+              </div>
+            </div>
+
+            {playlistsLoading ? (
+              <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-8">
+                <LoadingSpinner text="Loading playlists..." />
+              </div>
+            ) : playlists.length === 0 ? (
+              <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-8 text-center text-white/40">
+                No playlists found
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                {playlists.map((playlist) => (
+                  <div key={playlist.id} className="bg-white/[0.05] border border-white/[0.06] rounded-lg p-4 hover:bg-white/[0.08] transition-all flex flex-col group">
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex-1">
+                        <p className="font-medium text-white text-sm line-clamp-2">{playlist.name}</p>
+                        <p className="text-xs text-white/40 mt-1">{playlist.trackIds?.length || 0} tracks</p>
+                      </div>
+                    </div>
+                    <p className="text-xs text-white/40 line-clamp-2 mb-3">{playlist.description || 'No description'}</p>
+                    <div className="flex items-center gap-1 mb-3 flex-wrap">
+                      {playlist.isPublic && (
+                        <span className="text-xs px-2 py-1 bg-green-500/20 text-green-400 rounded flex items-center gap-1">
+                          <Globe size={12} /> Public
+                        </span>
+                      )}
+                      {playlist.isFeatured && (
+                        <span className="text-xs px-2 py-1 bg-yellow-500/20 text-yellow-400 rounded flex items-center gap-1">
+                          <Star size={12} /> Featured
+                        </span>
+                      )}
+                      {!playlist.isPublic && (
+                        <span className="text-xs px-2 py-1 bg-white/[0.06] text-white/60 rounded flex items-center gap-1">
+                          <Lock size={12} /> Private
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 mt-auto">
+                      <button
+                        onClick={() => handleEditPlaylist(playlist)}
+                        className="flex-1 px-2 py-1.5 bg-white/[0.06] text-white/60 hover:text-white text-xs rounded transition-colors"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleDeletePlaylist(playlist.id)}
+                        className="px-2 py-1.5 text-white/40 hover:text-red-400 transition-colors"
+                        title="Delete"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* CUSTOM TAB */}
+        {activeTab === 'custom' && (
+          <div className="space-y-3" id="custom-settings">
+            <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-4">
+              {loadingSettings ? (
+                <LoadingSpinner text="Loading settings..." />
+              ) : trackSettings ? (
+                <div className="space-y-3">
+                  {/* Custom Tab 1 */}
+                  <div className="flex items-center justify-between p-3 bg-white/[0.06] rounded-lg">
+                    <div className="flex-1">
+                      <label className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={trackSettings.customTab1Enabled}
+                          onChange={(e) =>
+                            setTrackSettings({
+                              ...trackSettings,
+                              customTab1Enabled: e.target.checked,
+                            })
+                          }
+                          className="rounded"
+                        />
+                        <span className="text-sm font-semibold text-white">Custom Tab 1</span>
+                      </label>
+                    </div>
+                    {trackSettings.customTab1Enabled && (
+                      <input
+                        type="text"
+                        value={trackSettings.customTab1Label}
+                        onChange={(e) =>
+                          setTrackSettings({
+                            ...trackSettings,
+                            customTab1Label: e.target.value,
+                          })
+                        }
+                        placeholder="Label"
+                        className="w-32 px-2 py-1 rounded bg-white/[0.06] border border-white/[0.06] text-white text-xs focus:outline-none focus:border-blue-500"
+                      />
+                    )}
+                  </div>
+
+                  {/* Custom Tab 2 */}
+                  <div className="flex items-center justify-between p-3 bg-white/[0.06] rounded-lg">
+                    <div className="flex-1">
+                      <label className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={trackSettings.customTab2Enabled}
+                          onChange={(e) =>
+                            setTrackSettings({
+                              ...trackSettings,
+                              customTab2Enabled: e.target.checked,
+                            })
+                          }
+                          className="rounded"
+                        />
+                        <span className="text-sm font-semibold text-white">Custom Tab 2</span>
+                      </label>
+                    </div>
+                    {trackSettings.customTab2Enabled && (
+                      <input
+                        type="text"
+                        value={trackSettings.customTab2Label}
+                        onChange={(e) =>
+                          setTrackSettings({
+                            ...trackSettings,
+                            customTab2Label: e.target.value,
+                          })
+                        }
+                        placeholder="Label"
+                        className="w-32 px-2 py-1 rounded bg-white/[0.06] border border-white/[0.06] text-white text-xs focus:outline-none focus:border-blue-500"
+                      />
+                    )}
+                  </div>
+
+                  <div className="flex justify-end pt-2">
+                    <button
+                      onClick={handleSaveTrackSettings}
+                      className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 px-3 py-1.5 rounded-lg text-white font-medium transition-all text-sm"
+                    >
+                      <Save size={14} />
+                      Save
+                    </button>
+                  </div>
+                </div>
+              ) : null}
+            </div>
+
+            <div className="bg-blue-900/20 border border-blue-700/30 rounded-xl p-3">
+              <p className="text-xs text-blue-300">
+                💡 Enable and name custom tabs to create specialized track collections
+              </p>
+            </div>
+          </div>
+        )}
       </div>
 
       {showModal && (
@@ -672,6 +1020,42 @@ const TracksPage: React.FC = () => {
             setEditingTrack(null);
           }}
         />
+      )}
+
+      {showPlaylistEditModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowPlaylistEditModal(false)} />
+          <div className="relative bg-black border border-white/[0.06] rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-black/80 backdrop-blur-sm border-b border-white/[0.06] px-5 py-4 flex items-center justify-between z-10">
+              <h2 className="text-lg font-bold text-white">{editingPlaylist ? 'Edit Playlist' : 'Create Playlist'}</h2>
+              <button onClick={() => setShowPlaylistEditModal(false)} className="text-white/40 hover:text-white"><Plus size={20} className="rotate-45" /></button>
+            </div>
+            <div className="px-5 py-4 space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-white/60 uppercase mb-2">Name</label>
+                <input value={playlistEditForm.name} onChange={(e) => setPlaylistEditForm({...playlistEditForm, name: e.target.value})} className="w-full px-3 py-2 rounded-lg bg-white/[0.08] border border-white/[0.06] text-white text-sm focus:outline-none focus:border-purple-500" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-white/60 uppercase mb-2">Description</label>
+                <textarea value={playlistEditForm.description} onChange={(e) => setPlaylistEditForm({...playlistEditForm, description: e.target.value})} className="w-full px-3 py-2 rounded-lg bg-white/[0.08] border border-white/[0.06] text-white text-sm focus:outline-none focus:border-purple-500 resize-none" rows={3} />
+              </div>
+              <div className="space-y-2">
+                <label className="flex items-center gap-2">
+                  <input type="checkbox" checked={playlistEditForm.isPublic} onChange={(e) => setPlaylistEditForm({...playlistEditForm, isPublic: e.target.checked})} className="rounded" />
+                  <span className="text-xs font-semibold text-white/60">Make Public</span>
+                </label>
+                <label className="flex items-center gap-2">
+                  <input type="checkbox" checked={playlistEditForm.isFeatured} onChange={(e) => setPlaylistEditForm({...playlistEditForm, isFeatured: e.target.checked})} className="rounded" />
+                  <span className="text-xs font-semibold text-white/60">Featured</span>
+                </label>
+              </div>
+              <div className="flex gap-2 pt-4">
+                <button onClick={() => setShowPlaylistEditModal(false)} className="flex-1 py-2 rounded-lg bg-white/[0.06] text-white hover:bg-white/[0.12] text-sm font-medium">Cancel</button>
+                <button onClick={handleSavePlaylist} className="flex-1 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 text-sm font-medium">Save</button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </AdminLayout>
   );
@@ -705,6 +1089,7 @@ const TrackFormModal: React.FC<TrackFormModalProps> = ({ track, onClose, onSave 
     type: track?.type || 'Single',
     year: track?.year || currentYear,
     collab: track?.collab || 'Solo',
+    duration: track?.duration || '0:00',
     tags: track?.tags?.join(', ') || '',
     audioUrl: track?.audioUrl || '',
     artworkUrl: track?.artworkUrl || '',
@@ -713,13 +1098,11 @@ const TrackFormModal: React.FC<TrackFormModalProps> = ({ track, onClose, onSave 
     status: track?.status || 'draft',
     featured: track?.featured || false,
     isFree: track?.isFree || false,
+    description: track?.description || '',
   });
 
   const [tracklist, setTracklist] = useState<TracklistItem[]>([]);
-  const [customTrackLinks, setCustomTrackLinks] = useState<CustomTrackLink[]>(track?.customTrackLinks || []);
   const [saving, setSaving] = useState(false);
-  const [showCustomLinkForm, setShowCustomLinkForm] = useState(false);
-  const [newCustomLink, setNewCustomLink] = useState({ mode: 'custom' as 'custom' | 'existing', title: '', audioUrl: '', trackId: '' });
   const { tracks: allTracks } = useTracks();
 
   // Load album tracks when editing an album
@@ -751,14 +1134,14 @@ const TrackFormModal: React.FC<TrackFormModalProps> = ({ track, onClose, onSave 
         type: formData.type,
         year: formData.year,
         collab: formData.collab,
+        duration: formData.duration,
         tags: formData.tags.split(',').map((t) => t.trim()),
         artworkUrl: formData.artworkUrl,
         slug: formData.slug || formData.title.toLowerCase().replace(/\s+/g, '-'),
         status: formData.status,
         featured: formData.featured,
         isFree: formData.isFree,
-        ...(formData.price && formData.price !== '' && { price: parseFloat(formData.price as any) }),
-        customTrackLinks: customTrackLinks.length > 0 ? customTrackLinks : undefined,
+        description: formData.description || undefined,
         licenses: {
           basic: {
             type: 'basic' as const,
@@ -918,40 +1301,6 @@ const TrackFormModal: React.FC<TrackFormModalProps> = ({ track, onClose, onSave 
     }
   };
 
-  const addCustomTrackLink = () => {
-    if (newCustomLink.mode === 'custom' && (!newCustomLink.title || !newCustomLink.audioUrl)) {
-      alert('Please enter both title and audio URL');
-      return;
-    }
-    if (newCustomLink.mode === 'existing' && !newCustomLink.trackId) {
-      alert('Please select a track');
-      return;
-    }
-
-    if (newCustomLink.mode === 'custom') {
-      setCustomTrackLinks([...customTrackLinks, {
-        title: newCustomLink.title,
-        audioUrl: toDirectUrl(newCustomLink.audioUrl),
-      }]);
-    } else {
-      const selectedTrack = allTracks.find(t => t.id === newCustomLink.trackId);
-      if (selectedTrack) {
-        setCustomTrackLinks([...customTrackLinks, {
-          title: selectedTrack.title,
-          audioUrl: selectedTrack.audioUrl,
-          trackId: selectedTrack.id,
-        }]);
-      }
-    }
-
-    setNewCustomLink({ mode: 'custom', title: '', audioUrl: '', trackId: '' });
-    setShowCustomLinkForm(false);
-  };
-
-  const removeCustomTrackLink = (index: number) => {
-    setCustomTrackLinks(customTrackLinks.filter((_, i) => i !== index));
-  };
-
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-xl z-50 flex items-start justify-center pt-8 pb-8 overflow-y-auto p-4">
       <div className="bg-white/[0.10] backdrop-blur-2xl border border-white/[0.10] rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
@@ -965,7 +1314,7 @@ const TrackFormModal: React.FC<TrackFormModalProps> = ({ track, onClose, onSave 
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-white/60 mb-2">
-                {(formData.type === 'Album' || formData.type === 'EP') ? 'Album Name' : 'Title'}
+                {(formData.type === 'Album' || formData.type === 'EP') ? 'Album Name' : 'Title'} <span className="text-red-400">*</span>
               </label>
               <input
                 type="text"
@@ -977,7 +1326,7 @@ const TrackFormModal: React.FC<TrackFormModalProps> = ({ track, onClose, onSave 
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Artist</label>
+              <label className="block text-sm font-medium text-white/60 mb-2">Artist <span className="text-red-400">*</span></label>
               <input
                 type="text"
                 value={formData.artist}
@@ -987,7 +1336,7 @@ const TrackFormModal: React.FC<TrackFormModalProps> = ({ track, onClose, onSave 
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Type</label>
+              <label className="block text-sm font-medium text-white/60 mb-2">Type <span className="text-red-400">*</span></label>
               <select
                 value={formData.type}
                 onChange={(e) => setFormData({ ...formData, type: e.target.value as 'Album' | 'EP' | 'Single' | 'Exclusive' })}
@@ -1001,7 +1350,7 @@ const TrackFormModal: React.FC<TrackFormModalProps> = ({ track, onClose, onSave 
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Year</label>
+              <label className="block text-sm font-medium text-white/60 mb-2">Year <span className="text-red-400">*</span></label>
               <input
                 type="number"
                 value={formData.year}
@@ -1011,7 +1360,7 @@ const TrackFormModal: React.FC<TrackFormModalProps> = ({ track, onClose, onSave 
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Collab</label>
+              <label className="block text-sm font-medium text-white/60 mb-2">Collab <span className="text-red-400">*</span></label>
               <select
                 value={formData.collab}
                 onChange={(e) => setFormData({ ...formData, collab: e.target.value as 'Solo' | 'Collab' })}
@@ -1023,13 +1372,23 @@ const TrackFormModal: React.FC<TrackFormModalProps> = ({ track, onClose, onSave 
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Genre</label>
+              <label className="block text-sm font-medium text-white/60 mb-2">Genre <span className="text-red-400">*</span></label>
               <input
                 type="text"
                 value={formData.genre}
                 onChange={(e) => setFormData({ ...formData, genre: e.target.value })}
                 className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white"
                 required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-white/60 mb-2">Duration</label>
+              <input
+                type="text"
+                value={formData.duration}
+                onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
+                className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white"
+                placeholder="e.g. 3:45"
               />
             </div>
             <div>
@@ -1256,11 +1615,17 @@ const TrackFormModal: React.FC<TrackFormModalProps> = ({ track, onClose, onSave 
             </div>
           )}
 
-          {/* Custom Track Links Section */}
-          <div className="space-y-3 border-t border-white/[0.06] pt-4">
-            <CustomTrackLinksEditor
-              customLinks={customTrackLinks}
-              onLinksChange={setCustomTrackLinks}
+
+          <div>
+            <label className="block text-sm font-medium text-white/60 mb-2">
+              Description (optional)
+            </label>
+            <textarea
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              placeholder="Add a description for this track..."
+              className="w-full px-3 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white placeholder-white/30 focus:outline-none focus:border-white/[0.2]"
+              rows={3}
             />
           </div>
 

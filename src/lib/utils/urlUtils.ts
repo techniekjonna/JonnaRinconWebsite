@@ -9,8 +9,12 @@
  */
 export function toDirectUrl(url: string): string {
   if (!url) return url;
-  // Check if it's a Nextcloud/ownCloud share URL and doesn't already have /download
+  // Nextcloud/ownCloud share URL (/index.php/s/ pattern, covers internedata.nl and others)
   if (url.includes('/index.php/s/') && !url.endsWith('/download')) {
+    return url.replace(/\/?$/, '/download');
+  }
+  // internedata.nl short share links (e.g. https://cloud.internedata.nl/s/xxx)
+  if (url.includes('internedata.nl') && /\/s\/[^/]+$/.test(url)) {
     return url.replace(/\/?$/, '/download');
   }
   return url;
@@ -23,7 +27,7 @@ export function toDirectUrl(url: string): string {
  */
 export function detectUrlType(url: string): 'nextcloud' | 'firebase' | 'direct' {
   if (!url) return 'direct';
-  if (url.includes('/index.php/s/')) return 'nextcloud';
+  if (url.includes('/index.php/s/') || url.includes('internedata.nl')) return 'nextcloud';
   if (url.includes('firebasestorage.googleapis.com') || url.includes('firebase')) return 'firebase';
   return 'direct';
 }

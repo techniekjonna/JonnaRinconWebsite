@@ -2,9 +2,11 @@ import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { X, ShoppingBag, ArrowUpRight, Music, LogOut, LogIn } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import { useCart } from '../hooks/useCart';
+import { useCartContext } from '../contexts/CartContext';
 import ShoppingCart from './ShoppingCart';
-import { getCurrentTrack, togglePlayerOpen } from './GlobalAudioPlayer';
+import { getCurrentTrack, togglePlayerOpen, openPlayer, setPreviewTrack } from './GlobalAudioPlayer';
+import { useTracks } from '../hooks/useTracks';
+import { useContrastColor } from '../lib/utils/colorDetection';
 
 interface NavigationProps {
   cartItemCount?: number;
@@ -26,12 +28,34 @@ export default function Navigation({ cartItemCount = 0, onCartClick, isDarkOverl
   const [authLoading, setAuthLoading] = useState(false);
   const [expandedShop, setExpandedShop] = useState(false);
   const [expandedCatalogue, setExpandedCatalogue] = useState(false);
-  const [isCartOpen, setIsCartOpen] = useState(false);
+  const [expandedGetInTouch, setExpandedGetInTouch] = useState(false);
   const { user, signIn, signUp, signOut } = useAuth();
-  const { cartItems, removeFromCart, removeItemByIndex, clearCart } = useCart();
+  const { cartItems, isOpen: isCartOpen, setIsOpen: setIsCartOpen, removeFromCart, clearCart } = useCartContext();
+  const { tracks } = useTracks();
   const navigate = useNavigate();
   const closeTimeout = useRef<NodeJS.Timeout | null>(null);
   const scrollPositionRef = useRef(0);
+
+  // Smart color detection for menu button and logo
+  const smartColor = useContrastColor();
+
+  // Convert color name to actual color value for inline styles
+  const getColorValue = (colorName: string): string => {
+    const colors: Record<string, string> = {
+      'white': '#ffffff',
+      'black': '#000000',
+    };
+    return colors[colorName] || '#ffffff';
+  };
+
+  const navTextColor = getColorValue('white');  // Always white navigation text
+
+  // Listen for external open event (from Header hamburger button)
+  useEffect(() => {
+    const handleOpenPanel = () => openMenu();
+    window.addEventListener('open-nav-panel', handleOpenPanel);
+    return () => window.removeEventListener('open-nav-panel', handleOpenPanel);
+  }, []);
 
   // Lock scroll when menu is open - improved state management
   useEffect(() => {
@@ -154,11 +178,10 @@ export default function Navigation({ cartItemCount = 0, onCartClick, isDarkOverl
     }
   };
 
-  // Determine nav colors based on context
-  const useWhiteNav = isDarkOverlay && !isLightMode;
-  const useBlackNav = isLightMode || !isDarkOverlay;
-
-  const navTextColor = useWhiteNav ? 'text-white' : 'text-black';
+  // Determine nav colors based on smart detection
+  // Use smartColor for both logo and menu based on background brightness
+  const useWhiteNav = true;  // Always use white logo and white text for nav
+  const useBlackNav = false;
 
   const shopSubmenu = [
     { label: 'Beat Shop', subtitle: 'Browse instrumentals', href: '/shop/beats' },
@@ -176,10 +199,15 @@ export default function Navigation({ cartItemCount = 0, onCartClick, isDarkOverl
     { label: 'Support', subtitle: 'Artist support & features', href: '/support', isSmall: true },
   ];
 
-  const menuItems: { label: string; subtitle: string; href?: string; action?: () => void; submenu?: Array<{ label: string; subtitle: string; href: string }>; expanded?: boolean }[] = [
+  const getInTouchSubmenu = [
+    { label: 'Social Media', subtitle: 'Follow on all platforms', href: '/socials', action: () => { closeMenu(); navigate('/socials'); } },
+    { label: 'Contact', subtitle: 'For serious inquiries', href: '#contact', action: () => { closeMenu(); navigate('/contact'); } },
+  ];
+
+  const menuItems: { label: string; subtitle: string; href?: string; action?: () => void; submenu?: Array<{ label: string; subtitle: string; href: string; action?: () => void }>; expanded?: boolean }[] = [
     { label: 'SHOP', subtitle: 'Browse our catalog', action: () => setExpandedShop(!expandedShop), submenu: shopSubmenu, expanded: expandedShop },
     { label: 'CATALOGUE', subtitle: 'Browse all content', action: () => setExpandedCatalogue(!expandedCatalogue), submenu: catalogueSubmenu, expanded: expandedCatalogue },
-    { label: 'SOCIALS & CONTACT', subtitle: 'Follow & Get in touch', action: () => { closeMenu(); navigate('/socials'); } },
+    { label: 'GET IN TOUCH', subtitle: 'Connect with Jonna', action: () => setExpandedGetInTouch(!expandedGetInTouch), submenu: getInTouchSubmenu, expanded: expandedGetInTouch },
   ];
 
   const socialLinks = [
@@ -187,6 +215,7 @@ export default function Navigation({ cartItemCount = 0, onCartClick, isDarkOverl
     { label: 'YouTube', href: 'https://www.youtube.com/jonnarincon' },
     { label: 'Spotify', href: 'https://open.spotify.com/artist/6o3BlWTeK4EKUyByo35y6F' },
     { label: 'SoundCloud', href: 'https://soundcloud.com/jonnarincon' },
+    { label: 'Shops', href: '/shop', internal: true },
   ];
 
   const menuVisible = isMenuOpen || isMenuClosing;
@@ -394,10 +423,10 @@ export default function Navigation({ cartItemCount = 0, onCartClick, isDarkOverl
                 </div>
 
                 {/* Divider */}
-                <div className="w-full h-px bg-white/[0.06]" />
+                <div className="w-full h-px bg-white/[0.06] mb-4" />
 
-                {/* Menu items — clean, modern, spaced */}
-                <div className="flex-1 flex flex-col justify-center -mt-8">
+                {/* Menu items — clean, modern, spaced, scrollable */}
+                <div className="flex-1 flex flex-col overflow-y-auto pr-2 pb-12">
                   {menuItems.map((item, i) => (
                     <div key={item.label}>
                       <button
@@ -422,7 +451,7 @@ export default function Navigation({ cartItemCount = 0, onCartClick, isDarkOverl
 
                       {/* Submenu */}
                       {item.submenu && (
-                        <div className={`overflow-hidden transition-all duration-300 ease-out ${item.expanded ? 'max-h-96' : 'max-h-0'}`}>
+                        <div className={`overflow-hidden transition-all duration-300 ease-out ${item.expanded ? 'max-h-[800px]' : 'max-h-0'}`}>
                           {/* Group small items together */}
                           {(() => {
                             const smallItems = item.submenu.filter((s: any) => s.isSmall);
@@ -433,10 +462,14 @@ export default function Navigation({ cartItemCount = 0, onCartClick, isDarkOverl
                                 {/* Regular items */}
                                 {regularItems.map((subitem: any, subIndex) => (
                                   <button
-                                    key={subitem.href}
+                                    key={subitem.href || subitem.label}
                                     onClick={() => {
-                                      closeMenu();
-                                      navigate(subitem.href);
+                                      if (subitem.action) {
+                                        subitem.action();
+                                      } else {
+                                        closeMenu();
+                                        navigate(subitem.href);
+                                      }
                                     }}
                                     className="group w-full text-left py-3 md:py-4 cursor-pointer border-b border-white/[0.04] hover:translate-x-1.5 transition-transform duration-300"
                                     style={{
@@ -497,7 +530,7 @@ export default function Navigation({ cartItemCount = 0, onCartClick, isDarkOverl
                   >
                     <div className="flex items-center justify-between">
                       <div>
-                        <span className="block text-2xl md:text-3xl font-semibold text-white/90 group-hover:text-white transition-colors duration-300 tracking-tight">
+                        <span className="block text-3xl md:text-4xl font-semibold text-white/90 group-hover:text-white transition-colors duration-300 tracking-tight">
                           {user ? 'DASHBOARD' : 'SIGN IN'}
                         </span>
                         {user && (
@@ -536,11 +569,7 @@ export default function Navigation({ cartItemCount = 0, onCartClick, isDarkOverl
                       <button
                         onClick={() => {
                           closeMenu();
-                          if (cartItems.length > 0) {
-                            setIsCartOpen(true);
-                          } else {
-                            navigate('/shop');
-                          }
+                          setIsCartOpen(true);
                         }}
                         className="relative transition-all hover:scale-110 duration-300 cursor-pointer"
                       >
@@ -554,7 +583,25 @@ export default function Navigation({ cartItemCount = 0, onCartClick, isDarkOverl
 
                       {/* Player Button */}
                       <button
-                        onClick={() => { closeMenu(); togglePlayerOpen(); }}
+                        onClick={() => {
+                          closeMenu();
+                          if (!getCurrentTrack() && tracks.length > 0) {
+                            const published = tracks.filter(t => t.status === 'published');
+                            const random = published[Math.floor(Math.random() * published.length)];
+                            if (random) {
+                              setPreviewTrack({
+                                id: random.id,
+                                title: random.title,
+                                artist: random.artist,
+                                audioUrl: random.audioUrl,
+                                coverArt: random.artworkUrl || '',
+                              });
+                            }
+                            openPlayer();
+                          } else {
+                            togglePlayerOpen();
+                          }
+                        }}
                         className="transition-all hover:scale-110 duration-300 cursor-pointer"
                         title="Toggle player"
                       >
@@ -602,17 +649,27 @@ export default function Navigation({ cartItemCount = 0, onCartClick, isDarkOverl
                 {/* Bottom — Social links */}
                 <div className="flex-shrink-0 py-6 md:py-8">
                   <div className="flex flex-wrap gap-x-5 gap-y-2 mb-4">
-                    {socialLinks.map((link) => (
-                      <a
-                        key={link.label}
-                        href={link.href}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-[11px] text-white/25 uppercase tracking-[0.15em] font-medium hover:text-white/60 transition-colors duration-300"
-                      >
-                        {link.label}
-                      </a>
-                    ))}
+                    {socialLinks.map((link) =>
+                      (link as any).internal ? (
+                        <button
+                          key={link.label}
+                          onClick={() => { closeMenu(); navigate(link.href); }}
+                          className="text-[11px] text-white/25 uppercase tracking-[0.15em] font-medium hover:text-white/60 transition-colors duration-300"
+                        >
+                          {link.label}
+                        </button>
+                      ) : (
+                        <a
+                          key={link.label}
+                          href={link.href}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-[11px] text-white/25 uppercase tracking-[0.15em] font-medium hover:text-white/60 transition-colors duration-300"
+                        >
+                          {link.label}
+                        </a>
+                      )
+                    )}
                   </div>
                   <p className="text-[10px] text-white/15 uppercase tracking-[0.15em] font-medium">
                     &copy; 2025 Jonna Rincon
@@ -636,6 +693,11 @@ export default function Navigation({ cartItemCount = 0, onCartClick, isDarkOverl
         .animate-panel-slide-in {
           animation: panel-slide-in 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
+        @media (max-width: 768px) {
+          .animate-panel-slide-in {
+            animation: panel-slide-in 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+          }
+        }
 
         @keyframes panel-slide-out {
           from {
@@ -648,6 +710,11 @@ export default function Navigation({ cartItemCount = 0, onCartClick, isDarkOverl
         .animate-panel-slide-out {
           animation: panel-slide-out 0.5s cubic-bezier(0.7, 0, 0.84, 0) forwards;
         }
+        @media (max-width: 768px) {
+          .animate-panel-slide-out {
+            animation: panel-slide-out 0.2s cubic-bezier(0.7, 0, 0.84, 0) forwards;
+          }
+        }
 
         @keyframes menu-item-reveal {
           from {
@@ -657,6 +724,13 @@ export default function Navigation({ cartItemCount = 0, onCartClick, isDarkOverl
           to {
             opacity: 1;
             transform: translateX(0);
+          }
+        }
+
+        @media (max-width: 768px) {
+          /* Faster animations on mobile */
+          [style*="animation-delay"] {
+            animation-duration: 0.3s !important;
           }
         }
       `}</style>
@@ -670,10 +744,8 @@ export default function Navigation({ cartItemCount = 0, onCartClick, isDarkOverl
           removeFromCart(beatId);
         }}
         onCheckout={() => {
-          alert('Proceeding to checkout...');
-          // TODO: Implement checkout flow
-          clearCart();
           setIsCartOpen(false);
+          navigate('/checkout');
         }}
       />
     </nav>

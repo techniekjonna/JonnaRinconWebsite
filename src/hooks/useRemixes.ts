@@ -12,6 +12,7 @@ export const useRemixes = (filters?: {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    setLoading(true);
     const unsubscribe = remixService.subscribeToRemixes(
       (remixesData) => {
         setRemixes(remixesData);
@@ -21,7 +22,7 @@ export const useRemixes = (filters?: {
     );
 
     return () => unsubscribe();
-  }, [filters?.status, filters?.featured, filters?.genre]);
+  }, [JSON.stringify(filters)]);
 
   return { remixes, loading, error, setError };
 };

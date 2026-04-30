@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ShoppingCart, Star } from 'lucide-react';
+import { ShoppingCart, Star, ChevronLeft, ChevronRight } from 'lucide-react';
 import Navigation from '../../components/Navigation';
 import Footer from '../../components/Footer';
 import MerchandiseDetailModal from '../../components/MerchandiseDetailModal';
@@ -7,6 +7,7 @@ import { useCyberDecodeInView } from '../../hooks/useCyberDecode';
 import { useMerchandise } from '../../hooks/useMerchandise';
 import { useCart } from '../../hooks/useCart';
 import { Merchandise } from '../../lib/firebase/types';
+import { useScrollToTop } from '../../hooks/useScrollToTop';
 
 const merchandiseItems: any[] = [
   {
@@ -120,6 +121,7 @@ const merchandiseItems: any[] = [
 ];
 
 const MerchandisePage: React.FC = () => {
+  useScrollToTop();
   const heroTitle = useCyberDecodeInView('Merchandise');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedMerchandise, setSelectedMerchandise] = useState<Merchandise | null>(null);
@@ -159,18 +161,15 @@ const MerchandisePage: React.FC = () => {
 
   return (
     <div className="min-h-screen text-white">
-      {/* Fixed JEIGHTENESIS Background */}
-      <div className="fixed inset-0 w-full h-screen -z-10">
-        <img src="/JEIGHTENESIS.jpg" alt="" className="w-full h-full object-cover" style={{ objectPosition: 'center' }} />
-        <div className="absolute inset-0 bg-black/80" />
-      </div>
+      {/* Fixed Dark Overlay */}
+      <div className="fixed inset-0 w-full h-screen -z-10 bg-black/20" />
 
       <Navigation isDarkOverlay={true} isLightMode={false} />
 
       {/* Hero Section - Centered Layout */}
       <section className="relative pt-40 px-6 md:px-12 pb-4">
         <div className="relative z-10 max-w-7xl mx-auto w-full">
-          <h1 ref={heroTitle.ref as React.RefObject<HTMLHeadingElement>} className="text-6xl md:text-8xl lg:text-9xl font-black uppercase leading-[0.85] tracking-tighter mb-8 text-center">
+          <h1 ref={heroTitle.ref as React.RefObject<HTMLHeadingElement>} style={{fontSize: 'clamp(1.875rem, 8vw, 10.2rem)'}} className="font-black uppercase leading-[0.85] tracking-tighter mb-8 text-center">
             {heroTitle.display}
           </h1>
 
@@ -231,15 +230,43 @@ const MerchandisePage: React.FC = () => {
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
 
-                  {/* Stock Badge */}
-                  {!item.inStock && (
+                  {/* Stock Badge - Show only when totalStock is 0 */}
+                  {(item.totalStock ?? 0) === 0 && (
                     <div className="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm">
                       <span className="text-white font-bold text-lg">Out of Stock</span>
                     </div>
                   )}
 
+                  {/* Logos */}
+                  <div className="absolute top-3 left-3 right-3 flex justify-between items-start gap-2">
+                    {item.showJonnaRinconLogo && (
+                      <div className="w-12 h-12 flex items-center justify-center flex-shrink-0 drop-shadow-lg">
+                        <img
+                          src="/Jonna Rincon Logo WH.png"
+                          alt="Jonna Rincon"
+                          className="w-full h-full object-contain"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).style.display = 'none';
+                          }}
+                        />
+                      </div>
+                    )}
+                    {item.showJeighteenLogo && (
+                      <div className="w-12 h-12 flex items-center justify-center flex-shrink-0 drop-shadow-lg">
+                        <img
+                          src="/JEIGHTEEN-logo.png"
+                          alt="JEIGHTEEN"
+                          className="w-full h-full object-contain brightness-0 drop-shadow-md"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).style.display = 'none';
+                          }}
+                        />
+                      </div>
+                    )}
+                  </div>
+
                   {/* Category Badge */}
-                  <div className="absolute top-3 left-3">
+                  <div className="absolute bottom-3 left-3">
                     <span className="px-3 py-1.5 bg-white/[0.08] backdrop-blur-sm border border-white/[0.1] text-white text-[10px] font-bold rounded-full uppercase tracking-wider">
                       {item.category}
                     </span>
@@ -272,15 +299,15 @@ const MerchandisePage: React.FC = () => {
                         e.stopPropagation();
                         handleAddToCart(item.id);
                       }}
-                      disabled={!item.inStock}
+                      disabled={(item.totalStock ?? 0) === 0}
                       className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold transition-all group-hover:scale-105 ${
-                        item.inStock
+                        (item.totalStock ?? 0) > 0
                           ? 'bg-red-600 hover:bg-red-700 text-white'
                           : 'bg-white/[0.04] text-white/30 cursor-not-allowed'
                       }`}
                     >
                       <ShoppingCart size={14} />
-                      {cartItems.some((cart: any) => cart.id === item.id) ? 'Added!' : 'Add'}
+                      {(item.totalStock ?? 0) === 0 ? 'Out of Stock' : 'Add'}
                     </button>
                   </div>
                 </div>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X, ChevronDown } from 'lucide-react';
 
 interface FilterOption {
@@ -24,6 +24,18 @@ export default function FilterModal({
   const [expandedFilter, setExpandedFilter] = useState<string | null>(
     filters.length > 0 ? filters[0].label : null
   );
+
+  // Prevent body scroll when modal is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'auto';
+    }
+    return () => {
+      document.body.style.overflow = 'auto';
+    };
+  }, [isOpen]);
 
   if (!isOpen) return null;
 

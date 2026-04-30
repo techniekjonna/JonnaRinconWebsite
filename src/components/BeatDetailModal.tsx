@@ -53,6 +53,18 @@ export default function BeatDetailModal({
     return () => document.removeEventListener('keydown', handleEscape);
   }, [isOpen, onClose]);
 
+  // Prevent body scroll when modal is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'auto';
+    }
+    return () => {
+      document.body.style.overflow = 'auto';
+    };
+  }, [isOpen]);
+
   if (!isOpen || !beat) return null;
 
   const isCurrentBeatPlaying = getCurrentTrack()?.id === beat.id;
@@ -113,7 +125,7 @@ export default function BeatDetailModal({
         {/* Main Content */}
         <div className="grid grid-cols-1 md:grid-cols-5 gap-0 overflow-y-auto max-h-[calc(90vh-60px)]">
           {/* Left Column - Artwork & Quick Stats */}
-          <div className="md:col-span-2 bg-gradient-to-b from-white/[0.08] to-transparent p-4 md:p-6 border-b md:border-b-0 md:border-r border-white/[0.1]">
+          <div className="md:col-span-2 bg-gradient-to-b from-white/[0.08] to-transparent p-4 md:p-6 pt-16 md:pt-6 border-b md:border-b-0 md:border-r border-white/[0.1]">
             {/* Artwork */}
             <div className="relative aspect-square rounded-2xl overflow-hidden mb-4 group">
               <img

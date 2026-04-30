@@ -42,6 +42,8 @@ export default function BeatCard({ beat, onAddToCart }: BeatCardProps) {
         <img
           src={beat.artwork_url}
           alt={beat.title}
+          loading="lazy"
+          decoding="async"
           className="w-full h-full object-cover group-hover:scale-110 transition-all duration-700"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-60 group-hover:opacity-40 transition-opacity duration-300"></div>

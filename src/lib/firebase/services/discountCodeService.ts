@@ -259,7 +259,7 @@ class DiscountCodeService {
           codes.push({ id: doc.id, ...doc.data() } as DiscountCode);
         });
         // Sort client-side instead
-        codes.sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
+        codes.sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0));
         callback(codes);
       },
       (error) => {

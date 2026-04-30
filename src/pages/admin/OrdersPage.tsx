@@ -62,32 +62,6 @@ const OrdersPage: React.FC = () => {
           </select>
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-4">
-            <p className="text-white/40 text-sm">Total Orders</p>
-            <p className="text-2xl font-bold text-white mt-1">{orders.length}</p>
-          </div>
-          <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-4">
-            <p className="text-white/40 text-sm">Pending</p>
-            <p className="text-2xl font-bold text-yellow-400 mt-1">
-              {orders.filter((o) => o.status === 'pending').length}
-            </p>
-          </div>
-          <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-4">
-            <p className="text-white/40 text-sm">Completed</p>
-            <p className="text-2xl font-bold text-green-400 mt-1">
-              {orders.filter((o) => o.status === 'completed').length}
-            </p>
-          </div>
-          <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-4">
-            <p className="text-white/40 text-sm">Total Revenue</p>
-            <p className="text-2xl font-bold text-white mt-1">
-              €{orders.reduce((sum, o) => o.status === 'completed' ? sum + o.total : sum, 0).toFixed(2)}
-            </p>
-          </div>
-        </div>
-
         {/* Orders Table */}
         <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl overflow-hidden">
           <div className="overflow-x-auto">

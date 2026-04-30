@@ -1,239 +1,440 @@
-/* Jonna Rincon Audio Player Styling */
+/* Jonna Rincon Audio Player Styling - Redesigned Layout */
 
 .jonna-audio-player {
   background: rgba(255, 255, 255, 0.04) !important;
   backdrop-filter: blur(12px) !important;
   border-top: 1px solid rgba(255, 255, 255, 0.06) !important;
+  padding-top: 0 !important;
 }
 
-.jonna-audio-player .rhap_container {
-  position: relative !important;
-  background: transparent !important;
-  backdrop-filter: none !important;
-  border-top: none !important;
-  padding: 48px 16px 24px 16px !important;
-  gap: 14px !important;
+/* Progress bar at top - Spotify style with times */
+.jonna-progress-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 16px;
+  height: auto;
 }
 
-/* X button (close button) */
-.jonna-audio-player .jonna-close-button {
-  width: 40px !important;
-  height: 40px !important;
-  padding: 8px !important;
-  border-radius: 50% !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
+.jonna-progress-slider {
+  flex: 1;
+  height: 6px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  outline: none;
+  cursor: pointer;
+  accent-color: rgb(220, 38, 38);
+  -webkit-appearance: none;
+  appearance: none;
 }
 
-.jonna-audio-player .jonna-close-button:hover {
-  background: rgba(255, 255, 255, 0.06) !important;
+.jonna-progress-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: rgb(220, 38, 38);
+  cursor: pointer;
+  box-shadow: 0 0 8px rgba(220, 38, 38, 0.6);
 }
 
-/* Progress bar */
-.jonna-audio-player .rhap_progress-container {
-  position: absolute !important;
-  top: 0 !important;
-  left: 0 !important;
-  right: 0 !important;
-  margin: 0 !important;
-  padding: 12px 0 8px 0 !important;
-  width: 100% !important;
-  grid-column: 1 / -1 !important;
+.jonna-progress-slider::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: rgb(220, 38, 38);
+  cursor: pointer;
+  box-shadow: 0 0 8px rgba(220, 38, 38, 0.6);
+  border: none;
 }
 
-.jonna-audio-player .rhap_progress-bar {
-  background: rgba(255, 255, 255, 0.08) !important;
-  border-radius: 4px !important;
-  height: 6px !important;
-  cursor: pointer !important;
+/* Main player content container - LEFT / CENTER / RIGHT layout */
+.jonna-player-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 16px;
+  width: 100%;
+  min-height: 100px;
 }
 
-.jonna-audio-player .rhap_progress-filled {
-  background: linear-gradient(to right, rgb(220, 38, 38), rgb(239, 68, 68)) !important;
-  border-radius: 4px !important;
-  position: relative !important;
+/* LEFT: Cover art section */
+.jonna-cover-section {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+  min-width: fit-content;
+  width: auto;
 }
 
-/* Progress bar circle indicator */
-.jonna-audio-player .rhap_progress-filled::after {
-  content: '' !important;
-  position: absolute !important;
-  width: 14px !important;
-  height: 14px !important;
-  background: rgb(220, 38, 38) !important;
-  border-radius: 50% !important;
-  right: -7px !important;
-  top: 50% !important;
-  transform: translateY(-50%) !important;
-  box-shadow: 0 0 8px rgba(220, 38, 38, 0.6) !important;
+.jonna-cover-wrapper {
+  width: 80px;
+  height: 80px;
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  flex-shrink: 0;
 }
 
-.jonna-audio-player .rhap_progress-bar:hover .rhap_progress-filled {
-  height: 6px !important;
+.jonna-cover-wrapper:hover {
+  transform: scale(1.05);
+  box-shadow: 0 8px 16px rgba(220, 38, 38, 0.3);
 }
 
-/* Hide buffering bar - all variants */
-.jonna-audio-player .rhap_buffered-progress,
-.jonna-audio-player .rhap_buffering,
-.jonna-audio-player .rhap_buffered,
-.jonna-audio-player .rhap_progress-bar > *:not(.rhap_progress-filled) {
-  display: none !important;
+.jonna-cover-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
-/* Controls - Desktop layout with center-aligned play button */
+.jonna-track-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: left;
+  width: auto;
+  min-width: 0;
+  flex-shrink: 1;
+}
+
+.jonna-track-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+}
+
+.jonna-track-artist {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.6);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+}
+
+/* CENTER: Shuffle + Play Controls + Repeat */
+.jonna-center-section {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  flex: 1;
+  min-width: fit-content;
+}
+
+/* Play controls: Prev + Play + Next together */
+.jonna-play-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: fit-content;
+}
+
+.jonna-skip-btn {
+  width: 40px;
+  height: 40px;
+}
+
+.jonna-play-pause-btn {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgb(220, 38, 38), rgb(239, 68, 68));
+  color: white;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.jonna-play-pause-btn:hover {
+  background: linear-gradient(135deg, rgb(239, 68, 68), rgb(248, 113, 113));
+  transform: scale(1.08);
+  box-shadow: 0 8px 24px rgba(220, 38, 38, 0.4);
+}
+
+.jonna-play-pause-btn:active {
+  transform: scale(0.95);
+}
+
+.jonna-control-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.4);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.jonna-control-btn:hover {
+  color: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.jonna-control-btn:active {
+  transform: scale(0.95);
+}
+
+/* RIGHT: Controls (Mute, Volume, Close) */
+.jonna-right-controls {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-shrink: 0;
+  min-width: fit-content;
+}
+
+.jonna-volume-slider {
+  width: 80px;
+  height: 4px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  outline: none;
+  cursor: pointer;
+  accent-color: rgb(220, 38, 38);
+  -webkit-appearance: none;
+  appearance: none;
+  display: none;
+}
+
 @media (min-width: 769px) {
-  .jonna-audio-player .rhap_container {
-    display: grid !important;
-    grid-template-columns: 1fr auto 1fr !important;
-    align-items: center !important;
-    padding: 48px 24px 24px 24px !important;
-  }
-
-  .jonna-audio-player .rhap_additional-controls {
-    grid-column: 1 !important;
-    justify-self: start !important;
-  }
-
-  .jonna-audio-player .rhap_controls-section {
-    grid-column: 2 !important;
-    justify-self: center !important;
-  }
-
-  .jonna-audio-player .rhap_time {
-    grid-column: 3 !important;
-    justify-self: end !important;
+  .jonna-volume-slider {
+    display: block;
   }
 }
 
-/* Controls */
-.jonna-audio-player .rhap_controls-section {
-  display: flex !important;
-  align-items: center !important;
-  gap: 8px !important;
+.jonna-volume-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgb(220, 38, 38);
+  cursor: pointer;
 }
 
-.jonna-audio-player .rhap_controls-section button {
-  color: rgba(255, 255, 255, 0.4) !important;
-  transition: all 0.3s ease !important;
-  padding: 8px !important;
-  border-radius: 50% !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
+.jonna-volume-slider::-moz-range-thumb {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgb(220, 38, 38);
+  cursor: pointer;
+  border: none;
 }
 
-.jonna-audio-player .rhap_controls-section button:hover {
-  color: rgba(255, 255, 255, 0.7) !important;
-  background: rgba(255, 255, 255, 0.06) !important;
+/* PlayerModal slider thumb styling (scoped to avoid global conflicts) */
+.player-modal-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: white;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
-/* Play/Pause button */
-.jonna-audio-player .rhap_play-pause-button {
-  width: 40px !important;
-  height: 40px !important;
-  background: linear-gradient(135deg, rgb(220, 38, 38), rgb(239, 68, 68)) !important;
-  color: white !important;
-  border-radius: 50% !important;
-  border: none !important;
-  cursor: pointer !important;
-  transition: all 0.3s ease !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
+.player-modal-range::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: white;
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
-.jonna-audio-player .rhap_play-pause-button:hover {
-  background: linear-gradient(135deg, rgb(239, 68, 68), rgb(248, 113, 113)) !important;
-  transform: scale(1.05) !important;
+.player-modal-volume::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: rgb(220, 38, 38);
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
-/* Volume control */
-.jonna-audio-player .rhap_volume-container {
-  display: flex !important;
-  align-items: center !important;
-  gap: 8px !important;
+.player-modal-volume::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: rgb(220, 38, 38);
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
-.jonna-audio-player .rhap_volume-button {
-  color: rgba(255, 255, 255, 0.4) !important;
-  transition: all 0.3s ease !important;
+.jonna-close-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.4);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  padding: 0;
+  flex-shrink: 0;
 }
 
-.jonna-audio-player .rhap_volume-button:hover {
-  color: rgba(255, 255, 255, 0.7) !important;
+.jonna-close-btn:hover {
+  color: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.06);
 }
 
-.jonna-audio-player input[type='range'] {
-  accent-color: rgb(220, 38, 38) !important;
-  background: rgba(255, 255, 255, 0.08) !important;
-  border-radius: 4px !important;
-  height: 4px !important;
+.jonna-close-btn:active {
+  transform: scale(0.95);
 }
 
-/* Track info & Additional controls */
-.jonna-audio-player .rhap_additional-controls {
-  display: flex !important;
-  align-items: center !important;
-  gap: 12px !important;
-  margin-right: 16px !important;
+/* Active state for buttons */
+.jonna-control-btn.jonna-active {
+  color: rgb(220, 38, 38);
+  background: rgba(220, 38, 38, 0.1);
+  box-shadow: 0 0 12px rgba(220, 38, 38, 0.3);
 }
 
-/* Volume container positioning */
-.jonna-audio-player .rhap_volume-container {
-  margin-left: 8px !important;
+.jonna-control-btn.jonna-active:hover {
+  color: rgb(248, 113, 113);
+  background: rgba(220, 38, 38, 0.15);
 }
 
-.jonna-audio-player .rhap_time {
-  color: rgba(255, 255, 255, 0.5) !important;
-  font-size: 12px !important;
-  font-weight: 500 !important;
-  min-width: 45px !important;
+/* Time display - within progress container */
+.jonna-progress-container .jonna-current-time {
+  min-width: 30px;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.5);
+  text-align: right;
 }
 
-/* Hide default footer if present */
-.jonna-audio-player .rhap_footer {
-  display: none !important;
+.jonna-progress-container .jonna-total-time {
+  min-width: 30px;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.5);
+  text-align: left;
 }
 
-/* Responsive */
+/* Mobile/Tablet responsive */
 @media (max-width: 768px) {
-  .jonna-audio-player .rhap_container {
-    position: relative !important;
-    padding: 48px 12px 32px 12px !important;
-    padding-bottom: max(32px, calc(32px + env(safe-area-inset-bottom))) !important;
-    gap: 10px !important;
+  .jonna-progress-container {
+    padding: 6px 12px;
+    gap: 6px;
   }
 
-  .jonna-audio-player .rhap_progress-container {
-    padding: 14px 0 10px !important;
+  .jonna-progress-container .jonna-current-time,
+  .jonna-progress-container .jonna-total-time {
+    font-size: 10px;
+    min-width: 28px;
   }
 
-  .jonna-audio-player .rhap_progress-bar {
-    height: 6px !important;
+  .jonna-player-content {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    gap: 6px;
+    padding: 6px 10px;
+    min-height: auto;
+    justify-content: space-between;
+    align-items: center;
   }
 
-  .jonna-audio-player .rhap_progress-filled::after {
-    width: 12px !important;
-    height: 12px !important;
-    right: -6px !important;
+  .jonna-cover-section {
+    display: flex !important;
+    flex-direction: row;
+    gap: 8px;
+    align-items: center;
+    flex-shrink: 1;
+    min-width: 0;
+    flex: 1;
   }
 
-  .jonna-audio-player .rhap_play-pause-button {
-    width: 40px !important;
-    height: 40px !important;
+  .jonna-cover-wrapper {
+    width: 48px;
+    height: 48px;
+    border-radius: 6px;
+    flex-shrink: 0;
   }
 
-  .jonna-audio-player .rhap_controls-section button {
-    padding: 8px !important;
+  .jonna-track-info {
+    width: auto;
+    text-align: left;
+    flex-shrink: 1;
+    min-width: 0;
   }
 
-  .jonna-audio-player .rhap_time {
-    font-size: 11px !important;
-    min-width: 40px !important;
+  .jonna-track-title {
+    font-size: 12px;
+    max-width: 100%;
   }
 
-  .jonna-audio-player .rhap_volume-container {
-    display: none !important;
+  .jonna-track-artist {
+    font-size: 11px;
+    max-width: 100%;
+  }
+
+  .jonna-center-section {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+
+  .jonna-play-controls {
+    gap: 2px;
+  }
+
+  .jonna-right-controls {
+    display: none;
+  }
+
+  .jonna-skip-btn {
+    width: 32px;
+    height: 32px;
+  }
+
+  .jonna-play-pause-btn {
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+  }
+
+  .jonna-control-btn {
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+  }
+
+  .jonna-close-btn {
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
   }
 }

@@ -96,6 +96,7 @@ export interface Beat {
   bpm: number;
   key: string;
   genre: string;
+  duration?: string; // e.g. "3:45"
   subGenre?: string;
   mood?: string[];
   tags: string[];
@@ -139,6 +140,34 @@ export interface Beat {
 }
 
 // ============================================
+// BEAT PACK TYPES
+// ============================================
+
+export interface BeatPackItem {
+  title: string;
+  artist: string;
+  bpm: number;
+  key: string;
+  genre: string;
+  duration?: string; // e.g. "3:45"
+  audioUrl: string;
+  downloadUrl: string;
+}
+
+export interface BeatPack {
+  id: string;
+  title: string;
+  description?: string;
+  coverUrl: string;
+  beats: BeatPackItem[];
+  price: number;
+  status: 'draft' | 'published';
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+  createdBy: string;
+}
+
+// ============================================
 // ART TYPES
 // ============================================
 
@@ -147,59 +176,31 @@ export interface Art {
   title: string;
   description: string;
   artist: string;
-  medium: string; // e.g., "Digital", "Acrylic", "Mixed Media"
+  medium: string;
   year: number;
-  category: string; // e.g., "Digital Art", "Cover Design", "Visual Art", "Illustration", "Photography"
-  image: string; // Main image URL
 
-  // Media
-  gallery?: string[]; // Additional gallery images
+  // Art Type System
+  type: 'Painting' | 'Hardware' | 'Furniture' | 'Clothing';
+  subtype?: string; // For Clothing: 'Jacket', 'Bomber Jacket', 'Jeans', 'Leather Jacket', 'Belt', 'Cap', 'Sunglasses', etc.
+  category: string; // Legacy category support
 
-  // Status
-  status: 'draft' | 'published' | 'archived';
-  featured: boolean;
+  image: string;
+  gallery?: string[];
 
-  // Stats
-  views: number;
-  likes: number;
+  // Pricing & Availability
+  forSale: boolean; // Toggle for NOT FOR SALE
+  price?: number; // Optional, if not set = FREE
+  isFree: boolean; // True if no price set or price is 0
 
-  // SEO & Meta
-  slug: string;
-  metaTitle?: string;
-  metaDescription?: string;
-
-  // Timestamps
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
-
-  // Creator info
-  createdBy: string;
-  lastUpdatedBy: string;
-}
-
-// ============================================
-// MERCHANDISE TYPES
-// ============================================
-
-export interface Merchandise {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  category: string; // e.g., "Clothing", "Accessories", "Home", "Other"
-  image: string; // Main product image URL
-
-  // Media
-  gallery?: string[]; // Additional product images
+  // Stock Management (All art pieces are unique, stock = 1)
+  stock: number; // Always 1 for unique pieces
+  sold: boolean; // True when purchased
+  soldAt?: Timestamp; // When it was sold
+  soldToUserId?: string; // User who bought it
 
   // Status
   status: 'draft' | 'published' | 'archived';
   featured: boolean;
-  inStock: boolean;
-
-  // Stats
-  views: number;
-  sold: number;
 
   // SEO & Meta
   slug: string;
@@ -225,8 +226,17 @@ export interface Service {
   description: string;
   rate: number; // Price per hour or service rate
   cta: string; // Call-to-action button text
-  gradient: string; // e.g., "from-purple-600 to-pink-600"
+  gradient: string; // e.g., "from-red-600 to-orange-600"
   icon: string; // Icon name as string (e.g., "Zap", "Music", "Edit")
+  coverUrl?: string; // Optional cover image URL
+
+  // Delivery option prices (for services with multiple delivery speeds)
+  price48h?: number; // 48-hour delivery price
+  price72h?: number; // 72-hour delivery price
+  price7days?: number; // 7-day delivery price
+
+  // Download link (for delivering service files/documents)
+  downloadUrl?: string; // Optional download link URL
 
   // Status
   status: 'draft' | 'published' | 'archived';
@@ -250,6 +260,15 @@ export interface Service {
 }
 
 // ============================================
+// MERCHANDISE SIZE TYPE
+// ============================================
+
+export interface MerchandiseSize {
+  name: string; // e.g., "S", "M", "L", "XL"
+  stock: number; // Quantity available in this size
+}
+
+// ============================================
 // MERCHANDISE TYPES
 // ============================================
 
@@ -262,13 +281,25 @@ export interface Merchandise {
   image: string; // Product image URL
   gallery?: string[]; // Additional product images
 
+  // Inventory Management
+  totalStock: number; // Total quantity available
+  sold: number; // Total quantity sold
+  sizes?: MerchandiseSize[]; // Optional sizes with individual stock counts (for clothing)
+
+  // Pre-order
+  isPreOrder: boolean; // Whether this is a pre-order item
+  preOrderDeadline?: Timestamp; // When pre-orders close
+
+  // Brand Logos
+  showJeighteenLogo: boolean; // Show JEIGHTEEN logo
+  showJonnaRinconLogo: boolean; // Show JONNA RINCON logo
+
   // Status
   status: 'draft' | 'published' | 'archived';
   featured: boolean;
 
   // Stats
   views: number;
-  sold: number;
 
   // SEO & Meta
   slug: string;
@@ -322,6 +353,17 @@ export interface Purchase {
   // Status
   status: 'pending' | 'completed' | 'expired';
 
+  // Optional: present for beat-pack purchases. Individual beats inside the pack
+  // with their own download links.
+  packBeats?: {
+    title: string;
+    artist: string;
+    bpm: number;
+    key: string;
+    genre: string;
+    downloadUrl: string;
+  }[];
+
   // Timestamps
   createdAt: Timestamp;
   expiresAt: Timestamp;
@@ -348,6 +390,7 @@ export interface Track {
   bpm?: number;
   key?: string;
   genre: string;
+  duration?: string; // e.g. "3:45"
   subGenre?: string;
   mood?: string[];
   tags: string[];
@@ -475,6 +518,7 @@ export interface Remix {
   bpm?: number;
   key?: string;
   genre: string;
+  duration?: string; // e.g. "3:45"
   subGenre?: string;
   mood?: string[];
   tags: string[];
@@ -579,6 +623,59 @@ export interface Edit {
 }
 
 // ============================================
+// PURCHASE/DOWNLOAD LINK TYPES
+// ============================================
+
+export interface DownloadLink {
+  url: string;
+  expiresAt: Timestamp;
+  isActive: boolean;
+  downloadedAt?: Timestamp;
+}
+
+export type SupportStatus = 'idle' | 'requested' | 'in_progress' | 'completed';
+export type ProductCategory = 'beat' | 'track' | 'remix' | 'edit' | 'art' | 'merchandise' | 'service';
+
+// For Mix Masters and services with delivery timers
+export interface DeliveryTimer {
+  startedAt: Timestamp;
+  deliveryOption: '48h' | '72h' | '7days'; // Delivery time option
+  expiresAt: Timestamp;
+  isCompleted: boolean;
+  completedAt?: Timestamp;
+}
+
+export interface ProductPurchase {
+  id: string;
+  orderId: string;
+  productId: string;
+  productType: ProductCategory;
+  productTitle: string;
+  productArtist?: string;
+  price: number;
+
+  // Product-specific info
+  coverImage?: string;
+
+  // Download management
+  downloadLinks?: Record<string, DownloadLink>; // e.g., { "wav": {...}, "stems": {...}, "main": {...} }
+  supportStatus: SupportStatus;
+  supportRequestedAt?: Timestamp;
+
+  // For Mix Masters and services
+  deliveryTimer?: DeliveryTimer;
+
+  // Status and metadata
+  status: 'active' | 'expired' | 'refunded';
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+
+  // Customer and order info
+  customerId: string;
+  customerEmail: string;
+}
+
+// ============================================
 // ORDER TYPES
 // ============================================
 
@@ -593,11 +690,15 @@ export type OrderStatus =
 export type PaymentMethod = 'stripe' | 'paypal' | 'ideal' | 'bancontact';
 
 export interface OrderItem {
-  beatId: string;
-  beatTitle: string;
-  licenseType: LicenseType;
+  productId: string;
+  productType: ProductCategory;
+  productTitle: string;
+  productArtist?: string;
   price: number;
-  artworkUrl: string;
+  quantity?: number;
+  artworkUrl?: string;
+  licenseType?: LicenseType;
+  deliveryOption?: '48h' | '72h' | '7days'; // For services/mix masters
 }
 
 export interface Order {
@@ -627,8 +728,8 @@ export interface Order {
   paymentStatus: 'pending' | 'succeeded' | 'failed';
 
   // Delivery
-  downloadLinks?: Record<string, string>; // beatId -> download link
-  licensePDFs?: Record<string, string>; // beatId -> license PDF URL
+  downloadLinks?: Record<string, string>; // productId -> download link (legacy)
+  licensePDFs?: Record<string, string>; // productId -> license PDF URL
 
   // Notes
   customerNote?: string;
@@ -958,6 +1059,223 @@ export interface FollowGateCompletion {
 
   // Timestamps
   createdAt: Timestamp;
+}
+
+// ============================================
+// CHAT & MESSAGING TYPES
+// ============================================
+
+export type ChatPersonality = 'jonna' | 'manager' | 'support';
+export type ChatCategory = 'tracks' | 'remixes' | 'beats' | 'art' | 'merchandise' | 'services' | 'business' | 'questions';
+export type MessageStatus = 'sent' | 'delivered' | 'read';
+
+export interface ChatMessage {
+  id: string;
+  conversationId: string;
+  senderId: string; // user UID or 'admin'
+  senderName: string;
+  senderAvatar?: string;
+  personality: ChatPersonality; // Which "person" this is from
+  content: string;
+  timestamp: Timestamp;
+  status: MessageStatus;
+  attachments?: string[]; // URLs to images/files
+
+  // Optional context for product/order chats
+  linkedProductId?: string;
+  linkedOrderId?: string;
+}
+
+export interface ChatConversation {
+  id: string;
+  userId: string; // Customer UID
+  userEmail: string;
+  userName?: string;
+
+  // Chat metadata
+  personalities: ChatPersonality[]; // Which personalities are involved
+  category: ChatCategory; // What this chat is about
+
+  // Context
+  linkedProductId?: string;
+  linkedOrderId?: string;
+  subject?: string;
+
+  // Messages and status
+  messageCount: number;
+  lastMessage?: string;
+  lastMessageAt?: Timestamp;
+  unreadCount: number;
+
+  // Timeline
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+  closedAt?: Timestamp;
+  isClosed: boolean;
+}
+
+export interface ChatPersonalityInfo {
+  id: ChatPersonality;
+  name: string;
+  description: string;
+  avatar?: string;
+  icon?: string; // lucide-react icon name
+  color: string; // Tailwind color class
+}
+
+export interface Playlist {
+  id: string;
+  userId: string;
+  name: string;
+  description?: string;
+  trackIds: string[];
+  coverImage: string; // URL of first track's cover
+  isPublic: boolean;
+  isFeatured: boolean; // Admin only
+  views: number;
+  likes: number;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+  createdBy: string;
+}
+
+// ============================================
+// AGENDA TYPES
+// ============================================
+
+export type AgendaDayStatus = 'available' | 'absent' | 'studio' | string;
+export type AgendaStatusType = 'beschikbaar' | 'afwezig' | 'beschikbaar_studio' | 'custom';
+
+export interface AgendaStatus {
+  id: string;
+  name: string;
+  color: string;
+  bgColor: string;
+  type: AgendaStatusType;
+  isBuiltIn: boolean;
+  createdAt: Timestamp;
+}
+
+export interface AgendaTask {
+  id: string;
+  title: string;
+  description?: string;
+  date?: string; // YYYY-MM-DD
+  userId?: string;
+  userDisplayName?: string;
+  productType?: string;
+  time?: string;
+  completed: boolean;
+  createdAt: Timestamp;
+  updatedAt?: Timestamp;
+}
+
+export interface AgendaDay {
+  id: string; // YYYY-MM-DD date string
+  date: string; // YYYY-MM-DD
+  statusId?: string | null;
+  statusNote?: string;
+  studioSessionOrderId?: string;
+  studioSessionInfo?: {
+    clientName?: string;
+    clientEmail?: string;
+    sessionType?: string;
+    notes?: string;
+  };
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+export interface AgendaEntry {
+  id: string; // YYYY-MM-DD date string
+  date: string; // YYYY-MM-DD
+  status?: AgendaDayStatus;
+  statusLabel?: string;
+  statusDescription?: string;
+  tasks: AgendaTask[];
+  studioSessionInfo?: {
+    clientName?: string;
+    clientEmail?: string;
+    sessionType?: string;
+    notes?: string;
+  };
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+export interface AgendaCustomStatus {
+  id: string;
+  name: string;
+  color: string;
+  description?: string;
+  createdAt: Timestamp;
+}
+
+// ============================================
+// PROJECT TYPES
+// ============================================
+
+export type ProjectStatus = 'not-started' | 'in-progress' | 'on-hold' | 'awaiting-feedback' | 'completed';
+export type ProjectFilterType = 'all' | 'completed' | 'in-progress' | 'not-started' | 'not-completed' | 'now-working';
+
+export interface ProjectAttachment {
+  id: string;
+  name: string;
+  url: string;
+  uploadedAt: Timestamp;
+  uploadedBy: string;
+}
+
+export interface ProjectSubTask {
+  id: string;
+  projectId: string;
+  title: string;
+  description?: string;
+  status: ProjectStatus;
+  order: number;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+export interface ProjectCommentReaction {
+  userId: string;
+  emoji: string;
+  timestamp: Timestamp;
+}
+
+export interface ProjectComment {
+  id: string;
+  projectId: string;
+  userId: string;
+  userDisplayName: string;
+  userRole: 'admin' | 'manager';
+  content: string;
+  reactions: ProjectCommentReaction[];
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+  editedAt?: Timestamp;
+}
+
+export interface Project {
+  id: string;
+  title: string;
+  description: string;
+  status: ProjectStatus;
+  category?: 'artist' | 'producer' | 'other';
+  coverUrl?: string;
+  internalDataLink?: string;
+  downloadSuffix?: string;
+  attachments: ProjectAttachment[];
+  subTasks: ProjectSubTask[];
+  agendaTaskIds: string[];
+  availableDateRanges: {
+    startDate: string;
+    endDate: string;
+  }[];
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+  createdBy: string;
+  lastUpdatedBy: string;
 }
 
 // ============================================
