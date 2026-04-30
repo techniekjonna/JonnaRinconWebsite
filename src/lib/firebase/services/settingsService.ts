@@ -74,6 +74,7 @@ export interface CustomButton {
   label: string;
   url: string;
   color: string;
+  trackIds?: string[];
 }
 
 export interface TrackSettings {
