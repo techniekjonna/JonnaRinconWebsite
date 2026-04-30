@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
-import { ChevronDown, ChevronUp, AlertCircle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ChevronDown, ChevronUp, AlertCircle, X } from 'lucide-react';
 import { useTrackSettings } from '../../hooks/useTrackSettings';
 import { CustomButton, TrackSettings } from '../../lib/firebase/services/settingsService';
+import { useTracks } from '../../hooks/useTracks';
+import { Track } from '../../lib/firebase/types';
 
 interface CustomButtonConfigProps {
   isExpanded?: boolean;
@@ -20,12 +22,16 @@ const colorOptions = [
 
 const CustomButtonConfig: React.FC<CustomButtonConfigProps> = ({ isExpanded: initialExpanded = true }) => {
   const { settings, loading, error, updateSettings } = useTrackSettings();
+  const { tracks: allTracks = [], loading: tracksLoading } = useTracks({ status: 'published' });
   const [isExpanded, setIsExpanded] = useState(initialExpanded);
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   const [button1, setButton1] = useState<CustomButton | undefined>(settings?.customButton1);
   const [button2, setButton2] = useState<CustomButton | undefined>(settings?.customButton2);
+
+  const [isTrackModalOpen, setIsTrackModalOpen] = useState<1 | 2 | null>(null);
+  const [trackSearchQuery, setTrackSearchQuery] = useState('');
 
   React.useEffect(() => {
     if (settings) {
@@ -59,20 +65,39 @@ const CustomButtonConfig: React.FC<CustomButtonConfigProps> = ({ isExpanded: ini
   const updateButton = (
     buttonNum: 1 | 2,
     field: keyof CustomButton,
-    value: string
+    value: string | string[]
   ) => {
     if (buttonNum === 1) {
       setButton1({
         ...button1!,
         [field]: value,
-      });
+      } as CustomButton);
     } else {
       setButton2({
         ...button2!,
         [field]: value,
-      });
+      } as CustomButton);
     }
   };
+
+  const toggleTrackSelection = (buttonNum: 1 | 2, trackId: string) => {
+    const button = buttonNum === 1 ? button1 : button2;
+    const currentTrackIds = button?.trackIds || [];
+    const newTrackIds = currentTrackIds.includes(trackId)
+      ? currentTrackIds.filter(id => id !== trackId)
+      : [...currentTrackIds, trackId];
+
+    updateButton(buttonNum, 'trackIds', newTrackIds);
+  };
+
+  const clearTrackSelection = (buttonNum: 1 | 2) => {
+    updateButton(buttonNum, 'trackIds', []);
+  };
+
+  const filteredTracks = allTracks.filter(track =>
+    track.title.toLowerCase().includes(trackSearchQuery.toLowerCase()) ||
+    track.artist.toLowerCase().includes(trackSearchQuery.toLowerCase())
+  );
 
   const toggleButtonEnabled = (buttonNum: 1 | 2, enabled: boolean) => {
     if (buttonNum === 1) {
