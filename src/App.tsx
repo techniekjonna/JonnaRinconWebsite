@@ -23,6 +23,7 @@ function App() {
   const [isDarkOverlay, setIsDarkOverlay] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [loadingComplete, setLoadingComplete] = useState(false);
+  const [contentVisible, setContentVisible] = useState(false);
 
 
   const handleAddToCart = (beat: Beat, license: 'basic' | 'premium' | 'exclusive') => {
@@ -88,7 +89,10 @@ function App() {
 
   return (
     <div className="min-h-screen text-white">
-      <LoadingScreen onLoadingComplete={() => setLoadingComplete(true)} />
+      <LoadingScreen onLoadingComplete={() => {
+        setLoadingComplete(true);
+        setTimeout(() => setContentVisible(true), 100);
+      }} />
 
       <ShoppingCart
         isOpen={isCartOpen}
@@ -98,7 +102,13 @@ function App() {
         onCheckout={handleCheckout}
       />
 
-      <main className="pt-20">
+      <main
+        className="pt-20"
+        style={{
+          opacity: contentVisible ? 1 : 0,
+          transition: 'opacity 1.2s ease-in-out',
+        }}
+      >
         {/* === HERO + DARK SECTIONS === */}
         <div id="hero" className="h-screen overflow-hidden"><Hero /></div>
         <Marquee />

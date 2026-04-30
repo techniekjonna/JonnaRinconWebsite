@@ -50,6 +50,13 @@ export default function Navigation({ cartItemCount = 0, onCartClick, isDarkOverl
 
   const navTextColor = getColorValue('white');  // Always white navigation text
 
+  // Listen for external open event (from Header hamburger button)
+  useEffect(() => {
+    const handleOpenPanel = () => openMenu();
+    window.addEventListener('open-nav-panel', handleOpenPanel);
+    return () => window.removeEventListener('open-nav-panel', handleOpenPanel);
+  }, []);
+
   // Lock scroll when menu is open - improved state management
   useEffect(() => {
     const updateBodyScroll = () => {
@@ -214,55 +221,8 @@ export default function Navigation({ cartItemCount = 0, onCartClick, isDarkOverl
   const menuVisible = isMenuOpen || isMenuClosing;
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-30">
-      {/* Top bar — logo left, MENU right */}
-      <div className="fixed top-0 left-0 right-0 z-30 flex items-center justify-between px-6 md:px-10 py-4 md:py-5">
-        {/* Logo — top-left */}
-        <Link to="/" className="block flex-shrink-0">
-          <div className="relative h-[160px] md:h-[200px]">
-            <img
-              src="/Jonna Rincon Logo BL.png"
-              alt="Jonna Rincon"
-              className="h-full w-auto transition-opacity duration-500"
-              style={{ opacity: useWhiteNav ? 0 : 1 }}
-            />
-            <img
-              src="/Jonna Rincon Logo WH.png"
-              alt="Jonna Rincon"
-              className="absolute top-0 left-0 h-full w-auto transition-opacity duration-500"
-              style={{ opacity: useWhiteNav ? 1 : 0 }}
-            />
-          </div>
-        </Link>
-
-        {/* Right side — Cart + MENU */}
-        <div className="flex items-center gap-5 md:gap-6">
-          {/* Cart icon */}
-          {cartItems.length > 0 && (
-            <button
-              onClick={() => setIsCartOpen(true)}
-              style={{ color: navTextColor }}
-              className={`relative transition-all duration-300 hover:scale-110 cursor-pointer`}
-            >
-              <ShoppingBag className="w-5 h-5" strokeWidth={1.5} />
-              <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-red-600 rounded-full flex items-center justify-center text-[9px] font-bold text-white">
-                {cartItems.length}
-              </span>
-            </button>
-          )}
-
-          {/* MENU button */}
-          <button
-            onClick={openMenu}
-            style={{ color: navTextColor }}
-            className={`text-lg md:text-xl font-black uppercase tracking-[0.3em] transition-all duration-500 hover:opacity-60 cursor-pointer`}
-          >
-            Menu
-          </button>
-        </div>
-      </div>
-
-      <div className="w-full">
+    <nav className="fixed top-0 left-0 right-0 z-30 pointer-events-none">
+      <div className="w-full pointer-events-auto">
 
         {/* Auth Modal */}
         {isAuthModalOpen && (

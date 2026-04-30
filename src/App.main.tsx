@@ -12,6 +12,7 @@ import GlobalBeatDetailModal from './components/GlobalBeatDetailModal';
 import BackgroundRenderer from './components/BackgroundRenderer';
 import BackgroundOverlay from './components/BackgroundOverlay';
 import Header from './components/Header';
+import Navigation from './components/Navigation';
 
 // Public pages
 import HomePage from './App';
@@ -112,6 +113,7 @@ const MainApp: React.FC = () => {
             <BeatDetailProvider>
               <BrowserRouter>
                 <Header />
+                <Navigation />
                 <ScrollToTopWrapper>
                   <BackgroundOverlay />
                   <GlobalAudioPlayer />

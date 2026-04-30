@@ -1,24 +1,24 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, ShoppingBag } from 'lucide-react';
+import { Menu, ShoppingBag } from 'lucide-react';
 import { useCartContext } from '../contexts/CartContext';
 
 const Header: React.FC = () => {
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [showMobileMenu, setShowMobileMenu] = useState(false);
-  const [showMenuLabel, setShowMenuLabel] = useState(false);
+  const [hamburgerHovered, setHamburgerHovered] = useState(false);
   const location = useLocation();
-  const menuRef = useRef<HTMLDivElement>(null);
   const logoRef = useRef<HTMLDivElement>(null);
   const [logoScale, setLogoScale] = useState(1);
   const [headerOpacity, setHeaderOpacity] = useState(1);
   const { cartItems } = useCartContext();
 
+  const openNavPanel = () => {
+    window.dispatchEvent(new CustomEvent('open-nav-panel'));
+  };
+
   const openCart = () => {
     window.dispatchEvent(new CustomEvent('open-cart'));
   };
 
-  // Hide header on protected/admin routes
   const isProtectedRoute = location.pathname.startsWith('/admin') ||
     location.pathname.startsWith('/manager') ||
     location.pathname.startsWith('/artist') ||
@@ -26,11 +26,9 @@ const Header: React.FC = () => {
 
   if (isProtectedRoute) return null;
 
-  // Listen for sidebar open event
   useEffect(() => {
     const handleSidebarStateChange = (e: CustomEvent) => {
       const { isOpen } = e.detail;
-      // Subtle animation: slightly fade out header when sidebar opens
       setHeaderOpacity(isOpen ? 0.4 : 1);
       setLogoScale(isOpen ? 0.8 : 1);
     };
@@ -38,18 +36,6 @@ const Header: React.FC = () => {
     window.addEventListener('sidebar-state-change', handleSidebarStateChange as EventListener);
     return () => window.removeEventListener('sidebar-state-change', handleSidebarStateChange as EventListener);
   }, []);
-
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setShowMobileMenu(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  const closeMenu = () => setShowMobileMenu(false);
 
   const navItems = [
     { label: 'Shop', href: '/shop', position: 'left' },
@@ -60,6 +46,35 @@ const Header: React.FC = () => {
 
   const isActive = (path: string) => location.pathname === path;
 
+  const HamburgerMenuButton = ({ className }: { className?: string }) => (
+    <button
+      onClick={openNavPanel}
+      onMouseEnter={() => setHamburgerHovered(true)}
+      onMouseLeave={() => setHamburgerHovered(false)}
+      className={`items-center justify-center w-14 h-9 rounded-lg hover:bg-white/[0.08] transition-colors text-white/60 hover:text-white flex-shrink-0 overflow-hidden relative ${className}`}
+      title="Menu"
+    >
+      <span
+        className="absolute inset-0 flex items-center justify-center transition-all duration-300"
+        style={{
+          opacity: hamburgerHovered ? 0 : 1,
+          transform: hamburgerHovered ? 'translateY(-6px)' : 'translateY(0)',
+        }}
+      >
+        <Menu size={20} />
+      </span>
+      <span
+        className="absolute inset-0 flex items-center justify-center text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-300"
+        style={{
+          opacity: hamburgerHovered ? 1 : 0,
+          transform: hamburgerHovered ? 'translateY(0)' : 'translateY(6px)',
+        }}
+      >
+        MENU
+      </span>
+    </button>
+  );
+
   return (
     <header
       className="fixed top-0 left-0 right-0 z-40 pt-3 px-4 sm:px-6 lg:px-8 transition-opacity duration-300"
@@ -67,6 +82,7 @@ const Header: React.FC = () => {
     >
       <div className="backdrop-blur-xl bg-black/30 border border-white/[0.08] rounded-2xl">
         <div className="flex items-center justify-between px-6 py-4 h-20">
+
           {/* Desktop Logo - Left */}
           <Link to="/" className="hidden md:flex items-center justify-center flex-shrink-0 w-12 h-12">
             <img src="/Jonna Rincon Logo WH.png" alt="JR" className="w-full h-full object-contain" />
@@ -75,7 +91,6 @@ const Header: React.FC = () => {
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center justify-center flex-1">
             <div className="flex items-center gap-12">
-              {/* Left items */}
               <div className="flex gap-8">
                 {navItems
                   .filter(item => item.position === 'left')
@@ -84,9 +99,7 @@ const Header: React.FC = () => {
                       key={item.label}
                       to={item.href}
                       className={`text-sm font-semibold transition-all duration-200 relative group ${
-                        isActive(item.href)
-                          ? 'text-white'
-                          : 'text-white/50 hover:text-white/80'
+                        isActive(item.href) ? 'text-white' : 'text-white/50 hover:text-white/80'
                       }`}
                     >
                       {item.label}
@@ -97,7 +110,6 @@ const Header: React.FC = () => {
                   ))}
               </div>
 
-              {/* Center Logo/Title */}
               <div
                 ref={logoRef}
                 className="text-center px-12 border-x border-white/[0.08] flex-shrink-0 transition-transform duration-300"
@@ -106,7 +118,6 @@ const Header: React.FC = () => {
                 <h1 className="text-lg font-black text-white tracking-tighter">JONNA RINCON</h1>
               </div>
 
-              {/* Right items */}
               <div className="flex gap-8">
                 {navItems
                   .filter(item => item.position === 'right')
@@ -115,9 +126,7 @@ const Header: React.FC = () => {
                       key={item.label}
                       to={item.href}
                       className={`text-sm font-semibold transition-all duration-200 relative group ${
-                        isActive(item.href)
-                          ? 'text-white'
-                          : 'text-white/50 hover:text-white/80'
+                        isActive(item.href) ? 'text-white' : 'text-white/50 hover:text-white/80'
                       }`}
                     >
                       {item.label}
@@ -130,107 +139,47 @@ const Header: React.FC = () => {
             </div>
           </nav>
 
-          {/* Desktop Cart - Right */}
-          {cartItems.length > 0 && (
-            <button
-              onClick={openCart}
-              className="hidden md:flex items-center justify-center flex-shrink-0 relative w-10 h-10 rounded-lg bg-white/[0.08] hover:bg-white/[0.12] transition-colors group"
-              title="Shopping Cart"
-            >
-              <ShoppingBag size={18} className="text-white/70 group-hover:text-white transition-colors" />
-              <span className="absolute -top-2 -right-2 flex items-center justify-center w-5 h-5 bg-red-500 text-white text-xs font-bold rounded-full">
-                {cartItems.length}
-              </span>
-            </button>
-          )}
+          {/* Desktop: Cart + Hamburger */}
+          <div className="hidden md:flex items-center gap-2">
+            {cartItems.length > 0 && (
+              <button
+                onClick={openCart}
+                className="flex items-center justify-center flex-shrink-0 relative w-10 h-10 rounded-lg bg-white/[0.08] hover:bg-white/[0.12] transition-colors group"
+                title="Shopping Cart"
+              >
+                <ShoppingBag size={18} className="text-white/70 group-hover:text-white transition-colors" />
+                <span className="absolute -top-2 -right-2 flex items-center justify-center w-5 h-5 bg-red-500 text-white text-xs font-bold rounded-full">
+                  {cartItems.length}
+                </span>
+              </button>
+            )}
+            <HamburgerMenuButton className="flex" />
+          </div>
 
           {/* Mobile: JR Logo - Left */}
           <Link to="/" className="md:hidden flex items-center justify-center flex-shrink-0 w-10 h-10">
             <img src="/Jonna Rincon Logo WH.png" alt="JR" className="w-full h-full object-contain" />
           </Link>
 
-          {/* Mobile: Spacer to push items right */}
           <div className="md:hidden flex-1" />
 
-          {/* Mobile Cart - Right (before menu) */}
-          {cartItems.length > 0 && (
-            <button
-              onClick={openCart}
-              className="md:hidden flex items-center justify-center flex-shrink-0 relative w-10 h-10 rounded-lg bg-white/[0.08] hover:bg-white/[0.12] transition-colors group"
-              title="Shopping Cart"
-            >
-              <ShoppingBag size={18} className="text-white/70 group-hover:text-white transition-colors" />
-              <span className="absolute -top-2 -right-2 flex items-center justify-center w-5 h-5 bg-red-500 text-white text-xs font-bold rounded-full">
-                {cartItems.length}
-              </span>
-            </button>
-          )}
-
-          {/* Mobile Menu Button - Far Right */}
-          <button
-            onClick={() => setShowMobileMenu(!showMobileMenu)}
-            onMouseEnter={() => setShowMenuLabel(true)}
-            onMouseLeave={() => setShowMenuLabel(false)}
-            className="md:hidden flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-white/[0.08] transition-colors text-white/40 hover:text-white group flex-shrink-0"
-            title="Menu"
-          >
-            <div className="transition-transform duration-300">{showMobileMenu ? <X size={18} /> : <Menu size={18} />}</div>
-            <span className={`text-xs font-semibold uppercase tracking-widest transition-all duration-300 hidden sm:inline ${
-              showMenuLabel || showMobileMenu
-                ? 'opacity-100 translate-x-0'
-                : 'opacity-0 -translate-x-2'
-            }`}>
-              Menu
-            </span>
-          </button>
-
-          {/* Mobile Sidebar Menu - appears over header */}
-          {showMobileMenu && (
-            <>
-              {/* Backdrop */}
-              <div
-                className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 md:hidden"
-                onClick={closeMenu}
-              />
-
-              {/* Sidebar */}
-              <div
-                ref={menuRef}
-                className="fixed left-0 top-0 h-full w-64 bg-neutral-950/95 backdrop-blur-xl border-r border-white/[0.08] z-50 md:hidden flex flex-col"
+          {/* Mobile: Cart + Hamburger */}
+          <div className="md:hidden flex items-center gap-2">
+            {cartItems.length > 0 && (
+              <button
+                onClick={openCart}
+                className="flex items-center justify-center flex-shrink-0 relative w-10 h-10 rounded-lg bg-white/[0.08] hover:bg-white/[0.12] transition-colors group"
+                title="Shopping Cart"
               >
-                {/* Sidebar Header */}
-                <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.06]">
-                  <div className="flex items-center justify-center w-8 h-8">
-                    <img src="/Jonna Rincon Logo WH.png" alt="JR" className="w-full h-full object-contain" />
-                  </div>
-                  <button
-                    onClick={closeMenu}
-                    className="text-white/40 hover:text-white transition-colors"
-                  >
-                    <X size={20} />
-                  </button>
-                </div>
+                <ShoppingBag size={18} className="text-white/70 group-hover:text-white transition-colors" />
+                <span className="absolute -top-2 -right-2 flex items-center justify-center w-5 h-5 bg-red-500 text-white text-xs font-bold rounded-full">
+                  {cartItems.length}
+                </span>
+              </button>
+            )}
+            <HamburgerMenuButton className="flex" />
+          </div>
 
-                {/* Sidebar Navigation */}
-                <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-                  {navItems.map(item => (
-                    <Link
-                      key={item.label}
-                      to={item.href}
-                      onClick={closeMenu}
-                      className={`block px-4 py-3 rounded-lg text-sm font-semibold transition-all ${
-                        isActive(item.href)
-                          ? 'bg-white/[0.1] text-white'
-                          : 'text-white/60 hover:text-white hover:bg-white/[0.06]'
-                      }`}
-                    >
-                      {item.label}
-                    </Link>
-                  ))}
-                </nav>
-              </div>
-            </>
-          )}
         </div>
       </div>
     </header>
