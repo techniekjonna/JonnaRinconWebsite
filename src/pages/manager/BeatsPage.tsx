@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import ManagerLayout from '../../components/manager/ManagerLayout';
+import LoadingSpinner from '../../components/LoadingSpinner';
 import { useBeats } from '../../hooks/useBeats';
 import { beatService } from '../../lib/firebase/services';
 import { Beat } from '../../lib/firebase/types';
@@ -96,8 +97,8 @@ const ManagerBeats: React.FC = () => {
               <tbody className="divide-y divide-white/[0.06]">
                 {loading ? (
                   <tr>
-                    <td colSpan={6} className="px-6 py-12 text-center text-white/40">
-                      Loading beats...
+                    <td colSpan={6} className="px-6 py-12">
+                      <LoadingSpinner text="Loading beats..." />
                     </td>
                   </tr>
                 ) : filteredBeats.length === 0 ? (

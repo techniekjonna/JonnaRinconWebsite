@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import AdminLayout from '../../components/admin/AdminLayout';
 import LinkInput from '../../components/admin/LinkInput';
+import LoadingSpinner from '../../components/LoadingSpinner';
 import { useRemixes } from '../../hooks/useRemixes';
 import { remixService } from '../../lib/firebase/services';
 import { Remix } from '../../lib/firebase/types';
@@ -83,31 +84,6 @@ const RemixesPage: React.FC = () => {
           </button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-4">
-            <p className="text-white/40 text-sm">Total Remixes</p>
-            <p className="text-2xl font-bold text-white mt-1">{remixes.length}</p>
-          </div>
-          <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-4">
-            <p className="text-white/40 text-sm">Published</p>
-            <p className="text-2xl font-bold text-white mt-1">
-              {remixes.filter((r) => r.status === 'published').length}
-            </p>
-          </div>
-          <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-4">
-            <p className="text-white/40 text-sm">Featured</p>
-            <p className="text-2xl font-bold text-white mt-1">
-              {remixes.filter((r) => r.featured).length}
-            </p>
-          </div>
-          <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-4">
-            <p className="text-white/40 text-sm">Total Plays</p>
-            <p className="text-2xl font-bold text-white mt-1">
-              {remixes.reduce((sum, r) => sum + r.plays, 0)}
-            </p>
-          </div>
-        </div>
-
         <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
@@ -125,8 +101,8 @@ const RemixesPage: React.FC = () => {
               <tbody className="divide-y divide-white/[0.06]">
                 {loading ? (
                   <tr>
-                    <td colSpan={7} className="px-6 py-12 text-center text-white/40">
-                      Loading remixes...
+                    <td colSpan={7} className="px-6 py-12">
+                      <LoadingSpinner text="Loading remixes..." />
                     </td>
                   </tr>
                 ) : remixes.length === 0 ? (
@@ -260,6 +236,7 @@ const RemixFormModal: React.FC<RemixFormModalProps> = ({ remix, onClose, onSave 
     remixType: remix?.remixType || 'Remix',
     year: remix?.year || currentYear,
     collab: remix?.collab || 'Solo',
+    duration: remix?.duration || '0:00',
     tags: remix?.tags?.join(', ') || '',
     audioUrl: remix?.audioUrl || '',
     artworkUrl: remix?.artworkUrl || '',
@@ -284,6 +261,7 @@ const RemixFormModal: React.FC<RemixFormModalProps> = ({ remix, onClose, onSave 
         remixType: formData.remixType,
         year: formData.year,
         collab: formData.collab,
+        duration: formData.duration,
         tags: formData.tags.split(',').map((t) => t.trim()),
         audioUrl: formData.audioUrl,
         artworkUrl: formData.artworkUrl,
@@ -350,7 +328,7 @@ const RemixFormModal: React.FC<RemixFormModalProps> = ({ remix, onClose, onSave 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Title</label>
+              <label className="block text-sm font-medium text-white/60 mb-2">Title <span className="text-red-400">*</span></label>
               <input
                 type="text"
                 value={formData.title}
@@ -360,7 +338,7 @@ const RemixFormModal: React.FC<RemixFormModalProps> = ({ remix, onClose, onSave 
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Remix Artist</label>
+              <label className="block text-sm font-medium text-white/60 mb-2">Remix Artist <span className="text-red-400">*</span></label>
               <input
                 type="text"
                 value={formData.remixArtist}
@@ -370,7 +348,7 @@ const RemixFormModal: React.FC<RemixFormModalProps> = ({ remix, onClose, onSave 
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Original Artist</label>
+              <label className="block text-sm font-medium text-white/60 mb-2">Original Artist <span className="text-red-400">*</span></label>
               <input
                 type="text"
                 value={formData.originalArtist}
@@ -389,7 +367,7 @@ const RemixFormModal: React.FC<RemixFormModalProps> = ({ remix, onClose, onSave 
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Type</label>
+              <label className="block text-sm font-medium text-white/60 mb-2">Type <span className="text-red-400">*</span></label>
               <select
                 value={formData.remixType}
                 onChange={(e) => setFormData({ ...formData, remixType: e.target.value as 'Remix' | 'Edit' | 'Bootleg' })}
@@ -402,7 +380,7 @@ const RemixFormModal: React.FC<RemixFormModalProps> = ({ remix, onClose, onSave 
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Year</label>
+              <label className="block text-sm font-medium text-white/60 mb-2">Year <span className="text-red-400">*</span></label>
               <input
                 type="number"
                 value={formData.year}
@@ -412,7 +390,7 @@ const RemixFormModal: React.FC<RemixFormModalProps> = ({ remix, onClose, onSave 
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Collab</label>
+              <label className="block text-sm font-medium text-white/60 mb-2">Collab <span className="text-red-400">*</span></label>
               <select
                 value={formData.collab}
                 onChange={(e) => setFormData({ ...formData, collab: e.target.value as 'Solo' | 'Collab' })}
@@ -424,13 +402,23 @@ const RemixFormModal: React.FC<RemixFormModalProps> = ({ remix, onClose, onSave 
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Genre</label>
+              <label className="block text-sm font-medium text-white/60 mb-2">Genre <span className="text-red-400">*</span></label>
               <input
                 type="text"
                 value={formData.genre}
                 onChange={(e) => setFormData({ ...formData, genre: e.target.value })}
                 className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white"
                 required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-white/60 mb-2">Duration</label>
+              <input
+                type="text"
+                value={formData.duration}
+                onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
+                className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white"
+                placeholder="e.g. 3:45"
               />
             </div>
             <div>

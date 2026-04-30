@@ -15,7 +15,7 @@ const PRODUCT_TYPE_OPTIONS: { value: 'beat' | 'track' | 'remix' | 'edit'; label:
 
 const isExpired = (code: DiscountCode): boolean => {
   if (!code.hasDeadline || !code.endDate) return false;
-  return Timestamp.now().toMillis() > code.endDate.toMillis();
+  return (Timestamp.now()?.toMillis?.() || 0) > (code.endDate?.toMillis?.() || 0);
 };
 
 const DiscountCodesPage: React.FC = () => {
@@ -116,26 +116,6 @@ const DiscountCodesPage: React.FC = () => {
             <Plus size={20} />
             <span>Create Code</span>
           </button>
-        </div>
-
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-4">
-            <p className="text-white/40 text-sm">Total Codes</p>
-            <p className="text-2xl font-bold text-white mt-1">{stats.total}</p>
-          </div>
-          <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-4">
-            <p className="text-white/40 text-sm">Active</p>
-            <p className="text-2xl font-bold text-green-400 mt-1">{stats.active}</p>
-          </div>
-          <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-4">
-            <p className="text-white/40 text-sm">Expired</p>
-            <p className="text-2xl font-bold text-yellow-400 mt-1">{stats.expired}</p>
-          </div>
-          <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-4">
-            <p className="text-white/40 text-sm">Total Uses</p>
-            <p className="text-2xl font-bold text-white mt-1">{stats.totalUses}</p>
-          </div>
         </div>
 
         {/* Management Table */}
@@ -373,7 +353,7 @@ const DiscountCodeFormModal: React.FC<DiscountCodeFormModalProps> = ({
         <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto flex-1">
           {/* Code & Description */}
           <div>
-            <label className="block text-sm font-medium text-white/60 mb-2">Code</label>
+            <label className="block text-sm font-medium text-white/60 mb-2">Code <span className="text-red-400">*</span></label>
             <input
               type="text"
               value={formData.code}
@@ -414,7 +394,7 @@ const DiscountCodeFormModal: React.FC<DiscountCodeFormModalProps> = ({
 
             <div>
               <label className="block text-sm font-medium text-white/60 mb-2">
-                Discount Value ({formData.discountType === 'percentage' ? '%' : '€'})
+                Discount Value ({formData.discountType === 'percentage' ? '%' : '€'}) <span className="text-red-400">*</span>
               </label>
               <input
                 type="number"
@@ -503,7 +483,7 @@ const DiscountCodeFormModal: React.FC<DiscountCodeFormModalProps> = ({
 
             {formData.usageLimit === 'limited' && (
               <div>
-                <label className="block text-sm font-medium text-white/60 mb-2">Max Uses</label>
+                <label className="block text-sm font-medium text-white/60 mb-2">Max Uses <span className="text-red-400">*</span></label>
                 <input
                   type="number"
                   min="1"

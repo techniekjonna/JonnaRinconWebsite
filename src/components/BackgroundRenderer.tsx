@@ -1,47 +1,58 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useBackground } from '../contexts/BackgroundContext';
 
-/**
- * BackgroundRenderer applies the active background from Firebase to the page
- * Should be placed in the root of the app to affect all pages
- */
+const FALLBACK_URL = '/JEIGHTENESIS.jpg';
+
 const BackgroundRenderer: React.FC = () => {
   const { activeBackground } = useBackground();
+  const [imageUrl, setImageUrl] = useState<string>(FALLBACK_URL);
 
-  React.useEffect(() => {
-    if (activeBackground?.imageUrl) {
-      // Apply background image to body element
-      const style = document.documentElement.style;
-      style.backgroundImage = `url('${activeBackground.imageUrl}')`;
-      style.backgroundAttachment = 'fixed';
-      style.backgroundPosition = 'center';
-      style.backgroundRepeat = 'no-repeat';
-      style.backgroundSize = 'cover';
-      style.zIndex = '-1';
+  useEffect(() => {
+    const url = activeBackground?.imageUrl || FALLBACK_URL;
+    if (url === imageUrl) return;
 
-      // Also set on body as fallback
-      document.body.style.backgroundImage = `url('${activeBackground.imageUrl}')`;
-      document.body.style.backgroundAttachment = 'fixed';
-      document.body.style.backgroundPosition = 'center';
-      document.body.style.backgroundRepeat = 'no-repeat';
-      document.body.style.backgroundSize = 'cover';
-    } else {
-      // Clear background if none is active (fallback to black)
-      const style = document.documentElement.style;
-      style.backgroundImage = 'none';
-      document.body.style.backgroundImage = 'none';
-    }
+    const img = new Image();
+    img.onload = () => setImageUrl(url);
+    img.onerror = () => setImageUrl(FALLBACK_URL);
+    img.src = url;
 
     return () => {
-      // Cleanup on unmount
-      const style = document.documentElement.style;
-      style.backgroundImage = 'none';
-      document.body.style.backgroundImage = 'none';
+      img.onload = null;
+      img.onerror = null;
     };
-  }, [activeBackground]);
+  }, [activeBackground?.imageUrl]);
 
-  // This component doesn't render anything visible
-  return null;
+  // Clear any inline background-image set by previous approach
+  useEffect(() => {
+    document.documentElement.style.backgroundImage = '';
+  }, []);
+
+  return (
+    <div
+      aria-hidden="true"
+      style={{
+        position: 'fixed',
+        inset: 0,
+        width: '100%',
+        height: '100%',
+        zIndex: -20,
+        pointerEvents: 'none',
+        overflow: 'hidden',
+      }}
+    >
+      <img
+        src={imageUrl}
+        alt=""
+        style={{
+          width: '100%',
+          height: '100%',
+          objectFit: 'cover',
+          objectPosition: 'center',
+          display: 'block',
+        }}
+      />
+    </div>
+  );
 };
 
 export default BackgroundRenderer;

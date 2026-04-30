@@ -65,7 +65,7 @@ const ArtistShop: React.FC = () => {
       filtered.sort((a, b) => {
         switch (filter.sortBy) {
           case 'newest':
-            return b.createdAt.toMillis() - a.createdAt.toMillis();
+            return (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0);
           case 'popular':
             return b.plays - a.plays;
           case 'price_low':

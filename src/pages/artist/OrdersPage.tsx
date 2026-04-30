@@ -4,6 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { orderService } from '../../lib/firebase/services/orderService';
 import { Order } from '../../lib/firebase/types';
 import ArtistLayout from '../../components/artist/ArtistLayout';
+import LoadingSpinner from '../../components/LoadingSpinner';
 import { Package, Download } from 'lucide-react';
 
 const ArtistOrders: React.FC = () => {
@@ -38,7 +39,7 @@ const ArtistOrders: React.FC = () => {
     return (
       <ArtistLayout>
         <div className="flex justify-center items-center h-64">
-          <div className="text-xl text-white">Loading orders...</div>
+          <LoadingSpinner text="Loading orders..." />
         </div>
       </ArtistLayout>
     );

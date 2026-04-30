@@ -5,16 +5,25 @@ import Footer from '../components/Footer';
 import { Play, ExternalLink, ChevronLeft, ChevronRight, Music, Headphones, Disc3, Radio, Award, Mic2, ChevronDown, Sliders } from 'lucide-react';
 import { useCyberDecodeInView } from '../hooks/useCyberDecode';
 import { useAuth } from '../hooks/useAuth';
+import { useTrackDetail } from '../contexts/TrackDetailContext';
+import { useScrollToTop } from '../hooks/useScrollToTop';
+import { usePlayTracking } from '../hooks/usePlayTracking';
+import LoadingSpinner from '../components/LoadingSpinner';
 import { setCurrentTrack, getCurrentTrack } from '../components/GlobalAudioPlayer';
 import TrackListItem from '../components/TrackListItem';
 import { useTracks } from '../hooks/useTracks';
 import { useRemixes } from '../hooks/useRemixes';
+import { useRelatedTracks } from '../hooks/useRelatedTracks';
 import FilterModal from '../components/FilterModal';
 import TrackDetailModal from '../components/TrackDetailModal';
+import AlbumModal from '../components/AlbumModal';
 import LoginModal from '../components/LoginModal';
+import PlaylistModal from '../components/PlaylistModal';
+import PlaylistDetailView from '../components/PlaylistDetailView';
 import { extractUniqueGenres } from '../lib/utils/genreExtractor';
-import { trackService, settingsService } from '../lib/firebase/services';
+import { trackService, settingsService, playlistService } from '../lib/firebase/services';
 import { useCart } from '../hooks/useCart';
+import { Playlist, Track as FirebaseTrack } from '../lib/firebase/types';
 
 const buttons = [
   { id: 'tracks', label: 'Tracks', icon: Music },
@@ -116,6 +125,7 @@ const skills = [
 ];
 
 export default function TracksPage() {
+  useScrollToTop();
   const { isAuthenticated, isLoading } = useAuth();
   const { addTrackToCart, cartItems = [] } = useCart();
   const { tracks: firebaseTracks, loading: tracksLoading, error: tracksError } = useTracks({ status: 'published' });
@@ -133,12 +143,16 @@ export default function TracksPage() {
   const [selectedRemixGenre, setSelectedRemixGenre] = useState<string>('All');
   const [expandedAlbums, setExpandedAlbums] = useState<Set<string>>(new Set());
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
-  const [selectedTrack, setSelectedTrack] = useState<Track | null>(null);
+  const { selectedTrack, setSelectedTrack, isModalOpen, setIsModalOpen } = useTrackDetail();
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [selectedTypeTab, setSelectedTypeTab] = useState<'Singles' | 'Albums & EPs' | 'All' | 'Custom 1' | 'Custom 2'>('All');
   const [shopSettings, setShopSettings] = useState<any>(null);
   const [trackSettings, setTrackSettings] = useState<any>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [selectedAlbum, setSelectedAlbum] = useState<any>(null);
+  const [isPlaylistModalOpen, setIsPlaylistModalOpen] = useState(false);
+  const [selectedPlaylist, setSelectedPlaylist] = useState<Playlist | null>(null);
+  const [isPlaylistDetailOpen, setIsPlaylistDetailOpen] = useState(false);
   const heroTitle = useCyberDecodeInView('Music');
 
   // Convert Firebase tracks to local Track interface - Maps all track data including album field
@@ -159,7 +173,7 @@ export default function TracksPage() {
     audioUrl: t.audioUrl,
     coverArt: t.artworkUrl,
     coverArtUrl: t.artworkUrl,
-    createdAt: t.createdAt.toMillis?.() || Date.now(),
+    createdAt: t.createdAt?.toMillis?.() || Date.now(),
     isFree: t.isFree,
     licenses: t.licenses,
   }));
@@ -198,11 +212,13 @@ export default function TracksPage() {
       return;
     }
 
-    // Increment plays counter for this track
+    // Register play after 15 seconds of playback
     if (track.id) {
-      await trackService.incrementPlays(track.id).catch((error) => {
-        console.error('Failed to increment track plays:', error);
-      });
+      setTimeout(() => {
+        trackService.incrementPlays(track.id!).catch((error) => {
+          console.error('Failed to increment track plays:', error);
+        });
+      }, 15000);
     }
 
     // Filter tracks matching current filters and create queue
@@ -227,6 +243,16 @@ export default function TracksPage() {
     }
   };
 
+  const handleAddToPlaylist = async (trackId: string, playlistId: string) => {
+    try {
+      await playlistService.addTrackToPlaylist(playlistId, trackId);
+      // Show success feedback
+      console.log('Track added to playlist');
+    } catch (error) {
+      console.error('Error adding to playlist:', error);
+    }
+  };
+
   const handleTogglePlayTrack = (track: Track) => {
     const currentTrack = getCurrentTrack();
 
@@ -238,6 +264,42 @@ export default function TracksPage() {
     } else {
       // If clicking a different track, play it
       handlePlayTrack(track);
+      setIsPlaying(true);
+    }
+  };
+
+  const handlePlaylistSelect = (playlist: Playlist) => {
+    setSelectedPlaylist(playlist);
+    setIsPlaylistDetailOpen(true);
+  };
+
+  const handlePlayPlaylistTracks = (playlistTracks: FirebaseTrack[], startIndex: number = 0) => {
+    if (playlistTracks.length === 0) return;
+
+    // Convert Firebase tracks to local Track interface
+    const tracksToPlay = playlistTracks.map(t => ({
+      id: t.id,
+      title: t.title,
+      artist: t.artist,
+      album: t.album,
+      trackNumber: t.trackNumber,
+      duration: t.duration || '0:00',
+      genre: t.genre,
+      bpm: t.bpm,
+      key: t.key,
+      year: t.year,
+      type: t.type,
+      collab: t.collab,
+      audioUrl: t.audioUrl,
+      coverArt: t.artworkUrl,
+      createdAt: t.createdAt?.toMillis?.() || Date.now(),
+      isFree: t.isFree,
+      licenses: t.licenses,
+    }));
+
+    if (tracksToPlay.length > 0) {
+      const trackToPlay = tracksToPlay[startIndex] || tracksToPlay[0];
+      setCurrentTrack(trackToPlay, tracksToPlay);
       setIsPlaying(true);
     }
   };
@@ -255,27 +317,44 @@ export default function TracksPage() {
     }
   };
 
+  // Handler to open track detail modal when clicking on a track
+  const handleTrackClick = (track: Track) => {
+    setSelectedTrack(track);
+    setIsModalOpen(true);
+  };
+
   const getCustomTracksForTab = (): Track[] => {
     const customTracks: Track[] = [];
-    // Find all tracks with customTrackLinks and filter by the selected custom tab
+    const isCustom1 = selectedTypeTab === 'Custom 1' || selectedTypeTab === (trackSettings?.customTab1Label || 'Custom 1');
+    const isCustom2 = selectedTypeTab === 'Custom 2' || selectedTypeTab === (trackSettings?.customTab2Label || 'Custom 2');
+
+    if (!isCustom1 && !isCustom2) return [];
+
+    // Find all tracks with customTrackLinks
     demoTracks.forEach(track => {
-      if (track.customTrackLinks && track.customTrackLinks.length > 0) {
-        // For demo, display all custom tracks in both custom tabs
-        customTracks.push(...track.customTrackLinks.map((link, index) => ({
-          id: `custom-${track.id}-${index}`,
-          title: link.title,
-          artist: track.artist,
-          audioUrl: link.audioUrl,
-          coverArt: track.coverArt,
-          coverArtUrl: track.coverArtUrl,
-          type: 'Single' as const,
-          year: track.year,
-          collab: track.collab,
-          genre: track.genre,
-          createdAt: track.createdAt,
-        })) as unknown as Track);
+      // Only process tracks that have customTrackLinks
+      if (track.customTrackLinks && Array.isArray(track.customTrackLinks) && track.customTrackLinks.length > 0) {
+        track.customTrackLinks.forEach((link, index) => {
+          customTracks.push({
+            id: `custom-${track.id}-${index}`,
+            title: link.title || `Custom ${index + 1}`,
+            artist: track.artist,
+            audioUrl: link.audioUrl,
+            coverArt: track.coverArt,
+            coverArtUrl: track.coverArtUrl,
+            type: 'Single' as const,
+            year: track.year,
+            collab: track.collab,
+            genre: track.genre,
+            bpm: track.bpm,
+            key: track.key,
+            duration: track.duration,
+            createdAt: track.createdAt,
+          } as Track);
+        });
       }
     });
+
     return customTracks;
   };
 
@@ -366,28 +445,10 @@ export default function TracksPage() {
   }, []);
 
   // Show login modal if not authenticated
-  if (!isLoading && !isAuthenticated) {
-    return (
-      <div className="min-h-screen text-white">
-        {/* Fixed JEIGHTENESIS Background */}
-        <div className="fixed inset-0 w-full h-screen -z-10">
-          <img src="/JEIGHTENESIS.jpg" alt="" className="w-full h-full object-cover" style={{objectPosition: 'center'}} />
-          <div className="absolute inset-0 bg-black/75" />
-        </div>
-
-        <Navigation isDarkOverlay={true} isLightMode={false} />
-        <LoginModal isOpen={true} onClose={() => {}} />
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen text-white">
-      {/* Fixed JEIGHTENESIS Background */}
-      <div className="fixed inset-0 w-full h-screen -z-10">
-        <img src="/JEIGHTENESIS.jpg" alt="" className="w-full h-full object-cover" style={{objectPosition: 'center'}} />
-        <div className="absolute inset-0 bg-black/75" />
-      </div>
+      {/* Fixed Dark Overlay */}
+      <div className="fixed inset-0 w-full h-screen -z-10 bg-black/20" />
 
       <Navigation isDarkOverlay={true} isLightMode={false} />
 
@@ -397,18 +458,48 @@ export default function TracksPage() {
       {/* Track Detail Modal */}
       <TrackDetailModal
         track={selectedTrack}
-        isOpen={!!selectedTrack}
-        onClose={() => setSelectedTrack(null)}
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
         isPlaying={selectedTrack ? false : false}
         onPlay={handlePlayTrack}
         onBuy={handleBuyTrack}
         cartItems={cartItems}
+        relatedTracks={useRelatedTracks(selectedTrack, [])}
+        onAddToPlaylist={handleAddToPlaylist}
       />
+
+      {/* Album Modal */}
+      <AlbumModal
+        album={selectedAlbum}
+        isOpen={!!selectedAlbum}
+        onClose={() => setSelectedAlbum(null)}
+      />
+
+      {/* Playlist Modal */}
+      <PlaylistModal
+        isOpen={isPlaylistModalOpen}
+        onClose={() => setIsPlaylistModalOpen(false)}
+        onPlaylistSelect={handlePlaylistSelect}
+      />
+
+      {/* Playlist Detail View */}
+      {selectedPlaylist && (
+        <PlaylistDetailView
+          playlist={selectedPlaylist}
+          isOpen={isPlaylistDetailOpen}
+          onClose={() => {
+            setIsPlaylistDetailOpen(false);
+            setSelectedPlaylist(null);
+          }}
+          onPlayTracks={handlePlayPlaylistTracks}
+          isPlaying={isPlaying}
+        />
+      )}
 
       {/* Hero Section - Compact */}
       <section className="relative pt-40 px-6 md:px-12 pb-4">
         <div className="relative z-10 max-w-7xl mx-auto w-full">
-          <h1 ref={heroTitle.ref as React.RefObject<HTMLHeadingElement>} className="text-6xl md:text-8xl lg:text-9xl font-black uppercase leading-[0.85] tracking-tighter mb-8 text-center">
+          <h1 ref={heroTitle.ref as React.RefObject<HTMLHeadingElement>} style={{fontSize: 'clamp(1.875rem, 8vw, 10.2rem)'}} className="font-black uppercase leading-[0.85] tracking-tighter mb-8 text-center">
             {heroTitle.display}
           </h1>
 
@@ -418,21 +509,32 @@ export default function TracksPage() {
               {buttons.find(b => b.id === activeTab)?.label}
             </h2>
 
-            {/* Filter Button - Mobile only, conditional */}
+            {/* Filter & Playlist Buttons - Mobile only, conditional */}
             {(activeTab === 'tracks' || activeTab === 'remixes') && (
-              <button
-                onClick={() => setIsFilterModalOpen(true)}
-                className="md:hidden flex items-center gap-2 px-4 py-2.5 bg-white/[0.06] border border-white/[0.1] rounded-lg text-xs font-bold uppercase tracking-wider text-white/60 hover:text-white hover:bg-white/[0.12] transition-all"
-              >
-                <Sliders size={16} />
-                Filters
-              </button>
+              <div className="md:hidden flex items-center gap-2">
+                <button
+                  onClick={() => setIsFilterModalOpen(true)}
+                  className="flex items-center gap-2 px-4 py-2.5 bg-white/[0.06] border border-white/[0.1] rounded-lg text-xs font-bold uppercase tracking-wider text-white/60 hover:text-white hover:bg-white/[0.12] transition-all"
+                >
+                  <Sliders size={16} />
+                  Filters
+                </button>
+                {activeTab === 'tracks' && isAuthenticated && (
+                  <button
+                    onClick={() => setIsPlaylistModalOpen(true)}
+                    className="flex items-center gap-2 px-4 py-2.5 bg-white/[0.06] border border-white/[0.1] rounded-lg text-xs font-bold uppercase tracking-wider text-white/60 hover:text-white hover:bg-white/[0.12] transition-all"
+                  >
+                    <Music size={16} />
+                    Playlists
+                  </button>
+                )}
+              </div>
             )}
           </div>
 
-          {/* Filter Button - Desktop only, conditional */}
+          {/* Filter & Playlist Buttons - Desktop only, conditional */}
           {(activeTab === 'tracks' || activeTab === 'remixes') && (
-            <div className="hidden md:flex justify-center mb-8">
+            <div className="hidden md:flex justify-center gap-3 mb-8">
               <button
                 onClick={() => setIsFilterModalOpen(true)}
                 className="flex items-center gap-2 px-4 py-2.5 bg-white/[0.06] border border-white/[0.1] rounded-lg text-xs font-bold uppercase tracking-wider text-white/60 hover:text-white hover:bg-white/[0.12] transition-all"
@@ -440,8 +542,44 @@ export default function TracksPage() {
                 <Sliders size={16} />
                 Filters
               </button>
+              {activeTab === 'tracks' && isAuthenticated && (
+                <button
+                  onClick={() => setIsPlaylistModalOpen(true)}
+                  className="flex items-center gap-2 px-4 py-2.5 bg-white/[0.06] border border-white/[0.1] rounded-lg text-xs font-bold uppercase tracking-wider text-white/60 hover:text-white hover:bg-white/[0.12] transition-all"
+                >
+                  <Music size={16} />
+                  Playlists
+                </button>
+              )}
             </div>
           )}
+
+          {/* Type Filter Tabs - Mobile and Desktop */}
+          {activeTab === 'tracks' && (() => {
+            const tabsList = ['Singles', 'Albums & EPs', 'All']
+              .concat(trackSettings?.customTab1Enabled ? [trackSettings.customTab1Label || 'Custom 1'] : [])
+              .concat(trackSettings?.customTab2Enabled ? [trackSettings.customTab2Label || 'Custom 2'] : []);
+
+            return (
+              <div className="w-full">
+                <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${tabsList.length}, 1fr)` }}>
+                  {tabsList.map((tab) => (
+                    <button
+                      key={tab}
+                      onClick={() => setSelectedTypeTab(tab as any)}
+                      className={`w-full px-3 md:px-4 py-2 md:py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all border ${
+                        selectedTypeTab === tab
+                          ? 'bg-red-600 text-white border-red-500/50'
+                          : 'bg-white/[0.06] text-white/60 border-white/[0.1] hover:text-white hover:bg-white/[0.12] hover:border-white/[0.15]'
+                      }`}
+                    >
+                      {tab}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
         </div>
       </section>
 
@@ -508,44 +646,22 @@ export default function TracksPage() {
             </div>
           </section>
 
-          {/* Type Filter Tabs */}
-          <section className="px-6 md:px-12 py-4 md:py-6 border-b border-white/[0.06]">
-            <div className="max-w-7xl mx-auto">
-              <div className="flex items-center justify-center gap-4">
-                {/* Tabs - Center */}
-                <div className="flex flex-wrap gap-2 justify-center">
-                  {['Singles', 'Albums & EPs', 'All']
-                    .concat(
-                      // Conditionally add Custom Tab 1 if enabled in settings
-                      trackSettings?.customTab1Enabled ? [trackSettings.customTab1Label || 'Custom 1'] : []
-                    )
-                    .concat(
-                      // Conditionally add Custom Tab 2 if enabled in settings
-                      trackSettings?.customTab2Enabled ? [trackSettings.customTab2Label || 'Custom 2'] : []
-                    )
-                    .map((tab) => (
-                      <button
-                        key={tab}
-                        onClick={() => setSelectedTypeTab(tab as any)}
-                        className={`px-4 py-2 rounded-lg font-medium transition-all ${
-                          selectedTypeTab === tab
-                            ? 'bg-red-600 text-white'
-                            : 'bg-white/[0.06] text-white/50 hover:text-white/70 hover:bg-white/[0.10]'
-                        }`}
-                      >
-                        {tab}
-                      </button>
-                    ))}
-                </div>
+
+          {/* Loading Spinner */}
+          {tracksLoading && (
+            <section className="px-6 md:px-12 py-16">
+              <div className="max-w-7xl mx-auto">
+                <LoadingSpinner text="Loading tracks..." />
               </div>
-            </div>
-          </section>
+            </section>
+          )}
 
           {/* Mixed Track List / Album Groups OR Year Groups */}
-          <section className="px-6 md:px-12 py-2 md:py-4">
-            <div className="max-w-7xl mx-auto">
-              {/* Album/Type-based grouping for all types */}
-              <div className="space-y-3">
+          {!tracksLoading && (
+            <section className="px-6 md:px-12 py-2 md:py-4">
+              <div className="max-w-7xl mx-auto">
+                {/* Album/Type-based grouping for all types */}
+                <div className="space-y-3">
                   {Object.entries(groupedTracks)
                     .sort(([, a], [, b]) => {
                       // Albums sorted by createdAt (newest first)
@@ -566,12 +682,29 @@ export default function TracksPage() {
                             onClick={() => toggleAlbumExpand(albumKey)}
                             className="w-full px-6 py-4 flex items-center gap-4 border border-white/[0.06] rounded-xl hover:bg-white/[0.06] transition-all bg-white/[0.04] backdrop-blur-md group"
                           >
-                            {/* Album Cover - Small */}
-                            <img
-                              src={group.artwork}
-                              alt={group.albumName}
-                              className="w-12 h-12 rounded object-cover flex-shrink-0"
-                            />
+                            {/* Album Cover - Small - Clickable */}
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedAlbum({
+                                  name: group.albumName,
+                                  type: group.type,
+                                  artwork: group.artwork,
+                                  artist: group.displayTrack.artist,
+                                  year: group.displayTrack.year,
+                                  tracks: group.tracks,
+                                });
+                              }}
+                              className="flex-shrink-0 hover:scale-110 transition-transform"
+                              title="View album"
+                            >
+                              <img
+                                src={group.artwork}
+                                alt={group.albumName}
+                                loading="lazy"
+                                className="w-12 h-12 rounded object-cover"
+                              />
+                            </button>
 
                             {/* Album Info */}
                             <div className="flex-1 min-w-0">
@@ -602,7 +735,7 @@ export default function TracksPage() {
                                   <div key={track.id} className="pl-6 md:pl-8">
                                     <TrackListItem
                                       track={track}
-                                      onClickTrack={setSelectedTrack}
+                                      onClickTrack={handleTrackClick}
                                       onPlay={handlePlayTrack}
                                       onTogglePlay={handleTogglePlayTrack}
                                       onBuy={handleBuyTrack}
@@ -622,7 +755,7 @@ export default function TracksPage() {
                         <TrackListItem
                           key={albumKey}
                           track={group.displayTrack}
-                          onClickTrack={setSelectedTrack}
+                          onClickTrack={handleTrackClick}
                           onPlay={handlePlayTrack}
                           onTogglePlay={handleTogglePlayTrack}
                           onBuy={handleBuyTrack}
@@ -643,13 +776,14 @@ export default function TracksPage() {
               </div>
             </div>
           </section>
+            )}
 
-          {/* Stats - Compact, Single Row */}
-          <div className="flex justify-between gap-4 md:gap-8 mb-8">
+          {/* Stats - Compact, Centered */}
+          <div className="flex justify-center gap-6 md:gap-8 mb-12">
             {stats.map((stat) => (
-              <div key={stat.label} className="flex-1 min-w-0">
-                <p className="text-lg md:text-2xl font-black text-white truncate">{stat.value}</p>
-                <p className="text-[9px] md:text-[10px] text-white/30 uppercase tracking-wider mt-0.5 truncate">{stat.label}</p>
+              <div key={stat.label} className="flex flex-col items-center gap-1">
+                <p className="text-base md:text-lg font-black text-white">{stat.value}</p>
+                <p className="text-[8px] md:text-[9px] text-white/40 uppercase tracking-widest">{stat.label}</p>
               </div>
             ))}
           </div>
@@ -794,10 +928,20 @@ export default function TracksPage() {
             </div>
           </section>
 
+          {/* Loading Spinner */}
+          {remixesLoading && (
+            <section className="px-6 md:px-12 py-16">
+              <div className="max-w-7xl mx-auto">
+                <LoadingSpinner text="Loading remixes..." />
+              </div>
+            </section>
+          )}
+
           {/* Remix Tracks List */}
-          <section className="px-6 md:px-12 py-2 md:py-4">
-            <div className="max-w-7xl mx-auto">
-              <div className="space-y-3">
+          {!remixesLoading && (
+            <section className="px-6 md:px-12 py-2 md:py-4">
+              <div className="max-w-7xl mx-auto">
+                <div className="space-y-3">
                 {remixTracks
                   .filter((t) => {
                     const typeMatch = selectedRemixType === 'All' || t.remixType === selectedRemixType;
@@ -817,7 +961,7 @@ export default function TracksPage() {
                     <TrackListItem
                       key={remix.id}
                       track={remix}
-                      onClickTrack={setSelectedTrack}
+                      onClickTrack={handleTrackClick}
                       onPlay={handlePlayTrack}
                       onTogglePlay={handleTogglePlayTrack}
                       showType={false}
@@ -847,7 +991,8 @@ export default function TracksPage() {
                 </p>
               </div>
             </div>
-          </section>
+            </section>
+          )}
         </>
       )}
 

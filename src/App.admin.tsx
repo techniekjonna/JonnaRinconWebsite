@@ -1,9 +1,14 @@
 import React, { Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
-import { BackgroundProvider } from './contexts/BackgroundContext';
+import { useScrollToTop } from './hooks/useScrollToTop';
 import ProtectedRoute from './components/ProtectedRoute';
-import BackgroundRenderer from './components/BackgroundRenderer';
+
+// Scroll to top on route change
+const ScrollToTopWrapper = ({ children }: { children: React.ReactNode }) => {
+  useScrollToTop();
+  return <>{children}</>;
+};
 
 // Admin Pages
 import LoginPage from './pages/admin/LoginPage';
@@ -17,14 +22,18 @@ import EditsPage from './pages/admin/EditsPage';
 import ServicesPage from './pages/admin/ServicesPage';
 import OrdersPage from './pages/admin/OrdersPage';
 import CollaborationsPage from './pages/admin/CollaborationsPage';
-import BackgroundToolPage from './pages/admin/BackgroundToolPage';
 import DiscountCodesPage from './pages/admin/DiscountCodesPage';
+import PlaylistsPage from './pages/admin/PlaylistsPage';
+import AgendaPage from './pages/admin/AgendaPage';
+import BackgroundToolPage from './pages/admin/BackgroundToolPage';
+import ProjectsAdminPage from './pages/admin/ProjectsAdminPage';
 
 const AdminApp: React.FC = () => {
   return (
     <AuthProvider>
       <BrowserRouter>
-        <Routes>
+        <ScrollToTopWrapper>
+            <Routes>
           {/* Login Route */}
           <Route path="/admin/login" element={<LoginPage />} />
 
@@ -126,16 +135,41 @@ const AdminApp: React.FC = () => {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/admin/playlists"
+            element={
+              <ProtectedRoute requireAdmin={true}>
+                <PlaylistsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/agenda"
+            element={
+              <ProtectedRoute requireAdmin={true}>
+                <AgendaPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/projects"
+            element={
+              <ProtectedRoute requireAdmin={true}>
+                <ProjectsAdminPage />
+              </ProtectedRoute>
+            }
+          />
 
           {/* Redirect /admin to dashboard */}
           <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
 
           {/* Catch all - redirect to home */}
           <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </BrowserRouter>
-    </AuthProvider>
-  );
-};
+            </Routes>
+          </ScrollToTopWrapper>
+        </BrowserRouter>
+      </AuthProvider>
+    );
+  };
 
 export default AdminApp;

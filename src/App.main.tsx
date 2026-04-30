@@ -1,10 +1,19 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
+import { CartProvider } from './contexts/CartContext';
+import { TrackDetailProvider } from './contexts/TrackDetailContext';
+import { BeatDetailProvider } from './contexts/BeatDetailContext';
 import { BackgroundProvider } from './contexts/BackgroundContext';
+import { useScrollToTop } from './hooks/useScrollToTop';
 import ProtectedRoute from './components/ProtectedRoute';
 import GlobalAudioPlayer from './components/GlobalAudioPlayer';
+import GlobalBeatDetailModal from './components/GlobalBeatDetailModal';
 import BackgroundRenderer from './components/BackgroundRenderer';
+import BackgroundOverlay from './components/BackgroundOverlay';
+import ShoppingCart from './components/ShoppingCart';
+import { useCartContext } from './contexts/CartContext';
+import Navigation from './components/Navigation';
 
 // Public pages
 import HomePage from './App';
@@ -46,8 +55,8 @@ import CustomerMyProducts from './pages/customer/MyProductsPage';
 
 // Artist pages (protected - artist role)
 import ArtistDashboard from './pages/artist/DashboardPage';
+import ArtistAgenda from './pages/artist/AgendaPage';
 import ArtistCollaborations from './pages/artist/CollaborationsPage';
-import ArtistRequestCollab from './pages/artist/RequestCollabPage';
 import ArtistShop from './pages/artist/ShopPage';
 import ArtistOrders from './pages/artist/OrdersPage';
 import ArtistFreeDownloads from './pages/artist/FreeDownloadsPage';
@@ -61,6 +70,7 @@ import AdminBeats from './pages/admin/BeatsPage';
 import AdminTracks from './pages/admin/TracksPage';
 import AdminRemixes from './pages/admin/RemixesPage';
 import AdminOrders from './pages/admin/OrdersPage';
+import AdminProductManagement from './pages/admin/ProductManagementPage';
 import AdminContent from './pages/admin/ContentPage';
 import AdminAnalytics from './pages/admin/AnalyticsPage';
 import AdminCollaborations from './pages/admin/CollaborationsPage';
@@ -68,52 +78,122 @@ import AdminCollabRequests from './pages/admin/CollabRequestsPage';
 import AdminArtistRoleRequests from './pages/admin/ArtistRoleRequestsPage';
 import AdminSettings from './pages/admin/SettingsPage';
 import AdminChat from './pages/admin/ChatPage';
-import AdminBackground from './pages/admin/BackgroundToolPage';
 import AdminDiscountCodes from './pages/admin/DiscountCodesPage';
 import AdminArt from './pages/admin/ArtAdminPage';
 import AdminServices from './pages/admin/ServicesPage';
 import AdminMerchandise from './pages/admin/MerchandiseAdminPage';
+import AdminPlaylists from './pages/admin/PlaylistsPage';
+import AdminAgenda from './pages/admin/AgendaPage';
+import AdminProjects from './pages/admin/ProjectsAdminPage';
 
 // Manager pages (protected - manager role)
 import ManagerDashboard from './pages/manager/DashboardPage';
 import ManagerBeats from './pages/manager/BeatsPage';
 import ManagerCollaborations from './pages/manager/CollaborationsPage';
 import ManagerChat from './pages/manager/ChatPage';
+import ManagerAgendaPage from './pages/manager/AgendaPage';
+import { ManagerProjectsPage as ManagerProjects } from './pages/admin/ProjectsAdminPage';
+
+// Checkout pages (public)
+import CheckoutPage from './pages/CheckoutPage';
+import CheckoutSuccessPage from './pages/CheckoutSuccessPage';
+
+// Global Shopping Cart component using CartContext
+const GlobalShoppingCart = () => {
+  const navigate = useNavigate();
+  const { cartItems, isOpen, setIsOpen, removeFromCart } = useCartContext();
+
+  // Listen for cart open event from Header
+  React.useEffect(() => {
+    const handleOpenCart = () => {
+      setIsOpen(true);
+    };
+    window.addEventListener('open-cart', handleOpenCart);
+    return () => window.removeEventListener('open-cart', handleOpenCart);
+  }, [setIsOpen]);
+
+  const handleCheckout = () => {
+    setIsOpen(false);
+    navigate('/checkout');
+  };
+
+  return (
+    <ShoppingCart
+      isOpen={isOpen}
+      onClose={() => setIsOpen(false)}
+      items={cartItems}
+      onRemoveItem={(beatId) => removeFromCart(beatId)}
+      onCheckout={handleCheckout}
+    />
+  );
+};
+
+// Scroll to top on route change
+const ScrollToTopWrapper = ({ children }: { children: React.ReactNode }) => {
+  useScrollToTop();
+  return <>{children}</>;
+};
+
+// Alleen padding toepassen op publieke pagina's (niet op admin/artist/customer/manager)
+const PublicPaddingWrapper = ({ children }: { children: React.ReactNode }) => {
+  const location = useLocation();
+  const isProtectedRoute =
+    location.pathname.startsWith('/admin') ||
+    location.pathname.startsWith('/manager') ||
+    location.pathname.startsWith('/artist') ||
+    location.pathname.startsWith('/customer');
+  return <div className={isProtectedRoute ? '' : 'pt-28 sm:pt-32'}>{children}</div>;
+};
 
 const MainApp: React.FC = () => {
   return (
-    <AuthProvider>
-      <BackgroundProvider>
-        <BrowserRouter>
-          <BackgroundRenderer />
-          <GlobalAudioPlayer />
-          <Routes>
-          {/* Public Routes */}
-          <Route path="/" element={<HomePage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
+    <BackgroundProvider>
+      <BackgroundRenderer />
+      <AuthProvider>
+        <CartProvider>
+          <TrackDetailProvider>
+            <BeatDetailProvider>
+              <BrowserRouter>
+                <Header />
+                <Navigation />
+                <ScrollToTopWrapper>
+                  <BackgroundOverlay />
+                  <GlobalAudioPlayer />
+                  <GlobalBeatDetailModal />
+                  <GlobalShoppingCart />
+                  <PublicPaddingWrapper>
+                <Routes>
+                  {/* Public Routes */}
+                  <Route path="/" element={<HomePage />} />
+                  <Route path="/login" element={<LoginPage />} />
+                  <Route path="/register" element={<RegisterPage />} />
 
-          {/* Shop Routes (public) */}
-          <Route path="/shop" element={<ShopHub />} />
-          <Route path="/shop/beats" element={<BeatsShop />} />
-          <Route path="/shop/services" element={<ServicesShop />} />
-          <Route path="/shop/merchandise" element={<MerchandiseShop />} />
-          <Route path="/shop/art" element={<ArtShop />} />
+                  {/* Shop Routes (public) */}
+                  <Route path="/shop" element={<ShopHub />} />
+                  <Route path="/shop/beats" element={<BeatsShop />} />
+                  <Route path="/shop/services" element={<ServicesShop />} />
+                  <Route path="/shop/merchandise" element={<MerchandiseShop />} />
+                  <Route path="/shop/art" element={<ArtShop />} />
 
-          {/* Standalone Pages (public) */}
-          <Route path="/catalogue" element={<CataloguePage />} />
-          <Route path="/tracks" element={<TracksPage />} />
-          <Route path="/remixes" element={<RemixesPage />} />
-          <Route path="/dj-sets" element={<DJSetsPage />} />
-          <Route path="/productions" element={<ProductionsPage />} />
-          <Route path="/spotify" element={<SpotifyPage />} />
-          <Route path="/support" element={<SupportPage />} />
-          <Route path="/releases" element={<ReleasesPage />} />
-          <Route path="/download/:trackId" element={<DownloadGatePage />} />
-          <Route path="/socials" element={<SocialsPage />} />
-          <Route path="/contact" element={<ContactPage />} />
+                  {/* Standalone Pages (public) */}
+                  <Route path="/catalogue" element={<CataloguePage />} />
+                  <Route path="/tracks" element={<TracksPage />} />
+                  <Route path="/my-tracks" element={<TracksPage />} />
+                  <Route path="/remixes" element={<RemixesPage />} />
+                  <Route path="/dj-sets" element={<DJSetsPage />} />
+                  <Route path="/productions" element={<ProductionsPage />} />
+                  <Route path="/spotify" element={<SpotifyPage />} />
+                  <Route path="/support" element={<SupportPage />} />
+                  <Route path="/releases" element={<ReleasesPage />} />
+                  <Route path="/download/:trackId" element={<DownloadGatePage />} />
+                  <Route path="/socials" element={<SocialsPage />} />
+                  <Route path="/contact" element={<ContactPage />} />
 
-          {/* Customer Routes (protected - user role only) */}
+                  {/* Checkout (public) */}
+                  <Route path="/checkout" element={<CheckoutPage />} />
+                  <Route path="/checkout-success" element={<CheckoutSuccessPage />} />
+
+                  {/* Customer Routes (protected - user role only) */}
           <Route
             path="/customer/dashboard"
             element={
@@ -206,18 +286,18 @@ const MainApp: React.FC = () => {
             }
           />
           <Route
-            path="/artist/collaborations"
+            path="/artist/agenda"
             element={
               <ProtectedRoute allowedRoles={['artist']}>
-                <ArtistCollaborations />
+                <ArtistAgenda />
               </ProtectedRoute>
             }
           />
           <Route
-            path="/artist/request-collab"
+            path="/artist/collaborations"
             element={
               <ProtectedRoute allowedRoles={['artist']}>
-                <ArtistRequestCollab />
+                <ArtistCollaborations />
               </ProtectedRoute>
             }
           />
@@ -305,6 +385,30 @@ const MainApp: React.FC = () => {
             }
           />
           <Route
+            path="/admin/playlists"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <AdminPlaylists />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/agenda"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <AdminAgenda />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/projects"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <AdminProjects />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/admin/services"
             element={
               <ProtectedRoute allowedRoles={['admin']}>
@@ -317,6 +421,14 @@ const MainApp: React.FC = () => {
             element={
               <ProtectedRoute allowedRoles={['admin']}>
                 <AdminOrders />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/product-management"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <AdminProductManagement />
               </ProtectedRoute>
             }
           />
@@ -377,14 +489,6 @@ const MainApp: React.FC = () => {
             }
           />
           <Route
-            path="/admin/background"
-            element={
-              <ProtectedRoute allowedRoles={['admin']}>
-                <AdminBackground />
-              </ProtectedRoute>
-            }
-          />
-          <Route
             path="/admin/discount-codes"
             element={
               <ProtectedRoute allowedRoles={['admin']}>
@@ -437,17 +541,38 @@ const MainApp: React.FC = () => {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/manager/agenda"
+            element={
+              <ProtectedRoute allowedRoles={['manager']}>
+                <ManagerAgendaPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/manager/projects"
+            element={
+              <ProtectedRoute allowedRoles={['manager']}>
+                <ManagerProjects />
+              </ProtectedRoute>
+            }
+          />
 
           {/* Redirect /manager to dashboard */}
           <Route path="/manager" element={<Navigate to="/manager/dashboard" replace />} />
 
           {/* 404 */}
           <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-        </BrowserRouter>
-      </BackgroundProvider>
-    </AuthProvider>
-  );
-};
+                </Routes>
+                  </PublicPaddingWrapper>
+                </ScrollToTopWrapper>
+              </BrowserRouter>
+            </BeatDetailProvider>
+          </TrackDetailProvider>
+        </CartProvider>
+      </AuthProvider>
+    </BackgroundProvider>
+    );
+  };
 
 export default MainApp;

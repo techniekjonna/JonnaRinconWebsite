@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { beatService } from '../../lib/firebase/services/beatService';
 import { Beat } from '../../lib/firebase/types';
 import CustomerLayout from '../../components/customer/CustomerLayout';
+import LoadingSpinner from '../../components/LoadingSpinner';
 import { Music, Play, Heart, Download } from 'lucide-react';
 import { extractUniqueGenres, createGenreFilter } from '../../lib/utils/genreExtractor';
 
@@ -65,7 +66,7 @@ const CustomerShop: React.FC = () => {
       filtered.sort((a, b) => {
         switch (filter.sortBy) {
           case 'newest':
-            return b.createdAt.toMillis() - a.createdAt.toMillis();
+            return (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0);
           case 'popular':
             return b.plays - a.plays;
           case 'price_low':
@@ -152,7 +153,7 @@ const CustomerShop: React.FC = () => {
         {/* Beats Grid */}
         {loading ? (
           <div className="flex justify-center items-center h-64">
-            <div className="text-xl text-white">Loading beats...</div>
+            <LoadingSpinner text="Loading beats..." />
           </div>
         ) : beats.length === 0 ? (
           <div className="text-center py-12 bg-white/[0.08] border border-white/[0.06] rounded-xl">

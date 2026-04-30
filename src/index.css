@@ -4,13 +4,33 @@
 
 @layer base {
   body {
-    @apply bg-black text-white font-sans overflow-x-hidden;
+    @apply text-white font-sans overflow-x-hidden;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
   html {
-    scroll-behavior: smooth;
+    background-color: #0a0a0a;
+    image-rendering: -webkit-optimize-contrast;
+    min-height: 100vh;
+  }
+
+  /* FOUC Prevention - Background Container States */
+  #site-bg-container {
+    opacity: 1;
+  }
+
+  #site-bg-container.site-bg-container-loading {
+    background-color: #0a0a0a;
+    opacity: 1;
+  }
+
+  #site-bg-container.site-bg-container-loaded {
+    opacity: 1;
+  }
+
+  html {
+    scroll-behavior: auto;
   }
 
   /* Modern selection color */
@@ -318,4 +338,39 @@
   .eq-bar-2 { animation: eq-bar 0.8s ease-in-out infinite; animation-delay: 150ms; }
   .eq-bar-3 { animation: eq-bar 0.8s ease-in-out infinite; animation-delay: 300ms; }
   .eq-bar-4 { animation: eq-bar 0.8s ease-in-out infinite; animation-delay: 100ms; }
+
+  /* Mobile animation optimization: faster durations for snappier feel */
+  @media (max-width: 768px) {
+    .slide-up {
+      animation: slide-up 0.4s ease-out forwards;
+    }
+
+    .animate-slide-in-right {
+      animation: slide-in-right 0.2s ease-out forwards;
+    }
+
+    .animate-fade-in {
+      animation: fade-in 0.2s ease-out forwards;
+    }
+
+    .animate-scale-in {
+      animation: scale-in 0.15s ease-out forwards;
+    }
+
+    .animate-scale-out {
+      animation: scale-out 0.15s ease-in forwards;
+    }
+
+    .fade-in {
+      animation: fade-in 0.4s ease-out forwards;
+    }
+
+    .hover-lift {
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .reveal-up {
+      animation: reveal-up 0.4s ease-out forwards;
+    }
+  }
 }

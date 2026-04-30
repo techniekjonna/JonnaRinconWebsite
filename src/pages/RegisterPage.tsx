@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { ArrowLeft } from 'lucide-react';
 
 const RegisterPage: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -41,23 +42,41 @@ const RegisterPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 flex items-center justify-center p-4">
-      <div className="max-w-md w-full">
-        <div className="bg-gray-800 rounded-2xl shadow-2xl p-8 border border-purple-500/20">
+    <div className="min-h-screen relative flex items-center justify-center p-4">
+      {/* Background with dark overlay */}
+      <div className="fixed inset-0 -z-10">
+        <img
+          src="/JEIGHTENESIS.jpg"
+          alt="Background"
+          className="w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-black/70" />
+      </div>
+
+      <div className="w-full max-w-md">
+        <button
+          onClick={() => navigate(-1)}
+          className="mb-6 inline-flex items-center gap-2 text-white/60 hover:text-white transition-colors"
+        >
+          <ArrowLeft size={20} />
+          <span className="text-sm font-medium">Back</span>
+        </button>
+
+        <div className="bg-white/[0.08] backdrop-blur-xl border border-white/[0.15] rounded-3xl overflow-hidden shadow-2xl p-8">
           <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold text-white mb-2">Create Account</h1>
-            <p className="text-gray-400">Join Jonna Rincon's beat store</p>
+            <h1 className="text-3xl font-black text-white mb-2 uppercase tracking-tight">Create Account</h1>
+            <p className="text-white/60 text-sm">Join Jonna Rincon's beat store</p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
-              <div className="bg-red-500/10 border border-red-500 text-red-500 px-4 py-3 rounded-lg">
+              <div className="bg-red-500/20 border border-red-500/50 text-red-300 px-4 py-3 rounded-lg text-sm">
                 {error}
               </div>
             )}
 
             <div>
-              <label htmlFor="displayName" className="block text-sm font-medium text-gray-300 mb-2">
+              <label htmlFor="displayName" className="block text-sm font-medium text-white/80 mb-2">
                 Display Name
               </label>
               <input
@@ -66,13 +85,13 @@ const RegisterPage: React.FC = () => {
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
                 required
-                className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="w-full px-4 py-2.5 bg-white/[0.06] border border-white/[0.15] rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-white/[0.3] focus:bg-white/[0.1] transition-all"
                 placeholder="Your name"
               />
             </div>
 
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
+              <label htmlFor="email" className="block text-sm font-medium text-white/80 mb-2">
                 Email Address
               </label>
               <input
@@ -81,13 +100,13 @@ const RegisterPage: React.FC = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="w-full px-4 py-2.5 bg-white/[0.06] border border-white/[0.15] rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-white/[0.3] focus:bg-white/[0.1] transition-all"
                 placeholder="your@email.com"
               />
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-2">
+              <label htmlFor="password" className="block text-sm font-medium text-white/80 mb-2">
                 Password
               </label>
               <input
@@ -96,13 +115,13 @@ const RegisterPage: React.FC = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="w-full px-4 py-2.5 bg-white/[0.06] border border-white/[0.15] rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-white/[0.3] focus:bg-white/[0.1] transition-all"
                 placeholder="••••••••"
               />
             </div>
 
             <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-300 mb-2">
+              <label htmlFor="confirmPassword" className="block text-sm font-medium text-white/80 mb-2">
                 Confirm Password
               </label>
               <input
@@ -111,7 +130,7 @@ const RegisterPage: React.FC = () => {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
-                className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="w-full px-4 py-2.5 bg-white/[0.06] border border-white/[0.15] rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-white/[0.3] focus:bg-white/[0.1] transition-all"
                 placeholder="••••••••"
               />
             </div>
@@ -119,19 +138,22 @@ const RegisterPage: React.FC = () => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-3 rounded-lg font-semibold hover:from-purple-700 hover:to-pink-700 transition-all disabled:opacity-50"
+              className="w-full bg-red-600 hover:bg-red-700 disabled:bg-red-600/50 text-white py-2.5 rounded-lg font-bold uppercase tracking-wider transition-all disabled:opacity-60 mt-2"
             >
               {loading ? 'Creating Account...' : 'Create Account'}
             </button>
           </form>
 
-          <div className="mt-6 text-center">
-            <p className="text-sm text-gray-400">
+          <div className="mt-6 text-center space-y-3">
+            <p className="text-sm text-white/60">
               Already have an account?{' '}
-              <Link to="/login" className="text-purple-400 hover:text-purple-300">
+              <Link to="/login" className="text-red-400 hover:text-red-300 font-semibold">
                 Sign in
               </Link>
             </p>
+            <Link to="/" className="inline-block text-sm text-white/40 hover:text-white/70 font-semibold">
+              Back to home
+            </Link>
           </div>
         </div>
       </div>

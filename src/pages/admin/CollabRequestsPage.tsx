@@ -116,32 +116,6 @@ const CollabRequestsPage: React.FC = () => {
           <p className="text-white/40 mt-2">Review and approve collaboration requests from artists</p>
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-4">
-            <p className="text-white/40 text-sm">Total Requests</p>
-            <p className="text-2xl font-bold text-white mt-1">{requests.length}</p>
-          </div>
-          <div className="bg-white/[0.08] border border-yellow-600 rounded-xl p-4">
-            <p className="text-white/40 text-sm">Pending</p>
-            <p className="text-2xl font-bold text-yellow-400 mt-1">
-              {requests.filter(r => r.status === 'pending').length}
-            </p>
-          </div>
-          <div className="bg-white/[0.08] border border-green-600 rounded-xl p-4">
-            <p className="text-white/40 text-sm">Approved</p>
-            <p className="text-2xl font-bold text-green-400 mt-1">
-              {requests.filter(r => r.status === 'approved').length}
-            </p>
-          </div>
-          <div className="bg-white/[0.08] border border-red-600 rounded-xl p-4">
-            <p className="text-white/40 text-sm">Rejected</p>
-            <p className="text-2xl font-bold text-red-400 mt-1">
-              {requests.filter(r => r.status === 'rejected').length}
-            </p>
-          </div>
-        </div>
-
         {/* Filter Tabs */}
         <div className="flex gap-4 border-b border-white/[0.06]">
           {(['all', 'pending', 'approved', 'rejected'] as const).map((status) => (

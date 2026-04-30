@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import AdminLayout from '../../components/admin/AdminLayout';
 import { settingsService } from '../../lib/firebase/services';
 import { SiteBackground } from '../../lib/firebase/types';
+import { toDirectUrl } from '../../lib/utils/urlUtils';
 import { Trash2, Check, Image } from 'lucide-react';
 
 // Background management tool - allows admins to change site background
@@ -39,7 +40,8 @@ const BackgroundToolPage: React.FC = () => {
     setSuccess('');
 
     try {
-      await settingsService.addBackground(imageUrl.trim(), name.trim() || undefined);
+      const directUrl = toDirectUrl(imageUrl.trim());
+      await settingsService.addBackground(directUrl, name.trim() || undefined);
       setSuccess('Background applied successfully');
       setImageUrl('');
       setName('');
@@ -206,17 +208,30 @@ const BackgroundToolPage: React.FC = () => {
                       className="w-full h-full object-cover"
                     />
                   </div>
-                  <div>
+                  <div className="flex-1">
                     <p className="text-white font-medium">
                       {activeBackground.name || 'Untitled'}
                     </p>
                     <p className="text-white/40 text-sm mt-1">
                       Added {formatDate(activeBackground.createdAt)}
                     </p>
-                    <span className="inline-flex items-center mt-2 px-2 py-1 bg-green-500/20 border border-green-500/40 rounded text-green-300 text-xs font-medium">
-                      <Check size={12} className="mr-1" />
-                      Active
-                    </span>
+                    <div className="flex items-center gap-3 mt-4">
+                      <span className="inline-flex items-center px-2 py-1 bg-green-500/20 border border-green-500/40 rounded text-green-300 text-xs font-medium">
+                        <Check size={12} className="mr-1" />
+                        Active
+                      </span>
+                      <button
+                        onClick={() => {
+                          if (imageUrl.trim()) {
+                            handleApplyBackground();
+                          }
+                        }}
+                        disabled={!imageUrl.trim() || applying}
+                        className="px-3 py-1 text-xs bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded font-medium transition-all"
+                      >
+                        Replace
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>

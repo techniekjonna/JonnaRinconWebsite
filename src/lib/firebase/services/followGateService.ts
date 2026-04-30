@@ -138,17 +138,17 @@ class FollowGateService {
     return onSnapshot(q, (snapshot) => {
       const completions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FollowGateCompletion));
       // Sort client-side instead
-      completions.sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
+      completions.sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0));
       callback(completions);
     });
   }
 
   isExpired(expiresAt: Timestamp): boolean {
-    return expiresAt.toMillis() < Date.now();
+    return (expiresAt?.toMillis?.() || 0) < Date.now();
   }
 
   getDaysUntilExpiry(expiresAt: Timestamp): number {
-    const diff = expiresAt.toMillis() - Date.now();
+    const diff = (expiresAt?.toMillis?.() || 0) - Date.now();
     return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
   }
 }

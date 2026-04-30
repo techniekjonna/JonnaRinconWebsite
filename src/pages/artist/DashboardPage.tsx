@@ -5,6 +5,7 @@ import { collaborationService } from '../../lib/firebase/services/collaborationS
 import { orderService } from '../../lib/firebase/services/orderService';
 import { Collaboration, Order } from '../../lib/firebase/types';
 import ArtistLayout from '../../components/artist/ArtistLayout';
+import LoadingSpinner from '../../components/LoadingSpinner';
 import { Handshake, Music, DollarSign, TrendingUp, Home } from 'lucide-react';
 
 const ArtistDashboard: React.FC = () => {
@@ -55,7 +56,7 @@ const ArtistDashboard: React.FC = () => {
     return (
       <ArtistLayout>
         <div className="flex justify-center items-center h-64">
-          <div className="text-white/40">Loading...</div>
+          <LoadingSpinner />
         </div>
       </ArtistLayout>
     );

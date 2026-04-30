@@ -4,6 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { orderService } from '../../lib/firebase/services/orderService';
 import { Order } from '../../lib/firebase/types';
 import CustomerLayout from '../../components/customer/CustomerLayout';
+import LoadingSpinner from '../../components/LoadingSpinner';
 import { TrendingUp, DollarSign, ShoppingBag, Download, Home } from 'lucide-react';
 
 const CustomerDashboard: React.FC = () => {
@@ -42,7 +43,7 @@ const CustomerDashboard: React.FC = () => {
     return (
       <CustomerLayout>
         <div className="flex justify-center items-center h-64">
-          <div className="text-white/40">Loading...</div>
+          <LoadingSpinner />
         </div>
       </CustomerLayout>
     );

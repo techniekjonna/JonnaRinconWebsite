@@ -53,6 +53,7 @@ export default function ProductCard({
         <img
           src={product.artworkUrl}
           alt={product.beatTitle}
+          loading="lazy"
           className={`w-full h-full object-cover transition-transform duration-300 ${
             isExpired ? 'grayscale' : 'group-hover:scale-105'
           }`}

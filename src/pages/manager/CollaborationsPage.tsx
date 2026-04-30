@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import ManagerLayout from '../../components/manager/ManagerLayout';
+import LoadingSpinner from '../../components/LoadingSpinner';
 import { useCollaborations } from '../../hooks/useCollaborations';
 import { CollaborationStatus } from '../../lib/firebase/types';
 import { MessageSquare, ChevronDown, ChevronUp } from 'lucide-react';
@@ -97,8 +98,8 @@ const CollaborationsPage: React.FC = () => {
         {/* Collaborations List */}
         <div className="space-y-4">
           {loading ? (
-            <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-12 text-center text-white/40">
-              Loading...
+            <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-12">
+              <LoadingSpinner text="Loading collaborations..." />
             </div>
           ) : collaborations.length === 0 ? (
             <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-12 text-center text-white/40">

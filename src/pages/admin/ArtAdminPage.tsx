@@ -5,7 +5,7 @@ import { useArt } from '../../hooks/useArt';
 import { toDirectUrl } from '../../lib/utils/urlUtils';
 import { artService } from '../../lib/firebase/services';
 import { Art } from '../../lib/firebase/types';
-import { Plus, Edit, Trash2 } from 'lucide-react';
+import { Plus, Edit, Trash2, Upload } from 'lucide-react';
 
 const categories = [
   'Digital Art',
@@ -57,26 +57,6 @@ const ArtAdminPage: React.FC = () => {
             <Plus size={20} />
             <span>Add Art</span>
           </button>
-        </div>
-
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-4">
-            <p className="text-white/40 text-sm">Total Art</p>
-            <p className="text-2xl font-bold text-white mt-1">{art.length}</p>
-          </div>
-          <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-4">
-            <p className="text-white/40 text-sm">Published</p>
-            <p className="text-2xl font-bold text-white mt-1">
-              {art.filter((a) => a.status === 'published').length}
-            </p>
-          </div>
-          <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-4">
-            <p className="text-white/40 text-sm">Featured</p>
-            <p className="text-2xl font-bold text-white mt-1">
-              {art.filter((a) => a.featured).length}
-            </p>
-          </div>
         </div>
 
         {/* Art Table */}
@@ -187,6 +167,14 @@ interface ArtFormModalProps {
   onSave: () => void;
 }
 
+const artTypes = ['Painting', 'Hardware', 'Furniture', 'Clothing'] as const;
+const subtypesByType: Record<string, string[]> = {
+  Painting: ['Acrylic', 'Oil', 'Watercolor', 'Digital', 'Mixed Media'],
+  Hardware: ['Sculpture', 'Installation', 'Mechanical', 'Other'],
+  Furniture: ['Chair', 'Table', 'Cabinet', 'Decor', 'Other'],
+  Clothing: ['Jacket', 'Bomber Jacket', 'Jeans', 'Leather Jacket', 'Belt', 'Cap', 'Sunglasses', 'Other'],
+};
+
 const ArtFormModal: React.FC<ArtFormModalProps> = ({ art, onClose, onSave }) => {
   const [formData, setFormData] = useState({
     title: art?.title || '',
@@ -202,6 +190,11 @@ const ArtFormModal: React.FC<ArtFormModalProps> = ({ art, onClose, onSave }) => 
     metaDescription: art?.metaDescription || '',
     status: art?.status || 'draft',
     featured: art?.featured || false,
+    type: art?.type || 'Painting' as const,
+    subtype: art?.subtype || '',
+    forSale: art?.forSale !== undefined ? art.forSale : true,
+    price: art?.price || 0,
+    isFree: art?.isFree !== undefined ? art.isFree : false,
   });
   const [saving, setSaving] = useState(false);
   const [galleryInput, setGalleryInput] = useState('');
@@ -223,6 +216,11 @@ const ArtFormModal: React.FC<ArtFormModalProps> = ({ art, onClose, onSave }) => 
         metaDescription: art.metaDescription || '',
         status: art.status || 'draft',
         featured: art.featured || false,
+        type: art.type || 'Painting',
+        subtype: art.subtype || '',
+        forSale: art.forSale !== undefined ? art.forSale : true,
+        price: art.price || 0,
+        isFree: art.isFree !== undefined ? art.isFree : false,
       });
       setGalleryInput('');
     }
@@ -281,6 +279,12 @@ const ArtFormModal: React.FC<ArtFormModalProps> = ({ art, onClose, onSave }) => 
         metaDescription: formData.metaDescription || undefined,
         status: formData.status,
         featured: formData.featured,
+        type: formData.type,
+        subtype: formData.subtype || undefined,
+        forSale: formData.forSale,
+        price: formData.forSale && !formData.isFree ? formData.price : undefined,
+        isFree: formData.isFree,
+        stock: 1,
       };
 
       if (art) {
@@ -311,7 +315,7 @@ const ArtFormModal: React.FC<ArtFormModalProps> = ({ art, onClose, onSave }) => 
         <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto flex-1">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Title</label>
+              <label className="block text-sm font-medium text-white/60 mb-2">Title <span className="text-red-400">*</span></label>
               <input
                 type="text"
                 value={formData.title}
@@ -322,7 +326,7 @@ const ArtFormModal: React.FC<ArtFormModalProps> = ({ art, onClose, onSave }) => 
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Artist</label>
+              <label className="block text-sm font-medium text-white/60 mb-2">Artist <span className="text-red-400">*</span></label>
               <input
                 type="text"
                 value={formData.artist}
@@ -334,7 +338,7 @@ const ArtFormModal: React.FC<ArtFormModalProps> = ({ art, onClose, onSave }) => 
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-white/60 mb-2">Description</label>
+            <label className="block text-sm font-medium text-white/60 mb-2">Description <span className="text-red-400">*</span></label>
             <textarea
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
@@ -345,7 +349,7 @@ const ArtFormModal: React.FC<ArtFormModalProps> = ({ art, onClose, onSave }) => 
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Medium</label>
+              <label className="block text-sm font-medium text-white/60 mb-2">Medium <span className="text-red-400">*</span></label>
               <input
                 type="text"
                 value={formData.medium}
@@ -357,7 +361,7 @@ const ArtFormModal: React.FC<ArtFormModalProps> = ({ art, onClose, onSave }) => 
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Year</label>
+              <label className="block text-sm font-medium text-white/60 mb-2">Year <span className="text-red-400">*</span></label>
               <input
                 type="number"
                 min="1900"
@@ -371,7 +375,7 @@ const ArtFormModal: React.FC<ArtFormModalProps> = ({ art, onClose, onSave }) => 
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-white/60 mb-2">Category</label>
+            <label className="block text-sm font-medium text-white/60 mb-2">Category <span className="text-red-400">*</span></label>
             <select
               value={formData.category}
               onChange={(e) => setFormData({ ...formData, category: e.target.value })}
@@ -412,6 +416,17 @@ const ArtFormModal: React.FC<ArtFormModalProps> = ({ art, onClose, onSave }) => 
                   className="flex-1 px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white"
                   placeholder="Add gallery image URL..."
                 />
+                <button
+                  type="button"
+                  onClick={() => {
+                    // Upload wiring comes later
+                  }}
+                  className="px-4 py-2 bg-white/[0.08] border border-white/[0.1] rounded-lg text-white/70 hover:text-white hover:bg-white/[0.12] transition-colors inline-flex items-center gap-2"
+                  title="Upload file"
+                >
+                  <Upload size={14} />
+                  <span className="text-xs font-semibold uppercase tracking-wider hidden sm:inline">Upload</span>
+                </button>
                 <button
                   type="button"
                   onClick={handleAddGalleryImage}
@@ -489,7 +504,88 @@ const ArtFormModal: React.FC<ArtFormModalProps> = ({ art, onClose, onSave }) => 
             />
           </div>
 
-          <div>
+          <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/[0.06]">
+            <div>
+              <label className="block text-sm font-medium text-white/60 mb-2">Type</label>
+              <select
+                value={formData.type}
+                onChange={(e) => setFormData({ ...formData, type: e.target.value as any, subtype: '' })}
+                className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white"
+              >
+                {artTypes.map((type) => (
+                  <option key={type} value={type}>
+                    {type}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-white/60 mb-2">Subtype (Optional)</label>
+              <select
+                value={formData.subtype}
+                onChange={(e) => setFormData({ ...formData, subtype: e.target.value })}
+                className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white"
+              >
+                <option value="">Select a subtype...</option>
+                {subtypesByType[formData.type]?.map((subtype) => (
+                  <option key={subtype} value={subtype}>
+                    {subtype}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="space-y-3 pt-4">
+            <div>
+              <label className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  checked={!formData.forSale}
+                  onChange={(e) => setFormData({ ...formData, forSale: !e.target.checked })}
+                  className="w-4 h-4"
+                />
+                <span className="text-sm text-white/60">Not For Sale</span>
+              </label>
+            </div>
+
+            {formData.forSale && (
+              <>
+                <div>
+                  <label className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      checked={formData.isFree}
+                      onChange={(e) => setFormData({ ...formData, isFree: e.target.checked })}
+                      className="w-4 h-4"
+                    />
+                    <span className="text-sm text-white/60">Free</span>
+                  </label>
+                </div>
+
+                {!formData.isFree && (
+                  <div>
+                    <label className="block text-sm font-medium text-white/60 mb-2">Price</label>
+                    <div className="flex items-center gap-2">
+                      <span className="text-white/60">€</span>
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={formData.price}
+                        onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })}
+                        className="flex-1 px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white"
+                        placeholder="0.00"
+                      />
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+
+          <div className="pt-4">
             <label className="flex items-center space-x-2">
               <input
                 type="checkbox"

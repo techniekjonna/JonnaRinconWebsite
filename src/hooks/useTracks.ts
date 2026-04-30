@@ -6,7 +6,7 @@ export const useTracks = (filters?: {
   status?: Track['status'];
   featured?: boolean;
   genre?: string;
-}) => {
+} | 'admin') => {
   const [tracks, setTracks] = useState<Track[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -15,13 +15,18 @@ export const useTracks = (filters?: {
     setError(null);
     setLoading(true);
 
+    // If 'admin' is passed, fetch all tracks; otherwise use filters (default to published)
+    const actualFilters = filters === 'admin'
+      ? undefined
+      : filters || { status: 'published' };
+
     const unsubscribe = trackService.subscribeToTracks(
       (tracksData) => {
         setTracks(tracksData);
         setError(null);
         setLoading(false);
       },
-      filters,
+      actualFilters === 'admin' ? undefined : (actualFilters as any),
       (error) => {
         setError(error.message || 'Failed to load tracks');
         setLoading(false);
@@ -29,7 +34,7 @@ export const useTracks = (filters?: {
     );
 
     return () => unsubscribe();
-  }, [filters?.status, filters?.featured, filters?.genre]);
+  }, [typeof filters === 'string' ? filters : JSON.stringify(filters)]);
 
   return { tracks, loading, error, setError };
 };

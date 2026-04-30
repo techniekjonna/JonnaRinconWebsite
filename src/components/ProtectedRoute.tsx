@@ -13,6 +13,7 @@ function getDashboardForRole(role: UserRole): string {
   switch (role) {
     case 'admin': return '/admin/dashboard';
     case 'artist': return '/artist/dashboard';
+    case 'manager': return '/manager/dashboard';
     default: return '/customer/dashboard';
   }
 }
