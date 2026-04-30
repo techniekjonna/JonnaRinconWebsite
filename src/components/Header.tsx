@@ -64,7 +64,7 @@ const Header: React.FC = () => {
         <Menu size={20} />
       </span>
       <span
-        className="absolute inset-0 flex items-center justify-center text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-300"
+        className="absolute inset-0 flex items-center justify-center text-xs font-black uppercase tracking-[0.2em] transition-all duration-300"
         style={{
           opacity: hamburgerHovered ? 1 : 0,
           transform: hamburgerHovered ? 'translateY(0)' : 'translateY(6px)',
@@ -84,7 +84,7 @@ const Header: React.FC = () => {
         <div className="flex items-center justify-between px-6 py-4 h-20">
 
           {/* Desktop Logo - Left */}
-          <Link to="/" className="hidden md:flex items-center justify-center flex-shrink-0 w-12 h-12">
+          <Link to="/" className="hidden md:flex items-center justify-center flex-shrink-0 w-32 h-32">
             <img src="/Jonna Rincon Logo WH.png" alt="JR" className="w-full h-full object-contain" />
           </Link>
 

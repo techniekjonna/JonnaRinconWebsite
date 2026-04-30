@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { CartProvider } from './contexts/CartContext';
 import { TrackDetailProvider } from './contexts/TrackDetailContext';
@@ -11,7 +11,8 @@ import GlobalAudioPlayer from './components/GlobalAudioPlayer';
 import GlobalBeatDetailModal from './components/GlobalBeatDetailModal';
 import BackgroundRenderer from './components/BackgroundRenderer';
 import BackgroundOverlay from './components/BackgroundOverlay';
-import Header from './components/Header';
+import ShoppingCart from './components/ShoppingCart';
+import { useCartContext } from './contexts/CartContext';
 import Navigation from './components/Navigation';
 
 // Public pages
@@ -97,6 +98,36 @@ import { ManagerProjectsPage as ManagerProjects } from './pages/admin/ProjectsAd
 import CheckoutPage from './pages/CheckoutPage';
 import CheckoutSuccessPage from './pages/CheckoutSuccessPage';
 
+// Global Shopping Cart component using CartContext
+const GlobalShoppingCart = () => {
+  const navigate = useNavigate();
+  const { cartItems, isOpen, setIsOpen, removeFromCart } = useCartContext();
+
+  // Listen for cart open event from Header
+  React.useEffect(() => {
+    const handleOpenCart = () => {
+      setIsOpen(true);
+    };
+    window.addEventListener('open-cart', handleOpenCart);
+    return () => window.removeEventListener('open-cart', handleOpenCart);
+  }, [setIsOpen]);
+
+  const handleCheckout = () => {
+    setIsOpen(false);
+    navigate('/checkout');
+  };
+
+  return (
+    <ShoppingCart
+      isOpen={isOpen}
+      onClose={() => setIsOpen(false)}
+      items={cartItems}
+      onRemoveItem={(beatId) => removeFromCart(beatId)}
+      onCheckout={handleCheckout}
+    />
+  );
+};
+
 // Scroll to top on route change
 const ScrollToTopWrapper = ({ children }: { children: React.ReactNode }) => {
   useScrollToTop();
@@ -129,6 +160,7 @@ const MainApp: React.FC = () => {
                   <BackgroundOverlay />
                   <GlobalAudioPlayer />
                   <GlobalBeatDetailModal />
+                  <GlobalShoppingCart />
                   <PublicPaddingWrapper>
                 <Routes>
                   {/* Public Routes */}
