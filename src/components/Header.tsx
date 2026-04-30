@@ -24,8 +24,6 @@ const Header: React.FC = () => {
     location.pathname.startsWith('/artist') ||
     location.pathname.startsWith('/customer');
 
-  if (isProtectedRoute) return null;
-
   useEffect(() => {
     const handleSidebarStateChange = (e: CustomEvent) => {
       const { isOpen } = e.detail;
@@ -36,6 +34,8 @@ const Header: React.FC = () => {
     window.addEventListener('sidebar-state-change', handleSidebarStateChange as EventListener);
     return () => window.removeEventListener('sidebar-state-change', handleSidebarStateChange as EventListener);
   }, []);
+
+  if (isProtectedRoute) return null;
 
   const navItems = [
     { label: 'Shop', href: '/shop', position: 'left' },
