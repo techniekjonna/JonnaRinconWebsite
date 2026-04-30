@@ -140,6 +140,7 @@ const CustomButtonConfig: React.FC<CustomButtonConfigProps> = ({ isExpanded: ini
     label: string
   ) => {
     const isEnabled = button !== undefined;
+    const selectedTrackCount = button?.trackIds?.length || 0;
 
     return (
       <div className="space-y-3 pb-4 border-b border-white/[0.06]">
@@ -179,6 +180,30 @@ const CustomButtonConfig: React.FC<CustomButtonConfigProps> = ({ isExpanded: ini
               />
             </div>
 
+            {/* Track Selection */}
+            <div>
+              <label className="block text-sm text-white/60 mb-2">
+                Filter Tracks {selectedTrackCount > 0 && <span className="text-white font-medium">({selectedTrackCount} selected)</span>}
+              </label>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setIsTrackModalOpen(buttonNum)}
+                  className="flex-1 px-3 py-2 rounded-lg bg-white/[0.1] border border-white/[0.2] text-white/80 hover:text-white hover:bg-white/[0.15] transition-colors text-sm font-medium"
+                >
+                  {selectedTrackCount > 0 ? `${selectedTrackCount} Tracks Selected` : 'Select Tracks...'}
+                </button>
+                {selectedTrackCount > 0 && (
+                  <button
+                    onClick={() => clearTrackSelection(buttonNum)}
+                    className="px-3 py-2 rounded-lg bg-white/[0.1] border border-white/[0.2] text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors text-sm font-medium"
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+              <p className="text-xs text-white/40 mt-1">Leave empty to show all tracks</p>
+            </div>
+
             {/* Color Selector */}
             <div>
               <label className="block text-sm text-white/60 mb-2">Button Color</label>
@@ -207,7 +232,7 @@ const CustomButtonConfig: React.FC<CustomButtonConfigProps> = ({ isExpanded: ini
                 disabled
                 className={`px-4 py-2 rounded-lg text-white font-medium ${button.color}`}
               >
-                {button.label}
+                {button.label} {selectedTrackCount > 0 && `(${selectedTrackCount} tracks)`}
               </button>
             </div>
           </div>
@@ -216,57 +241,171 @@ const CustomButtonConfig: React.FC<CustomButtonConfigProps> = ({ isExpanded: ini
     );
   };
 
-  return (
-    <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl overflow-hidden">
-      {/* Header */}
-      <button
-        onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full px-6 py-4 flex items-center justify-between hover:bg-white/[0.06] transition-all"
-      >
-        <h3 className="text-lg font-semibold text-white">Custom Track Buttons</h3>
-        {isExpanded ? (
-          <ChevronUp size={20} className="text-white/40" />
-        ) : (
-          <ChevronDown size={20} className="text-white/40" />
-        )}
-      </button>
+  const renderTrackSelectionModal = (buttonNum: 1 | 2) => {
+    if (isTrackModalOpen !== buttonNum) return null;
 
-      {/* Content */}
-      {isExpanded && (
-        <div className="px-6 py-4 space-y-4 border-t border-white/[0.06]">
-          {/* Info Text */}
-          <p className="text-sm text-white/60">
-            Configure up to 2 custom buttons that will appear on track cards and in modals. These buttons can link to external URLs or custom pages.
-          </p>
+    const button = buttonNum === 1 ? button1 : button2;
+    const selectedTrackIds = button?.trackIds || [];
 
-          {/* Button Configs */}
-          {renderButtonConfig(1, button1, 'Custom Button 1')}
-          {renderButtonConfig(2, button2, 'Custom Button 2')}
+    return (
+      <>
+        {/* Backdrop */}
+        <div
+          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40"
+          onClick={() => setIsTrackModalOpen(null)}
+        />
 
-          {/* Save Messages */}
-          {saveMessage && (
-            <div
-              className={`p-3 rounded-lg text-sm font-medium ${
-                saveMessage.type === 'success'
-                  ? 'bg-green-500/20 border border-green-500/30 text-green-400'
-                  : 'bg-red-500/20 border border-red-500/30 text-red-400'
-              }`}
-            >
-              {saveMessage.text}
+        {/* Modal */}
+        <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
+          <div className="bg-white/[0.08] backdrop-blur-xl border border-white/[0.15] rounded-2xl w-full max-w-2xl max-h-[80vh] overflow-hidden shadow-2xl flex flex-col">
+            {/* Header */}
+            <div className="flex items-center justify-between p-6 border-b border-white/[0.08] bg-white/[0.04]">
+              <div>
+                <h2 className="text-lg font-bold text-white">Select Tracks</h2>
+                <p className="text-xs text-white/40 mt-1">
+                  {selectedTrackIds.length} of {allTracks.length} tracks selected
+                </p>
+              </div>
+              <button
+                onClick={() => setIsTrackModalOpen(null)}
+                className="p-2 hover:bg-white/[0.1] rounded-lg transition-colors text-white/60 hover:text-white"
+                aria-label="Close"
+              >
+                <X size={20} />
+              </button>
             </div>
-          )}
 
-          {/* Save Button */}
-          <button
-            onClick={handleSave}
-            disabled={isSaving}
-            className="w-full px-4 py-3 rounded-lg font-semibold bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:from-purple-700 hover:to-pink-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-          >
-            {isSaving ? 'Saving...' : 'Save Custom Buttons'}
-          </button>
+            {/* Search */}
+            <div className="px-6 py-4 border-b border-white/[0.08]">
+              <input
+                type="text"
+                placeholder="Search tracks by title or artist..."
+                value={trackSearchQuery}
+                onChange={(e) => setTrackSearchQuery(e.target.value)}
+                className="w-full px-3 py-2 rounded-lg bg-white/[0.06] border border-white/[0.12] text-white placeholder-white/30 focus:outline-none focus:border-white/[0.25] transition-colors"
+              />
+            </div>
+
+            {/* Track List */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-2">
+              {tracksLoading ? (
+                <div className="text-center py-8 text-white/60">Loading tracks...</div>
+              ) : filteredTracks.length === 0 ? (
+                <div className="text-center py-8 text-white/60">
+                  {trackSearchQuery ? 'No tracks match your search' : 'No tracks available'}
+                </div>
+              ) : (
+                filteredTracks.map((track) => (
+                  <button
+                    key={track.id}
+                    onClick={() => toggleTrackSelection(buttonNum, track.id)}
+                    className={`w-full text-left px-4 py-3 rounded-lg border transition-all ${
+                      selectedTrackIds.includes(track.id)
+                        ? 'bg-blue-500/20 border-blue-500/40 text-white'
+                        : 'bg-white/[0.06] border-white/[0.12] text-white/80 hover:bg-white/[0.12]'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-sm truncate">{track.title}</p>
+                        <p className="text-xs text-white/60 truncate">{track.artist}</p>
+                      </div>
+                      <div className={`w-5 h-5 rounded border flex items-center justify-center flex-shrink-0 ${
+                        selectedTrackIds.includes(track.id)
+                          ? 'bg-blue-500 border-blue-500'
+                          : 'border-white/[0.25]'
+                      }`}>
+                        {selectedTrackIds.includes(track.id) && (
+                          <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                        )}
+                      </div>
+                    </div>
+                  </button>
+                ))
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="flex gap-3 p-4 border-t border-white/[0.08] bg-white/[0.04]">
+              <button
+                onClick={() => clearTrackSelection(buttonNum)}
+                disabled={selectedTrackIds.length === 0}
+                className="px-4 py-2.5 bg-white/[0.08] border border-white/[0.15] rounded-lg font-bold uppercase tracking-wider text-xs text-white/60 hover:text-white hover:bg-white/[0.12] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              >
+                Clear All
+              </button>
+              <button
+                onClick={() => setIsTrackModalOpen(null)}
+                className="flex-1 px-4 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg font-bold uppercase tracking-wider text-xs hover:from-purple-700 hover:to-pink-700 transition-all"
+              >
+                Done ({selectedTrackIds.length})
+              </button>
+            </div>
+          </div>
         </div>
-      )}
-    </div>
+      </>
+    );
+  };
+
+  return (
+    <>
+      <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl overflow-hidden">
+        {/* Header */}
+        <button
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="w-full px-6 py-4 flex items-center justify-between hover:bg-white/[0.06] transition-all"
+        >
+          <h3 className="text-lg font-semibold text-white">Custom Track Buttons</h3>
+          {isExpanded ? (
+            <ChevronUp size={20} className="text-white/40" />
+          ) : (
+            <ChevronDown size={20} className="text-white/40" />
+          )}
+        </button>
+
+        {/* Content */}
+        {isExpanded && (
+          <div className="px-6 py-4 space-y-4 border-t border-white/[0.06]">
+            {/* Info Text */}
+            <p className="text-sm text-white/60">
+              Configure up to 2 custom buttons that will appear on track cards and in modals. Optionally filter which tracks are displayed when the button is selected.
+            </p>
+
+            {/* Button Configs */}
+            {renderButtonConfig(1, button1, 'Custom Button 1')}
+            {renderButtonConfig(2, button2, 'Custom Button 2')}
+
+            {/* Save Messages */}
+            {saveMessage && (
+              <div
+                className={`p-3 rounded-lg text-sm font-medium ${
+                  saveMessage.type === 'success'
+                    ? 'bg-green-500/20 border border-green-500/30 text-green-400'
+                    : 'bg-red-500/20 border border-red-500/30 text-red-400'
+                }`}
+              >
+                {saveMessage.text}
+              </div>
+            )}
+
+            {/* Save Button */}
+            <button
+              onClick={handleSave}
+              disabled={isSaving}
+              className="w-full px-4 py-3 rounded-lg font-semibold bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:from-purple-700 hover:to-pink-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            >
+              {isSaving ? 'Saving...' : 'Save Custom Buttons'}
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Track Selection Modals */}
+      {renderTrackSelectionModal(1)}
+      {renderTrackSelectionModal(2)}
+    </>
   );
 };
 
