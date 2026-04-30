@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { CartProvider } from './contexts/CartContext';
 import { TrackDetailProvider } from './contexts/TrackDetailContext';
@@ -103,6 +103,17 @@ const ScrollToTopWrapper = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
+// Alleen padding toepassen op publieke pagina's (niet op admin/artist/customer/manager)
+const PublicPaddingWrapper = ({ children }: { children: React.ReactNode }) => {
+  const location = useLocation();
+  const isProtectedRoute =
+    location.pathname.startsWith('/admin') ||
+    location.pathname.startsWith('/manager') ||
+    location.pathname.startsWith('/artist') ||
+    location.pathname.startsWith('/customer');
+  return <div className={isProtectedRoute ? '' : 'pt-28 sm:pt-32'}>{children}</div>;
+};
+
 const MainApp: React.FC = () => {
   return (
     <BackgroundProvider>
@@ -118,7 +129,7 @@ const MainApp: React.FC = () => {
                   <BackgroundOverlay />
                   <GlobalAudioPlayer />
                   <GlobalBeatDetailModal />
-                  <div className="pt-28 sm:pt-32">
+                  <PublicPaddingWrapper>
                 <Routes>
                   {/* Public Routes */}
                   <Route path="/" element={<HomePage />} />
@@ -521,7 +532,7 @@ const MainApp: React.FC = () => {
           {/* 404 */}
           <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
-                  </div>
+                  </PublicPaddingWrapper>
                 </ScrollToTopWrapper>
               </BrowserRouter>
             </BeatDetailProvider>

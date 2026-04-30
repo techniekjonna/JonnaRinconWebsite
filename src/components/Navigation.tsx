@@ -221,7 +221,7 @@ export default function Navigation({ cartItemCount = 0, onCartClick, isDarkOverl
   const menuVisible = isMenuOpen || isMenuClosing;
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-30 pointer-events-none">
+    <nav className="fixed top-0 left-0 right-0 z-[60] pointer-events-none">
       <div className="w-full pointer-events-auto">
 
         {/* Auth Modal */}
