@@ -1,234 +1,615 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Music, Disc3, Radio, Lightbulb, Music2, Heart, ArrowUpRight } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
+import { Music, Disc3, Radio, Sliders, ChevronDown } from 'lucide-react';
 import { useCyberDecodeInView } from '../hooks/useCyberDecode';
+import { useAuth } from '../hooks/useAuth';
+import { useTrackDetail } from '../contexts/TrackDetailContext';
 import { useScrollToTop } from '../hooks/useScrollToTop';
+import LoadingSpinner from '../components/LoadingSpinner';
+import { setCurrentTrack, getCurrentTrack } from '../components/GlobalAudioPlayer';
+import TrackListItem from '../components/TrackListItem';
+import { useTracks } from '../hooks/useTracks';
+import { useRemixes } from '../hooks/useRemixes';
+import { useRelatedTracks } from '../hooks/useRelatedTracks';
+import FilterModal from '../components/FilterModal';
+import TrackDetailModal from '../components/TrackDetailModal';
+import AlbumModal from '../components/AlbumModal';
+import LoginModal from '../components/LoginModal';
+import PlaylistModal from '../components/PlaylistModal';
+import PlaylistDetailView from '../components/PlaylistDetailView';
+import { extractUniqueGenres } from '../lib/utils/genreExtractor';
+import { trackService, settingsService, playlistService } from '../lib/firebase/services';
+import { useCart } from '../hooks/useCart';
+import { Playlist, Track as FirebaseTrack } from '../lib/firebase/types';
 
-interface CatalogueCategory {
+const tabs = [
+  { id: 'tracks', label: 'Tracks', icon: Music },
+  { id: 'remixes', label: 'Remixes', icon: Disc3 },
+  { id: 'djsets', label: 'DJ Sets', icon: Radio },
+];
+
+const djSetVideos = [
+  {
+    id: 'dj1',
+    youtubeId: '_e51RSGz5Tw',
+    title: 'DJ Set #1',
+  },
+  {
+    id: 'dj2',
+    youtubeId: 'RWG00_2ogJA',
+    title: 'DJ Set #2',
+  },
+  {
+    id: 'dj3',
+    youtubeId: 'vHiwNyTBkN4',
+    title: 'DJ Set #3',
+  },
+];
+
+interface Track {
   id: string;
-  label: string;
-  subtitle: string;
-  icon: React.ComponentType<{ className?: string }>;
-  href: string;
-  color: string;
-  description: string;
-  fullWidth?: boolean;
+  artist: string;
+  title: string;
+  audioUrl?: string;
+  coverArt?: string;
+  createdAt: number;
+  type?: 'Album' | 'EP' | 'Single' | 'Exclusive';
+  year?: number;
+  collab?: 'Solo' | 'Collab';
+  genre?: string;
+  bpm?: number;
+  key?: string;
+  duration?: string;
+  album?: string;
+  trackNumber?: number;
+  sortOrder?: number;
+  isFree?: boolean;
+  licenses?: { exclusive?: { price: number } };
 }
 
-const CataloguePage: React.FC = () => {
+interface RemixTrack extends Track {
+  remixType?: 'Remix' | 'Edit' | 'Bootleg';
+}
+
+export default function CataloguePage() {
   useScrollToTop();
+  const { isAuthenticated } = useAuth();
+  const { addTrackToCart, cartItems = [] } = useCart();
+  const { tracks: firebaseTracks, loading: tracksLoading, error: tracksError } = useTracks({ status: 'published' });
+  const { remixes: firebaseRemixes, loading: remixesLoading } = useRemixes({ status: 'published' });
+
+  const [activeTab, setActiveTab] = useState('tracks');
+  const [selectedType, setSelectedType] = useState<'Album' | 'EP' | 'Single' | 'Exclusive' | 'All'>('All');
+  const [selectedYear, setSelectedYear] = useState<number | 'All'>('All');
+  const [selectedCollab, setSelectedCollab] = useState<'Solo' | 'Collab' | 'All'>('All');
+  const [selectedGenre, setSelectedGenre] = useState<string>('All');
+  const [selectedSort, setSelectedSort] = useState<'newest' | 'oldest'>('newest');
+  const [selectedRemixType, setSelectedRemixType] = useState<'Remix' | 'Edit' | 'Bootleg' | 'All'>('All');
+  const [selectedRemixYear, setSelectedRemixYear] = useState<number | 'All'>('All');
+  const [selectedRemixCollab, setSelectedRemixCollab] = useState<'Solo' | 'Collab' | 'All'>('All');
+  const [selectedRemixGenre, setSelectedRemixGenre] = useState<string>('All');
+  const [expandedAlbums, setExpandedAlbums] = useState<Set<string>>(new Set());
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+  const { selectedTrack, setSelectedTrack, isModalOpen, setIsModalOpen } = useTrackDetail();
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [selectedTypeTab, setSelectedTypeTab] = useState<'Singles' | 'Albums & EPs' | 'All' | 'Custom 1' | 'Custom 2'>('All');
+  const [trackSettings, setTrackSettings] = useState<any>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [selectedAlbum, setSelectedAlbum] = useState<any>(null);
+  const [isPlaylistModalOpen, setIsPlaylistModalOpen] = useState(false);
+  const [selectedPlaylist, setSelectedPlaylist] = useState<Playlist | null>(null);
+  const [isPlaylistDetailOpen, setIsPlaylistDetailOpen] = useState(false);
+  const [playingDjSet, setPlayingDjSet] = useState<string | null>(null);
+
   const heroTitle = useCyberDecodeInView('CATALOGUE');
-  const [selectedFilter, setSelectedFilter] = useState<string>('All');
 
-  const categories: CatalogueCategory[] = [
-    {
-      id: 'tracks',
-      label: 'TRACKS',
-      subtitle: 'Full discography',
-      icon: Music,
-      href: '/tracks',
-      color: 'from-red-600 to-red-500',
-      description: 'Explore the complete collection of original tracks, albums, and singles from Jonna Rincon.',
-      fullWidth: true,
-    },
-    {
-      id: 'remixes',
-      label: 'REMIXES',
-      subtitle: 'Remixes and edits',
-      icon: Disc3,
-      href: '/remixes',
-      color: 'from-pink-600 to-pink-500',
-      description: 'Creative reinterpretations and edits of tracks by Jonna Rincon and collaborators.',
-      fullWidth: true,
-    },
-    {
-      id: 'dj-sets',
-      label: 'DJ SETS',
-      subtitle: 'Live DJ performances',
-      icon: Radio,
-      href: '/dj-sets',
-      color: 'from-purple-600 to-purple-500',
-      description: 'Live DJ sets, mixes, and performances showcasing diverse musical styles.',
-      fullWidth: true,
-    },
-    {
-      id: 'productions',
-      label: 'PRODUCTIONS',
-      subtitle: 'Production work & collaborations',
-      icon: Lightbulb,
-      href: '/productions',
-      color: 'from-cyan-600 to-cyan-500',
-      description: 'Production work, beat collaborations, and creative projects with other artists.',
-      fullWidth: true,
-    },
-    {
-      id: 'spotify',
-      label: 'SPOTIFY',
-      subtitle: 'Stream on all platforms',
-      icon: Music2,
-      href: '/spotify',
-      color: 'from-green-600 to-green-500',
-      description: 'Listen on Spotify and discover all music across streaming platforms.',
-      fullWidth: false,
-    },
-    {
-      id: 'support',
-      label: 'SUPPORT',
-      subtitle: 'Artist support & features',
-      icon: Heart,
-      href: '/support',
-      color: 'from-orange-600 to-orange-500',
-      description: 'Artist features, collaborations, and community support highlights.',
-      fullWidth: false,
-    },
-  ];
+  const demoTracks: Track[] = firebaseTracks.map(t => ({
+    id: t.id,
+    title: t.title,
+    artist: t.artist,
+    album: t.album,
+    trackNumber: t.trackNumber,
+    sortOrder: t.sortOrder,
+    duration: t.duration || '0:00',
+    genre: t.genre,
+    bpm: t.bpm,
+    key: t.key,
+    year: t.year,
+    type: t.type,
+    collab: t.collab,
+    audioUrl: t.audioUrl,
+    coverArt: t.artworkUrl,
+    coverArtUrl: t.artworkUrl,
+    createdAt: t.createdAt?.toMillis?.() || Date.now(),
+    isFree: t.isFree,
+    licenses: t.licenses,
+  }));
 
-  const filterOptions = ['All', 'TRACKS', 'REMIXES', 'DJ SETS', 'PRODUCTIONS', 'STREAMS', 'COMMUNITY'];
+  const remixTracks: RemixTrack[] = firebaseRemixes.map(r => ({
+    id: r.id,
+    title: r.title,
+    artist: r.remixArtist,
+    duration: r.duration || '0:00',
+    genre: r.genre,
+    bpm: r.bpm,
+    year: r.year,
+    collab: r.collab,
+    remixType: r.remixType,
+    sortOrder: r.sortOrder,
+    audioUrl: r.audioUrl,
+    coverArt: r.artworkUrl,
+    coverArtUrl: r.artworkUrl,
+    createdAt: r.createdAt.toMillis?.() || Date.now(),
+  }));
 
-  const filteredCategories =
-    selectedFilter === 'All'
-      ? categories
-      : categories.filter((cat) => {
-          if (selectedFilter === 'TRACKS' && cat.id === 'tracks') return true;
-          if (selectedFilter === 'REMIXES' && cat.id === 'remixes') return true;
-          if (selectedFilter === 'DJ SETS' && cat.id === 'dj-sets') return true;
-          if (selectedFilter === 'PRODUCTIONS' && cat.id === 'productions') return true;
-          if (selectedFilter === 'STREAMS' && (cat.id === 'spotify')) return true;
-          if (selectedFilter === 'COMMUNITY' && (cat.id === 'support')) return true;
-          return false;
-        });
+  const genreMatches = (genre: string | undefined, sel: string) => {
+    if (sel === 'All') return true;
+    if (!genre) return false;
+    return genre.split(',').map(g => g.trim()).includes(sel);
+  };
+
+  const handlePlayTrack = async (track: Track) => {
+    if (!isAuthenticated) { setIsLoginModalOpen(true); return; }
+    if (track.id) {
+      setTimeout(() => { trackService.incrementPlays(track.id!).catch(() => {}); }, 15000);
+    }
+    const queue = demoTracks
+      .filter(t => {
+        return (selectedType === 'All' || t.type === selectedType) &&
+          (selectedYear === 'All' || t.year === selectedYear) &&
+          (selectedCollab === 'All' || t.collab === selectedCollab) &&
+          genreMatches(t.genre, selectedGenre);
+      })
+      .sort((a, b) => b.createdAt - a.createdAt);
+    setCurrentTrack(track, queue);
+  };
+
+  const handleBuyTrack = (track: Track) => {
+    const ft = firebaseTracks.find(t => t.id === track.id);
+    if (ft) addTrackToCart(ft);
+  };
+
+  const handleAddToPlaylist = async (trackId: string, playlistId: string) => {
+    try { await playlistService.addTrackToPlaylist(playlistId, trackId); } catch {}
+  };
+
+  const handleTogglePlayTrack = (track: Track) => {
+    const current = getCurrentTrack();
+    if (current?.id === track.id) { setIsPlaying(!isPlaying); }
+    else { handlePlayTrack(track); setIsPlaying(true); }
+  };
+
+  const handlePlaylistSelect = (playlist: Playlist) => {
+    setSelectedPlaylist(playlist);
+    setIsPlaylistDetailOpen(true);
+  };
+
+  const handlePlayPlaylistTracks = (playlistTracks: FirebaseTrack[], startIndex = 0) => {
+    if (playlistTracks.length === 0) return;
+    const tracksToPlay = playlistTracks.map(t => ({
+      id: t.id, title: t.title, artist: t.artist, album: t.album,
+      trackNumber: t.trackNumber, duration: t.duration || '0:00', genre: t.genre,
+      bpm: t.bpm, key: t.key, year: t.year, type: t.type, collab: t.collab,
+      audioUrl: t.audioUrl, coverArt: t.artworkUrl,
+      createdAt: t.createdAt?.toMillis?.() || Date.now(), isFree: t.isFree, licenses: t.licenses,
+    }));
+    const trackToPlay = tracksToPlay[startIndex] || tracksToPlay[0];
+    setCurrentTrack(trackToPlay, tracksToPlay);
+    setIsPlaying(true);
+  };
+
+  const matchesTypeTab = (track: Track) => {
+    switch (selectedTypeTab) {
+      case 'Singles': return !track.album && (track.type === 'Single' || track.type === 'Exclusive');
+      case 'Albums & EPs': return track.type === 'Album' || track.type === 'EP';
+      default: return true;
+    }
+  };
+
+  const handleTrackClick = (track: Track) => { setSelectedTrack(track); setIsModalOpen(true); };
+
+  const filteredTracks = demoTracks.filter(track => {
+    return matchesTypeTab(track) &&
+      (selectedType === 'All' || track.type === selectedType) &&
+      (selectedYear === 'All' || track.year === selectedYear) &&
+      (selectedCollab === 'All' || track.collab === selectedCollab) &&
+      genreMatches(track.genre, selectedGenre);
+  });
+
+  const years = Array.from(new Set(demoTracks.map(t => t.year).filter(Boolean))).sort((a, b) => b - a) as number[];
+
+  const trackGenres = useMemo(() => extractUniqueGenres(demoTracks, { sort: true }), [demoTracks]);
+  const remixGenres = useMemo(() => extractUniqueGenres(remixTracks, { sort: true }), [remixTracks]);
+
+  const groupedTracks = filteredTracks.reduce((acc, track) => {
+    if (track.type === 'Album' || track.type === 'EP') {
+      const albumName = track.album || track.title;
+      const albumKey = `${track.type}:${albumName}`;
+      if (!acc[albumKey]) {
+        acc[albumKey] = { albumName, type: track.type, artwork: track.coverArt, tracks: [], displayTrack: track };
+      }
+      acc[albumKey].tracks.push(track);
+    } else {
+      const singleKey = `single:${track.id}`;
+      acc[singleKey] = { albumName: null, type: track.type, artwork: track.coverArt, tracks: [track], displayTrack: track };
+    }
+    return acc;
+  }, {} as Record<string, any>);
+
+  const toggleAlbumExpand = (albumKey: string) => {
+    const next = new Set(expandedAlbums);
+    next.has(albumKey) ? next.delete(albumKey) : next.add(albumKey);
+    setExpandedAlbums(next);
+  };
+
+  useEffect(() => { setExpandedAlbums(new Set()); }, [selectedType, selectedYear, selectedGenre, selectedCollab]);
+
+  useEffect(() => {
+    settingsService.getTrackSettings().then(setTrackSettings).catch(() => {});
+  }, []);
+
+  const tabsList = ['Singles', 'Albums & EPs', 'All']
+    .concat(trackSettings?.customTab1Enabled ? [trackSettings.customTab1Label || 'Custom 1'] : [])
+    .concat(trackSettings?.customTab2Enabled ? [trackSettings.customTab2Label || 'Custom 2'] : []);
 
   return (
     <div className="min-h-screen text-white">
-      {/* Fixed Dark Overlay */}
       <div className="fixed inset-0 w-full h-screen -z-10 bg-black/20" />
       <Navigation isDarkOverlay={true} />
 
-      {/* Hero Section */}
-      <section className="relative pt-40 px-6 md:px-12 pb-16">
+      <LoginModal isOpen={isLoginModalOpen} onClose={() => setIsLoginModalOpen(false)} />
+
+      <TrackDetailModal
+        track={selectedTrack}
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        isPlaying={false}
+        onPlay={handlePlayTrack}
+        onBuy={handleBuyTrack}
+        cartItems={cartItems}
+        relatedTracks={useRelatedTracks(selectedTrack, [])}
+        onAddToPlaylist={handleAddToPlaylist}
+      />
+
+      <AlbumModal album={selectedAlbum} isOpen={!!selectedAlbum} onClose={() => setSelectedAlbum(null)} />
+
+      <PlaylistModal
+        isOpen={isPlaylistModalOpen}
+        onClose={() => setIsPlaylistModalOpen(false)}
+        onPlaylistSelect={handlePlaylistSelect}
+      />
+
+      {selectedPlaylist && (
+        <PlaylistDetailView
+          playlist={selectedPlaylist}
+          isOpen={isPlaylistDetailOpen}
+          onClose={() => { setIsPlaylistDetailOpen(false); setSelectedPlaylist(null); }}
+          onPlayTracks={handlePlayPlaylistTracks}
+          isPlaying={isPlaying}
+        />
+      )}
+
+      {/* Hero */}
+      <section className="relative pt-40 px-6 md:px-12 pb-4">
         <div className="relative z-10 max-w-7xl mx-auto w-full text-center">
           <h1
             ref={heroTitle.ref as React.RefObject<HTMLHeadingElement>}
-            style={{fontSize: 'clamp(1.875rem, 8vw, 10.2rem)'}} className="font-black uppercase leading-[0.85] tracking-tighter mb-8"
+            style={{ fontSize: 'clamp(1.875rem, 8vw, 10.2rem)' }}
+            className="font-black uppercase leading-[0.85] tracking-tighter mb-8"
           >
             {heroTitle.display}
           </h1>
-          <p className="text-lg md:text-xl text-white/60 max-w-2xl mx-auto">
-            Browse all content including tracks, remixes, DJ sets, productions, and more
-          </p>
         </div>
       </section>
 
-      {/* Filter Section */}
-      <section className="px-6 md:px-12 py-8 border-b border-white/[0.06]">
+      {/* Tab Bar */}
+      <section className="px-6 md:px-12 pb-2">
         <div className="max-w-7xl mx-auto">
-          <div className="flex flex-wrap gap-3 justify-center">
-            {filterOptions.map((option) => (
-              <button
-                key={option}
-                onClick={() => setSelectedFilter(option)}
-                className={`px-6 py-2.5 rounded-full font-semibold uppercase tracking-wider text-sm transition-all duration-300 ${
-                  selectedFilter === option
-                    ? 'bg-red-600 text-white shadow-lg shadow-red-600/50'
-                    : 'bg-white/[0.06] border border-white/[0.1] text-white/70 hover:text-white hover:bg-white/[0.12]'
-                }`}
-              >
-                {option}
-              </button>
-            ))}
+          <div className="grid grid-cols-3 gap-2">
+            {tabs.map(tab => {
+              const Icon = tab.icon;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-bold uppercase tracking-wider text-sm transition-all border ${
+                    activeTab === tab.id
+                      ? 'bg-red-600 text-white border-red-500/50 shadow-lg shadow-red-600/20'
+                      : 'bg-white/[0.06] text-white/60 border-white/[0.1] hover:text-white hover:bg-white/[0.12] hover:border-white/[0.15]'
+                  }`}
+                >
+                  <Icon size={16} />
+                  <span className="hidden sm:inline">{tab.label}</span>
+                  <span className="sm:hidden text-xs">{tab.label}</span>
+                </button>
+              );
+            })}
           </div>
         </div>
       </section>
 
-      {/* Category Grid */}
-      <section className="px-6 md:px-12 py-20">
-        <div className="max-w-7xl mx-auto">
-          {filteredCategories.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
-              {filteredCategories.map((category, index) => {
-                const IconComponent = category.icon;
-                const isHalfWidth = !category.fullWidth;
-                const itemHeight = isHalfWidth ? 'h-[280px]' : 'h-[420px]';
-
-                return (
-                  <Link
-                    key={category.id}
-                    to={category.href}
-                    className={`group relative ${itemHeight} ${isHalfWidth ? '' : 'md:col-span-2'}`}
-                    style={{
-                      animation: `fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) ${0.1 + index * 0.08}s both`,
-                    }}
+      {/* ── TRACKS TAB ── */}
+      {activeTab === 'tracks' && (
+        <>
+          <section className="px-6 md:px-12 pt-6 pb-2">
+            <div className="max-w-7xl mx-auto">
+              <div className="flex flex-col items-center gap-4 mb-6">
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setIsFilterModalOpen(true)}
+                    className="flex items-center gap-2 px-4 py-2.5 bg-white/[0.06] border border-white/[0.1] rounded-lg text-xs font-bold uppercase tracking-wider text-white/60 hover:text-white hover:bg-white/[0.12] transition-all"
                   >
-                    {/* Glassmorphism Card */}
-                    <div className="absolute inset-0 bg-white/[0.05] backdrop-blur-xl border border-white/[0.08] rounded-2xl overflow-hidden hover:border-white/[0.15] transition-all duration-500 hover:scale-[1.02] hover:bg-white/[0.08]">
-                      {/* Gradient Background */}
-                      <div
-                        className={`absolute inset-0 bg-gradient-to-br ${category.color} opacity-0 group-hover:opacity-10 transition-opacity duration-500`}
-                      />
+                    <Sliders size={16} />
+                    Filters
+                  </button>
+                  {isAuthenticated && (
+                    <button
+                      onClick={() => setIsPlaylistModalOpen(true)}
+                      className="flex items-center gap-2 px-4 py-2.5 bg-white/[0.06] border border-white/[0.1] rounded-lg text-xs font-bold uppercase tracking-wider text-white/60 hover:text-white hover:bg-white/[0.12] transition-all"
+                    >
+                      <Music size={16} />
+                      Playlists
+                    </button>
+                  )}
+                </div>
 
-                      {/* Content */}
-                      <div className="relative z-10 h-full flex flex-col p-8 md:p-6">
-                        {/* Icon */}
-                        <div className="mb-6">
-                          <div className="w-16 h-16 rounded-xl bg-white/[0.08] border border-white/[0.12] flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                            <IconComponent className="w-8 h-8 text-white/80 group-hover:text-white transition-colors" />
-                          </div>
-                        </div>
+                {/* Type sub-tabs */}
+                <div className="w-full">
+                  <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${tabsList.length}, 1fr)` }}>
+                    {tabsList.map(tab => (
+                      <button
+                        key={tab}
+                        onClick={() => setSelectedTypeTab(tab as any)}
+                        className={`w-full px-3 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all border ${
+                          selectedTypeTab === tab
+                            ? 'bg-red-600 text-white border-red-500/50'
+                            : 'bg-white/[0.06] text-white/60 border-white/[0.1] hover:text-white hover:bg-white/[0.12]'
+                        }`}
+                      >
+                        {tab}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
 
-                        {/* Text Content */}
-                        <div className="flex-1">
-                          <h3 className="text-2xl md:text-xl font-bold mb-2 text-white group-hover:text-white transition-colors">
-                            {category.label}
-                          </h3>
-                          <p className="text-sm text-white/50 mb-4 group-hover:text-white/70 transition-colors">
-                            {category.subtitle}
-                          </p>
-                          {category.fullWidth && (
-                            <p className="text-sm text-white/40 leading-relaxed group-hover:text-white/60 transition-colors">
-                              {category.description}
-                            </p>
+              {tracksError && (
+                <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl mb-6">
+                  <p className="text-red-400 text-sm font-semibold">⚠️ {tracksError}</p>
+                </div>
+              )}
+
+              <FilterModal
+                isOpen={isFilterModalOpen}
+                onClose={() => setIsFilterModalOpen(false)}
+                onReset={() => {
+                  setSelectedType('All'); setSelectedYear('All');
+                  setSelectedCollab('All'); setSelectedGenre('All'); setSelectedSort('newest');
+                }}
+                filters={[
+                  { label: 'Type', options: ['All', 'Album', 'EP', 'Single', 'Exclusive'], value: selectedType, onChange: v => setSelectedType(v as any) },
+                  { label: 'Year', options: ['All', ...years], value: selectedYear, onChange: v => setSelectedYear(v as any) },
+                  { label: 'Collab', options: ['All', 'Solo', 'Collab'], value: selectedCollab, onChange: v => setSelectedCollab(v as any) },
+                  { label: 'Genre', options: ['All', ...trackGenres], value: selectedGenre, onChange: v => setSelectedGenre(v) },
+                  { label: 'Sort', options: ['Newest', 'Oldest'], value: selectedSort === 'newest' ? 'Newest' : 'Oldest', onChange: v => setSelectedSort(v === 'Newest' ? 'newest' : 'oldest') },
+                ]}
+              />
+            </div>
+          </section>
+
+          {tracksLoading && (
+            <section className="px-6 md:px-12 py-16">
+              <div className="max-w-7xl mx-auto"><LoadingSpinner text="Loading tracks..." /></div>
+            </section>
+          )}
+
+          {!tracksLoading && (
+            <section className="px-6 md:px-12 py-2 md:py-4">
+              <div className="max-w-7xl mx-auto">
+                <div className="space-y-3">
+                  {Object.entries(groupedTracks)
+                    .sort(([, a], [, b]) => {
+                      if ((a.albumName && b.albumName) || (!a.albumName && !b.albumName)) {
+                        return (b.displayTrack.sortOrder ?? b.displayTrack.createdAt) - (a.displayTrack.sortOrder ?? a.displayTrack.createdAt);
+                      }
+                      return a.albumName ? -1 : 1;
+                    })
+                    .map(([albumKey, group]) => {
+                      const isAlbum = group.albumName && (group.type === 'Album' || group.type === 'EP');
+                      const isExpanded = expandedAlbums.has(albumKey);
+                      return isAlbum ? (
+                        <div key={albumKey}>
+                          <button
+                            onClick={() => toggleAlbumExpand(albumKey)}
+                            className="w-full px-6 py-4 flex items-center gap-4 border border-white/[0.06] rounded-xl hover:bg-white/[0.06] transition-all bg-white/[0.04] backdrop-blur-md group"
+                          >
+                            <button
+                              onClick={e => { e.stopPropagation(); setSelectedAlbum({ name: group.albumName, type: group.type, artwork: group.artwork, artist: group.displayTrack.artist, year: group.displayTrack.year, tracks: group.tracks }); }}
+                              className="flex-shrink-0 hover:scale-110 transition-transform"
+                            >
+                              <img src={group.artwork} alt={group.albumName} loading="lazy" className="w-12 h-12 rounded object-cover" />
+                            </button>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-bold text-white truncate">{group.albumName}</p>
+                              <p className="text-sm text-white/40">{group.tracks.length} track{group.tracks.length !== 1 ? 's' : ''}</p>
+                            </div>
+                            <span className="px-2 py-1 bg-red-600/20 border border-red-500/30 rounded-full text-[10px] font-bold text-red-400 uppercase tracking-wider flex-shrink-0">{group.type}</span>
+                            <ChevronDown size={18} className={`text-white/40 group-hover:text-white/60 transition-transform flex-shrink-0 ${isExpanded ? 'rotate-180' : ''}`} />
+                          </button>
+                          {isExpanded && (
+                            <div className="mt-4 space-y-2 border-t border-white/[0.06] pt-4">
+                              {group.tracks
+                                .sort((a: Track, b: Track) => (a.trackNumber || 0) - (b.trackNumber || 0))
+                                .map((track: Track, index: number) => (
+                                  <div key={track.id} className="pl-6 md:pl-8">
+                                    <TrackListItem
+                                      track={track} onClickTrack={handleTrackClick} onPlay={handlePlayTrack}
+                                      onTogglePlay={handleTogglePlayTrack} onBuy={handleBuyTrack}
+                                      showType={false} showMetadata isAlbumTrack trackNumber={index + 1} isPlaying={isPlaying}
+                                    />
+                                  </div>
+                                ))}
+                            </div>
                           )}
                         </div>
+                      ) : (
+                        <TrackListItem
+                          key={albumKey} track={group.displayTrack} onClickTrack={handleTrackClick}
+                          onPlay={handlePlayTrack} onTogglePlay={handleTogglePlayTrack} onBuy={handleBuyTrack}
+                          showType showMetadata isPlaying={isPlaying}
+                        />
+                      );
+                    })}
+                </div>
+                <div className="flex items-center justify-between mt-8 pt-4 border-t border-white/[0.1]">
+                  <p className="text-[10px] md:text-xs text-red-500/60 uppercase tracking-[0.4em]">Discography</p>
+                  <p className="text-[10px] md:text-xs text-white/30 uppercase tracking-widest">{filteredTracks.length} Track{filteredTracks.length !== 1 ? 's' : ''}</p>
+                </div>
+              </div>
+            </section>
+          )}
+        </>
+      )}
 
-                        {/* CTA Arrow */}
-                        <div className="flex items-center justify-between mt-8 pt-6 border-t border-white/[0.06]">
-                          <span className="text-xs font-semibold uppercase tracking-widest text-white/30 group-hover:text-white/60 transition-colors">
-                            Explore
-                          </span>
-                          <ArrowUpRight className="w-5 h-5 text-white/20 group-hover:text-white/60 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all duration-300" />
-                        </div>
+      {/* ── REMIXES TAB ── */}
+      {activeTab === 'remixes' && (
+        <>
+          <section className="px-6 md:px-12 pt-6 pb-2">
+            <div className="max-w-7xl mx-auto">
+              <div className="flex justify-center mb-6">
+                <button
+                  onClick={() => setIsFilterModalOpen(true)}
+                  className="flex items-center gap-2 px-4 py-2.5 bg-white/[0.06] border border-white/[0.1] rounded-lg text-xs font-bold uppercase tracking-wider text-white/60 hover:text-white hover:bg-white/[0.12] transition-all"
+                >
+                  <Sliders size={16} />
+                  Filters
+                </button>
+              </div>
+              <FilterModal
+                isOpen={isFilterModalOpen}
+                onClose={() => setIsFilterModalOpen(false)}
+                onReset={() => { setSelectedRemixType('All'); setSelectedRemixYear('All'); setSelectedRemixCollab('All'); setSelectedRemixGenre('All'); }}
+                filters={[
+                  { label: 'Type', options: ['All', 'Remix', 'Edit', 'Bootleg'], value: selectedRemixType, onChange: v => setSelectedRemixType(v as any) },
+                  { label: 'Year', options: ['All', ...Array.from(new Set(remixTracks.map(t => t.year))).sort((a, b) => b - a)], value: selectedRemixYear, onChange: v => setSelectedRemixYear(v as any) },
+                  { label: 'Collab', options: ['All', 'Solo', 'Collab'], value: selectedRemixCollab, onChange: v => setSelectedRemixCollab(v as any) },
+                  { label: 'Genre', options: ['All', ...remixGenres], value: selectedRemixGenre, onChange: v => setSelectedRemixGenre(v as any) },
+                ]}
+              />
+            </div>
+          </section>
+
+          {remixesLoading && (
+            <section className="px-6 md:px-12 py-16">
+              <div className="max-w-7xl mx-auto"><LoadingSpinner text="Loading remixes..." /></div>
+            </section>
+          )}
+
+          {!remixesLoading && (
+            <section className="px-6 md:px-12 py-2 md:py-4">
+              <div className="max-w-7xl mx-auto">
+                <div className="space-y-3">
+                  {remixTracks
+                    .filter(t =>
+                      (selectedRemixType === 'All' || t.remixType === selectedRemixType) &&
+                      (selectedRemixYear === 'All' || t.year === selectedRemixYear) &&
+                      (selectedRemixCollab === 'All' || t.collab === selectedRemixCollab) &&
+                      genreMatches(t.genre, selectedRemixGenre)
+                    )
+                    .sort((a, b) => {
+                      const aSort = a.sortOrder ?? Number.MAX_VALUE;
+                      const bSort = b.sortOrder ?? Number.MAX_VALUE;
+                      if (aSort !== bSort) return bSort - aSort;
+                      return b.createdAt - a.createdAt;
+                    })
+                    .map(remix => (
+                      <TrackListItem
+                        key={remix.id} track={remix} onClickTrack={handleTrackClick}
+                        onPlay={handlePlayTrack} onTogglePlay={handleTogglePlayTrack}
+                        showType={false} showMetadata isPlaying={isPlaying}
+                      />
+                    ))}
+                </div>
+                <div className="flex items-center justify-between mt-8 pt-4 border-t border-white/[0.1]">
+                  <p className="text-[10px] md:text-xs text-red-500/60 uppercase tracking-[0.4em]">Discography</p>
+                  <p className="text-[10px] md:text-xs text-white/30 uppercase tracking-widest">
+                    {remixTracks.filter(t =>
+                      (selectedRemixType === 'All' || t.remixType === selectedRemixType) &&
+                      (selectedRemixYear === 'All' || t.year === selectedRemixYear) &&
+                      (selectedRemixCollab === 'All' || t.collab === selectedRemixCollab) &&
+                      genreMatches(t.genre, selectedRemixGenre)
+                    ).length} Track{remixTracks.filter(t =>
+                      (selectedRemixType === 'All' || t.remixType === selectedRemixType) &&
+                      (selectedRemixYear === 'All' || t.year === selectedRemixYear) &&
+                      (selectedRemixCollab === 'All' || t.collab === selectedRemixCollab) &&
+                      genreMatches(t.genre, selectedRemixGenre)
+                    ).length !== 1 ? 's' : ''}
+                  </p>
+                </div>
+              </div>
+            </section>
+          )}
+        </>
+      )}
+
+      {/* ── DJ SETS TAB ── */}
+      {activeTab === 'djsets' && (
+        <section className="px-6 md:px-12 pt-6 pb-20">
+          <div className="max-w-7xl mx-auto space-y-6">
+            {djSetVideos.map(set => (
+              <div
+                key={set.id}
+                className="bg-white/[0.04] backdrop-blur-md border border-white/[0.06] rounded-2xl overflow-hidden"
+              >
+                {playingDjSet === set.id ? (
+                  <iframe
+                    width="100%"
+                    height="400"
+                    src={`https://www.youtube.com/embed/${set.youtubeId}?autoplay=1`}
+                    title={set.title}
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    referrerPolicy="strict-origin-when-cross-origin"
+                    allowFullScreen
+                  />
+                ) : (
+                  <button
+                    onClick={() => setPlayingDjSet(set.id)}
+                    className="w-full relative aspect-video group"
+                  >
+                    <img
+                      src={`https://img.youtube.com/vi/${set.youtubeId}/maxresdefault.jpg`}
+                      alt={set.title}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-all flex items-center justify-center">
+                      <div className="w-16 h-16 bg-red-600 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg shadow-red-600/40">
+                        <svg className="w-8 h-8 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M8 5v14l11-7z" />
+                        </svg>
                       </div>
                     </div>
-                  </Link>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="text-center py-20">
-              <p className="text-xl text-white/60">No items found for this filter</p>
-            </div>
-          )}
-        </div>
-      </section>
+                  </button>
+                )}
+                <div className="px-5 py-4 flex items-center justify-between">
+                  <p className="font-bold text-white">{set.title}</p>
+                  <a
+                    href={`https://www.youtube.com/watch?v=${set.youtubeId}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-white/40 hover:text-red-400 transition-colors uppercase tracking-wider"
+                  >
+                    YouTube ↗
+                  </a>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       <Footer />
-
-      <style>{`
-        @keyframes fadeInUp {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-      `}</style>
     </div>
   );
-};
-
-export default CataloguePage;
+}

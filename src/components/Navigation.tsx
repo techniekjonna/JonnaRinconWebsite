@@ -28,6 +28,7 @@ export default function Navigation({ cartItemCount = 0, onCartClick, isDarkOverl
   const [authLoading, setAuthLoading] = useState(false);
   const [expandedShop, setExpandedShop] = useState(false);
   const [expandedCatalogue, setExpandedCatalogue] = useState(false);
+  const [expandedAboutMe, setExpandedAboutMe] = useState(false);
   const [expandedGetInTouch, setExpandedGetInTouch] = useState(false);
   const { user, signIn, signUp, signOut } = useAuth();
   const { cartItems, isOpen: isCartOpen, setIsOpen: setIsCartOpen, removeFromCart, clearCart } = useCartContext();
@@ -191,12 +192,15 @@ export default function Navigation({ cartItemCount = 0, onCartClick, isDarkOverl
   ];
 
   const catalogueSubmenu = [
-    { label: 'Tracks', subtitle: 'Full discography', href: '/tracks' },
-    { label: 'Remixes', subtitle: 'Remixes and edits', href: '/remixes' },
-    { label: 'DJ Sets', subtitle: 'Live DJ performances', href: '/dj-sets' },
-    { label: 'Productions', subtitle: 'Production work & collaborations', href: '/productions' },
-    { label: 'Spotify', subtitle: 'Stream on all platforms', href: '/spotify', isSmall: true },
-    { label: 'Support', subtitle: 'Artist support & features', href: '/support', isSmall: true },
+    { label: 'Tracks', subtitle: 'Full discography', href: '/catalogue' },
+    { label: 'Remixes', subtitle: 'Remixes and edits', href: '/catalogue' },
+    { label: 'DJ Sets', subtitle: 'Live DJ performances', href: '/catalogue' },
+  ];
+
+  const aboutMeSubmenu = [
+    { label: 'Productions', subtitle: 'Production work & collaborations', href: '/about' },
+    { label: 'Streams', subtitle: 'Stream on all platforms', href: '/about' },
+    { label: 'Community', subtitle: 'Artist support & features', href: '/about' },
   ];
 
   const getInTouchSubmenu = [
@@ -206,7 +210,8 @@ export default function Navigation({ cartItemCount = 0, onCartClick, isDarkOverl
 
   const menuItems: { label: string; subtitle: string; href?: string; action?: () => void; submenu?: Array<{ label: string; subtitle: string; href: string; action?: () => void }>; expanded?: boolean }[] = [
     { label: 'SHOP', subtitle: 'Browse our catalog', action: () => setExpandedShop(!expandedShop), submenu: shopSubmenu, expanded: expandedShop },
-    { label: 'CATALOGUE', subtitle: 'Browse all content', action: () => setExpandedCatalogue(!expandedCatalogue), submenu: catalogueSubmenu, expanded: expandedCatalogue },
+    { label: 'CATALOGUE', subtitle: 'Tracks, remixes & DJ sets', action: () => setExpandedCatalogue(!expandedCatalogue), submenu: catalogueSubmenu, expanded: expandedCatalogue },
+    { label: 'ABOUT ME', subtitle: 'Productions, streams & community', action: () => setExpandedAboutMe(!expandedAboutMe), submenu: aboutMeSubmenu, expanded: expandedAboutMe },
     { label: 'GET IN TOUCH', subtitle: 'Connect with Jonna', action: () => setExpandedGetInTouch(!expandedGetInTouch), submenu: getInTouchSubmenu, expanded: expandedGetInTouch },
   ];
 

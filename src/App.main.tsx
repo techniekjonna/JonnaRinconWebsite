@@ -40,6 +40,7 @@ import DJSetsPage from './pages/DJSetsPage';
 import ProductionsPage from './pages/ProductionsPage';
 import SpotifyPage from './pages/SpotifyPage';
 import SupportPage from './pages/SupportPage';
+import AboutMePage from './pages/AboutMePage';
 
 // Customer pages (protected - user role)
 import CustomerDashboard from './pages/customer/DashboardPage';
@@ -185,6 +186,7 @@ const MainApp: React.FC = () => {
                   <Route path="/productions" element={<ProductionsPage />} />
                   <Route path="/spotify" element={<SpotifyPage />} />
                   <Route path="/support" element={<SupportPage />} />
+                  <Route path="/about" element={<AboutMePage />} />
                   <Route path="/releases" element={<ReleasesPage />} />
                   <Route path="/download/:trackId" element={<DownloadGatePage />} />
                   <Route path="/socials" element={<SocialsPage />} />
