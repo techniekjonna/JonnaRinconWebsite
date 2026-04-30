@@ -12,6 +12,7 @@ import GlobalBeatDetailModal from './components/GlobalBeatDetailModal';
 import BackgroundRenderer from './components/BackgroundRenderer';
 import BackgroundOverlay from './components/BackgroundOverlay';
 import ShoppingCart from './components/ShoppingCart';
+import Header from './components/Header';
 import { useCartContext } from './contexts/CartContext';
 import Navigation from './components/Navigation';
 
@@ -154,6 +155,7 @@ const MainApp: React.FC = () => {
           <TrackDetailProvider>
             <BeatDetailProvider>
               <BrowserRouter>
+                <Header />
                 <Navigation />
                 <ScrollToTopWrapper>
                   <BackgroundOverlay />
