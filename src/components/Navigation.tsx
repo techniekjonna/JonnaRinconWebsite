@@ -197,7 +197,7 @@ export default function Navigation({ cartItemCount = 0, onCartClick, isDarkOverl
       <div className="fixed top-0 left-0 right-0 z-30 flex items-center justify-between px-6 md:px-10 py-4 md:py-5">
         {/* Logo — top-left */}
         <Link to="/" className="block flex-shrink-0">
-          <div className="relative h-[120px] md:h-[160px]">
+          <div className="relative h-[140px] md:h-[160px]">
             <img
               src="/Jonna Rincon Logo BL.png"
               alt="Jonna Rincon"
@@ -381,7 +381,7 @@ export default function Navigation({ cartItemCount = 0, onCartClick, isDarkOverl
                     <img
                       src="/Jonna Rincon Logo WH.png"
                       alt="Jonna Rincon"
-                      className="h-[80px] md:h-[110px] w-auto opacity-50 hover:opacity-100 transition-opacity duration-300"
+                      className="h-[100px] md:h-[110px] w-auto opacity-50 hover:opacity-100 transition-opacity duration-300"
                     />
                   </button>
 
