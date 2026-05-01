@@ -44,7 +44,7 @@ export default function Hero() {
   const { display, done } = useCyberDecode(TARGET_TEXT);
 
   return (
-    <section className="relative w-full h-screen flex flex-col items-center justify-center">
+    <section className="relative w-full flex flex-col items-center justify-center" style={{ height: 'calc(100vh - 5rem)' }}>
       {/* Background */}
       <div className="fixed inset-0 w-full h-screen -z-10">
         <img
@@ -60,7 +60,7 @@ export default function Hero() {
       {/* Hero Content — vertically centered, shifted slightly up to feel natural */}
       <div
         className="relative z-10 flex flex-col items-center text-center px-6 max-w-4xl mx-auto"
-        style={{ marginTop: '-5vh' }}
+        style={{ marginTop: 0 }}
       >
         {/* Badge */}
         <div
