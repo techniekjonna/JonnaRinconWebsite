@@ -41,7 +41,7 @@ const Header: React.FC = () => {
     { label: 'Shop', href: '/shop', position: 'left' },
     { label: 'Catalogue', href: '/catalogue', position: 'left' },
     { label: 'Socials', href: '/socials', position: 'right' },
-    { label: 'About Me', href: '/#about', position: 'right' },
+    { label: 'About Me', href: '/about', position: 'right' },
   ];
 
   const isActive = (path: string) => location.pathname === path;
