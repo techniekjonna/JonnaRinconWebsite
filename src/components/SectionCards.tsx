@@ -1,4 +1,4 @@
-import { Music, User, Library, Briefcase, ShoppingBag } from 'lucide-react';
+import { Music, User, Library, Briefcase } from 'lucide-react';
 
 const CARDS = [
   {
@@ -6,9 +6,8 @@ const CARDS = [
     title: 'Beat Shop',
     description: 'Premium beats for artists',
     icon: Music,
-    image: '/TN-DJSet.jpg',
+    image: '/DJI_20251017150728_0019_D.JPG',
     link: '/shop',
-    accent: true,
   },
   {
     id: 'about',
@@ -23,30 +22,22 @@ const CARDS = [
     title: 'Catalogue',
     description: 'Tracks, remixes & DJ sets',
     icon: Library,
-    image: '/JEIGHTENESIS.jpg',
+    image: '/DJ Screenshot 3-2-26.png',
     link: '/catalogue',
   },
   {
     id: 'services',
     title: 'Services',
-    description: 'Mix, master & more',
+    description: 'Book a studio session, Mix Master & more',
     icon: Briefcase,
-    image: '/DJ Screenshot 3-2-26.png',
+    image: '/DJI_20251115114029_0004_D.JPG',
     link: '/services',
-  },
-  {
-    id: 'merch',
-    title: 'Merch & Art',
-    description: 'Clothing & creative work',
-    icon: ShoppingBag,
-    image: '/ThisIsJonna.png',
-    link: '/shop',
   },
 ];
 
 export default function SectionCards() {
   return (
-    <section className="relative z-20 bg-black py-16 px-4">
+    <section className="relative z-20 py-16 px-4">
       {/* Section header */}
       <div className="max-w-7xl mx-auto mb-10 flex items-center gap-4">
         <div className="h-px flex-1 bg-white/10" />
@@ -54,10 +45,9 @@ export default function SectionCards() {
         <div className="h-px flex-1 bg-white/10" />
       </div>
 
-      {/* Cards grid */}
+      {/* Cards grid — 4 columns */}
       <div
-        className="max-w-7xl mx-auto grid gap-4"
-        style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))' }}
+        className="max-w-7xl mx-auto grid grid-cols-2 lg:grid-cols-4 gap-4"
       >
         {CARDS.map((card) => {
           const Icon = card.icon;
@@ -65,7 +55,7 @@ export default function SectionCards() {
             <a
               key={card.id}
               href={card.link}
-              className="group relative overflow-hidden aspect-square bg-white/5 border border-white/10 hover:border-red-600/50 transition-all duration-500 hover:-translate-y-1 hover:shadow-[0_20px_40px_rgba(239,68,68,0.15)]"
+              className="group relative overflow-hidden aspect-square border border-white/10 hover:border-red-600/50 transition-all duration-500 hover:-translate-y-1 hover:shadow-[0_20px_40px_rgba(239,68,68,0.15)]"
               style={{ textDecoration: 'none' }}
             >
               {/* Background image */}
@@ -73,7 +63,7 @@ export default function SectionCards() {
                 src={card.image}
                 alt={card.title}
                 className="absolute inset-0 w-full h-full object-cover transition-all duration-700 group-hover:scale-110 opacity-40 group-hover:opacity-60"
-                style={{ filter: 'grayscale(0.4)' }}
+                style={{ filter: 'grayscale(0.3)' }}
               />
 
               {/* Gradient overlay */}
@@ -84,19 +74,32 @@ export default function SectionCards() {
 
               {/* Content */}
               <div className="absolute inset-0 flex flex-col items-center justify-end p-6 text-center">
-                <Icon
-                  className="w-8 h-8 text-red-500 mb-3 transition-all duration-300 group-hover:scale-110 group-hover:text-red-400"
-                />
+                <Icon className="w-8 h-8 text-red-500 mb-3 transition-all duration-300 group-hover:scale-110 group-hover:text-red-400" />
                 <h3 className="text-white font-black uppercase tracking-wider text-xl transition-all duration-300 group-hover:text-red-400">
                   {card.title}
                 </h3>
-                <p className="text-white/40 text-xs uppercase tracking-widest mt-1 transition-all duration-300 group-hover:text-white/60">
+                <p className="text-white/40 text-xs uppercase tracking-widest mt-1 transition-all duration-300 group-hover:text-white/60 leading-relaxed">
                   {card.description}
                 </p>
               </div>
             </a>
           );
         })}
+      </div>
+
+      {/* CTA banner below cards */}
+      <div className="max-w-7xl mx-auto mt-6">
+        <a
+          href="/services"
+          className="flex items-center justify-between px-6 py-4 border border-white/10 hover:border-red-600/40 bg-white/5 hover:bg-white/8 transition-all duration-300 group"
+        >
+          <span className="text-white/60 text-sm group-hover:text-white/90 transition-colors">
+            Need a Mix master or want to book a studio session?
+          </span>
+          <span className="text-red-500 text-sm font-bold uppercase tracking-widest group-hover:text-red-400 transition-colors">
+            Click here →
+          </span>
+        </a>
       </div>
     </section>
   );
