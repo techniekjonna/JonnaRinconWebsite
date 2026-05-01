@@ -30,7 +30,7 @@ function App() {
           transition: 'opacity 1.2s ease-in-out',
         }}
       >
-        <div id="hero" style={{ height: 'calc(100vh - 5rem)', overflow: 'hidden' }}><Hero /></div>
+        <div id="hero"><Hero /></div>
         <SectionCards />
         <MusicPreview />
         <Footer />
