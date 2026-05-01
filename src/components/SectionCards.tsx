@@ -28,7 +28,7 @@ const CARDS = [
   {
     id: 'services',
     title: 'Services',
-    description: 'Book a studio session, Mix Master & more',
+    description: 'Studio Session, Mix Masters',
     icon: Briefcase,
     image: '/DJI_20251115114029_0004_D.JPG',
     link: '/services',
@@ -91,7 +91,7 @@ export default function SectionCards() {
       <div className="max-w-7xl mx-auto mt-6">
         <a
           href="/services"
-          className="flex items-center justify-between px-6 py-4 border border-white/10 hover:border-red-600/40 bg-white/5 hover:bg-white/8 transition-all duration-300 group"
+          className="flex items-center justify-between py-4 border border-white/10 hover:border-red-600/40 bg-white/5 hover:bg-white/8 transition-all duration-300 group px-4"
         >
           <span className="text-white/60 text-sm group-hover:text-white/90 transition-colors">
             Need a Mix master or want to book a studio session?
