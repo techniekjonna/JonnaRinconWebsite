@@ -38,6 +38,14 @@ const CARDS = [
 export default function SectionCards() {
   return (
     <section className="relative z-20 py-12 px-4">
+      {/* Scroll indicator */}
+      <div className="max-w-7xl mx-auto mb-6 flex flex-col items-center gap-1 opacity-40">
+        <span className="text-white text-[10px] uppercase tracking-widest">Scroll</span>
+        <svg width="16" height="20" viewBox="0 0 16 20" fill="none" className="animate-bounce">
+          <path d="M8 0v16M1 9l7 9 7-9" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      </div>
+
       {/* Section header */}
       <div className="max-w-7xl mx-auto mb-8 flex items-center gap-4">
         <div className="h-px flex-1 bg-white/10" />
@@ -78,20 +86,6 @@ export default function SectionCards() {
         })}
       </div>
 
-      {/* Studio session CTA */}
-      <div className="max-w-7xl mx-auto mt-5">
-        <a
-          href="/studio-session"
-          className="flex items-center justify-between px-4 py-4 border border-white/10 hover:border-red-600/40 bg-white/[0.03] hover:bg-white/[0.06] transition-all duration-300 group"
-        >
-          <span className="text-white/40 text-sm group-hover:text-white/70 transition-colors">
-            Studio session with Jonna?
-          </span>
-          <span className="text-white/70 text-sm font-bold uppercase tracking-widest group-hover:text-white group-hover:[text-shadow:0_0_12px_rgba(255,255,255,0.5)] transition-all duration-300">
-            Book here →
-          </span>
-        </a>
-      </div>
     </section>
   );
 }
