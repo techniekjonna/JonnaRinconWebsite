@@ -1,13 +1,12 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useCartContext } from './contexts/CartContext';
+import { useState } from 'react';
 import Hero from './components/Hero';
-import BeatStore from './components/BeatStore';
 import Footer from './components/Footer';
 import LoadingScreen from './components/LoadingScreen';
 import SectionCards from './components/SectionCards';
+import MusicPreview from './components/MusicPreview';
 
 // Hidden for now, kept for later use:
+// import BeatStore from './components/BeatStore';
 // import Music from './components/Music';
 // import Socials from './components/Socials';
 // import LiveStudio from './components/LiveStudio';
@@ -15,27 +14,12 @@ import SectionCards from './components/SectionCards';
 // import MarqueeRed from './components/MarqueeRed';
 // import WaveformDivider from './components/WaveformDivider';
 
-import { Beat } from './lib/types';
-
 function App() {
-  const { isOpen, setIsOpen, addToCart } = useCartContext();
-  const navigate = useNavigate();
-  const [loadingComplete, setLoadingComplete] = useState(false);
   const [contentVisible, setContentVisible] = useState(false);
-
-  const handleAddToCart = (beat: Beat, license: 'basic' | 'premium' | 'exclusive') => {
-    addToCart(beat, license);
-  };
-
-  const handleCheckout = () => {
-    setIsOpen(false);
-    navigate('/checkout');
-  };
 
   return (
     <div className="min-h-screen text-white">
       <LoadingScreen onLoadingComplete={() => {
-        setLoadingComplete(true);
         setTimeout(() => setContentVisible(true), 100);
       }} />
 
@@ -48,7 +32,7 @@ function App() {
       >
         <div id="hero" style={{ height: 'calc(100vh - 5rem)', overflow: 'hidden' }}><Hero /></div>
         <SectionCards />
-        <BeatStore onAddToCart={handleAddToCart} />
+        <MusicPreview />
         <Footer />
       </main>
     </div>
