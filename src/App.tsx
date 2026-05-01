@@ -11,6 +11,7 @@ import Marquee from './components/Marquee';
 import MarqueeRed from './components/MarqueeRed';
 import WaveformDivider from './components/WaveformDivider';
 import LoadingScreen from './components/LoadingScreen';
+import SectionCards from './components/SectionCards';
 
 import { Beat } from './lib/types';
 
@@ -60,6 +61,7 @@ function App() {
       >
         {/* === HERO + DARK SECTIONS === */}
         <div id="hero" className="h-screen overflow-hidden"><Hero /></div>
+        <SectionCards />
         <Marquee />
         <BeatStore onAddToCart={handleAddToCart} />
         <WaveformDivider />
