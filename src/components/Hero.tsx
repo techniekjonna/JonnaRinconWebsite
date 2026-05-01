@@ -12,7 +12,7 @@ export default function Hero() {
   return (
     <section
       className="relative w-full flex flex-col items-center justify-center"
-      style={{ minHeight: '55vh' }}
+      style={{ minHeight: '68vh' }}
     >
       {/* Background */}
       <div className="fixed inset-0 w-full h-screen -z-10">
