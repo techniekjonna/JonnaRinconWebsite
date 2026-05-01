@@ -1,8 +1,7 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
-import { Instagram, Youtube, Music2, ExternalLink } from 'lucide-react';
+import { Instagram, Youtube, Music2, ExternalLink, Mail, ArrowRight } from 'lucide-react';
 import { useCyberDecodeInView } from '../hooks/useCyberDecode';
 import { useScrollToTop } from '../hooks/useScrollToTop';
 
@@ -145,6 +144,75 @@ export default function SocialsPage() {
               <button className="px-6 md:px-8 py-3.5 bg-red-600 hover:bg-red-500 text-white rounded-2xl font-bold transition-all hover:scale-[1.03]">
                 Subscribe
               </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Contact */}
+      <section className="px-6 md:px-12 pb-24">
+        <div className="max-w-7xl mx-auto">
+          <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tight mb-8 text-center">Contact</h2>
+          <div className="grid md:grid-cols-2 gap-6">
+            {/* Contact info */}
+            <div className="bg-white/[0.04] border border-white/[0.06] rounded-3xl p-8 space-y-6">
+              <div className="flex items-start gap-4">
+                <div className="p-3 bg-white/[0.06] rounded-2xl">
+                  <Mail className="w-5 h-5 text-white/50" />
+                </div>
+                <div>
+                  <p className="text-white font-semibold mb-1">Email</p>
+                  <a href="mailto:contact@jonnarincon.com" className="text-white/40 hover:text-red-400 transition-colors text-sm">
+                    contact@jonnarincon.com
+                  </a>
+                </div>
+              </div>
+              <div className="border-t border-white/[0.06] pt-6">
+                <p className="text-white/25 text-xs uppercase tracking-wider mb-1">Management</p>
+                <p className="text-white/50 text-sm">Get Major Gigs</p>
+                <a href="mailto:jonnarincon@getmajorgigs.com" className="text-white/40 hover:text-red-400 transition-colors text-sm">
+                  jonnarincon@getmajorgigs.com
+                </a>
+              </div>
+              <div className="border-t border-white/[0.06] pt-6">
+                <p className="text-white/25 text-xs uppercase tracking-wider mb-1">Response Time</p>
+                <p className="text-white/50 text-sm">Usually within 24 hours</p>
+              </div>
+              <a
+                href="/studio-session"
+                className="group flex items-center justify-between p-4 bg-white/[0.04] border border-white/10 hover:border-red-600/40 transition-all"
+              >
+                <span className="text-white/60 text-sm group-hover:text-white transition-colors">Book a studio session</span>
+                <ArrowRight size={16} className="text-red-500" />
+              </a>
+            </div>
+
+            {/* Contact form */}
+            <div className="bg-white/[0.04] border border-white/[0.06] rounded-3xl p-8">
+              <h3 className="text-xl font-bold mb-6 text-white">Send a Message</h3>
+              <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
+                <input
+                  type="text"
+                  placeholder="Your name"
+                  className="w-full px-4 py-3 bg-white/[0.05] border border-white/[0.08] text-white placeholder-white/20 rounded-2xl focus:outline-none focus:border-red-500/40 transition-all text-sm"
+                />
+                <input
+                  type="email"
+                  placeholder="your@email.com"
+                  className="w-full px-4 py-3 bg-white/[0.05] border border-white/[0.08] text-white placeholder-white/20 rounded-2xl focus:outline-none focus:border-red-500/40 transition-all text-sm"
+                />
+                <textarea
+                  rows={4}
+                  placeholder="Your message..."
+                  className="w-full px-4 py-3 bg-white/[0.05] border border-white/[0.08] text-white placeholder-white/20 rounded-2xl focus:outline-none focus:border-red-500/40 transition-all text-sm resize-none"
+                />
+                <button
+                  type="submit"
+                  className="w-full py-3.5 bg-red-600 hover:bg-red-500 text-white font-bold rounded-2xl transition-all hover:scale-[1.02] text-sm uppercase tracking-widest"
+                >
+                  Send Message
+                </button>
+              </form>
             </div>
           </div>
         </div>
