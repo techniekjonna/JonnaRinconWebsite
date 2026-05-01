@@ -40,16 +40,24 @@ function seededShuffle<T>(arr: T[], seed: number): T[] {
   return a;
 }
 
+function toDirectUrl(url: string): string {
+  if (!url) return url;
+  if (url.includes('/index.php/s/') && !url.endsWith('/download')) {
+    return url.replace(/\/?$/, '/download');
+  }
+  return url;
+}
+
 function buildAll(beats: any[], tracks: any[], remixes: any[]): PreviewItem[] {
   return [
     ...beats
-      .filter(b => b.audioUrl && b.title)
+      .filter(b => b.title && (b.audioUrl || b.audio_url))
       .map(b => ({
         id: `beat-${b.id}`,
         title: b.title,
         artist: b.artist || 'Jonna Rincon',
-        audioUrl: b.audioUrl,
-        coverUrl: b.artworkUrl || '',
+        audioUrl: toDirectUrl(b.audioUrl || b.audio_url || ''),
+        coverUrl: toDirectUrl(b.artworkUrl || b.artwork_url || ''),
         tab: 'beats' as TabKey,
         label: 'Beat',
       })),
