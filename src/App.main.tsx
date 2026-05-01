@@ -41,6 +41,7 @@ import ProductionsPage from './pages/ProductionsPage';
 import SpotifyPage from './pages/SpotifyPage';
 import SupportPage from './pages/SupportPage';
 import AboutMePage from './pages/AboutMePage';
+import StudioSessionPage from './pages/StudioSessionPage';
 
 // Customer pages (protected - user role)
 import CustomerDashboard from './pages/customer/DashboardPage';
@@ -191,6 +192,7 @@ const MainApp: React.FC = () => {
                   <Route path="/download/:trackId" element={<DownloadGatePage />} />
                   <Route path="/socials" element={<SocialsPage />} />
                   <Route path="/contact" element={<ContactPage />} />
+                  <Route path="/studio-session" element={<StudioSessionPage />} />
 
                   {/* Checkout (public) */}
                   <Route path="/checkout" element={<CheckoutPage />} />

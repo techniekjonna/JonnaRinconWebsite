@@ -44,7 +44,7 @@ export default function Hero() {
   const { display, done } = useCyberDecode(TARGET_TEXT);
 
   return (
-    <section className="relative w-full min-h-screen flex flex-col items-center justify-center">
+    <section className="relative w-full h-screen flex flex-col items-center justify-center">
       {/* Background */}
       <div className="fixed inset-0 w-full h-screen -z-10">
         <img
@@ -57,8 +57,11 @@ export default function Hero() {
         <div className="absolute inset-0 bg-black/70" />
       </div>
 
-      {/* Hero Content — centered */}
-      <div className="relative z-10 flex flex-col items-center justify-center text-center px-6 max-w-4xl mx-auto">
+      {/* Hero Content — vertically centered, shifted slightly up to feel natural */}
+      <div
+        className="relative z-10 flex flex-col items-center text-center px-6 max-w-4xl mx-auto"
+        style={{ marginTop: '-5vh' }}
+      >
         {/* Badge */}
         <div
           className="mb-6 px-4 py-1.5 border border-white/20 rounded-full text-xs uppercase tracking-widest text-white/50 transition-opacity duration-700"
@@ -109,6 +112,20 @@ export default function Hero() {
             Contact
           </a>
         </div>
+
+        {/* Studio CTA line */}
+        <a
+          href="/studio-session"
+          className="group mt-5 flex items-center gap-2 transition-opacity duration-700"
+          style={{ opacity: done ? 1 : 0 }}
+        >
+          <span className="text-white/35 text-xs uppercase tracking-widest group-hover:text-red-500 transition-colors duration-300">
+            Studio session with Jonna?
+          </span>
+          <span className="text-white/70 text-xs font-bold uppercase tracking-widest group-hover:text-white group-hover:[text-shadow:0_0_12px_rgba(255,255,255,0.6)] transition-all duration-300">
+            Book here →
+          </span>
+        </a>
       </div>
 
       {/* Scroll indicator */}
