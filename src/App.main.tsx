@@ -59,11 +59,10 @@ import CustomerMyProducts from './pages/customer/MyProductsPage';
 // Artist pages (protected - artist role)
 import ArtistDashboard from './pages/artist/DashboardPage';
 import ArtistAgenda from './pages/artist/AgendaPage';
-import ArtistCollaborations from './pages/artist/CollaborationsPage';
+import ArtistBoard from './pages/artist/ArtistBoardPage';
 import ArtistShop from './pages/artist/ShopPage';
 import ArtistOrders from './pages/artist/OrdersPage';
 import ArtistFreeDownloads from './pages/artist/FreeDownloadsPage';
-import ArtistChat from './pages/artist/ChatPage';
 import ArtistProfile from './pages/artist/ProfilePage';
 import ArtistSettings from './pages/artist/SettingsPage';
 
@@ -299,10 +298,10 @@ const MainApp: React.FC = () => {
             }
           />
           <Route
-            path="/artist/collaborations"
+            path="/artist/board"
             element={
               <ProtectedRoute allowedRoles={['artist']}>
-                <ArtistCollaborations />
+                <ArtistBoard />
               </ProtectedRoute>
             }
           />
@@ -323,14 +322,6 @@ const MainApp: React.FC = () => {
             }
           />
           {/* Free Downloads removed - merged into My Products */}
-          <Route
-            path="/artist/chat"
-            element={
-              <ProtectedRoute allowedRoles={['artist']}>
-                <ArtistChat />
-              </ProtectedRoute>
-            }
-          />
           <Route
             path="/artist/profile"
             element={

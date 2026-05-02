@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { ChevronLeft, ChevronRight, Plus, Calendar, List, Trash2, Edit2, CheckCircle2, Circle, ChevronDown, Send, RefreshCw, Image as ImageIcon, Film, Type, Eye, AlertCircle, CheckCircle, Zap } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Calendar, List, Trash2, Edit2, CheckCircle2, Circle, ChevronDown } from 'lucide-react';
 import ArtistLayout from '../../components/artist/ArtistLayout';
 import {
   getAgendaDaysByMonth,
@@ -16,7 +16,7 @@ import LoadingSpinner from '../../components/LoadingSpinner';
 
 type ViewMode = 'calendar' | 'list';
 type FilterType = 'all' | 'available' | 'absent' | 'studio' | 'completed' | 'pending';
-type TabType = 'agenda' | 'social' | 'tasks';
+type TabType = 'agenda' | 'tasks';
 
 interface DayData {
   date: string;
@@ -24,18 +24,6 @@ interface DayData {
   status?: AgendaStatus;
   tasks: AgendaTask[];
   studioSessionInfo?: AgendaDay['studioSessionInfo'];
-}
-
-interface ScheduledPost {
-  id: string;
-  jobId?: string;
-  title: string;
-  platforms: string[];
-  scheduledDate: string;
-  status: string;
-  mediaType: 'video' | 'photo' | 'text';
-  mediaUrl?: string;
-  thumbnailUrl?: string;
 }
 
 
@@ -59,8 +47,6 @@ const ArtistAgenda: React.FC = () => {
   const [daysToShow, setDaysToShow] = useState(14);
   const [expandedStatus, setExpandedStatus] = useState(true);
   const [expandedTasks, setExpandedTasks] = useState(true);
-  const [scheduledPosts, setScheduledPosts] = useState<ScheduledPost[]>([]);
-
   const [loading, setLoading] = useState(true);
 
   const [taskForm, setTaskForm] = useState({
@@ -265,7 +251,7 @@ const ArtistAgenda: React.FC = () => {
 
           {/* Tabs */}
           <div className="flex gap-2 border-b border-white/[0.1] overflow-x-auto">
-            {(['agenda', 'social', 'tasks'] as TabType[]).map((tab) => (
+            {(['agenda', 'tasks'] as TabType[]).map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
@@ -276,7 +262,6 @@ const ArtistAgenda: React.FC = () => {
                 }`}
               >
                 {tab === 'agenda' && 'AGENDA'}
-                {tab === 'social' && 'SOCIAL PLANNER'}
                 {tab === 'tasks' && 'TASKS'}
               </button>
             ))}
@@ -463,16 +448,6 @@ const ArtistAgenda: React.FC = () => {
           </div>
         )}
 
-        {/* SOCIAL PLANNER TAB */}
-        {activeTab === 'social' && (
-          <div className="bg-white/[0.08] border border-white/[0.06] rounded-2xl p-6">
-            <div className="text-center py-12">
-              <Zap size={32} className="mx-auto mb-3 text-white/20" />
-              <p className="text-white/50 mb-2">Social Media Planner</p>
-              <p className="text-white/30 text-sm">Content planning tools coming soon</p>
-            </div>
-          </div>
-        )}
 
         {/* TASKS TAB */}
         {activeTab === 'tasks' && (
