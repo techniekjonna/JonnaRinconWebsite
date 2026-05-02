@@ -175,7 +175,8 @@ export default function MusicPreview() {
   }, [currentId]);
 
   const play = useCallback((item: PreviewItem) => {
-    if (!isAuthenticated && playCount >= MAX_FREE_PLAYS) {
+    // Everyone gets max 5 per session — logged-in users use full catalogue for more
+    if (playCount >= MAX_FREE_PLAYS) {
       setShowGate(true);
       return;
     }
@@ -192,19 +193,17 @@ export default function MusicPreview() {
     );
     setCurrentId(item.id);
     setIsPlaying(true);
-    if (!isAuthenticated) {
-      const next = playCount + 1;
-      setPlayCount(next);
-      sessionStorage.setItem(SESSION_COUNT_KEY, String(next));
-    }
-  }, [isAuthenticated, playCount, sessionItems]);
+    const next = playCount + 1;
+    setPlayCount(next);
+    sessionStorage.setItem(SESSION_COUNT_KEY, String(next));
+  }, [playCount, sessionItems]);
 
   const playRandom = useCallback(() => {
-    if (!isAuthenticated && playCount >= MAX_FREE_PLAYS) { setShowGate(true); return; }
+    if (playCount >= MAX_FREE_PLAYS) { setShowGate(true); return; }
     if (!sessionItems.length) return;
     const item = sessionItems[Math.floor(Math.random() * sessionItems.length)];
     play(item);
-  }, [sessionItems, play, isAuthenticated, playCount]);
+  }, [sessionItems, play, playCount]);
 
   const visibleItems = sessionItems.filter(i => i.tab === activeTab);
   const playsLeft = Math.max(0, MAX_FREE_PLAYS - playCount);
@@ -347,20 +346,20 @@ export default function MusicPreview() {
             {isLocked ? 'Login to Keep Listening' : 'Play Something Random'}
           </button>
 
-          {!isAuthenticated && (
-            <p className="text-white/25 text-xs text-center">
-              {isLocked ? 'Free previews used —' : `${playsLeft} left —`}
-              {' '}
-              <a href="/catalogue" className="text-white/40 hover:text-red-400 transition-colors underline underline-offset-2">
-                full catalogue
-              </a>
-              {' '}or{' '}
-              <a href="/login" className="text-white/40 hover:text-red-400 transition-colors underline underline-offset-2">
-                log in
-              </a>
-              {' '}for unlimited access
-            </p>
-          )}
+          <p className="text-white/25 text-xs text-center leading-relaxed">
+            or listen to all the{' '}
+            <a href="/catalogue" className="text-white/60 font-bold hover:text-red-400 transition-colors">
+              Tracks
+            </a>
+            {', '}
+            <a href="/catalogue" className="text-white/60 font-bold hover:text-red-400 transition-colors">
+              Remixes
+            </a>
+            {' '}or{' '}
+            <a href="/shop/beats" className="text-white/60 font-bold hover:text-red-400 transition-colors">
+              Beats
+            </a>
+          </p>
         </div>
 
         {/* Mix master CTA */}
@@ -388,17 +387,32 @@ export default function MusicPreview() {
             onClick={e => e.stopPropagation()}
           >
             <Lock className="w-10 h-10 text-red-500 mx-auto mb-4" />
-            <h3 className="text-white font-black uppercase text-xl mb-2">Free previews used</h3>
+            <h3 className="text-white font-black uppercase text-xl mb-2">5 previews heard</h3>
             <p className="text-white/40 text-sm mb-6 leading-relaxed">
-              You've listened to {MAX_FREE_PLAYS} free tracks. Log in for unlimited access.
+              {isAuthenticated
+                ? 'Refresh the page for new previews, or go to the full catalogue.'
+                : 'You\'ve heard 5 previews. Log in or visit the full catalogue for unlimited access.'}
             </p>
             <div className="flex flex-col gap-3">
-              <a href="/login" className="py-3 bg-red-600 hover:bg-red-700 text-white font-bold uppercase tracking-widest text-sm transition-all">
-                Log In
-              </a>
-              <a href="/register" className="py-3 bg-white/10 border border-white/20 text-white font-bold uppercase tracking-widest text-sm hover:bg-white/20 transition-all">
-                Create Account
-              </a>
+              {isAuthenticated ? (
+                <>
+                  <a href="/catalogue" className="py-3 bg-red-600 hover:bg-red-700 text-white font-bold uppercase tracking-widest text-sm transition-all">
+                    Full Catalogue
+                  </a>
+                  <a href="/shop/beats" className="py-3 bg-white/10 border border-white/20 text-white font-bold uppercase tracking-widest text-sm hover:bg-white/20 transition-all">
+                    Beat Shop
+                  </a>
+                </>
+              ) : (
+                <>
+                  <a href="/login" className="py-3 bg-red-600 hover:bg-red-700 text-white font-bold uppercase tracking-widest text-sm transition-all">
+                    Log In
+                  </a>
+                  <a href="/register" className="py-3 bg-white/10 border border-white/20 text-white font-bold uppercase tracking-widest text-sm hover:bg-white/20 transition-all">
+                    Create Account
+                  </a>
+                </>
+              )}
               <button onClick={() => setShowGate(false)} className="text-white/30 text-xs hover:text-white/60 transition-colors">
                 Maybe later
               </button>

@@ -63,6 +63,19 @@ export default function Hero() {
             Contact
           </a>
         </div>
+
+        {/* Studio session CTA */}
+        <a
+          href="/studio-session"
+          className="group mt-5 flex items-center gap-2"
+        >
+          <span className="text-white/35 text-xs uppercase tracking-widest group-hover:text-red-500 transition-colors duration-300">
+            Studio session with Jonna?
+          </span>
+          <span className="text-white/70 text-xs font-bold uppercase tracking-widest group-hover:text-white group-hover:[text-shadow:0_0_12px_rgba(255,255,255,0.6)] transition-all duration-300">
+            Book here →
+          </span>
+        </a>
       </div>
     </section>
   );
