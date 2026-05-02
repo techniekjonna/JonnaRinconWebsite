@@ -4,7 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import {
   LayoutDashboard,
   Calendar,
-  Handshake,
+  LayoutGrid,
   Music,
   ShoppingCart,
   User,
@@ -13,7 +13,6 @@ import {
   X,
   Plus,
   Settings,
-  MessageSquare,
   Download,
   Home,
   ArrowLeft,
@@ -37,11 +36,10 @@ const ArtistLayout: React.FC<ArtistLayoutProps> = ({ children }) => {
   const navigation = [
     { name: 'Dashboard', href: '/artist/dashboard', icon: LayoutDashboard },
     { name: 'Agenda', href: '/artist/agenda', icon: Calendar },
-    { name: 'Collaborations', href: '/artist/collaborations', icon: Handshake },
+    { name: 'Artist Board', href: '/artist/board', icon: LayoutGrid },
     { name: 'Shop Beats', href: '/artist/beats', icon: Music },
     { name: 'My Purchases', href: '/artist/orders', icon: ShoppingCart },
     { name: 'My Products', href: '/artist/my-products', icon: Download },
-    { name: 'Chat', href: '/artist/chat', icon: MessageSquare },
     { name: 'Profile', href: '/artist/profile', icon: User },
     { name: 'Settings', href: '/artist/settings', icon: Settings },
   ];
