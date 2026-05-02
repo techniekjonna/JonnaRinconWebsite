@@ -128,9 +128,9 @@ export default function MusicPreview() {
     if (storedRaw) {
       const storedIds: Record<TabKey, string[]> = JSON.parse(storedRaw);
       chosen = {
-        beats:   storedIds.beats.map(id => byTab.beats.find(i => i.id === id)).filter(Boolean) as PreviewItem[],
-        tracks:  storedIds.tracks.map(id => byTab.tracks.find(i => i.id === id)).filter(Boolean) as PreviewItem[],
-        remixes: storedIds.remixes.map(id => byTab.remixes.find(i => i.id === id)).filter(Boolean) as PreviewItem[],
+        beats:   (storedIds.beats   ?? []).map(id => byTab.beats.find(i => i.id === id)).filter(Boolean) as PreviewItem[],
+        tracks:  (storedIds.tracks  ?? []).map(id => byTab.tracks.find(i => i.id === id)).filter(Boolean) as PreviewItem[],
+        remixes: (storedIds.remixes ?? []).map(id => byTab.remixes.find(i => i.id === id)).filter(Boolean) as PreviewItem[],
       };
       // If we got enough, use them; otherwise fall through to reshuffle
       const ok = (['beats','tracks','remixes'] as TabKey[]).every(
