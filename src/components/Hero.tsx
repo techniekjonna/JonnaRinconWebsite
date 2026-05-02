@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { ArrowRight, Play } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 export default function Hero() {
   const [visible, setVisible] = useState(false);
@@ -30,9 +31,24 @@ export default function Hero() {
         className="relative z-10 flex flex-col items-center text-center px-6 max-w-4xl mx-auto transition-opacity duration-700"
         style={{ opacity: visible ? 1 : 0 }}
       >
-        {/* Badge */}
-        <div className="mb-5 px-4 py-1.5 border border-white/20 rounded-full text-xs uppercase tracking-widest text-white/50">
-          Artist · Producer · DJ · Sound Engineer
+        {/* Badge — clickable roles */}
+        <div className="mb-5 px-4 py-1.5 border border-white/20 rounded-full text-xs uppercase tracking-widest text-white/50 flex items-center gap-1.5 flex-wrap justify-center">
+          {[
+            { label: 'Artist', to: '/catalogue' },
+            { label: 'Producer', to: '/about' },
+            { label: 'DJ', to: '/dj' },
+            { label: 'Sound Engineer', to: '/mix-master' },
+          ].map(({ label, to }, i, arr) => (
+            <span key={label} className="flex items-center gap-1.5">
+              <Link
+                to={to}
+                className="hover:text-white transition-all duration-300 hover:[text-shadow:0_0_14px_rgba(255,255,255,0.8)] cursor-pointer"
+              >
+                {label}
+              </Link>
+              {i < arr.length - 1 && <span className="opacity-40">·</span>}
+            </span>
+          ))}
         </div>
 
         {/* Subtitle */}
