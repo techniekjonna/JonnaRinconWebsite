@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { ChevronLeft, ChevronRight, Plus, Calendar, List, Trash2, Edit2, CheckCircle2, Circle, ChevronDown, Clock, Send, RefreshCw, Image as ImageIcon, Film, Type, Eye, AlertCircle, CheckCircle, Zap } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Calendar, List, Trash2, Edit2, CheckCircle2, Circle, ChevronDown, Send, RefreshCw, Image as ImageIcon, Film, Type, Eye, AlertCircle, CheckCircle, Zap } from 'lucide-react';
 import ArtistLayout from '../../components/artist/ArtistLayout';
 import {
   getAgendaDaysByMonth,
@@ -16,7 +16,7 @@ import LoadingSpinner from '../../components/LoadingSpinner';
 
 type ViewMode = 'calendar' | 'list';
 type FilterType = 'all' | 'available' | 'absent' | 'studio' | 'completed' | 'pending';
-type TabType = 'agenda' | 'social' | 'tasks' | 'coming-up';
+type TabType = 'agenda' | 'social' | 'tasks';
 
 interface DayData {
   date: string;
@@ -38,19 +38,6 @@ interface ScheduledPost {
   thumbnailUrl?: string;
 }
 
-interface ComingUpEvent {
-  id: string;
-  title: string;
-  date: string;
-  type: 'release' | 'video' | 'merch' | 'art' | 'update';
-  description: string;
-  projectId?: string;
-  projectName?: string;
-  projectCover?: string;
-  projectAudio?: string;
-  filters?: string[];
-  category?: string;
-}
 
 const today = new Date();
 today.setHours(0, 0, 0, 0);
@@ -73,7 +60,7 @@ const ArtistAgenda: React.FC = () => {
   const [expandedStatus, setExpandedStatus] = useState(true);
   const [expandedTasks, setExpandedTasks] = useState(true);
   const [scheduledPosts, setScheduledPosts] = useState<ScheduledPost[]>([]);
-  const [comingUpEvents, setComingUpEvents] = useState<ComingUpEvent[]>([]);
+
   const [loading, setLoading] = useState(true);
 
   const [taskForm, setTaskForm] = useState({
@@ -84,15 +71,6 @@ const ArtistAgenda: React.FC = () => {
     productType: '',
   });
 
-  const [newEventForm, setNewEventForm] = useState({
-    title: '',
-    date: '',
-    type: 'release' as const,
-    description: '',
-    projectId: '',
-    filters: [] as string[],
-    category: '',
-  });
 
   useEffect(() => {
     const loadStatuses = async () => {
@@ -287,7 +265,7 @@ const ArtistAgenda: React.FC = () => {
 
           {/* Tabs */}
           <div className="flex gap-2 border-b border-white/[0.1] overflow-x-auto">
-            {(['agenda', 'social', 'tasks', 'coming-up'] as TabType[]).map((tab) => (
+            {(['agenda', 'social', 'tasks'] as TabType[]).map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
@@ -300,7 +278,6 @@ const ArtistAgenda: React.FC = () => {
                 {tab === 'agenda' && 'AGENDA'}
                 {tab === 'social' && 'SOCIAL PLANNER'}
                 {tab === 'tasks' && 'TASKS'}
-                {tab === 'coming-up' && 'COMING UP'}
               </button>
             ))}
           </div>
@@ -530,18 +507,7 @@ const ArtistAgenda: React.FC = () => {
           </div>
         )}
 
-        {/* COMING UP TAB */}
-        {activeTab === 'coming-up' && (
-          <div className="space-y-4">
-            <div className="bg-white/[0.08] border border-white/[0.06] rounded-2xl p-6">
-              <div className="text-center py-12">
-                <Clock size={32} className="mx-auto mb-3 text-white/20" />
-                <p className="text-white/50 mb-2">Coming Up</p>
-                <p className="text-white/30 text-sm">Upcoming releases, videos, merch drops & updates</p>
-              </div>
-            </div>
-          </div>
-        )}
+
       </div>
     </ArtistLayout>
   );
