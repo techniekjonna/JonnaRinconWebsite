@@ -83,7 +83,7 @@ const Header: React.FC = () => {
         <div className="flex items-center justify-between px-4 sm:px-6 h-16 md:h-20">
 
           {/* Logo left — desktop: larger, mobile: visible and properly sized */}
-          <Link to={logoHref} className="flex items-center justify-center flex-shrink-0" style={{ width: '3rem', height: '3rem' }}>
+          <Link to={logoHref} className="flex items-center justify-center flex-shrink-0 w-14 h-14 md:w-24 md:h-24">
             <img
               src="/Jonna Rincon Logo WH.png"
               alt="JR"

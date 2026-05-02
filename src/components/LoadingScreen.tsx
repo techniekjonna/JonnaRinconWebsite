@@ -6,68 +6,66 @@ interface LoadingScreenProps {
 
 const TARGET_TEXT = 'JONNA RINCON';
 
-// Progress stages: 0 → 18 → glitch → J18
-function useProgressBar() {
+// 10 frames in ~2s: J18 ×5, %%% ×3, 18 ×2
+const GLITCH_FRAMES = [
+  '%%%', '18', 'J18', '%%%', '18',
+  'J18', '%%%', 'J18', 'J18', 'J18',
+];
+const FRAME_MS = 200; // 10 × 200ms = 2s total
+
+function useProgressBar(onDone: () => void) {
   const [display, setDisplay] = useState('0%');
-  const [done, setDone] = useState(false);
 
   useEffect(() => {
     let current = 0;
-    // Phase 1: count 0→18 fast (total ~600ms)
+    // Phase 1: 0 → 18 in ~600ms (33ms/step)
     const step = setInterval(() => {
       current++;
       setDisplay(`${current}%`);
       if (current >= 18) {
         clearInterval(step);
-        // Phase 2: glitch %%%
-        let glitchCount = 0;
-        const glitchChars = ['%%%', '##%', '%!%', '18%', '%%%', 'J1%', 'J18'];
+        // Phase 2: 10 glitch frames
+        let idx = 0;
         const glitch = setInterval(() => {
-          setDisplay(glitchChars[glitchCount] ?? 'J18');
-          glitchCount++;
-          if (glitchCount >= glitchChars.length) {
+          setDisplay(GLITCH_FRAMES[idx] ?? 'J18');
+          idx++;
+          if (idx >= GLITCH_FRAMES.length) {
             clearInterval(glitch);
             setDisplay('J18');
-            setDone(true);
+            onDone(); // trigger fade immediately when done
           }
-        }, 80);
+        }, FRAME_MS);
       }
-    }, 33); // ~33ms per step = ~600ms for 18 steps
+    }, 33);
 
     return () => clearInterval(step);
-  }, []);
+  }, [onDone]);
 
-  return { display, done };
+  return display;
 }
 
 export default function LoadingScreen({ onLoadingComplete }: LoadingScreenProps) {
   const [isVisible, setIsVisible] = useState(true);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [showSkip, setShowSkip] = useState(false);
-  const { display: progressDisplay, done: progressDone } = useProgressBar();
 
-  const handleSkip = () => {
+  const handleFadeOut = () => {
+    if (isTransitioning) return;
     setIsTransitioning(true);
     setTimeout(() => {
       setIsVisible(false);
       onLoadingComplete();
-    }, 900);
+    }, 600);
   };
 
-  useEffect(() => {
-    const skipTimer = setTimeout(() => setShowSkip(true), 1500);
-    const transitionTimer = setTimeout(() => setIsTransitioning(true), 3000);
-    const completeTimer = setTimeout(() => {
-      setIsVisible(false);
-      onLoadingComplete();
-    }, 3900);
+  const display = useProgressBar(handleFadeOut);
 
-    return () => {
-      clearTimeout(skipTimer);
-      clearTimeout(transitionTimer);
-      clearTimeout(completeTimer);
-    };
-  }, [onLoadingComplete]);
+  useEffect(() => {
+    const skipTimer = setTimeout(() => setShowSkip(true), 800);
+    // Hard fallback: max 5s total
+    const fallback = setTimeout(handleFadeOut, 5000);
+    return () => { clearTimeout(skipTimer); clearTimeout(fallback); };
+  }, []);
 
   if (!isVisible) return null;
 
@@ -76,12 +74,11 @@ export default function LoadingScreen({ onLoadingComplete }: LoadingScreenProps)
       className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black cursor-pointer"
       style={{
         opacity: isTransitioning ? 0 : 1,
-        transition: isTransitioning ? 'opacity 0.9s ease-in-out' : 'none',
+        transition: isTransitioning ? 'opacity 0.6s ease-in-out' : 'none',
         pointerEvents: isTransitioning ? 'none' : 'auto',
       }}
-      onClick={showSkip ? handleSkip : undefined}
+      onClick={showSkip ? handleFadeOut : undefined}
     >
-      {/* Background */}
       <img
         src="/JEIGHTENESIS.jpg"
         alt="Jonna Rincon"
@@ -90,61 +87,52 @@ export default function LoadingScreen({ onLoadingComplete }: LoadingScreenProps)
       />
       <div className="absolute inset-0 bg-black/70" />
 
-      {/* Skip */}
       {showSkip && (
         <button
-          onClick={handleSkip}
-          className="absolute bottom-10 left-1/2 -translate-x-1/2 z-20 px-4 py-2 rounded-full border border-white/30 text-white/40 hover:text-white hover:border-white/60 text-xs font-semibold uppercase tracking-widest transition-all duration-700"
+          onClick={handleFadeOut}
+          className="absolute bottom-10 left-1/2 -translate-x-1/2 z-20 px-4 py-2 rounded-full border border-white/30 text-white/40 hover:text-white hover:border-white/60 text-xs font-semibold uppercase tracking-widest transition-all duration-300"
         >
           Click to continue
         </button>
       )}
 
-      {/* Content */}
       <div className="relative z-10 text-center">
         <h1
           className="text-white font-black uppercase leading-none tracking-tighter select-none"
           style={{
             fontSize: 'clamp(2rem, 8vw, 6rem)',
-            minHeight: '1.1em',
             letterSpacing: '0.05em',
-            animation: 'fadeInText 1.4s ease-out forwards',
+            animation: 'fadeInText 1.2s ease-out forwards',
             opacity: 0,
           }}
         >
           {TARGET_TEXT}
         </h1>
 
-        {/* Progress bar → J18 */}
         <div className="mt-6 flex flex-col items-center gap-2">
-          {/* Bar track */}
           <div
             className="bg-white/10 overflow-hidden"
             style={{ width: 'clamp(80px, 20vw, 200px)', height: '3px' }}
           >
             <div
-              className="h-full bg-white transition-all"
+              className="h-full bg-white"
               style={{
-                width: progressDone ? '100%' : '0%',
-                transition: progressDone ? 'width 0.15s ease-out' : 'none',
-                animation: !progressDone ? 'growBar 0.6s ease-out forwards' : 'none',
+                animation: 'growBar 0.6s ease-out forwards',
               }}
             />
           </div>
 
-          {/* Counter label */}
           <span
-            className="font-black tracking-widest text-white select-none"
+            className="font-black tracking-widest select-none transition-all duration-100"
             style={{
               fontSize: '0.75rem',
               fontVariantNumeric: 'tabular-nums',
               minWidth: '3ch',
-              letterSpacing: progressDone ? '0.2em' : '0.05em',
-              color: progressDone ? '#fff' : 'rgba(255,255,255,0.6)',
-              transition: 'color 0.2s, letter-spacing 0.2s',
+              color: display === 'J18' ? '#fff' : 'rgba(255,255,255,0.55)',
+              letterSpacing: display === 'J18' ? '0.25em' : '0.05em',
             }}
           >
-            {progressDisplay}
+            {display}
           </span>
         </div>
       </div>
