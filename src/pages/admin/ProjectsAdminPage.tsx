@@ -7,12 +7,15 @@ import { Project } from '../../lib/firebase/types';
 import { Plus, Filter, Edit2, Trash2 } from 'lucide-react';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import ProjectModal from '../../components/projects/ProjectModal';
+import ComingUpTab from '../../components/admin/ComingUpTab';
 
 type ProjectCategory = 'all' | 'artist' | 'producer' | 'other';
+type SectionType = 'projects' | 'coming-up';
 
 // Shared inner content — usable in admin (editable) and manager (read-only)
 export const ProjectsContent: React.FC<{ isAdmin?: boolean }> = ({ isAdmin = true }) => {
   const { projects, loading } = useProjects();
+  const [activeSection, setActiveSection] = useState<SectionType>('projects');
   const [activeTab, setActiveTab] = useState<ProjectCategory>('all');
   const [showModal, setShowModal] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
@@ -42,12 +45,13 @@ export const ProjectsContent: React.FC<{ isAdmin?: boolean }> = ({ isAdmin = tru
 
   return (
     <div className="space-y-3">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-white">Projecten</h1>
           <p className="text-white/40 mt-1 text-sm">Muziekproductieprojecten</p>
         </div>
-        {isAdmin && (
+        {isAdmin && activeSection === 'projects' && (
           <div className="flex items-center gap-2">
             <button
               onClick={handleCreate}
@@ -93,80 +97,110 @@ export const ProjectsContent: React.FC<{ isAdmin?: boolean }> = ({ isAdmin = tru
         )}
       </div>
 
-      {/* Tab Navigation */}
+      {/* Section Switcher: PROJECTS | COMING UP */}
       <div className="flex gap-1 border-b border-white/[0.1]">
-        {(['all', 'artist', 'producer', 'other'] as ProjectCategory[]).map((tab) => {
-          const label = tab === 'all' ? 'ALL' : tab.toUpperCase();
-          const isActiveTab = activeTab === tab;
+        {(['projects', 'coming-up'] as SectionType[]).map((section) => {
+          const label = section === 'projects' ? 'PROJECTS' : 'COMING UP';
+          const isActive = activeSection === section;
           return (
             <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
+              key={section}
+              onClick={() => setActiveSection(section)}
               className={`px-4 py-2.5 font-semibold text-sm transition-all relative ${
-                isActiveTab ? 'text-white' : 'text-white/40 hover:text-white'
+                isActive ? 'text-white' : 'text-white/40 hover:text-white'
               }`}
             >
               <span>{label}</span>
-              {isActiveTab && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-red-600 to-pink-600" />}
+              {isActive && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-red-600 to-pink-600" />}
             </button>
           );
         })}
       </div>
 
-      {/* Projects List */}
-      {loading ? (
-        <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-8">
-          <LoadingSpinner text="Loading projects..." />
-        </div>
-      ) : filteredProjects.length === 0 ? (
-        <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-8 text-center text-white/40 text-sm">
-          Geen projecten gevonden
-        </div>
-      ) : (
-        <div className="space-y-2">
-          {filteredProjects.map((project) => (
-            <div key={project.id} className="bg-white/[0.05] border border-white/[0.06] rounded-xl p-4 hover:bg-white/[0.08] transition-all flex items-center justify-between group">
-              <div className="flex-1 min-w-0">
-                <p className="font-medium text-white text-sm">{project.title}</p>
-                {project.description && <p className="text-xs text-white/40 mt-0.5 truncate">{project.description}</p>}
-                <div className="flex items-center gap-2 mt-2">
-                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                    project.status === 'completed' ? 'bg-green-500/20 text-green-400' :
-                    project.status === 'in-progress' ? 'bg-blue-500/20 text-blue-400' :
-                    project.status === 'on-hold' ? 'bg-orange-500/20 text-orange-400' :
-                    'bg-yellow-500/20 text-yellow-400'
-                  }`}>
-                    {project.status.replace('-', ' ')}
-                  </span>
-                  {(project as any).category && (
-                    <span className="text-xs px-2 py-0.5 bg-purple-500/20 text-purple-400 rounded-full">
-                      {(project as any).category}
-                    </span>
+      {/* PROJECTS section */}
+      {activeSection === 'projects' && (
+        <>
+          {/* Category Tabs */}
+          <div className="flex gap-1 border-b border-white/[0.06]">
+            {(['all', 'artist', 'producer', 'other'] as ProjectCategory[]).map((tab) => {
+              const label = tab === 'all' ? 'ALL' : tab.toUpperCase();
+              const isActiveTab = activeTab === tab;
+              return (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`px-4 py-2 font-semibold text-xs transition-all relative ${
+                    isActiveTab ? 'text-white' : 'text-white/40 hover:text-white'
+                  }`}
+                >
+                  <span>{label}</span>
+                  {isActiveTab && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-white/40" />}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Projects List */}
+          {loading ? (
+            <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-8">
+              <LoadingSpinner text="Loading projects..." />
+            </div>
+          ) : filteredProjects.length === 0 ? (
+            <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-8 text-center text-white/40 text-sm">
+              Geen projecten gevonden
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {filteredProjects.map((project) => (
+                <div key={project.id} className="bg-white/[0.05] border border-white/[0.06] rounded-xl p-4 hover:bg-white/[0.08] transition-all flex items-center justify-between group">
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-white text-sm">{project.title}</p>
+                    {project.description && <p className="text-xs text-white/40 mt-0.5 truncate">{project.description}</p>}
+                    <div className="flex items-center gap-2 mt-2">
+                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                        project.status === 'completed' ? 'bg-green-500/20 text-green-400' :
+                        project.status === 'in-progress' ? 'bg-blue-500/20 text-blue-400' :
+                        project.status === 'on-hold' ? 'bg-orange-500/20 text-orange-400' :
+                        'bg-yellow-500/20 text-yellow-400'
+                      }`}>
+                        {project.status.replace('-', ' ')}
+                      </span>
+                      {(project as any).category && (
+                        <span className="text-xs px-2 py-0.5 bg-purple-500/20 text-purple-400 rounded-full">
+                          {(project as any).category}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  {isAdmin && (
+                    <div className="flex items-center gap-1 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity ml-3">
+                      <button onClick={() => handleEdit(project)} className="p-2 text-white/40 hover:text-blue-400 transition-colors" title="Edit">
+                        <Edit2 size={15} />
+                      </button>
+                      <button onClick={() => handleDelete(project.id)} className="p-2 text-white/40 hover:text-red-400 transition-colors" title="Delete">
+                        <Trash2 size={15} />
+                      </button>
+                    </div>
                   )}
                 </div>
-              </div>
-              {isAdmin && (
-                <div className="flex items-center gap-1 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity ml-3">
-                  <button onClick={() => handleEdit(project)} className="p-2 text-white/40 hover:text-blue-400 transition-colors" title="Edit">
-                    <Edit2 size={15} />
-                  </button>
-                  <button onClick={() => handleDelete(project.id)} className="p-2 text-white/40 hover:text-red-400 transition-colors" title="Delete">
-                    <Trash2 size={15} />
-                  </button>
-                </div>
-              )}
+              ))}
             </div>
-          ))}
-        </div>
+          )}
+
+          {isAdmin && showModal && (
+            <ProjectModal
+              project={editingProject}
+              isOpen={showModal}
+              onClose={() => setShowModal(false)}
+              onSave={() => { setShowModal(false); setEditingProject(null); }}
+            />
+          )}
+        </>
       )}
 
-      {isAdmin && showModal && (
-        <ProjectModal
-          project={editingProject}
-          isOpen={showModal}
-          onClose={() => setShowModal(false)}
-          onSave={() => { setShowModal(false); setEditingProject(null); }}
-        />
+      {/* COMING UP section */}
+      {activeSection === 'coming-up' && (
+        <ComingUpTab />
       )}
     </div>
   );
