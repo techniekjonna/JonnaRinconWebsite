@@ -31,7 +31,7 @@ const CARDS = [
     description: 'Studio Session, Mix Masters',
     icon: Briefcase,
     image: '/DJI_20251115114029_0004_D.JPG',
-    link: '/services',
+    link: '/shop/services',
   },
 ];
 

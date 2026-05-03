@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { X, ShoppingBag, ArrowUpRight, Music, LogOut, LogIn } from 'lucide-react';
+import { X, ShoppingBag, ArrowUpRight, Music, LogOut, LogIn, AlertTriangle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useCartContext } from '../contexts/CartContext';
 import ShoppingCart from './ShoppingCart';
@@ -26,6 +26,7 @@ export default function Navigation({ cartItemCount = 0, onCartClick, isDarkOverl
   const [authName, setAuthName] = useState('');
   const [authError, setAuthError] = useState('');
   const [authLoading, setAuthLoading] = useState(false);
+  const [showClearAuthConfirm, setShowClearAuthConfirm] = useState(false);
   const [expandedShop, setExpandedShop] = useState(false);
   const [expandedCatalogue, setExpandedCatalogue] = useState(false);
   const [expandedAboutMe, setExpandedAboutMe] = useState(false);
@@ -150,6 +151,14 @@ export default function Navigation({ cartItemCount = 0, onCartClick, isDarkOverl
     setAuthError('');
   };
 
+  const clearAuthForm = () => {
+    setAuthEmail('');
+    setAuthPassword('');
+    setAuthName('');
+    setAuthError('');
+    setShowClearAuthConfirm(false);
+  };
+
   const closeMenu = () => {
     setIsMenuClosing(true);
     closeTimeout.current = setTimeout(() => {
@@ -159,6 +168,7 @@ export default function Navigation({ cartItemCount = 0, onCartClick, isDarkOverl
   };
 
   const openMenu = () => {
+    if (isMenuOpen && !isMenuClosing) return; // prevent double-open
     if (closeTimeout.current) clearTimeout(closeTimeout.current);
     setIsMenuClosing(false);
     setIsMenuOpen(true);
@@ -211,7 +221,6 @@ export default function Navigation({ cartItemCount = 0, onCartClick, isDarkOverl
   const menuItems: { label: string; subtitle: string; href?: string; action?: () => void; submenu?: Array<{ label: string; subtitle: string; href: string; action?: () => void }>; expanded?: boolean }[] = [
     { label: 'SHOP', subtitle: 'Browse our catalog', action: () => setExpandedShop(!expandedShop), submenu: shopSubmenu, expanded: expandedShop },
     { label: 'CATALOGUE', subtitle: 'Tracks, remixes & DJ sets', action: () => setExpandedCatalogue(!expandedCatalogue), submenu: catalogueSubmenu, expanded: expandedCatalogue },
-    { label: 'ABOUT ME', subtitle: 'Productions, streams & community', action: () => { closeMenu(); navigate('/about'); } },
     { label: 'GET IN TOUCH', subtitle: 'Connect with Jonna', action: () => setExpandedGetInTouch(!expandedGetInTouch), submenu: getInTouchSubmenu, expanded: expandedGetInTouch },
   ];
 
@@ -232,24 +241,63 @@ export default function Navigation({ cartItemCount = 0, onCartClick, isDarkOverl
         {/* Auth Modal */}
         {isAuthModalOpen && (
           <>
+            {/* Backdrop — closes modal but keeps form data */}
             <div
               className="fixed inset-0 bg-black/60 backdrop-blur-xl z-[120] animate-fade-in"
               onClick={() => setIsAuthModalOpen(false)}
             />
 
             <div className="fixed inset-0 z-[130] flex items-center justify-center p-4 pointer-events-none">
-              <div className="pointer-events-auto bg-black/90 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-scale-in">
-                <div className="p-8">
-                  <button
-                    onClick={() => setIsAuthModalOpen(false)}
-                    className="absolute top-6 right-6 p-2 rounded-full transition-all hover:scale-110 hover:rotate-90"
-                  >
-                    <X className="w-5 h-5 text-white" />
-                  </button>
+              <div className="pointer-events-auto bg-black/90 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-scale-in relative">
+                {/* Clear form confirmation overlay */}
+                {showClearAuthConfirm && (
+                  <>
+                    <div className="absolute inset-0 bg-black/80 backdrop-blur-sm z-10 rounded-2xl" />
+                    <div className="absolute inset-0 z-20 flex items-center justify-center p-6">
+                      <div className="text-center">
+                        <AlertTriangle className="w-10 h-10 text-red-400 mx-auto mb-3" />
+                        <h3 className="text-lg font-black text-white mb-1">Clear form?</h3>
+                        <p className="text-white/50 text-sm mb-5">All entered data will be removed.</p>
+                        <div className="flex gap-3">
+                          <button
+                            onClick={() => setShowClearAuthConfirm(false)}
+                            className="flex-1 py-2.5 border border-white/20 rounded-lg text-white/70 hover:text-white font-semibold text-sm transition-all"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            onClick={clearAuthForm}
+                            className="flex-1 py-2.5 bg-red-600 hover:bg-red-700 rounded-lg text-white font-bold text-sm transition-all"
+                          >
+                            Clear
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
 
-                  <h2 className="text-4xl font-black text-white mb-8 uppercase tracking-wider">
-                    {authMode === 'login' ? 'Welcome Back' : 'Create Account'}
-                  </h2>
+                <div className="p-8">
+                  <div className="flex items-start justify-between mb-8">
+                    <h2 className="text-4xl font-black text-white uppercase tracking-wider">
+                      {authMode === 'login' ? 'Welcome Back' : 'Create Account'}
+                    </h2>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <button
+                        onClick={() => setShowClearAuthConfirm(true)}
+                        className="text-xs text-white/20 hover:text-red-400 uppercase tracking-widest font-semibold transition-colors"
+                        title="Clear form"
+                      >
+                        Clear
+                      </button>
+                      <button
+                        onClick={() => setIsAuthModalOpen(false)}
+                        className="p-2 rounded-full transition-all hover:scale-110 hover:rotate-90"
+                      >
+                        <X className="w-5 h-5 text-white" />
+                      </button>
+                    </div>
+                  </div>
 
                   <form onSubmit={handleAuthSubmit} className="flex flex-col gap-5">
                     {authError && (
@@ -703,9 +751,15 @@ export default function Navigation({ cartItemCount = 0, onCartClick, isDarkOverl
         onRemoveItem={(beatId) => {
           removeFromCart(beatId);
         }}
+        onClearCart={clearCart}
         onCheckout={() => {
           setIsCartOpen(false);
           navigate('/checkout');
+        }}
+        isLoggedIn={!!user}
+        onLoginRequired={() => {
+          setIsCartOpen(false);
+          navigate('/register');
         }}
       />
     </nav>

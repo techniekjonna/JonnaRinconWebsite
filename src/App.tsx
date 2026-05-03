@@ -14,14 +14,22 @@ import MusicPreview from './components/MusicPreview';
 // import MarqueeRed from './components/MarqueeRed';
 // import WaveformDivider from './components/WaveformDivider';
 
+const HAS_VISITED_KEY = 'jonna_has_visited';
+
 function App() {
-  const [contentVisible, setContentVisible] = useState(false);
+  const alreadyVisited = sessionStorage.getItem(HAS_VISITED_KEY) === '1';
+  const [contentVisible, setContentVisible] = useState(alreadyVisited);
+  const [showLoader, setShowLoader] = useState(!alreadyVisited);
 
   return (
     <div className="min-h-screen text-white">
-      <LoadingScreen onLoadingComplete={() => {
-        setTimeout(() => setContentVisible(true), 100);
-      }} />
+      {showLoader && (
+        <LoadingScreen onLoadingComplete={() => {
+          sessionStorage.setItem(HAS_VISITED_KEY, '1');
+          setShowLoader(false);
+          setTimeout(() => setContentVisible(true), 100);
+        }} />
+      )}
 
       <main
         className="pt-20"
