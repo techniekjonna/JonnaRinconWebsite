@@ -53,8 +53,8 @@ export default function SectionCards() {
         <div className="h-px flex-1 bg-white/10" />
       </div>
 
-      {/* Cards grid — 1 col mobile, 4 cols desktop */}
-      <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+      {/* Cards grid — 4 columns */}
+      <div className="max-w-7xl mx-auto grid grid-cols-2 gap-4">
         {CARDS.map((card) => {
           const Icon = card.icon;
           return (
