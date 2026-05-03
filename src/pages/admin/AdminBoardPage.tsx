@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import AdminLayout from '../../components/admin/AdminLayout';
+import { AdminChatContent } from './ChatPage';
 import { db } from '../../lib/firebase/config';
 import {
   collection, query, orderBy, onSnapshot, doc, updateDoc,
@@ -8,7 +9,7 @@ import {
 import { Check, X, Clock, Handshake, UserPlus } from 'lucide-react';
 import LoadingSpinner from '../../components/LoadingSpinner';
 
-type BoardTab = 'artist-requests' | 'collab-requests';
+type BoardTab = 'artist-requests' | 'collab-requests' | 'chat';
 
 // ─── Collab Requests ───────────────────────────────────────────────────────
 interface CollabRequest {
@@ -264,14 +265,15 @@ const AdminBoardPage: React.FC = () => {
   const tabs: { key: BoardTab; label: string }[] = [
     { key: 'collab-requests',  label: 'COLLAB REQUESTS' },
     { key: 'artist-requests',  label: 'ARTIST REQUESTS' },
+    { key: 'chat',             label: 'CHAT' },
   ];
 
   return (
     <AdminLayout>
       <div className="space-y-4">
         <div>
-          <h1 className="text-xl font-bold text-white">Artist Board</h1>
-          <p className="text-white/40 mt-1 text-sm">Beheer artist requests en samenwerkingen</p>
+          <h1 className="text-xl font-bold text-white">Artist Support</h1>
+          <p className="text-white/40 mt-1 text-sm">Beheer artist requests, samenwerkingen en chat</p>
         </div>
 
         {/* Section tabs */}
@@ -290,8 +292,9 @@ const AdminBoardPage: React.FC = () => {
           ))}
         </div>
 
-        {activeTab === 'collab-requests'  && <CollabRequestsSection />}
-        {activeTab === 'artist-requests'  && <ArtistRequestsSection />}
+        {activeTab === 'collab-requests' && <CollabRequestsSection />}
+        {activeTab === 'artist-requests' && <ArtistRequestsSection />}
+        {activeTab === 'chat'            && <AdminChatContent />}
       </div>
     </AdminLayout>
   );

@@ -82,7 +82,7 @@ const ContactAvatar = ({ group, size = 'md' }: { group: RecipientGroup; size?: '
   );
 };
 
-const AdminChat: React.FC = () => {
+export const AdminChatContent: React.FC = () => {
   const { user } = useAuth();
   const [allMessages, setAllMessages] = useState<ChatMessage[]>([]);
   const [leftView, setLeftView] = useState<LeftView>('contacts');
@@ -262,7 +262,7 @@ const AdminChat: React.FC = () => {
   // Mobile full-screen panel view
   if (isMobile) {
     return (
-      <AdminLayout>
+      <>
         <div className="w-full overflow-hidden flex flex-col" style={{ height: 'calc(100dvh - 220px)', maxHeight: 'calc(100dvh - 220px)' }}>
 
           {/* Contacts view - Mobile */}
@@ -485,13 +485,13 @@ const AdminChat: React.FC = () => {
             </>
           )}
         </div>
-      </AdminLayout>
+      </>
     );
   }
 
   // Desktop layout (original)
   return (
-    <AdminLayout>
+    <>
       <div className="grid grid-cols-12 gap-3 overflow-hidden" style={{ height: 'calc(100dvh - 140px)', maxHeight: 'calc(100dvh - 140px)' }}>
 
         {/* Left panel */}
@@ -815,8 +815,14 @@ const AdminChat: React.FC = () => {
           </div>
         </div>
       )}
-    </AdminLayout>
+    </>
   );
 };
+
+const AdminChat: React.FC = () => (
+  <AdminLayout>
+    <AdminChatContent />
+  </AdminLayout>
+);
 
 export default AdminChat;
