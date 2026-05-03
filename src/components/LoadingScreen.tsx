@@ -1,70 +1,34 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 interface LoadingScreenProps {
   onLoadingComplete: () => void;
 }
 
-const TARGET_TEXT = 'JONNA RINCON';
-
-// 10 frames in ~2s: J18 ×5, %%% ×3, 18 ×2
-const GLITCH_FRAMES = [
-  '%%%', '18', 'J18', '%%%', '18',
-  'J18', '%%%', 'J18', 'J18', 'J18',
-];
-const FRAME_MS = 200; // 10 × 200ms = 2s total
-
-function useProgressBar(onDone: () => void) {
-  const [display, setDisplay] = useState('0%');
-
-  useEffect(() => {
-    let current = 0;
-    // Phase 1: 0 → 18 in ~600ms (33ms/step)
-    const step = setInterval(() => {
-      current++;
-      setDisplay(`${current}%`);
-      if (current >= 18) {
-        clearInterval(step);
-        // Phase 2: 10 glitch frames
-        let idx = 0;
-        const glitch = setInterval(() => {
-          setDisplay(GLITCH_FRAMES[idx] ?? 'J18');
-          idx++;
-          if (idx >= GLITCH_FRAMES.length) {
-            clearInterval(glitch);
-            setDisplay('J18');
-            onDone(); // trigger fade immediately when done
-          }
-        }, FRAME_MS);
-      }
-    }, 33);
-
-    return () => clearInterval(step);
-  }, [onDone]);
-
-  return display;
-}
+const HELVETICA: React.CSSProperties = {
+  fontFamily: '"Helvetica Neue", Helvetica, Arial, sans-serif',
+  fontWeight: 900,
+};
 
 export default function LoadingScreen({ onLoadingComplete }: LoadingScreenProps) {
-  const [isVisible, setIsVisible] = useState(true);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [isVisible, setIsVisible] = useState(true);
   const [showSkip, setShowSkip] = useState(false);
+  const doneRef = useRef(false);
 
   const handleFadeOut = () => {
-    if (isTransitioning) return;
+    if (doneRef.current) return;
+    doneRef.current = true;
     setIsTransitioning(true);
     setTimeout(() => {
       setIsVisible(false);
       onLoadingComplete();
-    }, 600);
+    }, 700);
   };
-
-  const display = useProgressBar(handleFadeOut);
 
   useEffect(() => {
     const skipTimer = setTimeout(() => setShowSkip(true), 800);
-    // Hard fallback: max 5s total
-    const fallback = setTimeout(handleFadeOut, 5000);
-    return () => { clearTimeout(skipTimer); clearTimeout(fallback); };
+    const autoTimer = setTimeout(handleFadeOut, 3200);
+    return () => { clearTimeout(skipTimer); clearTimeout(autoTimer); };
   }, []);
 
   if (!isVisible) return null;
@@ -74,7 +38,7 @@ export default function LoadingScreen({ onLoadingComplete }: LoadingScreenProps)
       className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black cursor-pointer"
       style={{
         opacity: isTransitioning ? 0 : 1,
-        transition: isTransitioning ? 'opacity 0.6s ease-in-out' : 'none',
+        transition: isTransitioning ? 'opacity 0.7s ease-in-out' : 'none',
         pointerEvents: isTransitioning ? 'none' : 'auto',
       }}
       onClick={showSkip ? handleFadeOut : undefined}
@@ -90,45 +54,32 @@ export default function LoadingScreen({ onLoadingComplete }: LoadingScreenProps)
       {showSkip && (
         <button
           onClick={handleFadeOut}
-          className="absolute bottom-10 left-1/2 -translate-x-1/2 z-20 px-4 py-2 rounded-full border border-white/30 text-white/40 hover:text-white hover:border-white/60 text-xs font-semibold uppercase tracking-widest transition-all duration-300"
+          className="absolute bottom-10 left-1/2 -translate-x-1/2 z-20 px-4 py-2 rounded-full border border-white/30 text-white/40 hover:text-white hover:border-white/60 text-xs uppercase tracking-widest transition-all duration-300"
+          style={HELVETICA}
         >
           Click to continue
         </button>
       )}
 
-      <div className="relative z-10 text-center">
+      <div className="relative z-10 text-center px-4">
         <h1
-          className="text-white font-black uppercase leading-none tracking-tighter select-none"
+          className="text-white uppercase leading-none select-none"
           style={{
-            fontSize: 'clamp(2rem, 8vw, 6rem)',
-            letterSpacing: '0.05em',
-            animation: 'fadeInText 1.2s ease-out forwards',
+            ...HELVETICA,
+            fontSize: 'clamp(3.5rem, 14vw, 11rem)',
+            letterSpacing: '0.08em',
+            animation: 'loadFadeIn 1.0s cubic-bezier(0.16, 1, 0.3, 1) forwards',
             opacity: 0,
           }}
         >
-          {TARGET_TEXT}
+          JONNA RINCON
         </h1>
-
-        <div className="mt-6 flex flex-col items-center gap-2">
-          <span
-            className="font-black tracking-widest select-none transition-all duration-100"
-            style={{
-              fontSize: '0.75rem',
-              fontVariantNumeric: 'tabular-nums',
-              minWidth: '3ch',
-              color: display === 'J18' ? '#fff' : 'rgba(255,255,255,0.55)',
-              letterSpacing: display === 'J18' ? '0.25em' : '0.05em',
-            }}
-          >
-            {display}
-          </span>
-        </div>
       </div>
 
       <style>{`
-        @keyframes fadeInText {
-          from { opacity: 0; transform: translateY(12px); }
-          to   { opacity: 1; transform: translateY(0); }
+        @keyframes loadFadeIn {
+          from { opacity: 0; transform: translateY(20px) scale(0.97); }
+          to   { opacity: 1; transform: translateY(0) scale(1); }
         }
       `}</style>
     </div>
