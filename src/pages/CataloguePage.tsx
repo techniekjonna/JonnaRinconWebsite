@@ -306,25 +306,26 @@ export default function CataloguePage() {
       {/* Tab Bar */}
       <section className="px-6 md:px-12 pb-2">
         <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-3 gap-2">
-            {tabs.map(tab => {
-              const Icon = tab.icon;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-bold uppercase tracking-wider text-sm transition-all border ${
-                    activeTab === tab.id
-                      ? 'bg-red-600 text-white border-red-500/50 shadow-lg shadow-red-600/20'
-                      : 'bg-white/[0.06] text-white/60 border-white/[0.1] hover:text-white hover:bg-white/[0.12] hover:border-white/[0.15]'
-                  }`}
-                >
-                  <Icon size={16} />
-                  <span className="hidden sm:inline">{tab.label}</span>
-                  <span className="sm:hidden text-xs">{tab.label}</span>
-                </button>
-              );
-            })}
+          <div className="flex items-center justify-center">
+            <div className="flex items-center bg-white/[0.05] border border-white/[0.08] rounded-xl p-1 gap-1">
+              {tabs.map(tab => {
+                const Icon = tab.icon;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`flex items-center gap-2 px-5 py-2 rounded-lg font-bold uppercase tracking-wider text-xs transition-all ${
+                      activeTab === tab.id
+                        ? 'bg-red-600 text-white shadow-md shadow-red-600/30'
+                        : 'text-white/50 hover:text-white/80'
+                    }`}
+                  >
+                    <Icon size={14} />
+                    {tab.label}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
       </section>
@@ -334,43 +335,42 @@ export default function CataloguePage() {
         <>
           <section className="px-6 md:px-12 pt-6 pb-2">
             <div className="max-w-7xl mx-auto">
-              <div className="flex flex-col items-center gap-4 mb-6">
-                <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 mb-6">
+                {/* Type sub-tabs */}
+                <div className="flex items-center bg-white/[0.05] border border-white/[0.08] rounded-xl p-1 gap-1 flex-1 min-w-0">
+                  {tabsList.map(tab => (
+                    <button
+                      key={tab}
+                      onClick={() => setSelectedTypeTab(tab as any)}
+                      className={`flex-1 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all truncate ${
+                        selectedTypeTab === tab
+                          ? 'bg-red-600 text-white shadow-md shadow-red-600/30'
+                          : 'text-white/50 hover:text-white/80'
+                      }`}
+                    >
+                      {tab}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Action buttons */}
+                <div className="flex items-center gap-1 flex-shrink-0">
                   <button
                     onClick={() => setIsFilterModalOpen(true)}
-                    className="flex items-center gap-2 px-4 py-2.5 bg-white/[0.06] border border-white/[0.1] rounded-lg text-xs font-bold uppercase tracking-wider text-white/60 hover:text-white hover:bg-white/[0.12] transition-all"
+                    title="Filters"
+                    className="flex items-center justify-center w-9 h-9 bg-white/[0.05] border border-white/[0.08] rounded-xl text-white/50 hover:text-white hover:bg-white/[0.10] transition-all"
                   >
-                    <Sliders size={16} />
-                    Filters
+                    <Sliders size={15} />
                   </button>
                   {isAuthenticated && (
                     <button
                       onClick={() => setIsPlaylistModalOpen(true)}
-                      className="flex items-center gap-2 px-4 py-2.5 bg-white/[0.06] border border-white/[0.1] rounded-lg text-xs font-bold uppercase tracking-wider text-white/60 hover:text-white hover:bg-white/[0.12] transition-all"
+                      title="Playlists"
+                      className="flex items-center justify-center w-9 h-9 bg-white/[0.05] border border-white/[0.08] rounded-xl text-white/50 hover:text-white hover:bg-white/[0.10] transition-all"
                     >
-                      <Music size={16} />
-                      Playlists
+                      <Music size={15} />
                     </button>
                   )}
-                </div>
-
-                {/* Type sub-tabs */}
-                <div className="w-full">
-                  <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${tabsList.length}, 1fr)` }}>
-                    {tabsList.map(tab => (
-                      <button
-                        key={tab}
-                        onClick={() => setSelectedTypeTab(tab as any)}
-                        className={`w-full px-3 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all border ${
-                          selectedTypeTab === tab
-                            ? 'bg-red-600 text-white border-red-500/50'
-                            : 'bg-white/[0.06] text-white/60 border-white/[0.1] hover:text-white hover:bg-white/[0.12]'
-                        }`}
-                      >
-                        {tab}
-                      </button>
-                    ))}
-                  </div>
                 </div>
               </div>
 
@@ -477,13 +477,13 @@ export default function CataloguePage() {
         <>
           <section className="px-6 md:px-12 pt-6 pb-2">
             <div className="max-w-7xl mx-auto">
-              <div className="flex justify-center mb-6">
+              <div className="flex justify-end mb-6">
                 <button
                   onClick={() => setIsFilterModalOpen(true)}
-                  className="flex items-center gap-2 px-4 py-2.5 bg-white/[0.06] border border-white/[0.1] rounded-lg text-xs font-bold uppercase tracking-wider text-white/60 hover:text-white hover:bg-white/[0.12] transition-all"
+                  title="Filters"
+                  className="flex items-center justify-center w-9 h-9 bg-white/[0.05] border border-white/[0.08] rounded-xl text-white/50 hover:text-white hover:bg-white/[0.10] transition-all"
                 >
-                  <Sliders size={16} />
-                  Filters
+                  <Sliders size={15} />
                 </button>
               </div>
               <FilterModal
