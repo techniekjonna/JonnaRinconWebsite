@@ -4,82 +4,228 @@ interface LoadingScreenProps {
   onLoadingComplete: () => void;
 }
 
-const HELVETICA: React.CSSProperties = {
+const OW: React.CSSProperties = {
   fontFamily: '"Helvetica Neue", Helvetica, Arial, sans-serif',
-  fontWeight: 900,
 };
 
+// Belt repeating text
+const BELT_UNIT = '  JONNA RINCON™  ·  ARTIST  ·  AUDIO ENGINEER  ·  MUSIC PRODUCER  ·  ART  ·';
+const BELT_TEXT = Array(8).fill(BELT_UNIT).join('');
+
 export default function LoadingScreen({ onLoadingComplete }: LoadingScreenProps) {
-  const [isTransitioning, setIsTransitioning] = useState(false);
-  const [isVisible, setIsVisible] = useState(true);
-  const [showSkip, setShowSkip] = useState(false);
+  const [phase, setPhase] = useState<'hidden' | 'visible' | 'fading'>('hidden');
   const doneRef = useRef(false);
 
-  const handleFadeOut = () => {
+  const dismiss = () => {
     if (doneRef.current) return;
     doneRef.current = true;
-    setIsTransitioning(true);
-    setTimeout(() => {
-      setIsVisible(false);
-      onLoadingComplete();
-    }, 700);
+    setPhase('fading');
+    setTimeout(() => onLoadingComplete(), 650);
   };
 
   useEffect(() => {
-    const skipTimer = setTimeout(() => setShowSkip(true), 800);
-    const autoTimer = setTimeout(handleFadeOut, 3200);
-    return () => { clearTimeout(skipTimer); clearTimeout(autoTimer); };
+    // Tiny delay so the browser has painted before we fade in
+    const show = setTimeout(() => setPhase('visible'), 60);
+    const auto = setTimeout(dismiss, 4500);
+    return () => { clearTimeout(show); clearTimeout(auto); };
   }, []);
-
-  if (!isVisible) return null;
 
   return (
     <div
-      className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black cursor-pointer"
+      onClick={dismiss}
       style={{
-        opacity: isTransitioning ? 0 : 1,
-        transition: isTransitioning ? 'opacity 0.7s ease-in-out' : 'none',
-        pointerEvents: isTransitioning ? 'none' : 'auto',
+        ...OW,
+        position: 'fixed',
+        inset: 0,
+        zIndex: 50,
+        background: '#000',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        cursor: 'pointer',
+        opacity: phase === 'visible' ? 1 : 0,
+        transition: phase === 'fading' ? 'opacity 0.65s ease-in-out' : phase === 'visible' ? 'opacity 0.9s ease-out' : 'none',
+        pointerEvents: phase === 'fading' ? 'none' : 'auto',
       }}
-      onClick={showSkip ? handleFadeOut : undefined}
     >
+      {/* Background photo */}
       <img
         src="/JEIGHTENESIS.jpg"
-        alt="Jonna Rincon"
-        className="absolute inset-0 w-full h-full object-cover"
-        style={{ objectPosition: 'center' }}
+        alt=""
+        aria-hidden
+        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center' }}
       />
-      <div className="absolute inset-0 bg-black/70" />
+      {/* Dark overlay — heavier for Off-White label contrast */}
+      <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.82)' }} />
 
-      {showSkip && (
-        <button
-          onClick={handleFadeOut}
-          className="absolute bottom-10 left-1/2 -translate-x-1/2 z-20 px-4 py-2 rounded-full border border-white/30 text-white/40 hover:text-white hover:border-white/60 text-xs uppercase tracking-widest transition-all duration-300"
-          style={HELVETICA}
-        >
-          Click to continue
-        </button>
-      )}
-
-      <div className="relative z-10 text-center px-4">
-        <h1
-          className="text-white uppercase leading-none select-none"
+      {/* ── Main label container ── */}
+      <div
+        style={{
+          position: 'relative',
+          zIndex: 10,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'flex-start',
+          width: 'min(92vw, 680px)',
+          padding: 'clamp(2rem, 5vw, 3.5rem)',
+          border: '1.5px solid rgba(255,255,255,0.35)',
+          borderRadius: 0,
+        }}
+      >
+        {/* c/o line — Off-White attribution style */}
+        <span
           style={{
-            ...HELVETICA,
-            fontSize: 'clamp(3.5rem, 14vw, 11rem)',
-            letterSpacing: '0.08em',
-            animation: 'loadFadeIn 1.0s cubic-bezier(0.16, 1, 0.3, 1) forwards',
-            opacity: 0,
+            ...OW,
+            display: 'block',
+            fontSize: 'clamp(8px, 1.6vw, 11px)',
+            fontWeight: 400,
+            letterSpacing: '0.28em',
+            color: 'rgba(255,255,255,0.38)',
+            textTransform: 'uppercase',
+            marginBottom: 'clamp(0.6rem, 2vw, 1.1rem)',
           }}
         >
-          JONNA RINCON
+          c/o JONNARINCON.COM
+        </span>
+
+        {/* ── "JONNA RINCON" — the Off-White quoted title ── */}
+        <h1
+          style={{
+            ...OW,
+            margin: 0,
+            fontSize: 'clamp(2.6rem, 9.5vw, 8rem)',
+            fontWeight: 900,
+            letterSpacing: '0.04em',
+            textTransform: 'uppercase',
+            color: '#ffffff',
+            lineHeight: 1,
+            whiteSpace: 'nowrap',
+          }}
+        >
+          &quot;JONNA RINCON&quot;
         </h1>
+
+        {/* Thin rule */}
+        <div
+          style={{
+            width: '100%',
+            height: '1px',
+            background: 'rgba(255,255,255,0.18)',
+            margin: 'clamp(1rem, 3vw, 1.8rem) 0',
+          }}
+        />
+
+        {/* Descriptor lines — Off-White "FOR WALKING" style */}
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 'clamp(0.35rem, 1.2vw, 0.6rem)',
+          }}
+        >
+          {[
+            'DUTCH AND DOMINICAN ETHNICITY',
+            'ARTIST · AUDIO ENGINEER · MUSIC PRODUCER · ART',
+            'BORN IN NETHERLANDS, MAASTRICHT',
+          ].map((line) => (
+            <span
+              key={line}
+              style={{
+                ...OW,
+                display: 'block',
+                fontSize: 'clamp(8px, 1.8vw, 12px)',
+                fontWeight: 700,
+                letterSpacing: '0.22em',
+                textTransform: 'uppercase',
+                color: 'rgba(255,255,255,0.48)',
+              }}
+            >
+              {line}
+            </span>
+          ))}
+        </div>
+
+        {/* Inner corner marks — Off-White spec-sheet aesthetic */}
+        {(['top-left','top-right','bottom-left','bottom-right'] as const).map((corner) => (
+          <div
+            key={corner}
+            style={{
+              position: 'absolute',
+              width: 10,
+              height: 10,
+              borderColor: 'rgba(255,255,255,0.55)',
+              borderStyle: 'solid',
+              ...(corner === 'top-left'     && { top: -1,    left: -1,    borderWidth: '2px 0 0 2px' }),
+              ...(corner === 'top-right'    && { top: -1,    right: -1,   borderWidth: '2px 2px 0 0' }),
+              ...(corner === 'bottom-left'  && { bottom: -1, left: -1,    borderWidth: '0 0 2px 2px' }),
+              ...(corner === 'bottom-right' && { bottom: -1, right: -1,   borderWidth: '0 2px 2px 0' }),
+            }}
+          />
+        ))}
       </div>
 
+      {/* ── Industrial belt — Off-White signature diagonal stripe ── */}
+      <div
+        style={{
+          position: 'relative',
+          zIndex: 10,
+          width: 'min(92vw, 680px)',
+          height: 'clamp(24px, 4vw, 32px)',
+          marginTop: '0px',
+          overflow: 'hidden',
+          background: 'repeating-linear-gradient(-45deg, #F5C518 0px, #F5C518 10px, #000000 10px, #000000 20px)',
+          borderLeft: '1.5px solid rgba(255,255,255,0.35)',
+          borderRight: '1.5px solid rgba(255,255,255,0.35)',
+          borderBottom: '1.5px solid rgba(255,255,255,0.35)',
+          display: 'flex',
+          alignItems: 'center',
+        }}
+      >
+        {/* Scrolling belt text */}
+        <div
+          style={{
+            ...OW,
+            display: 'flex',
+            whiteSpace: 'nowrap',
+            animation: 'beltScroll 18s linear infinite',
+            fontSize: 'clamp(7px, 1.4vw, 9px)',
+            fontWeight: 900,
+            letterSpacing: '0.18em',
+            textTransform: 'uppercase',
+            color: '#000000',
+            mixBlendMode: 'multiply',
+          }}
+        >
+          {BELT_TEXT}
+        </div>
+      </div>
+
+      {/* Click to continue hint */}
+      <p
+        style={{
+          ...OW,
+          position: 'absolute',
+          bottom: 'clamp(1.5rem, 4vw, 2.5rem)',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          zIndex: 10,
+          fontSize: 'clamp(7px, 1.4vw, 9px)',
+          fontWeight: 700,
+          letterSpacing: '0.3em',
+          textTransform: 'uppercase',
+          color: 'rgba(255,255,255,0.2)',
+          margin: 0,
+          whiteSpace: 'nowrap',
+        }}
+      >
+        CLICK TO CONTINUE
+      </p>
+
       <style>{`
-        @keyframes loadFadeIn {
-          from { opacity: 0; transform: translateY(20px) scale(0.97); }
-          to   { opacity: 1; transform: translateY(0) scale(1); }
+        @keyframes beltScroll {
+          from { transform: translateX(0); }
+          to   { transform: translateX(-50%); }
         }
       `}</style>
     </div>
