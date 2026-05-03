@@ -110,18 +110,6 @@ export default function LoadingScreen({ onLoadingComplete }: LoadingScreenProps)
         </h1>
 
         <div className="mt-6 flex flex-col items-center gap-2">
-          <div
-            className="bg-white/10 overflow-hidden"
-            style={{ width: 'clamp(80px, 20vw, 200px)', height: '3px' }}
-          >
-            <div
-              className="h-full bg-white"
-              style={{
-                animation: 'growBar 0.6s ease-out forwards',
-              }}
-            />
-          </div>
-
           <span
             className="font-black tracking-widest select-none transition-all duration-100"
             style={{
@@ -141,10 +129,6 @@ export default function LoadingScreen({ onLoadingComplete }: LoadingScreenProps)
         @keyframes fadeInText {
           from { opacity: 0; transform: translateY(12px); }
           to   { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes growBar {
-          from { width: 0%; }
-          to   { width: 18%; }
         }
       `}</style>
     </div>

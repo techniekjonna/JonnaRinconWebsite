@@ -1,4 +1,5 @@
-import { X, ShoppingCart as CartIcon, Trash2 } from 'lucide-react';
+import { useState } from 'react';
+import { X, ShoppingCart as CartIcon, Trash2, AlertTriangle } from 'lucide-react';
 import { CartItem } from '../hooks/useCart';
 
 interface ShoppingCartProps {
@@ -6,7 +7,10 @@ interface ShoppingCartProps {
   onClose: () => void;
   items: CartItem[];
   onRemoveItem: (itemId: string) => void;
+  onClearCart?: () => void;
   onCheckout: () => void;
+  isLoggedIn?: boolean;
+  onLoginRequired?: () => void;
 }
 
 export default function ShoppingCart({
@@ -14,9 +18,26 @@ export default function ShoppingCart({
   onClose,
   items,
   onRemoveItem,
+  onClearCart,
   onCheckout,
+  isLoggedIn = false,
+  onLoginRequired,
 }: ShoppingCartProps) {
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
   const total = items.reduce((sum, item) => sum + (item.price || 0), 0);
+
+  const handleCheckout = () => {
+    if (!isLoggedIn) {
+      onLoginRequired?.();
+      return;
+    }
+    onCheckout();
+  };
+
+  const handleClearConfirmed = () => {
+    onClearCart?.();
+    setShowClearConfirm(false);
+  };
 
   if (!isOpen) return null;
 
@@ -31,6 +52,34 @@ export default function ShoppingCart({
       {/* Centraal Pop-up Cart */}
       <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 pointer-events-none">
         <div className="pointer-events-auto bg-black/80 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85vh] overflow-hidden flex flex-col animate-scale-in">
+          {/* Clear confirmation dialog */}
+          {showClearConfirm && (
+            <>
+              <div className="absolute inset-0 bg-black/70 backdrop-blur-sm z-10 rounded-2xl" />
+              <div className="absolute inset-0 z-20 flex items-center justify-center p-6">
+                <div className="bg-black/90 border border-white/20 rounded-2xl p-8 text-center max-w-sm w-full">
+                  <AlertTriangle className="w-12 h-12 text-red-400 mx-auto mb-4" />
+                  <h3 className="text-xl font-black text-white mb-2">Clear cart?</h3>
+                  <p className="text-white/50 text-sm mb-6">All items will be removed from your cart.</p>
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => setShowClearConfirm(false)}
+                      className="flex-1 py-3 border border-white/20 rounded-lg text-white/70 hover:text-white hover:border-white/40 font-semibold transition-all"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleClearConfirmed}
+                      className="flex-1 py-3 bg-red-600 hover:bg-red-700 rounded-lg text-white font-bold transition-all"
+                    >
+                      Clear All
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+
           {/* Header */}
           <div className="flex items-center justify-between p-8 border-b border-white/10 flex-shrink-0">
             <div className="flex items-center gap-3">
@@ -39,12 +88,22 @@ export default function ShoppingCart({
                 Shopping Cart
               </h2>
             </div>
-            <button
-              onClick={onClose}
-              className="p-3 glass rounded-full transition-all hover:scale-110 hover:rotate-90"
-            >
-              <X className="w-6 h-6" />
-            </button>
+            <div className="flex items-center gap-3">
+              {items.length > 0 && onClearCart && (
+                <button
+                  onClick={() => setShowClearConfirm(true)}
+                  className="text-xs text-white/30 hover:text-red-400 uppercase tracking-widest font-semibold transition-colors"
+                >
+                  Clear All
+                </button>
+              )}
+              <button
+                onClick={onClose}
+                className="p-3 glass rounded-full transition-all hover:scale-110 hover:rotate-90"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
           </div>
 
           {/* Cart Content */}
@@ -122,12 +181,17 @@ export default function ShoppingCart({
                 </span>
               </div>
               <button
-                onClick={onCheckout}
+                onClick={handleCheckout}
                 className="w-full py-5 bg-white text-black hover:bg-gray-200 rounded-lg font-black text-xl transition-all hover:scale-105 active:scale-95"
               >
-                Proceed to Checkout
+                {isLoggedIn ? 'Proceed to Checkout' : 'Sign In to Checkout'}
               </button>
-              <p className="text-center text-xs text-gray-500 mt-4">
+              {!isLoggedIn && (
+                <p className="text-center text-xs text-white/40 mt-3">
+                  You need an account to complete your purchase.
+                </p>
+              )}
+              <p className="text-center text-xs text-gray-500 mt-2">
                 Secure checkout &bull; All licenses included
               </p>
             </div>

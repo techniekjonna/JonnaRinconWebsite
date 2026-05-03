@@ -99,7 +99,7 @@ const Header: React.FC = () => {
                   <Link
                     key={item.label}
                     to={item.href}
-                    className={`text-sm font-semibold transition-all duration-200 relative group ${
+                    className={`text-xs font-black uppercase tracking-widest transition-all duration-200 relative group ${
                       isActive(item.href) ? 'text-white' : 'text-white/50 hover:text-white/80'
                     }`}
                   >
@@ -129,7 +129,7 @@ const Header: React.FC = () => {
                   <Link
                     key={item.label}
                     to={item.href}
-                    className={`text-sm font-semibold transition-all duration-200 relative group ${
+                    className={`text-xs font-black uppercase tracking-widest transition-all duration-200 relative group ${
                       isActive(item.href) ? 'text-white' : 'text-white/50 hover:text-white/80'
                     }`}
                   >

@@ -1,6 +1,6 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
-import { AuthProvider } from './contexts/AuthContext';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { CartProvider } from './contexts/CartContext';
 import { TrackDetailProvider } from './contexts/TrackDetailContext';
 import { BeatDetailProvider } from './contexts/BeatDetailContext';
@@ -106,7 +106,8 @@ import CheckoutSuccessPage from './pages/CheckoutSuccessPage';
 // Global Shopping Cart component using CartContext
 const GlobalShoppingCart = () => {
   const navigate = useNavigate();
-  const { cartItems, isOpen, setIsOpen, removeFromCart } = useCartContext();
+  const { cartItems, isOpen, setIsOpen, removeFromCart, clearCart } = useCartContext();
+  const { user } = useAuth();
 
   // Listen for cart open event from Header
   React.useEffect(() => {
@@ -122,13 +123,21 @@ const GlobalShoppingCart = () => {
     navigate('/checkout');
   };
 
+  const handleLoginRequired = () => {
+    setIsOpen(false);
+    navigate('/register');
+  };
+
   return (
     <ShoppingCart
       isOpen={isOpen}
       onClose={() => setIsOpen(false)}
       items={cartItems}
       onRemoveItem={(beatId) => removeFromCart(beatId)}
+      onClearCart={clearCart}
       onCheckout={handleCheckout}
+      isLoggedIn={!!user}
+      onLoginRequired={handleLoginRequired}
     />
   );
 };
