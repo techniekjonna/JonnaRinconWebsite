@@ -32,7 +32,7 @@ const ArtistLayout: React.FC<ArtistLayoutProps> = ({ children }) => {
   const [isMenuClosing, setIsMenuClosing] = useState(false);
   const [sidebarPosition, setSidebarPositionState] = useState<SidebarPosition>(() => {
     const saved = localStorage.getItem('artist-sidebar-position') as SidebarPosition;
-    return saved || 'floating';
+    return saved || 'left';
   });
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
