@@ -88,9 +88,9 @@ export default function SocialsPage() {
       </section>
 
       {/* Platforms Grid */}
-      <section className="px-6 md:px-12 py-16 md:py-24">
+      <section className="px-6 md:px-12 py-8 md:py-12">
         <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
             {platforms.map((platform) => {
               const Icon = platform.icon;
               return (
@@ -99,22 +99,21 @@ export default function SocialsPage() {
                   href={platform.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group relative bg-white/[0.04] backdrop-blur-md border border-white/[0.06] rounded-3xl p-6 md:p-8 hover:border-white/[0.12] transition-all duration-500 hover:scale-[1.02] hover:bg-white/[0.08]"
+                  className="group relative bg-white/[0.04] backdrop-blur-md border border-white/[0.06] rounded-2xl p-4 hover:border-white/[0.12] transition-all duration-500 hover:scale-[1.02] hover:bg-white/[0.08]"
                 >
-                  <div className="flex items-start justify-between mb-6">
-                    <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${platform.gradient} flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}>
-                      <Icon className="w-7 h-7 text-white" />
+                  <div className="flex items-center justify-between mb-3">
+                    <div className={`w-9 h-9 rounded-xl bg-gradient-to-br ${platform.gradient} flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}>
+                      <Icon className="w-4 h-4 text-white" />
                     </div>
-                    <ExternalLink size={16} className="text-white/10 group-hover:text-white/40 transition-colors" />
+                    <ExternalLink size={13} className="text-white/10 group-hover:text-white/40 transition-colors" />
                   </div>
 
-                  <h3 className="text-xl font-black text-white mb-1 uppercase tracking-tight">{platform.name}</h3>
-                  <p className="text-white/30 text-xs mb-3">{platform.handle}</p>
-                  <p className="text-white/20 text-sm leading-relaxed mb-4">{platform.description}</p>
+                  <h3 className="text-sm font-black text-white mb-0.5 uppercase tracking-tight">{platform.name}</h3>
+                  <p className="text-white/30 text-[10px] mb-2">{platform.handle}</p>
 
-                  <div className="flex items-center justify-between pt-4 border-t border-white/[0.06]">
-                    <span className="text-[10px] text-white/25 uppercase tracking-wider font-medium">{platform.stats}</span>
-                    <span className="text-xs text-white/30 group-hover:text-red-400 transition-colors font-bold uppercase tracking-wider">
+                  <div className="flex items-center justify-between pt-2 border-t border-white/[0.06]">
+                    <span className="text-[9px] text-white/25 uppercase tracking-wider font-medium">{platform.stats}</span>
+                    <span className="text-[10px] text-white/30 group-hover:text-red-400 transition-colors font-bold uppercase tracking-wider">
                       Follow
                     </span>
                   </div>

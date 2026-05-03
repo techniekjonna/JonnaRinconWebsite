@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { X, ShoppingBag, ArrowUpRight, Music, LogOut, LogIn, AlertTriangle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useCartContext } from '../contexts/CartContext';
@@ -35,6 +35,7 @@ export default function Navigation({ cartItemCount = 0, onCartClick, isDarkOverl
   const { cartItems, isOpen: isCartOpen, setIsOpen: setIsCartOpen, removeFromCart, clearCart } = useCartContext();
   const { tracks } = useTracks();
   const navigate = useNavigate();
+  const location = useLocation();
   const closeTimeout = useRef<NodeJS.Timeout | null>(null);
   const scrollPositionRef = useRef(0);
 
@@ -51,6 +52,11 @@ export default function Navigation({ cartItemCount = 0, onCartClick, isDarkOverl
   };
 
   const navTextColor = getColorValue('white');  // Always white navigation text
+
+  // Close menu on route change
+  useEffect(() => {
+    if (isMenuOpen) closeMenu();
+  }, [location.pathname]);
 
   // Listen for external open event (from Header hamburger button)
   useEffect(() => {
