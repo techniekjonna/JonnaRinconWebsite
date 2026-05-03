@@ -53,16 +53,16 @@ export default function SectionCards() {
         <div className="h-px flex-1 bg-white/10" />
       </div>
 
-      {/* Cards grid — 4 columns */}
-      <div className="max-w-7xl mx-auto grid grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Cards grid — 1 col mobile, 4 cols desktop */}
+      <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
         {CARDS.map((card) => {
           const Icon = card.icon;
           return (
             <a
               key={card.id}
               href={card.link}
-              className="group relative overflow-hidden aspect-square border border-white/10 hover:border-red-600/50 transition-all duration-500 hover:-translate-y-1 hover:shadow-[0_20px_40px_rgba(239,68,68,0.15)]"
-              style={{ textDecoration: 'none' }}
+              className="group relative overflow-hidden border border-white/10 hover:border-red-600/50 transition-all duration-500 hover:-translate-y-1 hover:shadow-[0_20px_40px_rgba(239,68,68,0.15)]"
+              style={{ textDecoration: 'none', aspectRatio: '16/7' }}
             >
               <img
                 src={card.image}
@@ -74,14 +74,22 @@ export default function SectionCards() {
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
               <div className="absolute top-0 left-0 right-0 h-0.5 bg-red-600 scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left" />
-              <div className="absolute inset-0 flex flex-col items-center justify-end p-6 text-center">
-                <Icon className="w-8 h-8 text-red-500 mb-3 transition-all duration-300 group-hover:scale-110 group-hover:text-red-400" />
-                <h3 className="text-white font-black uppercase tracking-wider text-xl transition-all duration-300 group-hover:text-red-400">
+
+              {/* Icon top-left */}
+              <div className="absolute top-4 left-4">
+                <Icon className="w-6 h-6 text-red-500 transition-all duration-300 group-hover:scale-110 group-hover:text-red-400" />
+              </div>
+
+              {/* Subtitle top-right */}
+              <p className="absolute top-4 right-4 text-white/40 text-[10px] uppercase tracking-widest transition-all duration-300 group-hover:text-red-400 leading-relaxed text-right max-w-[45%]">
+                {card.description}
+              </p>
+
+              {/* Title bottom-left */}
+              <div className="absolute bottom-0 left-0 right-0 p-4">
+                <h3 className="text-white font-black uppercase tracking-wider text-lg transition-all duration-300 group-hover:text-red-400">
                   {card.title}
                 </h3>
-                <p className="text-white/40 text-xs uppercase tracking-widest mt-1 transition-all duration-300 group-hover:text-white/60 leading-relaxed">
-                  {card.description}
-                </p>
               </div>
             </a>
           );

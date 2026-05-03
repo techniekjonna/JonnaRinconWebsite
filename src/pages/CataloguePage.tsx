@@ -556,16 +556,16 @@ export default function CataloguePage() {
       {/* ── DJ SETS TAB ── */}
       {activeTab === 'djsets' && (
         <section className="px-6 md:px-12 pt-6 pb-20">
-          <div className="max-w-7xl mx-auto space-y-6">
+          <div className="max-w-7xl mx-auto space-y-3">
             {djSetVideos.map(set => (
               <div
                 key={set.id}
-                className="bg-white/[0.04] backdrop-blur-md border border-white/[0.06] rounded-2xl overflow-hidden"
+                className="bg-white/[0.04] backdrop-blur-md border border-white/[0.06] rounded-xl overflow-hidden"
               >
                 {playingDjSet === set.id ? (
                   <iframe
                     width="100%"
-                    height="400"
+                    height="280"
                     src={`https://www.youtube.com/embed/${set.youtubeId}?autoplay=1`}
                     title={set.title}
                     frameBorder="0"
@@ -574,35 +574,38 @@ export default function CataloguePage() {
                     allowFullScreen
                   />
                 ) : (
-                  <button
-                    onClick={() => setPlayingDjSet(set.id)}
-                    className="w-full relative aspect-video group"
-                  >
-                    <img
-                      src={`https://img.youtube.com/vi/${set.youtubeId}/maxresdefault.jpg`}
-                      alt={set.title}
-                      className="w-full h-full object-cover"
-                    />
-                    <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-all flex items-center justify-center">
-                      <div className="w-16 h-16 bg-red-600 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg shadow-red-600/40">
-                        <svg className="w-8 h-8 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M8 5v14l11-7z" />
-                        </svg>
+                  <div className="flex items-center gap-4 p-3">
+                    <button
+                      onClick={() => setPlayingDjSet(set.id)}
+                      className="relative flex-shrink-0 w-24 h-16 rounded-lg overflow-hidden group"
+                    >
+                      <img
+                        src={`https://img.youtube.com/vi/${set.youtubeId}/mqdefault.jpg`}
+                        alt={set.title}
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-all flex items-center justify-center">
+                        <div className="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
+                          <svg className="w-4 h-4 text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M8 5v14l11-7z" />
+                          </svg>
+                        </div>
                       </div>
+                    </button>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-bold text-white text-sm truncate">{set.title}</p>
+                      <p className="text-white/30 text-xs mt-0.5">DJ Set</p>
                     </div>
-                  </button>
+                    <a
+                      href={`https://www.youtube.com/watch?v=${set.youtubeId}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-white/30 hover:text-red-400 transition-colors uppercase tracking-wider flex-shrink-0 pr-1"
+                    >
+                      YT ↗
+                    </a>
+                  </div>
                 )}
-                <div className="px-5 py-4 flex items-center justify-between">
-                  <p className="font-bold text-white">{set.title}</p>
-                  <a
-                    href={`https://www.youtube.com/watch?v=${set.youtubeId}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-xs text-white/40 hover:text-red-400 transition-colors uppercase tracking-wider"
-                  >
-                    YouTube ↗
-                  </a>
-                </div>
               </div>
             ))}
           </div>
