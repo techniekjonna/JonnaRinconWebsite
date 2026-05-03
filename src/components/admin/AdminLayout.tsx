@@ -86,13 +86,10 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     },
     {
       label: 'ARTIST BOARD',
-      subtitle: 'Artist Requests, Collab Requests',
-      action: () => setExpandedArtist(!expandedArtist),
-      submenu: [
-        { label: 'Artist Requests', subtitle: 'Artist role requests', href: '/admin/artist-role-requests' },
-        { label: 'Collab Requests', subtitle: 'Collaboration requests', href: '/admin/collab-requests' },
-      ],
-      expanded: expandedArtist,
+      subtitle: 'Artist Requests, Collab Requests, Chat',
+      href: '/admin/board',
+      submenu: [],
+      expanded: false,
     },
     {
       label: 'SOCIAL MEDIA',

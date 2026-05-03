@@ -9,30 +9,42 @@ import LoadingSpinner from '../../components/LoadingSpinner';
 import ProjectModal from '../../components/projects/ProjectModal';
 import ComingUpTab from '../../components/admin/ComingUpTab';
 
-type ProjectCategory = 'all' | 'artist' | 'producer' | 'other';
 type SectionType = 'projects' | 'coming-up';
 
-// Shared inner content — usable in admin (editable) and manager (read-only)
+const BUILT_IN_CATEGORIES = ['artist', 'producer'];
+
+function deriveCategories(projects: Project[]): string[] {
+  const custom = new Set<string>();
+  projects.forEach((p) => {
+    const cat = (p as any).category as string | undefined;
+    if (cat && cat !== 'other' && !BUILT_IN_CATEGORIES.includes(cat)) custom.add(cat);
+  });
+  return ['all', ...BUILT_IN_CATEGORIES, ...Array.from(custom), 'other'];
+}
+
 export const ProjectsContent: React.FC<{ isAdmin?: boolean }> = ({ isAdmin = true }) => {
   const { projects, loading } = useProjects();
   const [activeSection, setActiveSection] = useState<SectionType>('projects');
-  const [activeTab, setActiveTab] = useState<ProjectCategory>('all');
+  const [activeTab, setActiveTab] = useState<string>('all');
   const [showModal, setShowModal] = useState(false);
-  const [editingProject, setEditingProject] = useState<Project | null>(null);
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [showFilters, setShowFilters] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
 
-  const filteredProjects = projects.filter(p => {
-    const projectCategory = (p as any).category || 'other';
-    if (activeTab !== 'all' && projectCategory !== activeTab) return false;
+  const categoryTabs = deriveCategories(projects);
+
+  const filteredProjects = projects.filter((p) => {
+    const cat = ((p as any).category as string | undefined) || 'other';
+    if (activeTab !== 'all' && cat !== activeTab) return false;
     if (selectedStatus && p.status !== selectedStatus) return false;
     return true;
   });
 
-  const handleCreate = () => { setEditingProject(null); setShowModal(true); };
-  const handleEdit = (project: Project) => { setEditingProject(project); setShowModal(true); };
+  const handleCreate = () => { setSelectedProject(null); setShowModal(true); };
+  const handleOpenProject = (project: Project) => { setSelectedProject(project); setShowModal(true); };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
     if (!confirm('Are you sure you want to delete this project?')) return;
     try {
       await projectService.deleteProject(id);
@@ -82,7 +94,7 @@ export const ProjectsContent: React.FC<{ isAdmin?: boolean }> = ({ isAdmin = tru
                   {['not-started', 'in-progress', 'completed', 'on-hold'].map((status) => (
                     <button
                       key={status}
-                      onClick={() => setSelectedStatus(selectedStatus === status ? null : status)}
+                      onClick={() => { setSelectedStatus(selectedStatus === status ? null : status); setShowFilters(false); }}
                       className={`w-full text-left px-2 py-1.5 rounded text-xs transition-colors ${
                         selectedStatus === status ? 'bg-red-600/20 text-red-400' : 'text-white/70 hover:bg-white/[0.08]'
                       }`}
@@ -100,17 +112,14 @@ export const ProjectsContent: React.FC<{ isAdmin?: boolean }> = ({ isAdmin = tru
       {/* Section Switcher: PROJECTS | COMING UP */}
       <div className="flex gap-1 border-b border-white/[0.1]">
         {(['projects', 'coming-up'] as SectionType[]).map((section) => {
-          const label = section === 'projects' ? 'PROJECTS' : 'COMING UP';
           const isActive = activeSection === section;
           return (
             <button
               key={section}
               onClick={() => setActiveSection(section)}
-              className={`px-4 py-2.5 font-semibold text-sm transition-all relative ${
-                isActive ? 'text-white' : 'text-white/40 hover:text-white'
-              }`}
+              className={`px-4 py-2.5 font-semibold text-sm transition-all relative ${isActive ? 'text-white' : 'text-white/40 hover:text-white'}`}
             >
-              <span>{label}</span>
+              {section === 'projects' ? 'PROJECTS' : 'COMING UP'}
               {isActive && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-red-600 to-pink-600" />}
             </button>
           );
@@ -120,20 +129,17 @@ export const ProjectsContent: React.FC<{ isAdmin?: boolean }> = ({ isAdmin = tru
       {/* PROJECTS section */}
       {activeSection === 'projects' && (
         <>
-          {/* Category Tabs */}
-          <div className="flex gap-1 border-b border-white/[0.06]">
-            {(['all', 'artist', 'producer', 'other'] as ProjectCategory[]).map((tab) => {
-              const label = tab === 'all' ? 'ALL' : tab.toUpperCase();
+          {/* Category Tabs — dynamic */}
+          <div className="flex gap-1 border-b border-white/[0.06] overflow-x-auto">
+            {categoryTabs.map((tab) => {
               const isActiveTab = activeTab === tab;
               return (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
-                  className={`px-4 py-2 font-semibold text-xs transition-all relative ${
-                    isActiveTab ? 'text-white' : 'text-white/40 hover:text-white'
-                  }`}
+                  className={`px-4 py-2 font-semibold text-xs whitespace-nowrap transition-all relative ${isActiveTab ? 'text-white' : 'text-white/40 hover:text-white'}`}
                 >
-                  <span>{label}</span>
+                  {tab.toUpperCase()}
                   {isActiveTab && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-white/40" />}
                 </button>
               );
@@ -152,7 +158,11 @@ export const ProjectsContent: React.FC<{ isAdmin?: boolean }> = ({ isAdmin = tru
           ) : (
             <div className="space-y-2">
               {filteredProjects.map((project) => (
-                <div key={project.id} className="bg-white/[0.05] border border-white/[0.06] rounded-xl p-4 hover:bg-white/[0.08] transition-all flex items-center justify-between group">
+                <div
+                  key={project.id}
+                  onClick={() => handleOpenProject(project)}
+                  className="bg-white/[0.05] border border-white/[0.06] rounded-xl p-4 hover:bg-white/[0.08] transition-all flex items-center justify-between group cursor-pointer"
+                >
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-white text-sm">{project.title}</p>
                     {project.description && <p className="text-xs text-white/40 mt-0.5 truncate">{project.description}</p>}
@@ -173,11 +183,22 @@ export const ProjectsContent: React.FC<{ isAdmin?: boolean }> = ({ isAdmin = tru
                     </div>
                   </div>
                   {isAdmin && (
-                    <div className="flex items-center gap-1 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity ml-3">
-                      <button onClick={() => handleEdit(project)} className="p-2 text-white/40 hover:text-blue-400 transition-colors" title="Edit">
+                    <div
+                      className="flex items-center gap-1 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity ml-3"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleOpenProject(project); }}
+                        className="p-2 text-white/40 hover:text-blue-400 transition-colors"
+                        title="Edit"
+                      >
                         <Edit2 size={15} />
                       </button>
-                      <button onClick={() => handleDelete(project.id)} className="p-2 text-white/40 hover:text-red-400 transition-colors" title="Delete">
+                      <button
+                        onClick={(e) => handleDelete(e, project.id)}
+                        className="p-2 text-white/40 hover:text-red-400 transition-colors"
+                        title="Delete"
+                      >
                         <Trash2 size={15} />
                       </button>
                     </div>
@@ -187,26 +208,23 @@ export const ProjectsContent: React.FC<{ isAdmin?: boolean }> = ({ isAdmin = tru
             </div>
           )}
 
-          {isAdmin && showModal && (
+          {showModal && (
             <ProjectModal
-              project={editingProject}
+              project={selectedProject}
               isOpen={showModal}
-              onClose={() => setShowModal(false)}
-              onSave={() => { setShowModal(false); setEditingProject(null); }}
+              onClose={() => { setShowModal(false); setSelectedProject(null); }}
+              onSave={() => { setShowModal(false); setSelectedProject(null); }}
             />
           )}
         </>
       )}
 
       {/* COMING UP section */}
-      {activeSection === 'coming-up' && (
-        <ComingUpTab />
-      )}
+      {activeSection === 'coming-up' && <ComingUpTab />}
     </div>
   );
 };
 
-// Admin version — full CRUD
 const ProjectsAdminPage: React.FC = () => (
   <AdminLayout>
     <ProjectsContent isAdmin={true} />
@@ -215,7 +233,6 @@ const ProjectsAdminPage: React.FC = () => (
 
 export default ProjectsAdminPage;
 
-// Manager version — read-only, exported for use in manager routes
 export const ManagerProjectsPage: React.FC = () => (
   <ManagerLayout>
     <ProjectsContent isAdmin={false} />

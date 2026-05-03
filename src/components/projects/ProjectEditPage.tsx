@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Project, ProjectSubTask, AgendaDay } from '../../lib/firebase/types';
-import { Plus, Trash2, GripVertical, Calendar } from 'lucide-react';
+import { Plus, Trash2, GripVertical, Calendar, X } from 'lucide-react';
 import { projectService } from '../../lib/firebase/services';
 import { getAgendaDaysByMonth } from '../../lib/firebase/services/agendaService';
 
@@ -23,6 +23,8 @@ const ProjectEditPage: React.FC<ProjectEditPageProps> = ({
   const [subTasks, setSubTasks] = useState<any[]>(project.subTasks || []);
   const [editingSubTask, setEditingSubTask] = useState<string | null>(null);
   const [localSubTaskCounter, setLocalSubTaskCounter] = useState(0);
+  const [customCategoryInput, setCustomCategoryInput] = useState('');
+  const [showCustomInput, setShowCustomInput] = useState(false);
 
   // Agenda scheduling
   const [showAgendaPicker, setShowAgendaPicker] = useState(false);
@@ -177,6 +179,82 @@ const ProjectEditPage: React.FC<ProjectEditPageProps> = ({
           <option value="awaiting-feedback">Awaiting Feedback</option>
           <option value="completed">Completed</option>
         </select>
+      </div>
+
+      {/* Category */}
+      <div>
+        <label className="block text-xs font-semibold text-white/60 uppercase mb-2">Category</label>
+        {!showCustomInput ? (
+          <div className="flex gap-2 flex-wrap">
+            {(['artist', 'producer', 'other'] as const).map((cat) => (
+              <button
+                key={cat}
+                type="button"
+                onClick={() => handleFieldChange('category', cat)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
+                  (project as any).category === cat
+                    ? 'bg-red-600/20 border-red-600/50 text-red-400'
+                    : 'bg-white/[0.04] border-white/[0.1] text-white/50 hover:text-white hover:border-white/20'
+                }`}
+              >
+                {cat.toUpperCase()}
+              </button>
+            ))}
+            {(project as any).category && !['artist', 'producer', 'other'].includes((project as any).category) && (
+              <button
+                type="button"
+                onClick={() => handleFieldChange('category', (project as any).category)}
+                className="px-3 py-1.5 rounded-lg text-xs font-semibold border bg-red-600/20 border-red-600/50 text-red-400 flex items-center gap-1"
+              >
+                {((project as any).category as string).toUpperCase()}
+                <X size={12} onClick={(e) => { e.stopPropagation(); handleFieldChange('category', 'other'); }} />
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => setShowCustomInput(true)}
+              className="px-3 py-1.5 rounded-lg text-xs font-semibold border border-dashed border-white/[0.15] text-white/30 hover:text-white/60 hover:border-white/30 transition-all flex items-center gap-1"
+            >
+              <Plus size={11} />Add new
+            </button>
+          </div>
+        ) : (
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={customCategoryInput}
+              onChange={(e) => setCustomCategoryInput(e.target.value)}
+              placeholder="Category name..."
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && customCategoryInput.trim()) {
+                  handleFieldChange('category', customCategoryInput.trim().toLowerCase());
+                  setShowCustomInput(false);
+                  setCustomCategoryInput('');
+                }
+                if (e.key === 'Escape') { setShowCustomInput(false); setCustomCategoryInput(''); }
+              }}
+              className="flex-1 px-3 py-1.5 bg-white/[0.05] border border-white/10 rounded-lg text-white text-xs placeholder-white/40 focus:outline-none focus:border-red-500/40"
+            />
+            <button
+              type="button"
+              onClick={() => {
+                if (customCategoryInput.trim()) {
+                  handleFieldChange('category', customCategoryInput.trim().toLowerCase());
+                }
+                setShowCustomInput(false);
+                setCustomCategoryInput('');
+              }}
+              className="px-3 py-1.5 rounded-lg bg-red-600/20 border border-red-600/40 text-red-400 text-xs hover:bg-red-600/30 transition"
+            >
+              Save
+            </button>
+            <button type="button" onClick={() => { setShowCustomInput(false); setCustomCategoryInput(''); }}
+              className="px-2 py-1.5 rounded-lg bg-white/[0.05] border border-white/10 text-white/40 hover:text-white text-xs transition">
+              <X size={12} />
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Description */}
