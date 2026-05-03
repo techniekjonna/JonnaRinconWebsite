@@ -260,12 +260,12 @@ const ArtistRequestsSection: React.FC = () => {
 
 // ─── MAIN PAGE ─────────────────────────────────────────────────────────────
 const AdminBoardPage: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<BoardTab>('collab-requests');
+  const [activeTab, setActiveTab] = useState<BoardTab>('chat');
 
   const tabs: { key: BoardTab; label: string }[] = [
+    { key: 'chat',             label: 'CHAT' },
     { key: 'collab-requests',  label: 'COLLAB REQUESTS' },
     { key: 'artist-requests',  label: 'ARTIST REQUESTS' },
-    { key: 'chat',             label: 'CHAT' },
   ];
 
   return (

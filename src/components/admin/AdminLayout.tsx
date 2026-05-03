@@ -175,6 +175,16 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     return () => { if (closeTimeout.current) clearTimeout(closeTimeout.current); };
   }, []);
 
+  // Close menu immediately whenever the route changes
+  React.useEffect(() => {
+    if (isMenuOpen || isMenuClosing) {
+      if (closeTimeout.current) clearTimeout(closeTimeout.current);
+      setIsMenuOpen(false);
+      setIsMenuClosing(false);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname]);
+
   const closeMenu = () => {
     setIsMenuClosing(true);
     closeTimeout.current = setTimeout(() => {
@@ -474,14 +484,14 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                 <div className="flex flex-col gap-4 pt-6">
                   <div className="flex items-center justify-center gap-3">
                     <button
-                      onClick={() => { navigate('/admin/dashboard'); }}
+                      onClick={() => { navigate('/admin/dashboard'); closeMenu(); }}
                       className="p-2.5 rounded-xl transition-all duration-200 text-white/40 hover:bg-white/[0.04] hover:text-white/80"
                       title="Dashboard"
                     >
                       <LayoutDashboard size={18} />
                     </button>
                     <button
-                      onClick={() => { navigate('/admin/settings'); }}
+                      onClick={() => { navigate('/admin/settings'); closeMenu(); }}
                       className="p-2.5 rounded-xl transition-all duration-200 text-white/40 hover:bg-white/[0.04] hover:text-white/80"
                       title="Settings"
                     >
