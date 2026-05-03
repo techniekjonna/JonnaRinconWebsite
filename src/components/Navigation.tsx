@@ -218,9 +218,10 @@ export default function Navigation({ cartItemCount = 0, onCartClick, isDarkOverl
     { label: 'Contact', subtitle: 'For serious inquiries', href: '#contact', action: () => { closeMenu(); navigate('/contact'); } },
   ];
 
-  const menuItems: { label: string; subtitle: string; href?: string; action?: () => void; submenu?: Array<{ label: string; subtitle: string; href: string; action?: () => void }>; expanded?: boolean }[] = [
+  const menuItems: { label: string; subtitle: string; href?: string; action?: () => void; submenu?: Array<{ label: string; subtitle: string; href: string; action?: () => void }>; expanded?: boolean; mobileOnly?: boolean }[] = [
     { label: 'SHOP', subtitle: 'Browse our catalog', action: () => setExpandedShop(!expandedShop), submenu: shopSubmenu, expanded: expandedShop },
     { label: 'CATALOGUE', subtitle: 'Tracks, remixes & DJ sets', action: () => setExpandedCatalogue(!expandedCatalogue), submenu: catalogueSubmenu, expanded: expandedCatalogue },
+    { label: 'ABOUT ME', subtitle: 'Productions, streams & community', action: () => { closeMenu(); navigate('/about'); }, mobileOnly: true },
     { label: 'GET IN TOUCH', subtitle: 'Connect with Jonna', action: () => setExpandedGetInTouch(!expandedGetInTouch), submenu: getInTouchSubmenu, expanded: expandedGetInTouch },
   ];
 
@@ -436,7 +437,7 @@ export default function Navigation({ cartItemCount = 0, onCartClick, isDarkOverl
                 {/* Menu items — clean, modern, spaced, scrollable */}
                 <div className="flex-1 flex flex-col overflow-y-auto pr-2 pb-12">
                   {menuItems.map((item, i) => (
-                    <div key={item.label}>
+                    <div key={item.label} className={item.mobileOnly ? 'md:hidden' : ''}>
                       <button
                         onClick={item.action}
                         className="group w-full text-left py-4 md:py-5 cursor-pointer border-b border-white/[0.04]"
