@@ -23,7 +23,7 @@ function deriveCategories(projects: Project[]): string[] {
 }
 
 export const ProjectsContent: React.FC<{ isAdmin?: boolean }> = ({ isAdmin = true }) => {
-  const { projects, loading } = useProjects();
+  const { projects, loading, refetch } = useProjects();
   const [activeSection, setActiveSection] = useState<SectionType>('projects');
   const [activeTab, setActiveTab] = useState<string>('all');
   const [showModal, setShowModal] = useState(false);
@@ -213,7 +213,7 @@ export const ProjectsContent: React.FC<{ isAdmin?: boolean }> = ({ isAdmin = tru
               project={selectedProject}
               isOpen={showModal}
               onClose={() => { setShowModal(false); setSelectedProject(null); }}
-              onSave={() => { setShowModal(false); setSelectedProject(null); }}
+              onSave={() => { setShowModal(false); setSelectedProject(null); refetch(); }}
             />
           )}
         </>
