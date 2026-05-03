@@ -85,7 +85,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       expanded: expandedCatalogue,
     },
     {
-      label: 'ARTIST BOARD',
+      label: 'ARTIST SUPPORT',
       subtitle: 'Artist Requests, Collab Requests, Chat',
       href: '/admin/board',
       submenu: [],
@@ -93,13 +93,10 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     },
     {
       label: 'SOCIAL MEDIA',
-      subtitle: 'Social Media, Chat',
-      action: () => setExpandedSocial(!expandedSocial),
-      submenu: [
-        { label: 'Social Media', subtitle: 'Content management', href: '/admin/content' },
-        { label: 'Chat', subtitle: 'Messaging', href: '/admin/chat' },
-      ],
-      expanded: expandedSocial,
+      subtitle: 'Content management',
+      href: '/admin/content',
+      submenu: [],
+      expanded: false,
     },
     {
       label: 'ORDERS AND STATS',

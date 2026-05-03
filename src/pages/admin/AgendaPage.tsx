@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Plus, Calendar, List, Filter, Trash2, Edit2, CheckCircle2, Circle, ChevronDown } from 'lucide-react';
 import AdminLayout from '../../components/admin/AdminLayout';
 import TaskBoard from '../../components/admin/TaskBoard';
+import { SocialPlannerContent } from './ContentPage';
 import {
   getAgendaDaysByMonth,
   getAgendaTasksByMonth,
@@ -17,7 +18,7 @@ import { AgendaDay, AgendaTask, AgendaStatus } from '../../lib/firebase/types';
 
 type ViewMode = 'calendar' | 'list';
 type FilterType = 'all' | 'available' | 'absent' | 'studio' | 'completed' | 'pending';
-type TabType = 'agenda' | 'tasks';
+type TabType = 'agenda' | 'social' | 'tasks';
 
 interface DayData {
   date: string;
@@ -267,7 +268,7 @@ const AgendaPage: React.FC = () => {
 
           {/* Main Tabs */}
           <div className="flex gap-2 border-b border-white/[0.1] overflow-x-auto mb-4">
-            {(['agenda', 'tasks'] as TabType[]).map((tab) => (
+            {(['agenda', 'social', 'tasks'] as TabType[]).map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
@@ -278,6 +279,7 @@ const AgendaPage: React.FC = () => {
                 }`}
               >
                 {tab === 'agenda' && 'AGENDA'}
+                {tab === 'social' && 'SOCIAL PLANNER'}
                 {tab === 'tasks' && 'TASKS'}
               </button>
             ))}
@@ -475,6 +477,11 @@ const AgendaPage: React.FC = () => {
           </div>
         )}
           </div>
+        )}
+
+        {/* SOCIAL PLANNER TAB */}
+        {activeTab === 'social' && (
+          <SocialPlannerContent />
         )}
 
         {/* TASKS TAB */}
