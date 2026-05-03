@@ -420,7 +420,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                       onClick={() => {
                         if ('href' in item && item.href) {
                           navigate(item.href);
-                          setIsMenuOpen(false);
+                          closeMenu();
                         } else {
                           item.action?.();
                         }
@@ -450,7 +450,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                         {item.submenu.map((sub, si) => (
                           <button
                             key={sub.href}
-                            onClick={() => { navigate(sub.href); }}
+                            onClick={() => { navigate(sub.href); closeMenu(); }}
                             className="group w-full text-left py-3 md:py-4 cursor-pointer border-b border-white/[0.04] hover:translate-x-1.5 transition-transform duration-300"
                             style={{
                               animation: item.expanded && !isMenuClosing ? `menu-item-reveal 0.4s cubic-bezier(0.16, 1, 0.3, 1) ${0.05 + si * 0.04}s both` : 'none',

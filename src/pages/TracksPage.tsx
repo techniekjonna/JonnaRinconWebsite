@@ -323,42 +323,23 @@ export default function TracksPage() {
     setIsModalOpen(true);
   };
 
+  const isCustomTab = (
+    (trackSettings?.customTab1Enabled && selectedTypeTab === (trackSettings.customTab1Label || 'Custom 1')) ||
+    (trackSettings?.customTab2Enabled && selectedTypeTab === (trackSettings.customTab2Label || 'Custom 2'))
+  );
+
   const getCustomTracksForTab = (): Track[] => {
-    const customTracks: Track[] = [];
-    const isCustom1 = selectedTypeTab === 'Custom 1' || selectedTypeTab === (trackSettings?.customTab1Label || 'Custom 1');
-    const isCustom2 = selectedTypeTab === 'Custom 2' || selectedTypeTab === (trackSettings?.customTab2Label || 'Custom 2');
+    const isCustom1 = trackSettings?.customTab1Enabled &&
+      selectedTypeTab === (trackSettings.customTab1Label || 'Custom 1');
 
-    if (!isCustom1 && !isCustom2) return [];
+    const button = isCustom1 ? trackSettings?.customButton1 : trackSettings?.customButton2;
+    const trackIds: string[] = button?.trackIds || [];
 
-    // Find all tracks with customTrackLinks
-    demoTracks.forEach(track => {
-      // Only process tracks that have customTrackLinks
-      if (track.customTrackLinks && Array.isArray(track.customTrackLinks) && track.customTrackLinks.length > 0) {
-        track.customTrackLinks.forEach((link, index) => {
-          customTracks.push({
-            id: `custom-${track.id}-${index}`,
-            title: link.title || `Custom ${index + 1}`,
-            artist: track.artist,
-            audioUrl: link.audioUrl,
-            coverArt: track.coverArt,
-            coverArtUrl: track.coverArtUrl,
-            type: 'Single' as const,
-            year: track.year,
-            collab: track.collab,
-            genre: track.genre,
-            bpm: track.bpm,
-            key: track.key,
-            duration: track.duration,
-            createdAt: track.createdAt,
-          } as Track);
-        });
-      }
-    });
-
-    return customTracks;
+    if (trackIds.length === 0) return [];
+    return demoTracks.filter(track => trackIds.includes(track.id));
   };
 
-  const filteredTracks = selectedTypeTab.startsWith('Custom')
+  const filteredTracks = isCustomTab
     ? getCustomTracksForTab()
     : demoTracks.filter(track => {
       const tabMatch = matchesTypeTab(track);
