@@ -190,7 +190,7 @@ const MainApp: React.FC = () => {
                   <Route path="/shop/art" element={<ArtShop />} />
 
                   {/* Standalone Pages (public) */}
-                  <Route path="/catalogue" element={<CataloguePage />} />
+                  <Route path="/catalogue" element={<ProtectedRoute><CataloguePage /></ProtectedRoute>} />
                   <Route path="/tracks" element={<TracksPage />} />
                   <Route path="/my-tracks" element={<TracksPage />} />
                   <Route path="/remixes" element={<RemixesPage />} />

@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { X, Play, Pause, ShoppingCart, Download, ChevronDown, Plus, Dice5 } from 'lucide-react';
+import { X, Play, Pause, Download, ChevronDown, Plus, Dice5 } from 'lucide-react';
 import { getCurrentTrack } from './GlobalAudioPlayer';
 import { useAuth } from '../hooks/useAuth';
 import { playlistService } from '../lib/firebase/services';
@@ -38,8 +38,6 @@ interface TrackDetailModalProps {
   onClose: () => void;
   isPlaying?: boolean;
   onPlay?: (track: Track) => void;
-  onBuy?: (track: Track) => void;
-  cartItems?: any[];
   relatedTracks?: Track[];
   onAddToPlaylist?: (trackId: string, playlistId: string) => Promise<void>;
 }
@@ -50,8 +48,6 @@ export default function TrackDetailModal({
   onClose,
   isPlaying = false,
   onPlay,
-  onBuy,
-  cartItems = [],
   relatedTracks = [],
   onAddToPlaylist,
 }: TrackDetailModalProps) {
@@ -77,9 +73,6 @@ export default function TrackDetailModal({
   useEffect(() => {
     setCurrentRelatedTracks(relatedTracks);
   }, [relatedTracks]);
-
-  // Check if track is already in cart
-  const isInCart = track ? cartItems.some(item => item.id === track.id) : false;
 
   // Handle body scroll lock when modal is open
   useEffect(() => {
@@ -472,23 +465,6 @@ export default function TrackDetailModal({
               </button>
             )}
 
-            {/* Buy Button - for non-free tracks with a price */}
-            {onBuy && track && !track.isFree && track.licenses?.exclusive?.price && (
-              <button
-                onClick={() => !isInCart && onBuy(track)}
-                disabled={isInCart}
-                className={`w-full px-6 py-3 text-white rounded-xl font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-3 mb-3 ${
-                  isInCart
-                    ? 'bg-gradient-to-r from-green-600 to-emerald-600 cursor-default'
-                    : 'bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 hover:scale-[1.02] active:scale-95'
-                }`}
-              >
-                <ShoppingCart size={18} />
-                <span>
-                  {isInCart ? 'In Cart' : `Add to Cart — €${track.licenses.exclusive.price.toFixed(2)}`}
-                </span>
-              </button>
-            )}
 
             {/* Close Button for Mobile */}
             <button

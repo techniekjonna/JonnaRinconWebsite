@@ -204,23 +204,16 @@ export default function TrackListItem({
       </div>
 
       {/* Download Button */}
-      {showDownload && track.audioUrl && (
-        <a
-          href={track.audioUrl}
-          download
+      {showDownload && (
+        <button
+          onClick={(e) => { e.stopPropagation(); onDownload?.(track); }}
           className="flex-shrink-0 flex items-center justify-center text-white/40 hover:text-red-400 transition-colors duration-200"
           style={{ width: '16px', height: '16px' }}
           title="Download track"
           aria-label="Download track"
-          onClick={(e) => {
-            e.stopPropagation();
-            if (onDownload) {
-              onDownload(track);
-            }
-          }}
         >
           <Download size={14} />
-        </a>
+        </button>
       )}
 
       {/* Play/Pause Button - hide if album track with its own button */}

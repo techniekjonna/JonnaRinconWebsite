@@ -1,11 +1,12 @@
-import { useState } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useParams, Link } from 'react-router-dom';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
-import { Check, Lock, Download, ExternalLink, Music, Instagram, Youtube } from 'lucide-react';
+import { Check, Lock, Download, ExternalLink, Music, Instagram } from 'lucide-react';
 import { useCyberDecodeInView } from '../hooks/useCyberDecode';
 import { useAuth } from '../contexts/AuthContext';
 import { useScrollToTop } from '../hooks/useScrollToTop';
+import { remixService } from '../lib/firebase/services';
 
 interface FollowStep {
   id: string;
@@ -33,44 +34,50 @@ const followSteps: FollowStep[] = [
     icon: Instagram,
     color: 'bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-500 hover:to-pink-400',
   },
-  {
-    id: 'youtube',
-    platform: 'YouTube',
-    label: 'Subscribe on YouTube',
-    url: 'https://www.youtube.com/jonnarincon',
-    icon: Youtube,
-    color: 'bg-red-600 hover:bg-red-500',
-  },
 ];
 
 export default function DownloadGatePage() {
   useScrollToTop();
   const { trackId } = useParams<{ trackId: string }>();
   const { user } = useAuth();
-  const navigate = useNavigate();
   const heroTitle = useCyberDecodeInView('Download');
 
   const [completedSteps, setCompletedSteps] = useState<Set<string>>(new Set());
-  const [isUnlocked, setIsUnlocked] = useState(false);
+  const [remixData, setRemixData] = useState<{ title: string; artist: string; audioUrl?: string; artworkUrl?: string } | null>(null);
+
+  useEffect(() => {
+    if (!trackId) return;
+    remixService.getRemixById(trackId).then(remix => {
+      if (remix) {
+        setRemixData({
+          title: remix.title,
+          artist: remix.remixArtist || remix.artist || 'Jonna Rincon',
+          audioUrl: remix.audioUrl,
+          artworkUrl: remix.artworkUrl,
+        });
+      }
+    }).catch(() => {});
+  }, [trackId]);
 
   const handleStepClick = (step: FollowStep) => {
-    // Open the social link in a new tab
     window.open(step.url, '_blank', 'noopener,noreferrer');
-
-    // Mark as completed after opening
     setTimeout(() => {
       setCompletedSteps(prev => {
         const next = new Set(prev);
         next.add(step.id);
-
-        // Check if all steps completed
-        if (next.size >= followSteps.length) {
-          setTimeout(() => setIsUnlocked(true), 500);
-        }
-
         return next;
       });
     }, 2000);
+  };
+
+  const handleDownload = () => {
+    if (!remixData?.audioUrl) return;
+    const a = document.createElement('a');
+    a.href = remixData.audioUrl;
+    a.download = remixData.title || 'track';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
   };
 
   const allCompleted = completedSteps.size >= followSteps.length;
@@ -78,9 +85,8 @@ export default function DownloadGatePage() {
 
   return (
     <div className="min-h-screen text-white">
-      {/* Fixed Dark Overlay */}
       <div className="fixed inset-0 w-full h-screen -z-10 bg-black/20" />
-<Navigation isDarkOverlay={true} isLightMode={false} />
+      <Navigation isDarkOverlay={true} isLightMode={false} />
 
       {/* Hero */}
       <section className="relative min-h-[40vh] flex items-end pb-12 md:pb-16 pt-40 px-6 md:px-12">
@@ -98,12 +104,18 @@ export default function DownloadGatePage() {
           {/* Track info card */}
           <div className="bg-white/[0.04] backdrop-blur-md border border-white/[0.06] rounded-3xl p-6 md:p-8 mb-8">
             <div className="flex items-center gap-4 mb-6">
-              <div className="w-16 h-16 rounded-xl bg-red-600/20 flex items-center justify-center">
-                <Music size={28} className="text-red-400" />
+              <div className="w-16 h-16 rounded-xl overflow-hidden flex-shrink-0">
+                {remixData?.artworkUrl ? (
+                  <img src={remixData.artworkUrl} alt={remixData.title} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full bg-red-600/20 flex items-center justify-center">
+                    <Music size={28} className="text-red-400" />
+                  </div>
+                )}
               </div>
               <div>
-                <h2 className="text-xl font-black uppercase tracking-tight">{trackId?.replace(/-/g, ' ') || 'Track'}</h2>
-                <p className="text-white/30 text-xs mt-0.5">by Jonna Rincon</p>
+                <h2 className="text-xl font-black uppercase tracking-tight">{remixData?.title || trackId?.replace(/-/g, ' ') || 'Track'}</h2>
+                <p className="text-white/30 text-xs mt-0.5">by {remixData?.artist || 'Jonna Rincon'}</p>
               </div>
             </div>
 
@@ -189,12 +201,12 @@ export default function DownloadGatePage() {
                   <h3 className="text-lg font-black uppercase tracking-tight mb-2">Unlocked!</h3>
                   <p className="text-white/30 text-sm mb-6">Your download is ready</p>
                   <button
+                    onClick={handleDownload}
                     className="inline-flex items-center gap-2 px-8 py-3.5 bg-red-600 hover:bg-red-500 text-white rounded-2xl font-bold transition-all hover:scale-105"
                   >
                     <Download size={18} />
                     Download Track
                   </button>
-                  <p className="text-[10px] text-white/15 mt-4">Download will be available from your dashboard</p>
                 </>
               )}
             </div>
@@ -202,7 +214,7 @@ export default function DownloadGatePage() {
 
           {!allCompleted && (
             <p className="text-center text-white/20 text-xs mt-4">
-              Complete all steps above to unlock the free download
+              Follow on Spotify and Instagram to unlock the free download
             </p>
           )}
         </div>
