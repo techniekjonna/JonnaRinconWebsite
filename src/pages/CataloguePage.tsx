@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
-import { Music, Disc3, Radio, Sliders, ChevronDown, Shuffle } from 'lucide-react';
+import { Sliders, ChevronDown, Shuffle } from 'lucide-react';
 import { useCyberDecodeInView } from '../hooks/useCyberDecode';
 import { useAuth } from '../hooks/useAuth';
 import { useTrackDetail } from '../contexts/TrackDetailContext';
@@ -18,16 +18,13 @@ import AlbumModal from '../components/AlbumModal';
 import LoginModal from '../components/LoginModal';
 import PlaylistModal from '../components/PlaylistModal';
 import PlaylistDetailView from '../components/PlaylistDetailView';
+import CatalogueSidebar from '../components/CatalogueSidebar';
 import { extractUniqueGenres } from '../lib/utils/genreExtractor';
 import { trackService, settingsService, playlistService } from '../lib/firebase/services';
 import { useCart } from '../hooks/useCart';
 import { Playlist, Track as FirebaseTrack } from '../lib/firebase/types';
 
-const tabs = [
-  { id: 'tracks', label: 'Tracks', icon: Music },
-  { id: 'remixes', label: 'Remixes', icon: Disc3 },
-  { id: 'djsets', label: 'DJ Sets', icon: Radio },
-];
+// sidebar nav tabs defined in CatalogueSidebar
 
 const djSetVideos = [
   {
@@ -318,6 +315,15 @@ export default function CataloguePage() {
         />
       )}
 
+      {/* Right sidebar */}
+      <CatalogueSidebar
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        trackSettings={trackSettings}
+        onCreatePlaylist={() => setIsPlaylistModalOpen(true)}
+        onPlaylistSelect={handlePlaylistSelect}
+      />
+
       {/* Hero */}
       <section className="relative pt-40 px-6 md:px-12 pb-4">
         <div className="relative z-10 max-w-7xl mx-auto w-full text-center">
@@ -328,33 +334,6 @@ export default function CataloguePage() {
           >
             {heroTitle.display}
           </h1>
-        </div>
-      </section>
-
-      {/* Tab Bar */}
-      <section className="px-6 md:px-12 pb-2">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex items-center justify-center">
-            <div className="flex items-center bg-white/[0.05] border border-white/[0.08] rounded-xl p-1 gap-1">
-              {tabs.map(tab => {
-                const Icon = tab.icon;
-                return (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
-                    className={`flex items-center gap-2 px-5 py-2 rounded-lg font-bold uppercase tracking-wider text-xs transition-all ${
-                      activeTab === tab.id
-                        ? 'bg-red-600 text-white shadow-md shadow-red-600/30'
-                        : 'text-white/50 hover:text-white/80'
-                    }`}
-                  >
-                    <Icon size={14} />
-                    {tab.label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
         </div>
       </section>
 

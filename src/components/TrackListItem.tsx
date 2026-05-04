@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Music, Play, Pause, Download } from 'lucide-react';
 import { getCurrentTrack, getIsPlaying, setCurrentTrack, togglePlayPause, subscribeToPlayerState } from './GlobalAudioPlayer';
-import { getRowHighlightClass } from '../lib/utils/buttonStyles';
 
 interface TrackListItemProps {
   track: any;
@@ -34,9 +33,6 @@ export default function TrackListItem({
   onDownload,
   allTracks = [],
   showType = true,
-  showYear = true,
-  showGenre = true,
-  showBPM = true,
   showMetadata = false,
   isAlbumTrack = false,
   trackNumber,
@@ -46,199 +42,176 @@ export default function TrackListItem({
   showPlayButton = true,
   showAlbumPlayButton = true,
 }: TrackListItemProps) {
-  // Force re-render when global player state changes
   const [, setPlayerState] = useState({});
+  const [hovered, setHovered] = useState(false);
 
   useEffect(() => {
-    const unsubscribe = subscribeToPlayerState(() => {
-      setPlayerState({});
-    });
+    const unsubscribe = subscribeToPlayerState(() => setPlayerState({}));
     return unsubscribe;
   }, []);
 
   const currentTrack = getCurrentTrack();
   const isCurrentTrack = currentTrack?.id === track.id;
   const globalIsPlaying = getIsPlaying();
-
-  // Use global playing state if this is current track, otherwise use props
-  const actualIsPlaying = isCurrentTrack ? globalIsPlaying : isPlaying;
+  const actualIsPlaying = isCurrentTrack ? globalIsPlaying : false;
 
   const handlePlayClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-
-    // If this track is already playing, toggle play/pause
     if (isCurrentTrack) {
       togglePlayPause();
+    } else if (onTogglePlay) {
+      onTogglePlay(track);
+    } else if (allTracks && allTracks.length > 0) {
+      setCurrentTrack(track, allTracks);
     } else {
-      // Otherwise, set as current track and start playing
-      if (onTogglePlay) {
-        onTogglePlay(track);
-      } else if (allTracks && allTracks.length > 0) {
-        setCurrentTrack(track, allTracks);
-      } else {
-        setCurrentTrack(track, [track]);
-      }
+      setCurrentTrack(track, [track]);
     }
   };
 
+  const handleCoverClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    // On mobile, cover tap plays
+    handlePlayClick(e);
+  };
+
+  const metaItems: { label: string; value: string; color?: string }[] = [];
+  if (track.genre) metaItems.push({ label: 'genre', value: track.genre, color: 'text-purple-300' });
+  if (track.year) metaItems.push({ label: 'year', value: String(track.year) });
+  if (showType && track.type) metaItems.push({ label: 'type', value: track.type, color: isCurrentTrack ? 'text-red-400' : undefined });
+
   return (
     <div
-      className={`rounded-xl ${isAlbumTrack ? 'p-2' : 'p-4'} flex items-center ${isAlbumTrack ? 'gap-2' : 'gap-4'} hover:bg-white/[0.06] transition-all duration-300 border backdrop-blur-md ${
-        isCurrentTrack ? 'border-red-500/50 bg-white/[0.08]' : 'bg-white/[0.04] border-white/[0.06]'
-      } ${getRowHighlightClass(isCurrentTrack)}`}
+      className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 cursor-default group ${
+        isCurrentTrack
+          ? 'bg-white/[0.06]'
+          : 'hover:bg-white/[0.05]'
+      }`}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
     >
-      {/* Cover Art */}
-      {showCover && (
-        <div
-          onClick={() => onClickTrack?.(track)}
-          className="w-12 h-12 rounded-lg bg-gradient-to-br from-red-600/40 to-red-900/20 border border-white/[0.08] flex-shrink-0 flex items-center justify-center overflow-hidden cursor-pointer hover:scale-105 transition-transform duration-200"
-        >
-          {track.coverArt ? (
-            <img
-              src={track.coverArt}
-              alt={track.title}
-              loading="lazy"
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <Music size={20} className="text-white/30" />
-          )}
+      {/* Track number / play toggle — desktop hover shows play, mobile hidden */}
+      {!isAlbumTrack && (
+        <div className="w-7 flex-shrink-0 flex items-center justify-center">
+          {/* Desktop: show number normally, play on hover */}
+          <span className="hidden md:flex items-center justify-center w-full h-full">
+            {(hovered || (isCurrentTrack && actualIsPlaying)) ? (
+              <button
+                onClick={handlePlayClick}
+                className="text-white hover:text-red-400 transition-colors"
+                title={actualIsPlaying ? 'Pause' : 'Play'}
+              >
+                {isCurrentTrack && actualIsPlaying ? (
+                  <Pause size={14} fill="currentColor" />
+                ) : (
+                  <Play size={14} fill="currentColor" />
+                )}
+              </button>
+            ) : (
+              <span className={`text-xs font-mono ${isCurrentTrack ? 'text-red-400' : 'text-white/30'}`}>
+                {trackNumber ?? ''}
+              </span>
+            )}
+          </span>
+          {/* Mobile: always show number */}
+          <span className="md:hidden text-xs font-mono text-white/30">
+            {trackNumber ?? ''}
+          </span>
         </div>
       )}
 
-      {/* Play/Pause Button for Album Tracks */}
+      {/* Cover art */}
+      {showCover && (
+        <div
+          className="relative flex-shrink-0 w-10 h-10 rounded bg-white/[0.08] overflow-hidden cursor-pointer"
+          onClick={handleCoverClick}
+        >
+          {track.coverArt ? (
+            <img src={track.coverArt} alt={track.title} loading="lazy" className="w-full h-full object-cover" />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center">
+              <Music size={16} className="text-white/30" />
+            </div>
+          )}
+          {/* Mobile play overlay on cover */}
+          <div className="md:hidden absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 active:opacity-100 transition-opacity">
+            {isCurrentTrack && actualIsPlaying ? (
+              <Pause size={14} className="text-white" fill="currentColor" />
+            ) : (
+              <Play size={14} className="text-white ml-0.5" fill="currentColor" />
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Album track: play button left of info */}
       {isAlbumTrack && showPlayButton && showAlbumPlayButton && (
         <button
-          onClick={(e) => {
-            e.stopPropagation();
-            handlePlayClick();
-          }}
-          className="flex-shrink-0 p-1 hover:bg-white/[0.1] rounded-lg transition-all"
-          title={isCurrentTrack && getIsPlaying() ? 'Pause' : 'Play'}
+          onClick={handlePlayClick}
+          className="flex-shrink-0 p-1 rounded hover:bg-white/[0.1] transition-all text-white/50 hover:text-white"
+          title={isCurrentTrack && actualIsPlaying ? 'Pause' : 'Play'}
         >
-          {isCurrentTrack && getIsPlaying() ? (
-            <Pause size={14} className="text-red-600" fill="currentColor" />
+          {isCurrentTrack && actualIsPlaying ? (
+            <Pause size={13} fill="currentColor" className="text-red-400" />
           ) : (
-            <Play size={14} className="text-white/60 hover:text-white" fill="currentColor" />
+            <Play size={13} fill="currentColor" />
           )}
         </button>
       )}
 
-      {/* Track Info */}
+      {/* Title + Artist stacked */}
       <div
         className="flex-1 min-w-0 cursor-pointer"
         onClick={() => onClickTrack?.(track)}
       >
-        {isAlbumTrack ? (
-          // Album Track Layout: Number + Title together, Artist name - more compact
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="font-bold text-white text-xs truncate">
-              {trackNumber && `${trackNumber}. `}{track.title}
-            </span>
-            <span className="text-white/40 text-xs truncate">
-              {track.artist}
-            </span>
-            {showType && (
-              <span className="px-1.5 py-0.5 bg-red-600/20 border border-red-500/30 rounded-full text-[8px] font-bold text-red-400 uppercase tracking-wider flex-shrink-0">
-                {track.type}
+        <p className={`text-sm font-semibold truncate leading-tight ${isCurrentTrack ? 'text-red-400' : 'text-white'}`}>
+          {isAlbumTrack && trackNumber ? `${trackNumber}. ` : ''}{track.title}
+        </p>
+        <p className="text-xs text-white/40 truncate leading-tight mt-0.5">{track.artist}</p>
+      </div>
+
+      {/* Right metadata — desktop: genre · year · type, mobile: only duration */}
+      <div className="flex items-center gap-3 flex-shrink-0">
+        {/* Desktop metadata */}
+        {showMetadata && metaItems.length > 0 && (
+          <div className="hidden md:flex items-center gap-2">
+            {metaItems.map((m, i) => (
+              <span
+                key={i}
+                className={`text-[10px] uppercase tracking-wide font-medium ${m.color ?? 'text-white/30'}`}
+              >
+                {m.value}
               </span>
-            )}
-          </div>
-        ) : (
-          // Regular Track Layout: Artist bold, Title normal
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-bold text-white text-sm md:text-base truncate">
-              {track.artist}
-            </span>
-            <span className="text-white/40 text-sm md:text-base truncate">
-              {track.title}
-            </span>
-            {showType && (
-              <span className="px-2 py-1 bg-red-600/20 border border-red-500/30 rounded-full text-[10px] font-bold text-red-400 uppercase tracking-wider flex-shrink-0">
-                {track.type}
-              </span>
-            )}
+            ))}
           </div>
         )}
 
-        {/* Metadata Row 2 - Additional Beat/Track Info */}
-        <div className={`flex flex-wrap ${isAlbumTrack ? 'gap-1.5 text-[8px] mt-0' : 'gap-3 text-[10px] mt-1'} text-white/50 uppercase tracking-wider`}>
-          {showYear && track.year && (
-            <span className="inline-flex items-center gap-1">
-              <span className="text-white/30">•</span>
-              <span>{track.year}</span>
-            </span>
-          )}
-          {showGenre && track.genre && (
-            <span className="inline-flex items-center gap-1">
-              <span className="text-white/30">•</span>
-              <span className="text-purple-300 font-semibold">{track.genre}</span>
-            </span>
-          )}
-          {showBPM && track.bpm && (
-            <span className="inline-flex items-center gap-1">
-              <span className="text-white/30">•</span>
-              <span className="text-cyan-300 font-semibold">{track.bpm} BPM</span>
-            </span>
-          )}
-          {track.key && (
-            <span className="inline-flex items-center gap-1">
-              <span className="text-white/30">•</span>
-              <span className="text-amber-300 font-semibold">{track.key}</span>
-            </span>
-          )}
-          {track.duration && (
-            <span className="inline-flex items-center gap-1">
-              <span className="text-white/30">•</span>
-              <span>{track.duration}</span>
-            </span>
-          )}
-          {track.remixType && (
-            <span className="inline-flex items-center gap-1 ml-auto">
-              <span className="text-red-400 font-bold bg-red-500/20 px-2 py-0.5 rounded">
-                {track.remixType}
-              </span>
-            </span>
-          )}
-        </div>
+        {/* Remix type badge */}
+        {track.remixType && (
+          <span className={`hidden md:inline text-[10px] uppercase font-bold px-1.5 py-0.5 rounded ${
+            isCurrentTrack ? 'bg-red-500/20 text-red-400' : 'bg-white/[0.08] text-white/40'
+          }`}>
+            {track.remixType}
+          </span>
+        )}
+
+        {/* Duration — always visible */}
+        {track.duration && (
+          <span className="text-[11px] text-white/30 tabular-nums">{track.duration}</span>
+        )}
+
+        {/* Download */}
+        {showDownload && track.audioUrl && (
+          <a
+            href={track.audioUrl}
+            download
+            className="text-white/30 hover:text-red-400 transition-colors"
+            title="Download"
+            onClick={e => { e.stopPropagation(); onDownload?.(track); }}
+          >
+            <Download size={13} />
+          </a>
+        )}
       </div>
-
-      {/* Download Button */}
-      {showDownload && track.audioUrl && (
-        <a
-          href={track.audioUrl}
-          download
-          className="flex-shrink-0 flex items-center justify-center text-white/40 hover:text-red-400 transition-colors duration-200"
-          style={{ width: '16px', height: '16px' }}
-          title="Download track"
-          aria-label="Download track"
-          onClick={(e) => {
-            e.stopPropagation();
-            if (onDownload) {
-              onDownload(track);
-            }
-          }}
-        >
-          <Download size={14} />
-        </a>
-      )}
-
-      {/* Play/Pause Button - hide if album track with its own button */}
-      {!isAlbumTrack && (
-        <button
-          onClick={handlePlayClick}
-          className="flex-shrink-0 flex items-center justify-center text-white/40 hover:text-white/60 transition-colors duration-200"
-          style={{ width: '16px', height: '16px' }}
-          title={isCurrentTrack && actualIsPlaying ? 'Pause' : 'Play'}
-          aria-label={isCurrentTrack && actualIsPlaying ? 'Pause track' : 'Play track'}
-        >
-          {isCurrentTrack && actualIsPlaying ? (
-            <Pause size={12} fill="currentColor" />
-          ) : (
-            <Play size={12} fill="currentColor" />
-          )}
-        </button>
-      )}
     </div>
   );
 }
