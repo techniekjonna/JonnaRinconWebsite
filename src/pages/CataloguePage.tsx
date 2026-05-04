@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
 import { Music, Disc3, Radio, Sliders, ChevronDown } from 'lucide-react';
@@ -20,7 +21,6 @@ import PlaylistModal from '../components/PlaylistModal';
 import PlaylistDetailView from '../components/PlaylistDetailView';
 import { extractUniqueGenres } from '../lib/utils/genreExtractor';
 import { trackService, settingsService, playlistService } from '../lib/firebase/services';
-import { useCart } from '../hooks/useCart';
 import { Playlist, Track as FirebaseTrack } from '../lib/firebase/types';
 
 const tabs = [
@@ -75,7 +75,7 @@ interface RemixTrack extends Track {
 export default function CataloguePage() {
   useScrollToTop();
   const { isAuthenticated } = useAuth();
-  const { addTrackToCart, cartItems = [] } = useCart();
+  const navigate = useNavigate();
   const { tracks: firebaseTracks, loading: tracksLoading, error: tracksError } = useTracks({ status: 'published' });
   const { remixes: firebaseRemixes, loading: remixesLoading } = useRemixes({ status: 'published' });
 
@@ -163,11 +163,6 @@ export default function CataloguePage() {
       })
       .sort((a, b) => b.createdAt - a.createdAt);
     setCurrentTrack(track, queue);
-  };
-
-  const handleBuyTrack = (track: Track) => {
-    const ft = firebaseTracks.find(t => t.id === track.id);
-    if (ft) addTrackToCart(ft);
   };
 
   const handleAddToPlaylist = async (trackId: string, playlistId: string) => {
@@ -266,8 +261,6 @@ export default function CataloguePage() {
         onClose={() => setIsModalOpen(false)}
         isPlaying={false}
         onPlay={handlePlayTrack}
-        onBuy={handleBuyTrack}
-        cartItems={cartItems}
         relatedTracks={useRelatedTracks(selectedTrack, [])}
         onAddToPlaylist={handleAddToPlaylist}
       />
@@ -445,8 +438,7 @@ export default function CataloguePage() {
                                   <div key={track.id} className="pl-6 md:pl-8">
                                     <TrackListItem
                                       track={track} onClickTrack={handleTrackClick} onPlay={handlePlayTrack}
-                                      onTogglePlay={handleTogglePlayTrack} onBuy={handleBuyTrack}
-                                      showType={false} showMetadata isAlbumTrack trackNumber={index + 1} isPlaying={isPlaying}
+                                      onTogglePlay={handleTogglePlayTrack}                                      showType={false} showMetadata isAlbumTrack trackNumber={index + 1} isPlaying={isPlaying}
                                     />
                                   </div>
                                 ))}
@@ -456,8 +448,7 @@ export default function CataloguePage() {
                       ) : (
                         <TrackListItem
                           key={albumKey} track={group.displayTrack} onClickTrack={handleTrackClick}
-                          onPlay={handlePlayTrack} onTogglePlay={handleTogglePlayTrack} onBuy={handleBuyTrack}
-                          showType showMetadata isPlaying={isPlaying}
+                          onPlay={handlePlayTrack} onTogglePlay={handleTogglePlayTrack}                          showType showMetadata isPlaying={isPlaying}
                         />
                       );
                     })}
@@ -528,6 +519,7 @@ export default function CataloguePage() {
                         key={remix.id} track={remix} onClickTrack={handleTrackClick}
                         onPlay={handlePlayTrack} onTogglePlay={handleTogglePlayTrack}
                         showType={false} showMetadata isPlaying={isPlaying}
+                        showDownload onDownload={(remix) => navigate(`/download/${remix.id}`)}
                       />
                     ))}
                 </div>
