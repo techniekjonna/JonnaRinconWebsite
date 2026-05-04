@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
-import { Music, Disc3, Radio, Sliders, ChevronDown } from 'lucide-react';
+import { Music, Disc3, Radio, Sliders, ChevronDown, Shuffle } from 'lucide-react';
 import { useCyberDecodeInView } from '../hooks/useCyberDecode';
 import { useAuth } from '../hooks/useAuth';
 import { useTrackDetail } from '../contexts/TrackDetailContext';
@@ -93,7 +93,12 @@ export default function CataloguePage() {
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const { selectedTrack, setSelectedTrack, isModalOpen, setIsModalOpen } = useTrackDetail();
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
-  const [selectedTypeTab, setSelectedTypeTab] = useState<'Singles' | 'Albums & EPs' | 'All' | 'Custom 1' | 'Custom 2'>('All');
+  const [selectedTypeTab, setSelectedTypeTab] = useState<'New' | 'Old' | 'All' | string>('All');
+  const [selectedRemixTimeTab, setSelectedRemixTimeTab] = useState<'New' | 'Old' | 'All'>('All');
+  const [tracksShuffle, setTracksShuffle] = useState(false);
+  const [remixesShuffle, setRemixesShuffle] = useState(false);
+  const [shuffleSeedTracks, setShuffleSeedTracks] = useState(0);
+  const [shuffleSeedRemixes, setShuffleSeedRemixes] = useState(0);
   const [trackSettings, setTrackSettings] = useState<any>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [selectedAlbum, setSelectedAlbum] = useState<any>(null);
@@ -194,13 +199,34 @@ export default function CataloguePage() {
     setIsPlaying(true);
   };
 
+  const CURRENT_YEAR = new Date().getFullYear();
+
   const matchesTypeTab = (track: Track) => {
     switch (selectedTypeTab) {
-      case 'Singles': return !track.album && (track.type === 'Single' || track.type === 'Exclusive');
-      case 'Albums & EPs': return track.type === 'Album' || track.type === 'EP';
+      case 'New': return (track.year ?? 0) >= CURRENT_YEAR;
+      case 'Old': return (track.year ?? 0) <= 2024;
       default: return true;
     }
   };
+
+  const matchesRemixTimeTab = (track: RemixTrack) => {
+    switch (selectedRemixTimeTab) {
+      case 'New': return (track.year ?? 0) >= CURRENT_YEAR;
+      case 'Old': return (track.year ?? 0) <= 2024;
+      default: return true;
+    }
+  };
+
+  const shuffleArray = useCallback(<T,>(arr: T[], seed: number): T[] => {
+    const a = [...arr];
+    let s = seed || 1;
+    for (let i = a.length - 1; i > 0; i--) {
+      s = (s * 1664525 + 1013904223) & 0xffffffff;
+      const j = Math.abs(s) % (i + 1);
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }, []);
 
   const handleTrackClick = (track: Track) => { setSelectedTrack(track); setIsModalOpen(true); };
 
@@ -244,9 +270,11 @@ export default function CataloguePage() {
     settingsService.getTrackSettings().then(setTrackSettings).catch(() => {});
   }, []);
 
-  const tabsList = ['Singles', 'Albums & EPs', 'All']
+  const tabsList = ['New', 'Old', 'All']
     .concat(trackSettings?.customTab1Enabled ? [trackSettings.customTab1Label || 'Custom 1'] : [])
     .concat(trackSettings?.customTab2Enabled ? [trackSettings.customTab2Label || 'Custom 2'] : []);
+
+  const remixTimeTabsList = ['New', 'Old', 'All'];
 
   return (
     <div className="min-h-screen text-white">
@@ -328,14 +356,14 @@ export default function CataloguePage() {
         <>
           <section className="px-6 md:px-12 pt-6 pb-2">
             <div className="max-w-7xl mx-auto">
-              <div className="flex items-center gap-2 mb-6">
+              <div className="flex items-center justify-center gap-2 mb-6">
                 {/* Type sub-tabs */}
-                <div className="flex items-center bg-white/[0.05] border border-white/[0.08] rounded-xl p-1 gap-1 flex-1 min-w-0">
+                <div className="flex items-center bg-white/[0.05] border border-white/[0.08] rounded-xl p-1 gap-1">
                   {tabsList.map(tab => (
                     <button
                       key={tab}
                       onClick={() => setSelectedTypeTab(tab as any)}
-                      className={`flex-1 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all truncate ${
+                      className={`flex items-center gap-2 px-5 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${
                         selectedTypeTab === tab
                           ? 'bg-red-600 text-white shadow-md shadow-red-600/30'
                           : 'text-white/50 hover:text-white/80'
@@ -364,6 +392,17 @@ export default function CataloguePage() {
                       <Music size={15} />
                     </button>
                   )}
+                  <button
+                    onClick={() => { setTracksShuffle(s => !s); setShuffleSeedTracks(Date.now()); }}
+                    title="Shuffle"
+                    className={`flex items-center justify-center w-9 h-9 border rounded-xl transition-all ${
+                      tracksShuffle
+                        ? 'bg-red-600/20 border-red-500/40 text-red-400 hover:bg-red-600/30'
+                        : 'bg-white/[0.05] border-white/[0.08] text-white/50 hover:text-white hover:bg-white/[0.10]'
+                    }`}
+                  >
+                    <Shuffle size={15} />
+                  </button>
                 </div>
               </div>
 
@@ -401,13 +440,15 @@ export default function CataloguePage() {
             <section className="px-6 md:px-12 py-2 md:py-4">
               <div className="max-w-7xl mx-auto">
                 <div className="space-y-3">
-                  {Object.entries(groupedTracks)
-                    .sort(([, a], [, b]) => {
-                      if ((a.albumName && b.albumName) || (!a.albumName && !b.albumName)) {
-                        return (b.displayTrack.sortOrder ?? b.displayTrack.createdAt) - (a.displayTrack.sortOrder ?? a.displayTrack.createdAt);
-                      }
-                      return a.albumName ? -1 : 1;
-                    })
+                  {(tracksShuffle
+                    ? shuffleArray(Object.entries(groupedTracks), shuffleSeedTracks)
+                    : Object.entries(groupedTracks).sort(([, a], [, b]) => {
+                        if ((a.albumName && b.albumName) || (!a.albumName && !b.albumName)) {
+                          return (b.displayTrack.sortOrder ?? b.displayTrack.createdAt) - (a.displayTrack.sortOrder ?? a.displayTrack.createdAt);
+                        }
+                        return a.albumName ? -1 : 1;
+                      })
+                  )
                     .map(([albumKey, group]) => {
                       const isAlbum = group.albumName && (group.type === 'Album' || group.type === 'EP');
                       const isExpanded = expandedAlbums.has(albumKey);
@@ -468,14 +509,53 @@ export default function CataloguePage() {
         <>
           <section className="px-6 md:px-12 pt-6 pb-2">
             <div className="max-w-7xl mx-auto">
-              <div className="flex justify-end mb-6">
-                <button
-                  onClick={() => setIsFilterModalOpen(true)}
-                  title="Filters"
-                  className="flex items-center justify-center w-9 h-9 bg-white/[0.05] border border-white/[0.08] rounded-xl text-white/50 hover:text-white hover:bg-white/[0.10] transition-all"
-                >
-                  <Sliders size={15} />
-                </button>
+              <div className="flex items-center justify-center gap-2 mb-6">
+                {/* Time sub-tabs */}
+                <div className="flex items-center bg-white/[0.05] border border-white/[0.08] rounded-xl p-1 gap-1">
+                  {remixTimeTabsList.map(tab => (
+                    <button
+                      key={tab}
+                      onClick={() => setSelectedRemixTimeTab(tab as any)}
+                      className={`flex items-center gap-2 px-5 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${
+                        selectedRemixTimeTab === tab
+                          ? 'bg-red-600 text-white shadow-md shadow-red-600/30'
+                          : 'text-white/50 hover:text-white/80'
+                      }`}
+                    >
+                      {tab}
+                    </button>
+                  ))}
+                </div>
+                {/* Action buttons */}
+                <div className="flex items-center gap-1 flex-shrink-0">
+                  <button
+                    onClick={() => setIsFilterModalOpen(true)}
+                    title="Filters"
+                    className="flex items-center justify-center w-9 h-9 bg-white/[0.05] border border-white/[0.08] rounded-xl text-white/50 hover:text-white hover:bg-white/[0.10] transition-all"
+                  >
+                    <Sliders size={15} />
+                  </button>
+                  {isAuthenticated && (
+                    <button
+                      onClick={() => setIsPlaylistModalOpen(true)}
+                      title="Playlists"
+                      className="flex items-center justify-center w-9 h-9 bg-white/[0.05] border border-white/[0.08] rounded-xl text-white/50 hover:text-white hover:bg-white/[0.10] transition-all"
+                    >
+                      <Music size={15} />
+                    </button>
+                  )}
+                  <button
+                    onClick={() => { setRemixesShuffle(s => !s); setShuffleSeedRemixes(Date.now()); }}
+                    title="Shuffle"
+                    className={`flex items-center justify-center w-9 h-9 border rounded-xl transition-all ${
+                      remixesShuffle
+                        ? 'bg-red-600/20 border-red-500/40 text-red-400 hover:bg-red-600/30'
+                        : 'bg-white/[0.05] border-white/[0.08] text-white/50 hover:text-white hover:bg-white/[0.10]'
+                    }`}
+                  >
+                    <Shuffle size={15} />
+                  </button>
+                </div>
               </div>
               <FilterModal
                 isOpen={isFilterModalOpen}
@@ -501,20 +581,32 @@ export default function CataloguePage() {
             <section className="px-6 md:px-12 py-2 md:py-4">
               <div className="max-w-7xl mx-auto">
                 <div className="space-y-3">
-                  {remixTracks
-                    .filter(t =>
-                      (selectedRemixType === 'All' || t.remixType === selectedRemixType) &&
-                      (selectedRemixYear === 'All' || t.year === selectedRemixYear) &&
-                      (selectedRemixCollab === 'All' || t.collab === selectedRemixCollab) &&
-                      genreMatches(t.genre, selectedRemixGenre)
-                    )
-                    .sort((a, b) => {
-                      const aSort = a.sortOrder ?? Number.MAX_VALUE;
-                      const bSort = b.sortOrder ?? Number.MAX_VALUE;
-                      if (aSort !== bSort) return bSort - aSort;
-                      return b.createdAt - a.createdAt;
-                    })
-                    .map(remix => (
+                  {(remixesShuffle
+                    ? shuffleArray(
+                        remixTracks.filter(t =>
+                          matchesRemixTimeTab(t) &&
+                          (selectedRemixType === 'All' || t.remixType === selectedRemixType) &&
+                          (selectedRemixYear === 'All' || t.year === selectedRemixYear) &&
+                          (selectedRemixCollab === 'All' || t.collab === selectedRemixCollab) &&
+                          genreMatches(t.genre, selectedRemixGenre)
+                        ),
+                        shuffleSeedRemixes
+                      )
+                    : remixTracks
+                        .filter(t =>
+                          matchesRemixTimeTab(t) &&
+                          (selectedRemixType === 'All' || t.remixType === selectedRemixType) &&
+                          (selectedRemixYear === 'All' || t.year === selectedRemixYear) &&
+                          (selectedRemixCollab === 'All' || t.collab === selectedRemixCollab) &&
+                          genreMatches(t.genre, selectedRemixGenre)
+                        )
+                        .sort((a, b) => {
+                          const aSort = a.sortOrder ?? Number.MAX_VALUE;
+                          const bSort = b.sortOrder ?? Number.MAX_VALUE;
+                          if (aSort !== bSort) return bSort - aSort;
+                          return b.createdAt - a.createdAt;
+                        })
+                  ).map(remix => (
                       <TrackListItem
                         key={remix.id} track={remix} onClickTrack={handleTrackClick}
                         onPlay={handlePlayTrack} onTogglePlay={handleTogglePlayTrack}
@@ -527,16 +619,18 @@ export default function CataloguePage() {
                   <p className="text-[10px] md:text-xs text-red-500/60 uppercase tracking-[0.4em]">Discography</p>
                   <p className="text-[10px] md:text-xs text-white/30 uppercase tracking-widest">
                     {remixTracks.filter(t =>
+                      matchesRemixTimeTab(t) &&
                       (selectedRemixType === 'All' || t.remixType === selectedRemixType) &&
                       (selectedRemixYear === 'All' || t.year === selectedRemixYear) &&
                       (selectedRemixCollab === 'All' || t.collab === selectedRemixCollab) &&
                       genreMatches(t.genre, selectedRemixGenre)
-                    ).length} Track{remixTracks.filter(t =>
+                    ).length} Remix{remixTracks.filter(t =>
+                      matchesRemixTimeTab(t) &&
                       (selectedRemixType === 'All' || t.remixType === selectedRemixType) &&
                       (selectedRemixYear === 'All' || t.year === selectedRemixYear) &&
                       (selectedRemixCollab === 'All' || t.collab === selectedRemixCollab) &&
                       genreMatches(t.genre, selectedRemixGenre)
-                    ).length !== 1 ? 's' : ''}
+                    ).length !== 1 ? 'es' : ''}
                   </p>
                 </div>
               </div>
