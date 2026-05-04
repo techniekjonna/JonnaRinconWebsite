@@ -337,12 +337,12 @@ export default function CataloguePage() {
             <div className="max-w-7xl mx-auto">
               <div className="flex items-center gap-2 mb-6">
                 {/* Type sub-tabs */}
-                <div className="flex items-center bg-white/[0.05] border border-white/[0.08] rounded-xl p-1 gap-1 flex-1 min-w-0">
+                <div className="flex items-center bg-white/[0.05] border border-white/[0.08] rounded-xl p-1 gap-1">
                   {tabsList.map(tab => (
                     <button
                       key={tab}
                       onClick={() => setSelectedTypeTab(tab as any)}
-                      className={`flex-1 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all truncate ${
+                      className={`flex items-center gap-2 px-5 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${
                         selectedTypeTab === tab
                           ? 'bg-red-600 text-white shadow-md shadow-red-600/30'
                           : 'text-white/50 hover:text-white/80'
