@@ -43,6 +43,7 @@ export default function DownloadGatePage() {
   const heroTitle = useCyberDecodeInView('Download');
 
   const [completedSteps, setCompletedSteps] = useState<Set<string>>(new Set());
+  const [pendingSteps, setPendingSteps] = useState<Set<string>>(new Set());
   const [remixData, setRemixData] = useState<{ title: string; artist: string; audioUrl?: string; artworkUrl?: string } | null>(null);
 
   useEffect(() => {
@@ -61,13 +62,11 @@ export default function DownloadGatePage() {
 
   const handleStepClick = (step: FollowStep) => {
     window.open(step.url, '_blank', 'noopener,noreferrer');
+    setPendingSteps(prev => { const n = new Set(prev); n.add(step.id); return n; });
     setTimeout(() => {
-      setCompletedSteps(prev => {
-        const next = new Set(prev);
-        next.add(step.id);
-        return next;
-      });
-    }, 2000);
+      setPendingSteps(prev => { const n = new Set(prev); n.delete(step.id); return n; });
+      setCompletedSteps(prev => { const n = new Set(prev); n.add(step.id); return n; });
+    }, 5000);
   };
 
   const handleDownload = () => {
@@ -139,37 +138,42 @@ export default function DownloadGatePage() {
             <div className="space-y-3">
               {followSteps.map((step, i) => {
                 const completed = completedSteps.has(step.id);
+                const pending = pendingSteps.has(step.id);
                 const Icon = step.icon;
 
                 return (
                   <button
                     key={step.id}
-                    onClick={() => !completed && handleStepClick(step)}
-                    disabled={completed}
+                    onClick={() => !completed && !pending && handleStepClick(step)}
+                    disabled={completed || pending}
                     className={`w-full flex items-center gap-4 p-4 rounded-xl border transition-all duration-300 text-left ${
                       completed
                         ? 'bg-green-600/10 border-green-600/20'
+                        : pending
+                        ? 'bg-yellow-600/10 border-yellow-600/20 cursor-wait'
                         : 'bg-white/[0.04] border-white/[0.06] hover:bg-white/[0.06] hover:border-white/[0.10] cursor-pointer'
                     }`}
                   >
                     <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
-                      completed ? 'bg-green-600/20' : 'bg-white/[0.06]'
+                      completed ? 'bg-green-600/20' : pending ? 'bg-yellow-600/20' : 'bg-white/[0.06]'
                     }`}>
                       {completed ? (
                         <Check size={18} className="text-green-400" />
+                      ) : pending ? (
+                        <div className="w-4 h-4 border-2 border-yellow-400 border-t-transparent rounded-full animate-spin" />
                       ) : (
                         <Icon size={18} className="text-white/40" />
                       )}
                     </div>
                     <div className="flex-1">
-                      <p className={`font-bold text-sm ${completed ? 'text-green-400' : 'text-white'}`}>
-                        {completed ? `Following on ${step.platform}` : step.label}
+                      <p className={`font-bold text-sm ${completed ? 'text-green-400' : pending ? 'text-yellow-400' : 'text-white'}`}>
+                        {completed ? `Following on ${step.platform}` : pending ? `Verifying ${step.platform}…` : step.label}
                       </p>
                       <p className="text-[10px] text-white/20 mt-0.5">
-                        {completed ? 'Completed' : `Step ${i + 1} of ${followSteps.length}`}
+                        {completed ? 'Completed' : pending ? 'Even geduld…' : `Step ${i + 1} of ${followSteps.length}`}
                       </p>
                     </div>
-                    {!completed && (
+                    {!completed && !pending && (
                       <ExternalLink size={14} className="text-white/20 flex-shrink-0" />
                     )}
                   </button>
