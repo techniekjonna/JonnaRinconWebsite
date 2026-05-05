@@ -156,7 +156,16 @@ const PublicPaddingWrapper = ({ children }: { children: React.ReactNode }) => {
     location.pathname.startsWith('/manager') ||
     location.pathname.startsWith('/artist') ||
     location.pathname.startsWith('/customer');
-  return <div className={isProtectedRoute ? '' : 'pt-28 sm:pt-32'}>{children}</div>;
+  const isCatalogue = location.pathname === '/catalogue';
+  const shouldFadeIn = !isProtectedRoute && !isCatalogue;
+  return (
+    <div
+      key={shouldFadeIn ? location.pathname : undefined}
+      className={`${isProtectedRoute ? '' : 'pt-28 sm:pt-32'} ${shouldFadeIn ? 'page-fade-in' : ''}`}
+    >
+      {children}
+    </div>
+  );
 };
 
 const MainApp: React.FC = () => {

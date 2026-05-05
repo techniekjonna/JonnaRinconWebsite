@@ -67,7 +67,7 @@ export default function SectionCards() {
               <img
                 src={card.image}
                 alt={card.title}
-                className="absolute inset-0 w-full h-full object-cover transition-all duration-700 group-hover:scale-110 opacity-40 group-hover:opacity-60"
+                className="absolute inset-0 w-full h-full object-cover transition-all duration-700 group-hover:scale-110 opacity-100 group-hover:opacity-100"
                 style={{ filter: 'grayscale(0.3)' }}
                 loading="lazy"
                 decoding="async"
