@@ -262,7 +262,7 @@ export const AgendaContent: React.FC = () => {
 
   return (
     <>
-    <div className="space-y-4">
+      <div className="space-y-4">
         <div>
           <h1 className="text-2xl font-bold text-white mb-3">Agenda</h1>
 
