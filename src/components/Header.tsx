@@ -39,8 +39,7 @@ const Header: React.FC = () => {
 
   if (isProtectedRoute) return null;
 
-  // JR logo: admin → dashboard, others → home
-  const logoHref = user?.role === 'admin' ? '/admin/dashboard' : '/';
+  const logoHref = '/';
 
   const navItems = [
     { label: 'Shop', href: '/shop', position: 'left' },
