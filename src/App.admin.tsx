@@ -27,6 +27,7 @@ import PlaylistsPage from './pages/admin/PlaylistsPage';
 import AgendaPage from './pages/admin/AgendaPage';
 import BackgroundToolPage from './pages/admin/BackgroundToolPage';
 import ProjectsAdminPage from './pages/admin/ProjectsAdminPage';
+import JonnaRinconPanelPage from './pages/admin/JonnaRinconPanelPage';
 
 const AdminApp: React.FC = () => {
   return (
@@ -156,6 +157,15 @@ const AdminApp: React.FC = () => {
             element={
               <ProtectedRoute requireAdmin={true}>
                 <ProjectsAdminPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/admin/jonna-rincon-panel"
+            element={
+              <ProtectedRoute requireAdmin={true}>
+                <JonnaRinconPanelPage />
               </ProtectedRoute>
             }
           />
