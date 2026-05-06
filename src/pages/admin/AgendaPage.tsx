@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Plus, Calendar, List, Filter, Trash2, Edit2, CheckCircle2, Circle, ChevronDown } from 'lucide-react';
 import AdminLayout from '../../components/admin/AdminLayout';
-import TaskBoard from '../../components/admin/TaskBoard';
-import { SocialPlannerContent } from './ContentPage';
 import {
   getAgendaDaysByMonth,
   getAgendaTasksByMonth,
@@ -18,8 +16,6 @@ import { AgendaDay, AgendaTask, AgendaStatus } from '../../lib/firebase/types';
 
 type ViewMode = 'calendar' | 'list';
 type FilterType = 'all' | 'available' | 'absent' | 'studio' | 'completed' | 'pending';
-type TabType = 'agenda' | 'social' | 'tasks';
-
 interface DayData {
   date: string;
   statusId?: string;
@@ -35,7 +31,6 @@ const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart
 
 export const AgendaContent: React.FC = () => {
   const isMobileInit = typeof window !== 'undefined' && window.innerWidth < 768;
-  const [activeTab, setActiveTab] = useState<TabType>('agenda');
   const [startDate, setStartDate] = useState(today); // start showing from today
   const [currentDate, setCurrentDate] = useState(new Date()); // still used to trigger data reloads
   const [viewMode, setViewMode] = useState<ViewMode>('calendar');
@@ -48,7 +43,7 @@ export const AgendaContent: React.FC = () => {
   const [newStatusName, setNewStatusName] = useState('');
   const [showNewStatusInput, setShowNewStatusInput] = useState(false);
   const [isMobile, setIsMobile] = useState(isMobileInit);
-  const [daysToShow, setDaysToShow] = useState(isMobileInit ? 7 : 14);
+  const [daysToShow, setDaysToShow] = useState(isMobileInit ? 7 : 30);
 
   const [taskForm, setTaskForm] = useState({
     title: '',
@@ -265,30 +260,9 @@ export const AgendaContent: React.FC = () => {
       <div className="space-y-4">
         <div>
           <h1 className="text-2xl font-bold text-white mb-3">Agenda</h1>
-
-          {/* Main Tabs */}
-          <div className="flex gap-2 border-b border-white/[0.1] overflow-x-auto mb-4">
-            {(['agenda', 'social', 'tasks'] as TabType[]).map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`px-4 py-3 text-sm font-semibold transition-all whitespace-nowrap border-b-2 ${
-                  activeTab === tab
-                    ? 'text-white border-red-500'
-                    : 'text-white/50 border-transparent hover:text-white/70'
-                }`}
-              >
-                {tab === 'agenda' && 'AGENDA'}
-                {tab === 'social' && 'SOCIAL PLANNER'}
-                {tab === 'tasks' && 'TASKS'}
-              </button>
-            ))}
-          </div>
         </div>
 
-        {/* AGENDA TAB CONTENT */}
-        {activeTab === 'agenda' && (
-          <div className="space-y-3">
+        <div className="space-y-3">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-1.5">
                 <button onClick={() => setViewMode('calendar')} className={`p-1.5 rounded-lg transition-all ${viewMode === 'calendar' ? 'bg-red-600/20 border border-red-600/40 text-red-400' : 'bg-white/[0.04] border border-white/[0.06] text-white/40'}`}>
@@ -477,21 +451,9 @@ export const AgendaContent: React.FC = () => {
           </div>
         )}
           </div>
-        )}
-
-        {/* SOCIAL PLANNER TAB */}
-        {activeTab === 'social' && (
-          <SocialPlannerContent />
-        )}
-
-        {/* TASKS TAB */}
-        {activeTab === 'tasks' && (
-          <TaskBoard />
-        )}
       </div>
 
-      {/* Modal stays outside tabs */}
-      {showModal && dayData && activeTab === 'agenda' && (
+      {showModal && dayData && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowModal(false)} />
           <div className="relative bg-black border border-white/[0.06] rounded-2xl max-w-sm w-full max-h-[85vh] overflow-y-auto">
