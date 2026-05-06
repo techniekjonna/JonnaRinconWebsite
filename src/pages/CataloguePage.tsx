@@ -308,17 +308,8 @@ export default function CataloguePage() {
         />
       )}
 
-      {/* Right sidebar */}
-      <CatalogueSidebar
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-        trackSettings={trackSettings}
-        onCreatePlaylist={() => setIsPlaylistModalOpen(true)}
-        onPlaylistSelect={handlePlaylistSelect}
-      />
-
       {/* Hero */}
-      <section className="relative pt-40 px-6 md:px-12 pb-4">
+      <section className="relative pt-40 px-6 md:px-12 pb-6">
         <div className="relative z-10 max-w-7xl mx-auto w-full text-center">
           <h1
             ref={heroTitle.ref as React.RefObject<HTMLHeadingElement>}
@@ -329,6 +320,15 @@ export default function CataloguePage() {
           </h1>
         </div>
       </section>
+
+      {/* Horizontal navigation bar */}
+      <CatalogueSidebar
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        trackSettings={trackSettings}
+        onCreatePlaylist={() => setIsPlaylistModalOpen(true)}
+        onPlaylistSelect={handlePlaylistSelect}
+      />
 
       {/* ── TRACKS TAB ── */}
       {activeTab === 'tracks' && (
