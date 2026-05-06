@@ -46,6 +46,7 @@ export default function TrackListItem({
 }: TrackListItemProps) {
   const [, setPlayerState] = useState({});
   const [hovered, setHovered] = useState(false);
+  const [imgLoaded, setImgLoaded] = useState(false);
 
   useEffect(() => {
     const unsubscribe = subscribeToPlayerState(() => setPlayerState({}));
@@ -130,12 +131,17 @@ export default function TrackListItem({
           className="relative flex-shrink-0 w-10 h-10 rounded bg-white/[0.08] overflow-hidden cursor-pointer"
           onClick={handleCoverClick}
         >
-          {track.coverArt ? (
-            <img src={track.coverArt} alt={track.title} loading="lazy" className="w-full h-full object-cover" />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center">
-              <Music size={16} className="text-white/30" />
-            </div>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <Music size={16} className="text-white/30" />
+          </div>
+          {track.coverArt && (
+            <img
+              src={track.coverArt}
+              alt={track.title}
+              loading="lazy"
+              onLoad={() => setImgLoaded(true)}
+              className={`w-full h-full object-cover transition-opacity duration-300 ${imgLoaded ? 'opacity-100' : 'opacity-0'}`}
+            />
           )}
           {/* Mobile play overlay on cover */}
           <div className="md:hidden absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 active:opacity-100 transition-opacity">

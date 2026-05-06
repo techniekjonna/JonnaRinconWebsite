@@ -195,7 +195,8 @@ export default function CataloguePage() {
   const getTabTypeFilter = useCallback((track: Track) => {
     if (activeTab === 'albums') return track.type === 'Album' || track.type === 'EP';
     if (activeTab === 'singles') return track.type === 'Single';
-    return true;
+    if (activeTab === 'tracks') return track.type !== 'Album' && track.type !== 'EP';
+    return true; // 'all' shows everything
   }, [activeTab]);
 
   const shuffleArray = useCallback(<T,>(arr: T[], seed: number): T[] => {
@@ -384,10 +385,17 @@ export default function CataloguePage() {
                               className="relative flex-shrink-0 w-10 h-10 rounded bg-white/[0.08] overflow-hidden cursor-pointer"
                               onClick={() => handleAlbumCoverClick(group)}
                             >
-                              {group.artwork ? (
-                                <img src={group.artwork} alt={group.albumName} loading="lazy" className="w-full h-full object-cover" />
-                              ) : (
-                                <div className="w-full h-full flex items-center justify-center"><Music size={16} className="text-white/30" /></div>
+                              <div className="absolute inset-0 flex items-center justify-center">
+                                <Music size={16} className="text-white/30" />
+                              </div>
+                              {group.artwork && (
+                                <img
+                                  src={group.artwork}
+                                  alt={group.albumName}
+                                  loading="lazy"
+                                  onLoad={e => (e.currentTarget.style.opacity = '1')}
+                                  className="w-full h-full object-cover opacity-0 transition-opacity duration-300"
+                                />
                               )}
                             </div>
                             {/* Title + track count — click expands */}
