@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Music, Disc3, Headphones, Plus, ListMusic, ChevronDown, Library } from 'lucide-react';
+import { Music, Disc3, Headphones, Plus, ListMusic, ChevronDown, Library, Sliders, Shuffle, Disc } from 'lucide-react';
 import { playlistService } from '../lib/firebase/services';
 import { Playlist } from '../lib/firebase/types';
 import { useAuth } from '../hooks/useAuth';
@@ -8,23 +8,26 @@ interface SidebarNavItem {
   id: string;
   label: string;
   icon: React.ReactNode;
-  cover?: string;
 }
 
 interface CatalogueSidebarProps {
   activeTab: string;
   onTabChange: (tab: string) => void;
-  trackSettings: any;
   onCreatePlaylist?: () => void;
   onPlaylistSelect?: (playlist: Playlist) => void;
+  onFilterClick?: () => void;
+  onShuffleClick?: () => void;
+  isShuffleActive?: boolean;
 }
 
 export default function CatalogueNavBar({
   activeTab,
   onTabChange,
-  trackSettings,
   onCreatePlaylist,
   onPlaylistSelect,
+  onFilterClick,
+  onShuffleClick,
+  isShuffleActive = false,
 }: CatalogueSidebarProps) {
   const { user, isAuthenticated } = useAuth();
   const [adminPlaylists, setAdminPlaylists] = useState<Playlist[]>([]);
@@ -55,34 +58,17 @@ export default function CatalogueNavBar({
   }, []);
 
   const coreItems: SidebarNavItem[] = [
+    { id: 'all', label: 'All', icon: <ListMusic size={16} /> },
     { id: 'tracks', label: 'Tracks', icon: <Music size={16} /> },
+    { id: 'albums', label: "Albums/EP's", icon: <Disc size={16} /> },
+    { id: 'singles', label: 'Singles', icon: <Disc3 size={16} /> },
     { id: 'remixes', label: 'Remixes', icon: <Disc3 size={16} /> },
     { id: 'djsets', label: 'DJ Sets', icon: <Headphones size={16} /> },
   ];
 
-  if (trackSettings?.customTab1Enabled) {
-    coreItems.push({
-      id: 'custom1',
-      label: trackSettings.customTab1Label || 'Custom 1',
-      icon: trackSettings.customButton1?.icon
-        ? <img src={trackSettings.customButton1.icon} alt="" className="w-4 h-4 rounded object-cover" />
-        : <ListMusic size={16} />,
-      cover: trackSettings.customButton1?.coverImage,
-    });
-  }
-
-  if (trackSettings?.customTab2Enabled) {
-    coreItems.push({
-      id: 'custom2',
-      label: trackSettings.customTab2Label || 'Custom 2',
-      icon: trackSettings.customButton2?.icon
-        ? <img src={trackSettings.customButton2.icon} alt="" className="w-4 h-4 rounded object-cover" />
-        : <ListMusic size={16} />,
-      cover: trackSettings.customButton2?.coverImage,
-    });
-  }
-
   const hasPlaylists = adminPlaylists.length > 0 || (isAuthenticated && userPlaylists.length > 0);
+
+  const showFilterShuffle = activeTab !== 'djsets';
 
   return (
     <div className="w-full px-6 md:px-12 mb-6">
@@ -103,16 +89,43 @@ export default function CatalogueNavBar({
                       : 'text-white/50 hover:text-white hover:bg-white/[0.08]'
                   }`}
                 >
-                  {item.cover ? (
-                    <img src={item.cover} alt={item.label} className="w-4 h-4 rounded object-cover" />
-                  ) : (
-                    <span className={isActive ? 'text-white' : 'text-white/50'}>{item.icon}</span>
-                  )}
+                  <span className={isActive ? 'text-white' : 'text-white/50'}>{item.icon}</span>
                   <span className="hidden sm:inline">{item.label}</span>
                 </button>
               );
             })}
           </div>
+
+          {/* Filter + Shuffle icons */}
+          {showFilterShuffle && (
+            <>
+              <div className="h-6 w-px bg-white/[0.08] flex-shrink-0" />
+              <div className="flex items-center gap-1 flex-shrink-0">
+                {onFilterClick && (
+                  <button
+                    onClick={onFilterClick}
+                    title="Filters"
+                    className="flex items-center justify-center w-9 h-9 bg-white/[0.05] border border-white/[0.08] rounded-xl text-white/50 hover:text-white hover:bg-white/[0.10] transition-all"
+                  >
+                    <Sliders size={15} />
+                  </button>
+                )}
+                {onShuffleClick && (
+                  <button
+                    onClick={onShuffleClick}
+                    title="Shuffle"
+                    className={`flex items-center justify-center w-9 h-9 border rounded-xl transition-all ${
+                      isShuffleActive
+                        ? 'bg-red-600/20 border-red-500/40 text-red-400 hover:bg-red-600/30'
+                        : 'bg-white/[0.05] border-white/[0.08] text-white/50 hover:text-white hover:bg-white/[0.10]'
+                    }`}
+                  >
+                    <Shuffle size={15} />
+                  </button>
+                )}
+              </div>
+            </>
+          )}
 
           {/* Divider */}
           <div className="h-6 w-px bg-white/[0.08] flex-shrink-0" />
@@ -141,7 +154,6 @@ export default function CatalogueNavBar({
 
                 {playlistDropdownOpen && (
                   <div className="absolute right-0 top-full mt-2 w-64 bg-gray-900/90 backdrop-blur-2xl border border-white/[0.10] rounded-2xl shadow-2xl shadow-black/60 z-50 overflow-hidden">
-                    {/* Admin playlists */}
                     {adminPlaylists.length > 0 && (
                       <div className="p-2">
                         <p className="text-[9px] uppercase tracking-[0.3em] text-white/30 font-bold px-2 py-1.5">
@@ -169,12 +181,10 @@ export default function CatalogueNavBar({
                       </div>
                     )}
 
-                    {/* Divider between sections */}
                     {adminPlaylists.length > 0 && isAuthenticated && userPlaylists.length > 0 && (
                       <div className="mx-3 border-t border-white/[0.06]" />
                     )}
 
-                    {/* User playlists */}
                     {isAuthenticated && userPlaylists.length > 0 && (
                       <div className="p-2">
                         <p className="text-[9px] uppercase tracking-[0.3em] text-white/30 font-bold px-2 py-1.5">
