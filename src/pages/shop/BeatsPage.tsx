@@ -2,7 +2,6 @@ import React, { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { Search, Filter, Grid3x3, List, Play, Pause, ShoppingCart, X, Sliders, ChevronLeft, ChevronRight, Package } from 'lucide-react';
 import { Beat, BeatPack } from '../../lib/firebase/types';
-import Navigation from '../../components/Navigation';
 import Footer from '../../components/Footer';
 import { useCyberDecodeInView } from '../../hooks/useCyberDecode';
 import { useCart } from '../../hooks/useCart';
@@ -181,7 +180,6 @@ const BeatsShop: React.FC = () => {
       {/* Fixed Dark Overlay */}
       <div className="fixed inset-0 w-full h-screen -z-10 bg-black/20" />
 
-      <Navigation isDarkOverlay={true} />
 
       {/* Hero Section - Centered Layout */}
       <section className="relative pt-40 px-6 md:px-12 pb-4">
