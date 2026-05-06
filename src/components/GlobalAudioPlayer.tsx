@@ -39,6 +39,17 @@ let previewTrack: Track | null = null;
 let setPlayerUI: ((store: PlayerStore) => void) | null = null;
 let togglePlayerVisibility: (() => void) | null = null;
 let isPlayerVisible = true;
+let openPlayerModalFn: (() => void) | null = null;
+let playerDetailContext: { type: 'track' | 'album'; data: any } | null = null;
+let openAlbumDetailFn: ((album: any) => void) | null = null;
+
+export function openPlayerModal() { openPlayerModalFn?.(); }
+export function setPlayerDetailContext(type: 'track' | 'album', data: any) {
+  playerDetailContext = { type, data };
+}
+export function registerAlbumDetailOpener(fn: (album: any) => void) {
+  openAlbumDetailFn = fn;
+}
 
 // Subscribers for state changes (e.g., TrackListItem components)
 const subscribers: ((store: PlayerStore) => void)[] = [];
@@ -195,7 +206,18 @@ export default function GlobalAudioPlayer({ onCoverClick }: { onCoverClick?: () 
     togglePlayerVisibility = () => {
       setIsVisible(!isVisible);
     };
+    openPlayerModalFn = () => setIsPlayerModalOpen(true);
   }, [isVisible]);
+
+  const handlePlayerInfoClick = () => {
+    setIsPlayerModalOpen(false);
+    if (playerDetailContext?.type === 'album') {
+      openAlbumDetailFn?.(playerDetailContext.data);
+    } else if (playerDetailContext?.type === 'track' && playerDetailContext.data) {
+      setSelectedTrack(playerDetailContext.data);
+      setIsModalOpen(true);
+    }
+  };
 
   // Save volume to localStorage when it changes
   React.useEffect(() => {
@@ -440,6 +462,7 @@ export default function GlobalAudioPlayer({ onCoverClick }: { onCoverClick?: () 
         onRepeatToggle={handleRepeatToggle}
         onPreviousClick={handlePreviousClick}
         onNextClick={handleNextClick}
+        onInfoClick={playerDetailContext ? handlePlayerInfoClick : undefined}
       />
       <audio
         ref={audioRef}

@@ -9,6 +9,7 @@ interface TrackListItemProps {
   onTogglePlay?: (track: any) => void;
   onBuy?: (track: any) => void;
   onDownload?: (track: any) => void;
+  onCoverClick?: (track: any) => void;
   allTracks?: any[];
   showType?: boolean;
   showYear?: boolean;
@@ -31,6 +32,7 @@ export default function TrackListItem({
   onTogglePlay,
   onBuy,
   onDownload,
+  onCoverClick,
   allTracks = [],
   showType = true,
   showMetadata = false,
@@ -70,8 +72,11 @@ export default function TrackListItem({
 
   const handleCoverClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    // On mobile, cover tap plays
-    handlePlayClick(e);
+    if (onCoverClick) {
+      onCoverClick(track);
+    } else {
+      handlePlayClick(e);
+    }
   };
 
   const metaItems: { label: string; value: string; color?: string }[] = [];

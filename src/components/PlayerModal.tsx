@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from 'react';
-import { X, Play, Pause, SkipBack, SkipForward, Shuffle, Repeat, Volume2, VolumeX } from 'lucide-react';
+import { X, Play, Pause, SkipBack, SkipForward, Shuffle, Repeat, Volume2, VolumeX, Info } from 'lucide-react';
 import { formatDuration } from '../lib/utils/audioMetadata';
 import {
   togglePlayPause,
@@ -28,6 +28,7 @@ interface PlayerModalProps {
   onRepeatToggle: () => void;
   onPreviousClick: () => void;
   onNextClick: () => void;
+  onInfoClick?: () => void;
 }
 
 export default function PlayerModal({
@@ -47,6 +48,7 @@ export default function PlayerModal({
   onRepeatToggle,
   onPreviousClick,
   onNextClick,
+  onInfoClick,
 }: PlayerModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
   const track = getCurrentTrack();
@@ -235,11 +237,21 @@ export default function PlayerModal({
               />
             </div>
 
-            {/* Queue Info */}
-            <div className="pt-6 border-t border-white/[0.08]">
-              <p className="text-xs text-white/40 text-center">
+            {/* Queue Info + Detail link */}
+            <div className="pt-6 border-t border-white/[0.08] flex items-center justify-between">
+              <p className="text-xs text-white/40">
                 {getQueue().length > 0 ? `Track ${(getCurrentIndex() || 0) + 1} of ${getQueue().length}` : 'No queue'}
               </p>
+              {onInfoClick && (
+                <button
+                  onClick={onInfoClick}
+                  className="flex items-center gap-1.5 text-xs text-white/40 hover:text-white transition-colors"
+                  title="Track details"
+                >
+                  <Info size={13} />
+                  Details
+                </button>
+              )}
             </div>
           </div>
         </div>
