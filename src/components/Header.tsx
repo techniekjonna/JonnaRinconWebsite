@@ -93,11 +93,11 @@ const Header: React.FC = () => {
       <div className="backdrop-blur-xl bg-black/30 border border-white/[0.08] rounded-2xl">
         <div className="flex items-center justify-between px-4 sm:px-6 h-16 md:h-20">
 
-          {/* Logo left — desktop: larger, mobile: visible and properly sized */}
-          <Link to={isShopRoute ? '/shop' : '/'} className="flex items-center justify-center flex-shrink-0 w-14 h-14 md:w-24 md:h-24">
+          {/* Logo left — always JR logo, links to homepage */}
+          <Link to="/" className="flex items-center justify-center flex-shrink-0 w-14 h-14 md:w-24 md:h-24">
             <img
-              src={isShopRoute ? '/JEIGHTEEN-logo.png' : '/Jonna Rincon Logo WH.png'}
-              alt={isShopRoute ? 'JEIGHTEEN' : 'JR'}
+              src="/Jonna Rincon Logo WH.png"
+              alt="JR"
               className="w-full h-full object-contain"
             />
           </Link>
@@ -122,17 +122,27 @@ const Header: React.FC = () => {
                 ))}
               </div>
 
-              {/* Brand name — home or shop hub */}
+              {/* Center brand — JEIGHTEEN logo on shop, text on main */}
               <div
                 ref={logoRef}
                 className="text-center px-12 border-x border-white/[0.08] flex-shrink-0 transition-transform duration-300"
                 style={{ transform: `scale(${logoScale})` }}
               >
-                <Link to={isShopRoute ? '/shop' : '/'}>
-                  <h1 className={`text-lg font-black text-white hover:text-white/80 transition-colors ${isShopRoute ? 'tracking-[0.3em]' : 'tracking-tighter'}`}>
-                    {isShopRoute ? 'SHOP' : 'JONNA RINCON'}
-                  </h1>
-                </Link>
+                {isShopRoute ? (
+                  <Link to="/shop">
+                    <img
+                      src="/JEIGHTEEN-logo.png"
+                      alt="JEIGHTEEN"
+                      className="h-10 w-auto object-contain opacity-90 hover:opacity-100 transition-opacity"
+                    />
+                  </Link>
+                ) : (
+                  <Link to="/">
+                    <h1 className="text-lg font-black text-white tracking-tighter hover:text-white/80 transition-colors">
+                      JONNA RINCON
+                    </h1>
+                  </Link>
+                )}
               </div>
 
               <div className="flex gap-8">
@@ -154,12 +164,16 @@ const Header: React.FC = () => {
             </div>
           </nav>
 
-          {/* Mobile: Brand name centered */}
-          <Link to={isShopRoute ? '/shop' : '/'} className="md:hidden flex-1 flex justify-center">
-            <span className={`text-base font-black text-white ${isShopRoute ? 'tracking-[0.25em]' : 'tracking-tighter'}`}>
-              {isShopRoute ? 'SHOP' : 'JONNA RINCON'}
-            </span>
-          </Link>
+          {/* Mobile: JEIGHTEEN logo on shop, text on main */}
+          {isShopRoute ? (
+            <Link to="/shop" className="md:hidden flex-1 flex justify-center">
+              <img src="/JEIGHTEEN-logo.png" alt="JEIGHTEEN" className="h-7 w-auto object-contain opacity-90" />
+            </Link>
+          ) : (
+            <Link to="/" className="md:hidden flex-1 flex justify-center">
+              <span className="text-base font-black text-white tracking-tighter">JONNA RINCON</span>
+            </Link>
+          )}
 
           {/* Right: Cart + Hamburger */}
           <div className="flex items-center gap-2">
