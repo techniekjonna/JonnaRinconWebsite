@@ -22,7 +22,7 @@ const categories: Category[] = [
     tagline: 'Find your sound',
     description: 'High-quality instrumentals across every genre. Exclusive licenses available.',
     href: '/shop/beats',
-    image: '/DJ Screenshot 3-2-26.png',
+    image: '/stu.png',
     overlayClass: 'from-black/80 via-black/40 to-transparent',
   },
   {
@@ -31,8 +31,8 @@ const categories: Category[] = [
     tagline: 'Professional audio',
     description: 'Mix & Master, Studio Sessions, and production consulting — tailored to your project.',
     href: '/shop/services',
-    image: '/MixedBy.png',
-    overlayClass: 'from-black/85 via-black/50 to-black/10',
+    image: '/DJI_20251017150728_0019_D.JPG',
+    overlayClass: 'from-black/80 via-black/40 to-transparent',
   },
   {
     id: 'merchandise',
@@ -40,7 +40,7 @@ const categories: Category[] = [
     tagline: 'Wear the brand',
     description: 'Official Jonna Rincon / JEIGHTEEN apparel and accessories.',
     href: '/shop/merchandise',
-    image: '/JEIGHTENESIS.jpg',
+    image: '/Menu Foto 1.png',
     overlayClass: 'from-black/80 via-black/40 to-transparent',
   },
   {
@@ -49,7 +49,7 @@ const categories: Category[] = [
     tagline: 'Original pieces',
     description: 'Limited edition digital and physical artwork from the J18 collection.',
     href: '/shop/art',
-    image: '/edited-j18.png',
+    image: 'https://internedata.nl/index.php/s/KvBJM9BKu8iAwdZ/download',
     overlayClass: 'from-black/80 via-black/40 to-transparent',
   },
 ];
@@ -72,7 +72,7 @@ const CategoryCard: React.FC<CategoryCardProps> = ({ category, index }) => {
     >
     <Link
       to={category.href}
-      className="group relative min-h-[420px] md:min-h-[500px] overflow-hidden rounded-2xl block"
+      className="group relative min-h-[300px] md:min-h-[360px] overflow-hidden rounded-2xl block"
     >
       {/* Background image */}
       <img
@@ -95,21 +95,21 @@ const CategoryCard: React.FC<CategoryCardProps> = ({ category, index }) => {
       </div>
 
       {/* Content anchored to bottom */}
-      <div className="absolute inset-0 flex flex-col justify-end p-7 md:p-8">
-        <span className="text-xs font-black uppercase tracking-[0.35em] text-red-400 mb-2">
+      <div className="absolute inset-0 flex flex-col justify-end p-5 md:p-6">
+        <span className="text-xs font-black uppercase tracking-[0.35em] text-red-400 mb-1.5">
           {category.tagline}
         </span>
-        <h2 className="text-4xl md:text-5xl font-black text-white mb-3 leading-none tracking-tighter">
+        <h2 className="text-2xl md:text-3xl font-black text-white mb-2 leading-none tracking-tighter">
           {category.label}
         </h2>
-        <p className="text-white/70 text-sm leading-relaxed max-w-xs mb-6">
+        <p className="text-white/65 text-xs leading-relaxed max-w-xs mb-4">
           {category.description}
         </p>
         <div className="flex items-center gap-2">
           <span className="text-xs font-black uppercase tracking-widest text-white group-hover:text-red-400 transition-colors duration-300">
             Explore
           </span>
-          <ArrowUpRight className="w-4 h-4 text-white/50 group-hover:text-red-400 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all duration-300" />
+          <ArrowUpRight className="w-3.5 h-3.5 text-white/50 group-hover:text-red-400 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all duration-300" />
         </div>
       </div>
     </Link>
@@ -186,13 +186,13 @@ const ShopPage: React.FC = () => {
       </section>
 
       {/* ─── CATEGORY CARDS ─── */}
-      <section ref={categoriesRef} className="px-4 md:px-8 lg:px-12 py-16 bg-black">
+      <section ref={categoriesRef} className="px-4 md:px-8 lg:px-12 py-12 bg-[#0a0a0a]">
         <div className="max-w-7xl mx-auto">
-          <div className="mb-10">
+          <div className="mb-8">
             <p className="text-xs uppercase tracking-[0.4em] text-red-500 mb-2 font-black">Browse</p>
-            <h2 className="text-4xl md:text-5xl font-black text-white tracking-tighter">Categories</h2>
+            <h2 className="text-3xl md:text-4xl font-black text-white tracking-tighter">Categories</h2>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
             {categories.map((cat, i) => (
               <CategoryCard key={cat.id} category={cat} index={i} />
             ))}
@@ -201,7 +201,7 @@ const ShopPage: React.FC = () => {
       </section>
 
       {/* ─── SERVICES SPOTLIGHT ─── */}
-      <section className="px-4 md:px-8 lg:px-12 py-16 bg-zinc-950 border-t border-white/[0.04]">
+      <section className="px-4 md:px-8 lg:px-12 py-16 bg-[#0f0f0f] border-t border-white/[0.04]">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-end justify-between mb-10">
             <div>
@@ -274,7 +274,7 @@ const ShopPage: React.FC = () => {
       {/* ─── ABOUT (shop-focused) ─── */}
       <section
         ref={aboutRef as React.RefObject<HTMLElement>}
-        className={`px-4 md:px-8 lg:px-12 py-16 bg-black border-t border-white/[0.04] transition-all duration-700 ${
+        className={`px-4 md:px-8 lg:px-12 py-16 bg-[#0a0a0a] border-t border-white/[0.04] transition-all duration-700 ${
           aboutInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
         }`}
       >
