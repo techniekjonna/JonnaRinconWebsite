@@ -63,13 +63,16 @@ const CategoryCard: React.FC<CategoryCardProps> = ({ category, index }) => {
   const [ref, inView] = useInView({ threshold: 0.1 });
 
   return (
-    <Link
-      ref={ref as React.RefObject<HTMLAnchorElement>}
-      to={category.href}
-      className={`group relative min-h-[420px] md:min-h-[500px] overflow-hidden rounded-2xl block transition-all duration-700 ${
+    <div
+      ref={ref}
+      className={`transition-all duration-700 ${
         inView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
       }`}
       style={{ transitionDelay: `${index * 100}ms` }}
+    >
+    <Link
+      to={category.href}
+      className="group relative min-h-[420px] md:min-h-[500px] overflow-hidden rounded-2xl block"
     >
       {/* Background image */}
       <img
@@ -110,6 +113,7 @@ const CategoryCard: React.FC<CategoryCardProps> = ({ category, index }) => {
         </div>
       </div>
     </Link>
+    </div>
   );
 };
 
