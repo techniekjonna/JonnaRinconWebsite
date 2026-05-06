@@ -1,4 +1,5 @@
 import React from 'react';
+import { useLocation } from 'react-router-dom';
 
 /** Dark overlay on top of the global background image so all page content stays readable. */
 const BackgroundOverlay: React.FC = () => {
