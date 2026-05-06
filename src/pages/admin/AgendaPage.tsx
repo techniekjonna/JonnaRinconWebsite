@@ -33,7 +33,7 @@ const today = new Date();
 today.setHours(0, 0, 0, 0);
 const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 
-const AgendaPage: React.FC = () => {
+export const AgendaContent: React.FC = () => {
   const isMobileInit = typeof window !== 'undefined' && window.innerWidth < 768;
   const [activeTab, setActiveTab] = useState<TabType>('agenda');
   const [startDate, setStartDate] = useState(today); // start showing from today
@@ -261,7 +261,7 @@ const AgendaPage: React.FC = () => {
     });
 
   return (
-    <AdminLayout>
+    <>
       <div className="space-y-4">
         <div>
           <h1 className="text-2xl font-bold text-white mb-3">Agenda</h1>
@@ -568,8 +568,14 @@ const AgendaPage: React.FC = () => {
           </div>
         </div>
       )}
-    </AdminLayout>
+    </>
   );
 };
+
+const AgendaPage: React.FC = () => (
+  <AdminLayout>
+    <AgendaContent />
+  </AdminLayout>
+);
 
 export default AgendaPage;

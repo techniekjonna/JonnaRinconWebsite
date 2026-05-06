@@ -90,6 +90,7 @@ import AdminMerchandise from './pages/admin/MerchandiseAdminPage';
 import AdminPlaylists from './pages/admin/PlaylistsPage';
 import AdminAgenda from './pages/admin/AgendaPage';
 import AdminProjects from './pages/admin/ProjectsAdminPage';
+import AdminJonnaRinconPanel, { ManagerJonnaRinconPanelPage as ManagerJonnaRinconPanel } from './pages/admin/JonnaRinconPanelPage';
 
 // Manager pages (protected - manager role)
 import ManagerDashboard from './pages/manager/DashboardPage';
@@ -428,6 +429,14 @@ const MainApp: React.FC = () => {
             }
           />
           <Route
+            path="/admin/jonna-rincon-panel"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <AdminJonnaRinconPanel />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/admin/services"
             element={
               <ProtectedRoute allowedRoles={['admin']}>
@@ -581,6 +590,15 @@ const MainApp: React.FC = () => {
             element={
               <ProtectedRoute allowedRoles={['manager']}>
                 <ManagerProjects />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/manager/jonna-rincon-panel"
+            element={
+              <ProtectedRoute allowedRoles={['manager']}>
+                <ManagerJonnaRinconPanel />
               </ProtectedRoute>
             }
           />

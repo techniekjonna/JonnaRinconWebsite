@@ -112,13 +112,10 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     },
     {
       label: 'JONNA RINCON PANEL',
-      subtitle: 'Agenda & Projects',
-      action: () => setExpandedPanel(!expandedPanel),
-      submenu: [
-        { label: 'Agenda', subtitle: 'Planning & tasks', href: '/admin/agenda' },
-        { label: 'Projects', subtitle: 'Project management', href: '/admin/projects' },
-      ],
-      expanded: expandedPanel,
+      subtitle: 'Projects, Agenda, Social & More',
+      href: '/admin/jonna-rincon-panel',
+      submenu: [],
+      expanded: false,
     },
   ];
 

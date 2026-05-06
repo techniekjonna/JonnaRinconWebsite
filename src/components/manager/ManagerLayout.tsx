@@ -51,8 +51,7 @@ const ManagerLayout: React.FC<ManagerLayoutProps> = ({ children }) => {
 
   const menuItems = [
     { label: 'DASHBOARD', subtitle: 'Overview & stats', href: '/manager/dashboard' },
-    { label: 'AGENDA', subtitle: 'Planning & tasks', href: '/manager/agenda' },
-    { label: 'PROJECTS', subtitle: 'Project management', href: '/manager/projects' },
+    { label: 'JONNA RINCON PANEL', subtitle: 'Projects, Agenda, Social & More', href: '/manager/jonna-rincon-panel' },
     { label: 'BEATS', subtitle: 'Beat management', href: '/manager/beats' },
     { label: 'COLLABORATIONS', subtitle: 'Active collabs', href: '/manager/collaborations' },
     { label: 'CHAT', subtitle: 'Messages', href: '/manager/chat' },
