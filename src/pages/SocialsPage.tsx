@@ -73,19 +73,8 @@ export default function SocialsPage() {
       <div className="fixed inset-0 w-full h-screen -z-10 bg-black/20" />
 <Navigation isDarkOverlay={true} isLightMode={false} />
 
-      {/* Hero Section - Centered Layout */}
-      <section className="relative pt-40 px-6 md:px-12 pb-4">
-        <div className="relative z-10 max-w-7xl mx-auto w-full">
-          <h1 ref={heroTitle.ref as React.RefObject<HTMLHeadingElement>} style={{fontSize: 'clamp(1.875rem, 8vw, 10.2rem)'}} className="font-black uppercase leading-[0.85] tracking-tighter mb-8 text-center">
-            {heroTitle.display}
-          </h1>
-
-          {/* Description */}
-          <p className="text-white/30 text-sm md:text-base text-center max-w-2xl mx-auto">
-            Follow the journey across all platforms. Stay updated on new releases, behind the scenes, and exclusive content.
-          </p>
-        </div>
-      </section>
+      {/* Hero Section */}
+      <section className="relative pt-28 px-6 md:px-12 pb-4" />
 
       {/* Platforms Grid */}
       <section className="px-6 md:px-12 py-8 md:py-12">

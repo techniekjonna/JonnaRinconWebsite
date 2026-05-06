@@ -149,6 +149,34 @@ const ScrollToTopWrapper = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
+// Scroll fade observer — adds .scroll-fade to all sections and observes them
+const ScrollFadeObserver = () => {
+  const location = useLocation();
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      const sections = document.querySelectorAll('section');
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add('visible');
+              observer.unobserve(entry.target);
+            }
+          });
+        },
+        { threshold: 0.08 }
+      );
+      sections.forEach((section) => {
+        section.classList.add('scroll-fade');
+        observer.observe(section);
+      });
+      return () => observer.disconnect();
+    }, 100);
+    return () => clearTimeout(timer);
+  }, [location.pathname]);
+  return null;
+};
+
 // Alleen padding toepassen op publieke pagina's (niet op admin/artist/customer/manager)
 const PublicPaddingWrapper = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
@@ -180,6 +208,7 @@ const MainApp: React.FC = () => {
               <BrowserRouter>
                 <Header />
                 <Navigation />
+                <ScrollFadeObserver />
                 <ScrollToTopWrapper>
                   <BackgroundOverlay />
                   <GlobalAudioPlayer />

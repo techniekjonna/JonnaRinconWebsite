@@ -78,17 +78,7 @@ export default function AboutMePage() {
       <Navigation isDarkOverlay={true} />
 
       {/* Hero */}
-      <section className="relative pt-40 px-6 md:px-12 pb-4">
-        <div className="relative z-10 max-w-7xl mx-auto w-full text-center">
-          <h1
-            ref={heroTitle.ref as React.RefObject<HTMLHeadingElement>}
-            style={{ fontSize: 'clamp(1.875rem, 8vw, 10.2rem)' }}
-            className="font-black uppercase leading-[0.85] tracking-tighter mb-8"
-          >
-            {heroTitle.display}
-          </h1>
-        </div>
-      </section>
+      <section className="relative pt-28 px-6 md:px-12 pb-2" />
 
       {/* Tab Bar */}
       <section className="px-6 md:px-12 pb-2">
