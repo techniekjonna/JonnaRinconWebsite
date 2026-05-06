@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
-import { Sliders, ChevronDown, Shuffle, Music } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 import { useCyberDecodeInView } from '../hooks/useCyberDecode';
 import { useAuth } from '../hooks/useAuth';
 import { useTrackDetail } from '../contexts/TrackDetailContext';
@@ -21,7 +21,7 @@ import PlaylistModal from '../components/PlaylistModal';
 import PlaylistDetailView from '../components/PlaylistDetailView';
 import CatalogueSidebar from '../components/CatalogueSidebar';
 import { extractUniqueGenres } from '../lib/utils/genreExtractor';
-import { trackService, settingsService, playlistService } from '../lib/firebase/services';
+import { trackService, playlistService } from '../lib/firebase/services';
 import { Playlist, Track as FirebaseTrack } from '../lib/firebase/types';
 
 // sidebar nav tabs defined in CatalogueSidebar
@@ -76,7 +76,7 @@ export default function CataloguePage() {
   const { tracks: firebaseTracks, loading: tracksLoading, error: tracksError } = useTracks({ status: 'published' });
   const { remixes: firebaseRemixes, loading: remixesLoading } = useRemixes({ status: 'published' });
 
-  const [activeTab, setActiveTab] = useState('tracks');
+  const [activeTab, setActiveTab] = useState('all');
   const [selectedType, setSelectedType] = useState<'Album' | 'EP' | 'Single' | 'Exclusive' | 'All'>('All');
   const [selectedYear, setSelectedYear] = useState<number | 'All'>('All');
   const [selectedCollab, setSelectedCollab] = useState<'Solo' | 'Collab' | 'All'>('All');
@@ -90,13 +90,8 @@ export default function CataloguePage() {
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const { selectedTrack, setSelectedTrack, isModalOpen, setIsModalOpen } = useTrackDetail();
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
-  const [selectedTypeTab, setSelectedTypeTab] = useState<'New' | 'Old' | 'All' | string>('All');
-  const [selectedRemixTimeTab, setSelectedRemixTimeTab] = useState<'New' | 'Old' | 'All'>('All');
-  const [tracksShuffle, setTracksShuffle] = useState(false);
-  const [remixesShuffle, setRemixesShuffle] = useState(false);
-  const [shuffleSeedTracks, setShuffleSeedTracks] = useState(0);
-  const [shuffleSeedRemixes, setShuffleSeedRemixes] = useState(0);
-  const [trackSettings, setTrackSettings] = useState<any>(null);
+  const [shuffle, setShuffle] = useState(false);
+  const [shuffleSeed, setShuffleSeed] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [selectedAlbum, setSelectedAlbum] = useState<any>(null);
   const [isPlaylistModalOpen, setIsPlaylistModalOpen] = useState(false);
@@ -158,7 +153,8 @@ export default function CataloguePage() {
     }
     const queue = demoTracks
       .filter(t => {
-        return (selectedType === 'All' || t.type === selectedType) &&
+        return getTabTypeFilter(t) &&
+          (selectedType === 'All' || t.type === selectedType) &&
           (selectedYear === 'All' || t.year === selectedYear) &&
           (selectedCollab === 'All' || t.collab === selectedCollab) &&
           genreMatches(t.genre, selectedGenre);
@@ -196,23 +192,11 @@ export default function CataloguePage() {
     setIsPlaying(true);
   };
 
-  const CURRENT_YEAR = new Date().getFullYear();
-
-  const matchesTypeTab = (track: Track) => {
-    switch (selectedTypeTab) {
-      case 'New': return (track.year ?? 0) >= CURRENT_YEAR;
-      case 'Old': return (track.year ?? 0) <= 2024;
-      default: return true;
-    }
-  };
-
-  const matchesRemixTimeTab = (track: RemixTrack) => {
-    switch (selectedRemixTimeTab) {
-      case 'New': return (track.year ?? 0) >= CURRENT_YEAR;
-      case 'Old': return (track.year ?? 0) <= 2024;
-      default: return true;
-    }
-  };
+  const getTabTypeFilter = useCallback((track: Track) => {
+    if (activeTab === 'albums') return track.type === 'Album' || track.type === 'EP';
+    if (activeTab === 'singles') return track.type === 'Single';
+    return true;
+  }, [activeTab]);
 
   const shuffleArray = useCallback(<T,>(arr: T[], seed: number): T[] => {
     const a = [...arr];
@@ -228,7 +212,7 @@ export default function CataloguePage() {
   const handleTrackClick = (track: Track) => { setSelectedTrack(track); setIsModalOpen(true); };
 
   const filteredTracks = demoTracks.filter(track => {
-    return matchesTypeTab(track) &&
+    return getTabTypeFilter(track) &&
       (selectedType === 'All' || track.type === selectedType) &&
       (selectedYear === 'All' || track.year === selectedYear) &&
       (selectedCollab === 'All' || track.collab === selectedCollab) &&
@@ -261,17 +245,7 @@ export default function CataloguePage() {
     setExpandedAlbums(next);
   };
 
-  useEffect(() => { setExpandedAlbums(new Set()); }, [selectedType, selectedYear, selectedGenre, selectedCollab]);
-
-  useEffect(() => {
-    settingsService.getTrackSettings().then(setTrackSettings).catch(() => {});
-  }, []);
-
-  const tabsList = ['New', 'Old', 'All']
-    .concat(trackSettings?.customTab1Enabled ? [trackSettings.customTab1Label || 'Custom 1'] : [])
-    .concat(trackSettings?.customTab2Enabled ? [trackSettings.customTab2Label || 'Custom 2'] : []);
-
-  const remixTimeTabsList = ['New', 'Old', 'All'];
+  useEffect(() => { setExpandedAlbums(new Set()); }, [selectedType, selectedYear, selectedGenre, selectedCollab, activeTab]);
 
   return (
     <div className="min-h-screen text-white">
@@ -324,67 +298,19 @@ export default function CataloguePage() {
       {/* Horizontal navigation bar */}
       <CatalogueSidebar
         activeTab={activeTab}
-        onTabChange={setActiveTab}
-        trackSettings={trackSettings}
+        onTabChange={(tab) => { setActiveTab(tab); setShuffle(false); }}
         onCreatePlaylist={() => setIsPlaylistModalOpen(true)}
         onPlaylistSelect={handlePlaylistSelect}
+        onFilterClick={activeTab !== 'djsets' ? () => setIsFilterModalOpen(true) : undefined}
+        onShuffleClick={activeTab !== 'djsets' ? () => { setShuffle(s => !s); setShuffleSeed(Date.now()); } : undefined}
+        isShuffleActive={shuffle}
       />
 
-      {/* ── TRACKS TAB ── */}
-      {activeTab === 'tracks' && (
+      {/* ── TRACKS / ALL / ALBUMS / SINGLES TABS ── */}
+      {(activeTab === 'all' || activeTab === 'tracks' || activeTab === 'albums' || activeTab === 'singles') && (
         <>
-          <section className="px-6 md:px-12 pt-6 pb-2">
+          <section className="px-6 md:px-12 pt-2 pb-2">
             <div className="max-w-7xl mx-auto">
-              <div className="flex items-center justify-center gap-2 mb-6">
-                {/* Type sub-tabs */}
-                <div className="flex items-center bg-white/[0.05] border border-white/[0.08] rounded-xl p-1 gap-1">
-                  {tabsList.map(tab => (
-                    <button
-                      key={tab}
-                      onClick={() => setSelectedTypeTab(tab as any)}
-                      className={`flex items-center gap-2 px-5 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${
-                        selectedTypeTab === tab
-                          ? 'bg-red-600 text-white shadow-md shadow-red-600/30'
-                          : 'text-white/50 hover:text-white/80'
-                      }`}
-                    >
-                      {tab}
-                    </button>
-                  ))}
-                </div>
-
-                {/* Action buttons */}
-                <div className="flex items-center gap-1 flex-shrink-0">
-                  <button
-                    onClick={() => setIsFilterModalOpen(true)}
-                    title="Filters"
-                    className="flex items-center justify-center w-9 h-9 bg-white/[0.05] border border-white/[0.08] rounded-xl text-white/50 hover:text-white hover:bg-white/[0.10] transition-all"
-                  >
-                    <Sliders size={15} />
-                  </button>
-                  {isAuthenticated && (
-                    <button
-                      onClick={() => setIsPlaylistModalOpen(true)}
-                      title="Playlists"
-                      className="flex items-center justify-center w-9 h-9 bg-white/[0.05] border border-white/[0.08] rounded-xl text-white/50 hover:text-white hover:bg-white/[0.10] transition-all"
-                    >
-                      <Music size={15} />
-                    </button>
-                  )}
-                  <button
-                    onClick={() => { setTracksShuffle(s => !s); setShuffleSeedTracks(Date.now()); }}
-                    title="Shuffle"
-                    className={`flex items-center justify-center w-9 h-9 border rounded-xl transition-all ${
-                      tracksShuffle
-                        ? 'bg-red-600/20 border-red-500/40 text-red-400 hover:bg-red-600/30'
-                        : 'bg-white/[0.05] border-white/[0.08] text-white/50 hover:text-white hover:bg-white/[0.10]'
-                    }`}
-                  >
-                    <Shuffle size={15} />
-                  </button>
-                </div>
-              </div>
-
               {tracksError && (
                 <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl mb-6">
                   <p className="text-red-400 text-sm font-semibold">⚠️ {tracksError}</p>
@@ -419,8 +345,8 @@ export default function CataloguePage() {
             <section className="px-6 md:px-12 py-2 md:py-4">
               <div className="max-w-7xl mx-auto">
                 <div className="space-y-3">
-                  {(tracksShuffle
-                    ? shuffleArray(Object.entries(groupedTracks), shuffleSeedTracks)
+                  {(shuffle
+                    ? shuffleArray(Object.entries(groupedTracks), shuffleSeed)
                     : Object.entries(groupedTracks).sort(([, a], [, b]) => {
                         if ((a.albumName && b.albumName) || (!a.albumName && !b.albumName)) {
                           return (b.displayTrack.sortOrder ?? b.displayTrack.createdAt) - (a.displayTrack.sortOrder ?? a.displayTrack.createdAt);
@@ -486,56 +412,8 @@ export default function CataloguePage() {
       {/* ── REMIXES TAB ── */}
       {activeTab === 'remixes' && (
         <>
-          <section className="px-6 md:px-12 pt-6 pb-2">
+          <section className="px-6 md:px-12 pt-2 pb-2">
             <div className="max-w-7xl mx-auto">
-              <div className="flex items-center justify-center gap-2 mb-6">
-                {/* Time sub-tabs */}
-                <div className="flex items-center bg-white/[0.05] border border-white/[0.08] rounded-xl p-1 gap-1">
-                  {remixTimeTabsList.map(tab => (
-                    <button
-                      key={tab}
-                      onClick={() => setSelectedRemixTimeTab(tab as any)}
-                      className={`flex items-center gap-2 px-5 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${
-                        selectedRemixTimeTab === tab
-                          ? 'bg-red-600 text-white shadow-md shadow-red-600/30'
-                          : 'text-white/50 hover:text-white/80'
-                      }`}
-                    >
-                      {tab}
-                    </button>
-                  ))}
-                </div>
-                {/* Action buttons */}
-                <div className="flex items-center gap-1 flex-shrink-0">
-                  <button
-                    onClick={() => setIsFilterModalOpen(true)}
-                    title="Filters"
-                    className="flex items-center justify-center w-9 h-9 bg-white/[0.05] border border-white/[0.08] rounded-xl text-white/50 hover:text-white hover:bg-white/[0.10] transition-all"
-                  >
-                    <Sliders size={15} />
-                  </button>
-                  {isAuthenticated && (
-                    <button
-                      onClick={() => setIsPlaylistModalOpen(true)}
-                      title="Playlists"
-                      className="flex items-center justify-center w-9 h-9 bg-white/[0.05] border border-white/[0.08] rounded-xl text-white/50 hover:text-white hover:bg-white/[0.10] transition-all"
-                    >
-                      <Music size={15} />
-                    </button>
-                  )}
-                  <button
-                    onClick={() => { setRemixesShuffle(s => !s); setShuffleSeedRemixes(Date.now()); }}
-                    title="Shuffle"
-                    className={`flex items-center justify-center w-9 h-9 border rounded-xl transition-all ${
-                      remixesShuffle
-                        ? 'bg-red-600/20 border-red-500/40 text-red-400 hover:bg-red-600/30'
-                        : 'bg-white/[0.05] border-white/[0.08] text-white/50 hover:text-white hover:bg-white/[0.10]'
-                    }`}
-                  >
-                    <Shuffle size={15} />
-                  </button>
-                </div>
-              </div>
               <FilterModal
                 isOpen={isFilterModalOpen}
                 onClose={() => setIsFilterModalOpen(false)}
@@ -560,20 +438,18 @@ export default function CataloguePage() {
             <section className="px-6 md:px-12 py-2 md:py-4">
               <div className="max-w-7xl mx-auto">
                 <div className="space-y-3">
-                  {(remixesShuffle
+                  {(shuffle
                     ? shuffleArray(
                         remixTracks.filter(t =>
-                          matchesRemixTimeTab(t) &&
                           (selectedRemixType === 'All' || t.remixType === selectedRemixType) &&
                           (selectedRemixYear === 'All' || t.year === selectedRemixYear) &&
                           (selectedRemixCollab === 'All' || t.collab === selectedRemixCollab) &&
                           genreMatches(t.genre, selectedRemixGenre)
                         ),
-                        shuffleSeedRemixes
+                        shuffleSeed
                       )
                     : remixTracks
                         .filter(t =>
-                          matchesRemixTimeTab(t) &&
                           (selectedRemixType === 'All' || t.remixType === selectedRemixType) &&
                           (selectedRemixYear === 'All' || t.year === selectedRemixYear) &&
                           (selectedRemixCollab === 'All' || t.collab === selectedRemixCollab) &&
@@ -598,18 +474,11 @@ export default function CataloguePage() {
                   <p className="text-[10px] md:text-xs text-red-500/60 uppercase tracking-[0.4em]">Discography</p>
                   <p className="text-[10px] md:text-xs text-white/30 uppercase tracking-widest">
                     {remixTracks.filter(t =>
-                      matchesRemixTimeTab(t) &&
                       (selectedRemixType === 'All' || t.remixType === selectedRemixType) &&
                       (selectedRemixYear === 'All' || t.year === selectedRemixYear) &&
                       (selectedRemixCollab === 'All' || t.collab === selectedRemixCollab) &&
                       genreMatches(t.genre, selectedRemixGenre)
-                    ).length} Remix{remixTracks.filter(t =>
-                      matchesRemixTimeTab(t) &&
-                      (selectedRemixType === 'All' || t.remixType === selectedRemixType) &&
-                      (selectedRemixYear === 'All' || t.year === selectedRemixYear) &&
-                      (selectedRemixCollab === 'All' || t.collab === selectedRemixCollab) &&
-                      genreMatches(t.genre, selectedRemixGenre)
-                    ).length !== 1 ? 'es' : ''}
+                    ).length} Remixes
                   </p>
                 </div>
               </div>

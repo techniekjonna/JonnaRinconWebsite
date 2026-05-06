@@ -5,7 +5,7 @@ import LoadingSpinner from '../../components/LoadingSpinner';
 import { useTracks } from '../../hooks/useTracks';
 import { useRemixes } from '../../hooks/useRemixes';
 import { usePlaylists } from '../../hooks/usePlaylists';
-import { trackService, remixService, playlistService, settingsService } from '../../lib/firebase/services';
+import { trackService, remixService, playlistService } from '../../lib/firebase/services';
 import { Track, Remix, Playlist } from '../../lib/firebase/types';
 import {
   Plus, Trash2, Play, Pause, ChevronDown, Music, Save,
@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import { toDirectUrl, detectUrlType, isValidUrl } from '../../lib/utils/urlUtils';
 
-type CatalogueTab = 'tracks' | 'albums' | 'remixes' | 'playlists' | 'custom';
+type CatalogueTab = 'tracks' | 'albums' | 'remixes' | 'playlists';
 type EditingContext = 'track' | 'remix' | null;
 
 const TracksPage: React.FC = () => {
@@ -32,28 +32,6 @@ const TracksPage: React.FC = () => {
   const [editingPlaylist, setEditingPlaylist] = useState<Playlist | null>(null);
   const [showPlaylistEditModal, setShowPlaylistEditModal] = useState(false);
   const [playlistEditForm, setPlaylistEditForm] = useState({ name: '', description: '', isPublic: false, isFeatured: false });
-
-  // Custom button track management
-  const [showCustomTracksModal, setShowCustomTracksModal] = useState(false);
-  const [customTracksButtonIndex, setCustomTracksButtonIndex] = useState<1 | 2>(1);
-
-  // Track settings state
-  const [trackSettings, setTrackSettings] = useState<any>(null);
-  const [loadingSettings, setLoadingSettings] = useState(true);
-
-  useEffect(() => {
-    const loadSettings = async () => {
-      try {
-        const data = await settingsService.getTrackSettings();
-        if (data) setTrackSettings(data);
-      } catch (error) {
-        console.error('Failed to load track settings:', error);
-      } finally {
-        setLoadingSettings(false);
-      }
-    };
-    loadSettings();
-  }, []);
 
   // Filter state
   const [selectedTypes, setSelectedTypes] = useState<Set<string>>(new Set());
@@ -177,17 +155,6 @@ const TracksPage: React.FC = () => {
       setPlaylistEditForm({ name: '', description: '', isPublic: false, isFeatured: false });
     } catch (error: any) {
       alert(error.message || 'Fout bij opslaan playlist');
-    }
-  };
-
-  const handleSaveTrackSettings = async () => {
-    if (!trackSettings) return;
-    try {
-      await settingsService.saveTrackSettings(trackSettings);
-      alert('Custom instellingen opgeslagen!');
-    } catch (error) {
-      console.error('Failed to save settings:', error);
-      alert('Fout bij opslaan instellingen');
     }
   };
 
@@ -325,7 +292,6 @@ const TracksPage: React.FC = () => {
     albums: 'ALBUMS & EP',
     remixes: 'REMIXES',
     playlists: 'PLAYLISTS',
-    custom: 'CUSTOM',
   };
 
   return (
@@ -338,7 +304,7 @@ const TracksPage: React.FC = () => {
 
         {/* Tab Navigation */}
         <div className="flex gap-1 border-b border-white/[0.1] overflow-x-auto">
-          {(['tracks', 'albums', 'remixes', 'playlists', 'custom'] as CatalogueTab[]).map((tab) => {
+          {(['tracks', 'albums', 'remixes', 'playlists'] as CatalogueTab[]).map((tab) => {
             const isActive = activeTab === tab;
             return (
               <button
@@ -784,135 +750,6 @@ const TracksPage: React.FC = () => {
           </div>
         )}
 
-        {/* ── CUSTOM TAB ── */}
-        {activeTab === 'custom' && (
-          <div className="space-y-4" id="custom-settings">
-            <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-4">
-              {loadingSettings ? (
-                <LoadingSpinner text="Instellingen laden..." />
-              ) : trackSettings ? (
-                <div className="space-y-4">
-                  {/* Custom Button 1 */}
-                  <div className="p-4 bg-white/[0.06] rounded-xl space-y-3">
-                    <div className="flex items-center justify-between">
-                      <label className="flex items-center gap-3">
-                        <input
-                          type="checkbox"
-                          checked={trackSettings.customTab1Enabled}
-                          onChange={(e) => setTrackSettings({ ...trackSettings, customTab1Enabled: e.target.checked })}
-                          className="rounded"
-                        />
-                        <span className="text-sm font-semibold text-white">Custom Groep 1</span>
-                      </label>
-                      {trackSettings.customTab1Enabled && (
-                        <button
-                          onClick={() => { setCustomTracksButtonIndex(1); setShowCustomTracksModal(true); }}
-                          className="text-xs px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center gap-1"
-                        >
-                          <Music size={12} />
-                          Tracks beheren ({(trackSettings.customButton1?.trackIds || []).length})
-                        </button>
-                      )}
-                    </div>
-                    {trackSettings.customTab1Enabled && (
-                      <div className="grid grid-cols-2 gap-2">
-                        <div>
-                          <label className="text-xs text-white/40 mb-1 block">Label</label>
-                          <input
-                            type="text"
-                            value={trackSettings.customTab1Label || ''}
-                            onChange={(e) => setTrackSettings({ ...trackSettings, customTab1Label: e.target.value })}
-                            placeholder="bv. Exclusief"
-                            className="w-full px-2 py-1.5 rounded bg-white/[0.06] border border-white/[0.06] text-white text-xs focus:outline-none focus:border-blue-500"
-                          />
-                        </div>
-                        <div>
-                          <label className="text-xs text-white/40 mb-1 block">URL (optioneel)</label>
-                          <input
-                            type="text"
-                            value={trackSettings.customButton1?.url || ''}
-                            onChange={(e) => setTrackSettings({
-                              ...trackSettings,
-                              customButton1: { ...(trackSettings.customButton1 || {}), url: e.target.value }
-                            })}
-                            placeholder="https://..."
-                            className="w-full px-2 py-1.5 rounded bg-white/[0.06] border border-white/[0.06] text-white text-xs focus:outline-none focus:border-blue-500"
-                          />
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Custom Button 2 */}
-                  <div className="p-4 bg-white/[0.06] rounded-xl space-y-3">
-                    <div className="flex items-center justify-between">
-                      <label className="flex items-center gap-3">
-                        <input
-                          type="checkbox"
-                          checked={trackSettings.customTab2Enabled}
-                          onChange={(e) => setTrackSettings({ ...trackSettings, customTab2Enabled: e.target.checked })}
-                          className="rounded"
-                        />
-                        <span className="text-sm font-semibold text-white">Custom Groep 2</span>
-                      </label>
-                      {trackSettings.customTab2Enabled && (
-                        <button
-                          onClick={() => { setCustomTracksButtonIndex(2); setShowCustomTracksModal(true); }}
-                          className="text-xs px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center gap-1"
-                        >
-                          <Music size={12} />
-                          Tracks beheren ({(trackSettings.customButton2?.trackIds || []).length})
-                        </button>
-                      )}
-                    </div>
-                    {trackSettings.customTab2Enabled && (
-                      <div className="grid grid-cols-2 gap-2">
-                        <div>
-                          <label className="text-xs text-white/40 mb-1 block">Label</label>
-                          <input
-                            type="text"
-                            value={trackSettings.customTab2Label || ''}
-                            onChange={(e) => setTrackSettings({ ...trackSettings, customTab2Label: e.target.value })}
-                            placeholder="bv. Oud werk"
-                            className="w-full px-2 py-1.5 rounded bg-white/[0.06] border border-white/[0.06] text-white text-xs focus:outline-none focus:border-blue-500"
-                          />
-                        </div>
-                        <div>
-                          <label className="text-xs text-white/40 mb-1 block">URL (optioneel)</label>
-                          <input
-                            type="text"
-                            value={trackSettings.customButton2?.url || ''}
-                            onChange={(e) => setTrackSettings({
-                              ...trackSettings,
-                              customButton2: { ...(trackSettings.customButton2 || {}), url: e.target.value }
-                            })}
-                            placeholder="https://..."
-                            className="w-full px-2 py-1.5 rounded bg-white/[0.06] border border-white/[0.06] text-white text-xs focus:outline-none focus:border-blue-500"
-                          />
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex justify-end">
-                    <button
-                      onClick={handleSaveTrackSettings}
-                      className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg text-white font-medium transition-all text-sm"
-                    >
-                      <Save size={14} />
-                      Opslaan
-                    </button>
-                  </div>
-                </div>
-              ) : null}
-            </div>
-            <div className="bg-blue-900/20 border border-blue-700/30 rounded-xl p-3">
-              <p className="text-xs text-blue-300">
-                💡 Schakel custom groepen in, geef ze een naam en wijs tracks toe. Ze verschijnen als aparte groepen op de publieke "My Tracks" pagina.
-              </p>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* ── Track/Album Form Modal ── */}
@@ -982,147 +819,11 @@ const TracksPage: React.FC = () => {
         </div>
       )}
 
-      {/* ── Custom Button Tracks Modal ── */}
-      {showCustomTracksModal && trackSettings && (
-        <CustomButtonTracksModal
-          buttonIndex={customTracksButtonIndex}
-          buttonLabel={customTracksButtonIndex === 1 ? (trackSettings.customTab1Label || `Groep ${customTracksButtonIndex}`) : (trackSettings.customTab2Label || `Groep ${customTracksButtonIndex}`)}
-          allTracks={tracks}
-          currentTrackIds={(customTracksButtonIndex === 1 ? trackSettings.customButton1?.trackIds : trackSettings.customButton2?.trackIds) || []}
-          onClose={() => setShowCustomTracksModal(false)}
-          onSave={(newTrackIds) => {
-            const buttonKey = `customButton${customTracksButtonIndex}` as 'customButton1' | 'customButton2';
-            const existingButton = trackSettings[buttonKey] || {};
-            const newSettings = {
-              ...trackSettings,
-              [buttonKey]: { ...existingButton, trackIds: newTrackIds },
-            };
-            setTrackSettings(newSettings);
-            settingsService.saveTrackSettings(newSettings)
-              .then(() => { setShowCustomTracksModal(false); })
-              .catch((err: any) => alert(err.message || 'Fout bij opslaan'));
-          }}
-        />
-      )}
     </AdminLayout>
   );
 };
 
-// ============================================================
-// Custom Button Tracks Modal
-// ============================================================
-interface CustomButtonTracksModalProps {
-  buttonIndex: 1 | 2;
-  buttonLabel: string;
-  allTracks: Track[];
-  currentTrackIds: string[];
-  onClose: () => void;
-  onSave: (trackIds: string[]) => void;
-}
 
-const CustomButtonTracksModal: React.FC<CustomButtonTracksModalProps> = ({
-  buttonLabel, allTracks, currentTrackIds, onClose, onSave
-}) => {
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set(currentTrackIds));
-  const [search, setSearch] = useState('');
-  const [saving, setSaving] = useState(false);
-
-  const filteredTracks = allTracks.filter(t =>
-    t.title.toLowerCase().includes(search.toLowerCase()) ||
-    t.artist.toLowerCase().includes(search.toLowerCase())
-  );
-
-  const toggleTrack = (id: string) => {
-    const newSet = new Set(selectedIds);
-    if (newSet.has(id)) {
-      newSet.delete(id);
-    } else {
-      newSet.add(id);
-    }
-    setSelectedIds(newSet);
-  };
-
-  const handleSave = async () => {
-    setSaving(true);
-    onSave(Array.from(selectedIds));
-  };
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-black border border-white/[0.08] rounded-2xl max-w-lg w-full max-h-[85vh] flex flex-col">
-        <div className="px-5 py-4 border-b border-white/[0.06] flex items-center justify-between flex-shrink-0">
-          <div>
-            <h2 className="text-lg font-bold text-white">Tracks beheren</h2>
-            <p className="text-xs text-white/40 mt-0.5">Groep: {buttonLabel} · {selectedIds.size} geselecteerd</p>
-          </div>
-          <button onClick={onClose} className="text-white/40 hover:text-white"><X size={20} /></button>
-        </div>
-
-        <div className="px-5 py-3 border-b border-white/[0.06] flex-shrink-0">
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Zoek tracks..."
-            className="w-full px-3 py-2 rounded-lg bg-white/[0.06] border border-white/[0.06] text-white text-sm focus:outline-none focus:border-blue-500 placeholder-white/30"
-          />
-        </div>
-
-        <div className="flex-1 overflow-y-auto px-5 py-3 space-y-1">
-          {filteredTracks.length === 0 ? (
-            <p className="text-white/40 text-sm text-center py-8">Geen tracks gevonden</p>
-          ) : (
-            filteredTracks.map((track) => {
-              const isSelected = selectedIds.has(track.id);
-              return (
-                <div
-                  key={track.id}
-                  onClick={() => toggleTrack(track.id)}
-                  className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all ${
-                    isSelected ? 'bg-blue-600/20 border border-blue-500/30' : 'bg-white/[0.04] border border-transparent hover:bg-white/[0.08]'
-                  }`}
-                >
-                  <div className={`w-5 h-5 rounded flex items-center justify-center flex-shrink-0 transition-all ${
-                    isSelected ? 'bg-blue-600' : 'bg-white/[0.08] border border-white/[0.12]'
-                  }`}>
-                    {isSelected && <Check size={12} className="text-white" />}
-                  </div>
-                  <img
-                    src={track.artworkUrl}
-                    alt={track.title}
-                    className="w-8 h-8 rounded object-cover flex-shrink-0"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-white truncate">{track.title}</p>
-                    <p className="text-xs text-white/40 truncate">{track.artist} · {track.type}</p>
-                  </div>
-                </div>
-              );
-            })
-          )}
-        </div>
-
-        <div className="px-5 py-4 border-t border-white/[0.06] flex gap-3 flex-shrink-0">
-          <button onClick={onClose} className="flex-1 py-2 rounded-lg bg-white/[0.06] text-white hover:bg-white/[0.12] text-sm font-medium transition-colors">
-            Annuleren
-          </button>
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="flex-1 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-colors disabled:opacity-50"
-          >
-            {saving ? 'Opslaan...' : `Opslaan (${selectedIds.size} tracks)`}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// ============================================================
-// Track Form Modal
-// ============================================================
 interface TrackFormModalProps {
   track: Track | null;
   onClose: () => void;

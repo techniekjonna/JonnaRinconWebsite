@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import AdminLayout from '../../components/admin/AdminLayout';
-import { Store, Globe, Bell, Shield, Database, Save, Music } from 'lucide-react';
-import { settingsService, ShopSettings, GeneralSettings, NotificationSettings, SecuritySettings, TrackSettings } from '../../lib/firebase/services/settingsService';
+import { Store, Globe, Bell, Shield, Database, Save } from 'lucide-react';
+import { settingsService, ShopSettings, GeneralSettings, NotificationSettings, SecuritySettings } from '../../lib/firebase/services/settingsService';
 
 const AdminSettings: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'shop' | 'notifications' | 'security' | 'tracks'>('shop');
+  const [activeTab, setActiveTab] = useState<'shop' | 'notifications' | 'security'>('shop');
   const [loading, setLoading] = useState(true);
   const [shopSettings, setShopSettings] = useState<ShopSettings>({
     storeName: '',
@@ -37,30 +37,21 @@ const AdminSettings: React.FC = () => {
     backupFrequency: 'daily',
   });
 
-  const [trackSettings, setTrackSettings] = useState<TrackSettings>({
-    customTab1Enabled: false,
-    customTab1Label: 'Custom 1',
-    customTab2Enabled: false,
-    customTab2Label: 'Custom 2',
-  });
-
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   useEffect(() => {
     const loadSettings = async () => {
       try {
         setLoading(true);
-        const [shopData, notificationData, securityData, trackData] = await Promise.all([
+        const [shopData, notificationData, securityData] = await Promise.all([
           settingsService.getShopSettings(),
           settingsService.getNotificationSettings(),
           settingsService.getSecuritySettings(),
-          settingsService.getTrackSettings(),
         ]);
 
         if (shopData) setShopSettings(shopData);
         if (notificationData) setNotificationSettings(notificationData);
         if (securityData) setSecuritySettings(securityData);
-        if (trackData) setTrackSettings(trackData);
       } catch (error) {
         console.error('Failed to load settings:', error);
       } finally {
@@ -104,22 +95,10 @@ const AdminSettings: React.FC = () => {
     }
   };
 
-  const handleSaveTrackSettings = async () => {
-    try {
-      await settingsService.saveTrackSettings(trackSettings);
-      setMessage({ type: 'success', text: 'Track settings saved successfully!' });
-      setTimeout(() => setMessage(null), 3000);
-    } catch (error) {
-      console.error('Failed to save track settings:', error);
-      setMessage({ type: 'error', text: 'Failed to save settings. Please try again.' });
-    }
-  };
-
   const tabs = [
     { id: 'shop' as const, name: 'Shop Settings', icon: Store },
     { id: 'notifications' as const, name: 'Notifications', icon: Bell },
     { id: 'security' as const, name: 'Security', icon: Shield },
-    { id: 'tracks' as const, name: 'Track Settings', icon: Music },
   ];
 
   return (
@@ -590,120 +569,6 @@ const AdminSettings: React.FC = () => {
           </div>
         )}
 
-        {/* Track Settings Tab */}
-        {activeTab === 'tracks' && (
-          <div className="space-y-6">
-            <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-6">
-              <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-                <Music size={24} className="text-blue-400" />
-                Custom Track Tabs
-              </h2>
-              <div className="space-y-6">
-                {/* Custom Tab 1 */}
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between p-4 bg-white/[0.06] rounded-lg">
-                    <div>
-                      <p className="font-medium text-white">Enable Custom Tab 1</p>
-                      <p className="text-sm text-white/40">Show a custom tab in the tracks section</p>
-                    </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={trackSettings.customTab1Enabled}
-                        onChange={(e) =>
-                          setTrackSettings({
-                            ...trackSettings,
-                            customTab1Enabled: e.target.checked,
-                          })
-                        }
-                        className="sr-only peer"
-                      />
-                      <div className="w-11 h-6 bg-white/[0.08] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-white/20 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                    </label>
-                  </div>
-                  {trackSettings.customTab1Enabled && (
-                    <div>
-                      <label className="block text-sm font-medium text-white/60 mb-2">
-                        Custom Tab 1 Label
-                      </label>
-                      <input
-                        type="text"
-                        value={trackSettings.customTab1Label}
-                        onChange={(e) =>
-                          setTrackSettings({
-                            ...trackSettings,
-                            customTab1Label: e.target.value,
-                          })
-                        }
-                        placeholder="e.g., Favorites, Trending, etc."
-                        className="w-full bg-white/[0.06] border border-white/[0.08] rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500"
-                      />
-                    </div>
-                  )}
-                </div>
-
-                {/* Custom Tab 2 */}
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between p-4 bg-white/[0.06] rounded-lg">
-                    <div>
-                      <p className="font-medium text-white">Enable Custom Tab 2</p>
-                      <p className="text-sm text-white/40">Show another custom tab in the tracks section</p>
-                    </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={trackSettings.customTab2Enabled}
-                        onChange={(e) =>
-                          setTrackSettings({
-                            ...trackSettings,
-                            customTab2Enabled: e.target.checked,
-                          })
-                        }
-                        className="sr-only peer"
-                      />
-                      <div className="w-11 h-6 bg-white/[0.08] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-white/20 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                    </label>
-                  </div>
-                  {trackSettings.customTab2Enabled && (
-                    <div>
-                      <label className="block text-sm font-medium text-white/60 mb-2">
-                        Custom Tab 2 Label
-                      </label>
-                      <input
-                        type="text"
-                        value={trackSettings.customTab2Label}
-                        onChange={(e) =>
-                          setTrackSettings({
-                            ...trackSettings,
-                            customTab2Label: e.target.value,
-                          })
-                        }
-                        placeholder="e.g., New Releases, Exclusive, etc."
-                        className="w-full bg-white/[0.06] border border-white/[0.08] rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500"
-                      />
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-blue-900/20 border border-blue-700 rounded-xl p-4">
-              <p className="text-sm text-blue-300">
-                💡 <strong>Tip:</strong> Custom tabs allow you to create specialized track collections. Enable and name them, then assign tracks to each custom tab in the track editor.
-              </p>
-            </div>
-
-            <div className="flex justify-end">
-              <button
-                onClick={handleSaveTrackSettings}
-                className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 px-6 py-3 rounded-lg text-white font-medium transition-all"
-              >
-                <Save size={20} />
-                Save Track Settings
-              </button>
-            </div>
-          </div>
-        )}
       </div>
     </AdminLayout>
   );

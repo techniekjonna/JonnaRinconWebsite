@@ -70,23 +70,6 @@ export interface SecuritySettings {
   updatedBy?: string;
 }
 
-export interface CustomButton {
-  label: string;
-  url: string;
-  color: string;
-  trackIds?: string[];
-}
-
-export interface TrackSettings {
-  customTab1Enabled: boolean;
-  customTab1Label: string;
-  customTab2Enabled: boolean;
-  customTab2Label: string;
-  customButton1?: CustomButton;
-  customButton2?: CustomButton;
-  updatedAt?: any;
-  updatedBy?: string;
-}
 
 class SettingsService {
   private collectionName = 'settings';
@@ -252,53 +235,6 @@ class SettingsService {
     } catch (error: any) {
       console.error('Save security settings error:', error);
       throw new Error(error.message || 'Failed to save security settings');
-    }
-  }
-
-  async getTrackSettings(): Promise<TrackSettings | null> {
-    try {
-      const docRef = doc(db, this.collectionName, 'tracks');
-      const docSnap = await getDoc(docRef);
-
-      if (docSnap.exists()) {
-        return docSnap.data() as TrackSettings;
-      }
-      return null;
-    } catch (error: any) {
-      console.error('Get track settings error:', error);
-      throw new Error(error.message || 'Failed to get track settings');
-    }
-  }
-
-  async saveTrackSettings(settings: TrackSettings): Promise<void> {
-    const user = authService.getCurrentUser();
-    if (!user || user.role !== 'admin') {
-      throw new Error('Unauthorized: Only admins can save settings');
-    }
-
-    try {
-      const docRef = doc(db, this.collectionName, 'tracks');
-
-      // Filter out undefined values to avoid Firestore errors
-      const cleanedSettings = Object.fromEntries(
-        Object.entries(settings).filter(([_, value]) => value !== undefined)
-      );
-
-      const settingsWithMeta = {
-        ...cleanedSettings,
-        updatedAt: serverTimestamp(),
-        updatedBy: user.uid,
-      };
-
-      const docSnap = await getDoc(docRef);
-      if (docSnap.exists()) {
-        await updateDoc(docRef, settingsWithMeta);
-      } else {
-        await setDoc(docRef, settingsWithMeta);
-      }
-    } catch (error: any) {
-      console.error('Save track settings error:', error);
-      throw new Error(error.message || 'Failed to save track settings');
     }
   }
 
