@@ -67,12 +67,12 @@ export default function SectionCards() {
               <img
                 src={card.image}
                 alt={card.title}
-                className="absolute inset-0 w-full h-full object-cover transition-all duration-700 group-hover:scale-110 opacity-100 group-hover:opacity-100"
-                style={{ filter: 'grayscale(0.3)' }}
+                className="absolute inset-0 w-full h-full object-cover transition-all duration-700 group-hover:scale-110 opacity-80 group-hover:opacity-100"
+                style={{ filter: 'grayscale(0.2)' }}
                 loading="lazy"
                 decoding="async"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
               <div className="absolute top-0 left-0 right-0 h-0.5 bg-red-600 scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left" />
 
               {/* Icon top-left */}
