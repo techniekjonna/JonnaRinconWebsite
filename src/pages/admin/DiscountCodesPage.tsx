@@ -22,6 +22,7 @@ const DiscountCodesPage: React.FC = () => {
   const { discountCodes, loading } = useDiscountCodes();
   const [showModal, setShowModal] = useState(false);
   const [editingCode, setEditingCode] = useState<DiscountCode | null>(null);
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive' | 'expired'>('active');
 
   const stats = useMemo(() => {
     const total = discountCodes.length;
@@ -30,6 +31,13 @@ const DiscountCodesPage: React.FC = () => {
     const totalUses = discountCodes.reduce((sum, c) => sum + (c.usedCount || 0), 0);
     return { total, active, expired, totalUses };
   }, [discountCodes]);
+
+  const filteredCodes = useMemo(() => {
+    if (statusFilter === 'active') return discountCodes.filter((c) => c.isActive && !isExpired(c));
+    if (statusFilter === 'inactive') return discountCodes.filter((c) => !c.isActive && !isExpired(c));
+    if (statusFilter === 'expired') return discountCodes.filter((c) => isExpired(c));
+    return discountCodes;
+  }, [discountCodes, statusFilter]);
 
   const handleCreate = () => {
     setEditingCode(null);
@@ -118,6 +126,28 @@ const DiscountCodesPage: React.FC = () => {
           </button>
         </div>
 
+        {/* Filter tabs */}
+        <div className="flex gap-1 border-b border-white/[0.08]">
+          {([
+            { key: 'active', label: `Active (${stats.active})`, color: 'text-emerald-400' },
+            { key: 'all', label: `All (${stats.total})`, color: 'text-white' },
+            { key: 'inactive', label: `Inactive (${stats.total - stats.active - stats.expired})`, color: 'text-red-400' },
+            { key: 'expired', label: `Expired (${stats.expired})`, color: 'text-yellow-400' },
+          ] as const).map(({ key, label, color }) => (
+            <button
+              key={key}
+              onClick={() => setStatusFilter(key)}
+              className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-all whitespace-nowrap ${
+                statusFilter === key
+                  ? `${color} border-current`
+                  : 'text-white/40 border-transparent hover:text-white/60'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
         {/* Management Table */}
         <div className="bg-white/[0.06] border border-white/[0.06] rounded-xl overflow-hidden">
           <div className="overflow-x-auto">
@@ -140,14 +170,14 @@ const DiscountCodesPage: React.FC = () => {
                       Loading discount codes...
                     </td>
                   </tr>
-                ) : discountCodes.length === 0 ? (
+                ) : filteredCodes.length === 0 ? (
                   <tr>
                     <td colSpan={7} className="px-6 py-12 text-center text-white/40">
                       No discount codes yet. Create your first code!
                     </td>
                   </tr>
                 ) : (
-                  discountCodes.map((code) => (
+                  filteredCodes.map((code) => (
                     <tr key={code.id} className="hover:bg-white/[0.06]">
                       <td className="px-6 py-4">
                         <div>
