@@ -15,17 +15,6 @@ export default function Hero() {
       className="relative w-full flex flex-col items-center justify-center"
       style={{ minHeight: '68vh' }}
     >
-      {/* Background */}
-      <div className="fixed inset-0 w-full h-screen -z-10">
-        <img
-          src="/JEIGHTENESIS.jpg"
-          alt="Jonna Rincon"
-          className="w-full h-full object-cover"
-          style={{ objectPosition: 'center' }}
-        />
-        <div className="absolute inset-0 bg-black/70" />
-      </div>
-
       {/* Content */}
       <div
         className="relative z-10 flex flex-col items-center text-center px-6 max-w-4xl mx-auto transition-opacity duration-700"
