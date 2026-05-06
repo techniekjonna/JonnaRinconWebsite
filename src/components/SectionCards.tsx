@@ -2,14 +2,6 @@ import { Music, User, Library, Briefcase } from 'lucide-react';
 
 const CARDS = [
   {
-    id: 'beats',
-    title: 'Beat Shop',
-    description: 'Premium beats for artists',
-    icon: Music,
-    image: '/DJI_20251017150728_0019_D.JPG',
-    link: '/shop',
-  },
-  {
     id: 'about',
     title: 'About',
     description: 'The story behind the music',
@@ -24,6 +16,14 @@ const CARDS = [
     icon: Library,
     image: '/DJ Screenshot 3-2-26.png',
     link: '/catalogue',
+  },
+  {
+    id: 'beats',
+    title: 'Beat Shop',
+    description: 'Premium beats for artists',
+    icon: Music,
+    image: '/DJI_20251017150728_0019_D.JPG',
+    link: '/shop',
   },
   {
     id: 'services',
