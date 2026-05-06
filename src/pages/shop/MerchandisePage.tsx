@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { ShoppingCart, Star, ChevronLeft, ChevronRight } from 'lucide-react';
-import Navigation from '../../components/Navigation';
 import Footer from '../../components/Footer';
 import MerchandiseDetailModal from '../../components/MerchandiseDetailModal';
 import { useCyberDecodeInView } from '../../hooks/useCyberDecode';
@@ -164,7 +163,6 @@ const MerchandisePage: React.FC = () => {
       {/* Fixed Dark Overlay */}
       <div className="fixed inset-0 w-full h-screen -z-10 bg-black/20" />
 
-      <Navigation isDarkOverlay={true} isLightMode={false} />
 
       {/* Hero Section - Centered Layout */}
       <section className="relative pt-40 px-6 md:px-12 pb-4">

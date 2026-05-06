@@ -1,6 +1,5 @@
 import React, { useMemo, useState } from 'react';
 import { Zap, Headphones, Music, Volume2, Users, Palette, ArrowRight } from 'lucide-react';
-import Navigation from '../../components/Navigation';
 import Footer from '../../components/Footer';
 import { useCyberDecodeInView } from '../../hooks/useCyberDecode';
 import LoadingSpinner from '../../components/LoadingSpinner';
@@ -69,7 +68,6 @@ const ServicesPage: React.FC = () => {
       {/* Fixed Dark Overlay */}
       <div className="fixed inset-0 w-full h-screen -z-10 bg-black/20" />
 
-      <Navigation isDarkOverlay={true} isLightMode={false} />
 
       {/* Hero Section */}
       <section className="relative pt-40 px-6 md:px-12 pb-4">

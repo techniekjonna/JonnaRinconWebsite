@@ -39,16 +39,28 @@ const Header: React.FC = () => {
 
   if (isProtectedRoute) return null;
 
-  const logoHref = '/';
+  const isShopRoute = location.pathname.startsWith('/shop');
 
-  const navItems = [
+  const mainNavItems = [
     { label: 'Shop', href: '/shop', position: 'left' },
     { label: 'Catalogue', href: '/catalogue', position: 'left' },
     { label: 'Socials', href: '/socials', position: 'right' },
     { label: 'About Me', href: '/about', position: 'right' },
   ];
 
-  const isActive = (path: string) => location.pathname === path;
+  const shopNavItems = [
+    { label: 'Beat Shop', href: '/shop/beats', position: 'left' },
+    { label: 'Services', href: '/shop/services', position: 'left' },
+    { label: 'Merchandise', href: '/shop/merchandise', position: 'right' },
+    { label: 'Art', href: '/shop/art', position: 'right' },
+  ];
+
+  const navItems = isShopRoute ? shopNavItems : mainNavItems;
+
+  const isActive = (href: string) => {
+    if (href === '/shop') return location.pathname === '/shop';
+    return location.pathname === href || location.pathname.startsWith(href + '/');
+  };
 
   const HamburgerMenuButton = ({ className }: { className?: string }) => (
     <button
@@ -82,10 +94,10 @@ const Header: React.FC = () => {
         <div className="flex items-center justify-between px-4 sm:px-6 h-16 md:h-20">
 
           {/* Logo left — desktop: larger, mobile: visible and properly sized */}
-          <Link to={logoHref} className="flex items-center justify-center flex-shrink-0 w-14 h-14 md:w-24 md:h-24">
+          <Link to={isShopRoute ? '/shop' : '/'} className="flex items-center justify-center flex-shrink-0 w-14 h-14 md:w-24 md:h-24">
             <img
-              src="/Jonna Rincon Logo WH.png"
-              alt="JR"
+              src={isShopRoute ? '/JEIGHTEEN-logo.png' : '/Jonna Rincon Logo WH.png'}
+              alt={isShopRoute ? 'JEIGHTEEN' : 'JR'}
               className="w-full h-full object-contain"
             />
           </Link>
@@ -110,15 +122,15 @@ const Header: React.FC = () => {
                 ))}
               </div>
 
-              {/* Brand name → always home */}
+              {/* Brand name — home or shop hub */}
               <div
                 ref={logoRef}
                 className="text-center px-12 border-x border-white/[0.08] flex-shrink-0 transition-transform duration-300"
                 style={{ transform: `scale(${logoScale})` }}
               >
-                <Link to="/">
-                  <h1 className="text-lg font-black text-white tracking-tighter hover:text-white/80 transition-colors">
-                    JONNA RINCON
+                <Link to={isShopRoute ? '/shop' : '/'}>
+                  <h1 className={`text-lg font-black text-white hover:text-white/80 transition-colors ${isShopRoute ? 'tracking-[0.3em]' : 'tracking-tighter'}`}>
+                    {isShopRoute ? 'SHOP' : 'JONNA RINCON'}
                   </h1>
                 </Link>
               </div>
@@ -143,8 +155,10 @@ const Header: React.FC = () => {
           </nav>
 
           {/* Mobile: Brand name centered */}
-          <Link to="/" className="md:hidden flex-1 flex justify-center">
-            <span className="text-base font-black text-white tracking-tighter">JONNA RINCON</span>
+          <Link to={isShopRoute ? '/shop' : '/'} className="md:hidden flex-1 flex justify-center">
+            <span className={`text-base font-black text-white ${isShopRoute ? 'tracking-[0.25em]' : 'tracking-tighter'}`}>
+              {isShopRoute ? 'SHOP' : 'JONNA RINCON'}
+            </span>
           </Link>
 
           {/* Right: Cart + Hamburger */}

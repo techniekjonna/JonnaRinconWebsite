@@ -1,201 +1,381 @@
-import React, { useState } from 'react';
+import React, { useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { Music, Headphones, ShoppingBag, Palette, ArrowUpRight } from 'lucide-react';
-import Navigation from '../../components/Navigation';
+import { ArrowUpRight, Headphones, ChevronDown, Mic2, Package } from 'lucide-react';
 import Footer from '../../components/Footer';
-import { useCyberDecodeInView } from '../../hooks/useCyberDecode';
 import { useScrollToTop } from '../../hooks/useScrollToTop';
+import { useInView } from '../../hooks/useInView';
 
-interface ShopCategory {
+interface Category {
   id: string;
   label: string;
-  subtitle: string;
-  icon: React.ComponentType<{ className?: string }>;
-  href: string;
-  color: string;
+  tagline: string;
   description: string;
+  href: string;
+  image: string;
+  overlayClass: string;
 }
+
+const categories: Category[] = [
+  {
+    id: 'beats',
+    label: 'Beat Shop',
+    tagline: 'Find your sound',
+    description: 'High-quality instrumentals across every genre. Exclusive licenses available.',
+    href: '/shop/beats',
+    image: '/DJ Screenshot 3-2-26.png',
+    overlayClass: 'from-black/80 via-black/40 to-transparent',
+  },
+  {
+    id: 'services',
+    label: 'Services',
+    tagline: 'Professional audio',
+    description: 'Mix & Master, Studio Sessions, and production consulting — tailored to your project.',
+    href: '/shop/services',
+    image: '/MixedBy.png',
+    overlayClass: 'from-black/85 via-black/50 to-black/10',
+  },
+  {
+    id: 'merchandise',
+    label: 'Merchandise',
+    tagline: 'Wear the brand',
+    description: 'Official Jonna Rincon / JEIGHTEEN apparel and accessories.',
+    href: '/shop/merchandise',
+    image: '/JEIGHTENESIS.jpg',
+    overlayClass: 'from-black/80 via-black/40 to-transparent',
+  },
+  {
+    id: 'art',
+    label: 'Art',
+    tagline: 'Original pieces',
+    description: 'Limited edition digital and physical artwork from the J18 collection.',
+    href: '/shop/art',
+    image: '/edited-j18.png',
+    overlayClass: 'from-black/80 via-black/40 to-transparent',
+  },
+];
+
+interface CategoryCardProps {
+  category: Category;
+  index: number;
+}
+
+const CategoryCard: React.FC<CategoryCardProps> = ({ category, index }) => {
+  const [ref, inView] = useInView({ threshold: 0.1 });
+
+  return (
+    <Link
+      ref={ref as React.RefObject<HTMLAnchorElement>}
+      to={category.href}
+      className={`group relative min-h-[420px] md:min-h-[500px] overflow-hidden rounded-2xl block transition-all duration-700 ${
+        inView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
+      }`}
+      style={{ transitionDelay: `${index * 100}ms` }}
+    >
+      {/* Background image */}
+      <img
+        src={category.image}
+        alt={category.label}
+        className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+      />
+
+      {/* Gradient overlay — bottom up */}
+      <div className={`absolute inset-0 bg-gradient-to-t ${category.overlayClass}`} />
+
+      {/* Hover tint */}
+      <div className="absolute inset-0 bg-red-600/0 group-hover:bg-red-600/10 transition-all duration-500" />
+
+      {/* Top-right badge */}
+      <div className="absolute top-5 right-5 px-3 py-1.5 bg-black/40 backdrop-blur-md border border-white/20 rounded-full">
+        <span className="text-xs font-bold uppercase tracking-wider text-white/90">
+          {category.label}
+        </span>
+      </div>
+
+      {/* Content anchored to bottom */}
+      <div className="absolute inset-0 flex flex-col justify-end p-7 md:p-8">
+        <span className="text-xs font-black uppercase tracking-[0.35em] text-red-400 mb-2">
+          {category.tagline}
+        </span>
+        <h2 className="text-4xl md:text-5xl font-black text-white mb-3 leading-none tracking-tighter">
+          {category.label}
+        </h2>
+        <p className="text-white/70 text-sm leading-relaxed max-w-xs mb-6">
+          {category.description}
+        </p>
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-black uppercase tracking-widest text-white group-hover:text-red-400 transition-colors duration-300">
+            Explore
+          </span>
+          <ArrowUpRight className="w-4 h-4 text-white/50 group-hover:text-red-400 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all duration-300" />
+        </div>
+      </div>
+    </Link>
+  );
+};
 
 const ShopPage: React.FC = () => {
   useScrollToTop();
-  const heroTitle = useCyberDecodeInView('SHOP');
-  const [selectedFilter, setSelectedFilter] = useState<string>('All');
+  const categoriesRef = useRef<HTMLElement>(null);
+  const [aboutRef, aboutInView] = useInView({ threshold: 0.1 });
+  const [ctaRef, ctaInView] = useInView({ threshold: 0.1 });
 
-  const categories: ShopCategory[] = [
-    {
-      id: 'beat-shop',
-      label: 'Beat Shop',
-      subtitle: 'Browse instrumentals',
-      icon: Music,
-      href: '/shop/beats',
-      color: 'from-red-600 to-red-500',
-      description: 'Explore our collection of high-quality beats across multiple genres. Find the perfect instrumental for your project.',
-    },
-    {
-      id: 'services',
-      label: 'Services',
-      subtitle: 'Professional audio services',
-      icon: Headphones,
-      href: '/shop/services',
-      color: 'from-pink-600 to-pink-500',
-      description: 'Production, mixing, mastering, and music lessons. Get professional audio services from an experienced producer.',
-    },
-    {
-      id: 'merchandise',
-      label: 'Merchandise',
-      subtitle: 'Official branded products',
-      icon: ShoppingBag,
-      href: '/shop/merchandise',
-      color: 'from-purple-600 to-purple-500',
-      description: 'T-shirts, hoodies, posters, and more. Show your support with official Jonna Rincon merchandise.',
-    },
-    {
-      id: 'art',
-      label: 'Art',
-      subtitle: 'Digital & visual art',
-      icon: Palette,
-      href: '/shop/art',
-      color: 'from-cyan-600 to-cyan-500',
-      description: 'Original digital artwork and visual assets. Limited edition pieces from the Jonna Rincon collection.',
-    },
-  ];
-
-  const filterOptions = ['All', 'Beat Shop', 'Services', 'Merchandise', 'Art'];
-
-  const filteredCategories =
-    selectedFilter === 'All'
-      ? categories
-      : categories.filter(
-          (cat) =>
-            (selectedFilter === 'Beat Shop' && cat.id === 'beat-shop') ||
-            (selectedFilter === 'Services' && cat.id === 'services') ||
-            (selectedFilter === 'Merchandise' && cat.id === 'merchandise') ||
-            (selectedFilter === 'Art' && cat.id === 'art')
-        );
+  const scrollToCategories = () => {
+    categoriesRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
 
   return (
     <div className="min-h-screen text-white">
-      {/* Fixed Dark Overlay */}
-      <div className="fixed inset-0 w-full h-screen -z-10 bg-black/20" />
 
-      <Navigation isDarkOverlay={true} />
-
-      {/* Hero Section */}
-      <section className="relative pt-40 px-6 md:px-12 pb-16">
-        <div className="relative z-10 max-w-7xl mx-auto w-full text-center">
-          <h1
-            ref={heroTitle.ref as React.RefObject<HTMLHeadingElement>}
-            style={{fontSize: 'clamp(1.875rem, 8vw, 10.2rem)'}} className="font-black uppercase leading-[0.85] tracking-tighter mb-8"
-          >
-            {heroTitle.display}
-          </h1>
-          <p className="text-lg md:text-xl text-white/60 max-w-2xl mx-auto">
-            Explore our complete catalog of beats, services, merchandise, and art
-          </p>
+      {/* ─── HERO ─── */}
+      <section className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden -mt-28 sm:-mt-32">
+        {/* Background image */}
+        <div className="absolute inset-0">
+          <img
+            src="/DJI_20251018172151_0031_D.JPG"
+            alt=""
+            className="w-full h-full object-cover"
+            style={{ objectPosition: 'center 35%' }}
+          />
+          {/* Lighter overlay — key visual difference from main site */}
+          <div className="absolute inset-0 bg-black/45" />
+          {/* Bottom fade into next section */}
+          <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-black to-transparent" />
         </div>
+
+        {/* Hero content */}
+        <div className="relative z-10 text-center px-6 max-w-4xl mx-auto pt-32">
+          <p className="text-xs font-black uppercase tracking-[0.45em] text-red-500 mb-5">
+            JEIGHTEEN STORE
+          </p>
+          <h1
+            className="font-black uppercase leading-none tracking-tighter mb-6 text-white"
+            style={{ fontSize: 'clamp(4rem, 14vw, 11rem)' }}
+          >
+            SHOP
+          </h1>
+          <p className="text-white/75 text-lg md:text-xl max-w-xl mx-auto mb-10 leading-relaxed">
+            Beats, services, merchandise, and original art — all in one place.
+          </p>
+
+          {/* Category quick-jump buttons */}
+          <div className="flex flex-wrap gap-3 justify-center mb-6">
+            {categories.map((cat) => (
+              <Link
+                key={cat.id}
+                to={cat.href}
+                className="px-5 py-2.5 bg-white/[0.12] border border-white/25 backdrop-blur-sm text-white text-xs font-black uppercase tracking-widest hover:bg-red-600 hover:border-red-600 transition-all duration-300 rounded-full"
+              >
+                {cat.label}
+              </Link>
+            ))}
+          </div>
+        </div>
+
+        {/* Scroll indicator */}
+        <button
+          onClick={scrollToCategories}
+          className="absolute bottom-10 left-0 right-0 flex flex-col items-center gap-2 text-white/40 hover:text-white/70 transition-colors duration-300 cursor-pointer"
+        >
+          <span className="text-xs uppercase tracking-[0.3em] font-semibold">Scroll</span>
+          <ChevronDown className="w-5 h-5 animate-bounce" />
+        </button>
       </section>
 
-      {/* Filter Section */}
-      <section className="px-6 md:px-12 py-8 border-b border-white/[0.06]">
+      {/* ─── CATEGORY CARDS ─── */}
+      <section ref={categoriesRef} className="px-4 md:px-8 lg:px-12 py-16 bg-black">
         <div className="max-w-7xl mx-auto">
-          <div className="flex flex-wrap gap-3 justify-center">
-            {filterOptions.map((option) => (
-              <button
-                key={option}
-                onClick={() => setSelectedFilter(option)}
-                className={`px-6 py-2.5 rounded-full font-semibold uppercase tracking-wider text-sm transition-all duration-300 ${
-                  selectedFilter === option
-                    ? 'bg-red-600 text-white shadow-lg shadow-red-600/50'
-                    : 'bg-white/[0.06] border border-white/[0.1] text-white/70 hover:text-white hover:bg-white/[0.12]'
-                }`}
-              >
-                {option}
-              </button>
+          <div className="mb-10">
+            <p className="text-xs uppercase tracking-[0.4em] text-red-500 mb-2 font-black">Browse</p>
+            <h2 className="text-4xl md:text-5xl font-black text-white tracking-tighter">Categories</h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5">
+            {categories.map((cat, i) => (
+              <CategoryCard key={cat.id} category={cat} index={i} />
             ))}
           </div>
         </div>
       </section>
 
-      {/* Category Grid */}
-      <section className="px-6 md:px-12 py-20">
+      {/* ─── SERVICES SPOTLIGHT ─── */}
+      <section className="px-4 md:px-8 lg:px-12 py-16 bg-zinc-950 border-t border-white/[0.04]">
         <div className="max-w-7xl mx-auto">
-          {filteredCategories.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {filteredCategories.map((category, index) => {
-                const IconComponent = category.icon;
-                return (
-                  <Link
-                    key={category.id}
-                    to={category.href}
-                    className="group relative h-[420px]"
-                    style={{
-                      animation: `fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) ${0.1 + index * 0.08}s both`,
-                    }}
+          <div className="flex items-end justify-between mb-10">
+            <div>
+              <p className="text-xs uppercase tracking-[0.4em] text-red-500 mb-2 font-black">Professional Audio</p>
+              <h2 className="text-4xl md:text-5xl font-black text-white tracking-tighter">Services</h2>
+            </div>
+            <Link
+              to="/shop/services"
+              className="text-xs font-black uppercase tracking-widest text-white/40 hover:text-white transition-colors flex items-center gap-2 pb-1"
+            >
+              All Services <ArrowUpRight className="w-4 h-4" />
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {/* Mix & Master */}
+            <Link
+              to="/shop/services"
+              className="group glass-shop rounded-2xl p-7 flex flex-col hover:border-red-600/30 transition-all duration-300"
+            >
+              <div className="mb-5 w-14 h-14 rounded-xl bg-red-600/10 border border-red-600/20 flex items-center justify-center">
+                <Headphones className="w-7 h-7 text-red-500" />
+              </div>
+              <h3 className="text-xl font-black text-white mb-2">Mix &amp; Master</h3>
+              <p className="text-white/55 text-sm leading-relaxed flex-1 mb-5">
+                Professional mixing and mastering for your tracks. Radio-ready sound, tailored to your genre.
+              </p>
+              <span className="text-xs font-black uppercase tracking-widest text-red-500 group-hover:text-red-400 transition-colors">
+                Book Now →
+              </span>
+            </Link>
+
+            {/* Studio Sessions */}
+            <Link
+              to="/shop/services"
+              className="group glass-shop rounded-2xl p-7 flex flex-col hover:border-red-600/30 transition-all duration-300"
+            >
+              <div className="mb-5 w-14 h-14 rounded-xl bg-white/[0.07] border border-white/[0.12] flex items-center justify-center">
+                <Mic2 className="w-7 h-7 text-white/70" />
+              </div>
+              <h3 className="text-xl font-black text-white mb-2">Studio Sessions</h3>
+              <p className="text-white/55 text-sm leading-relaxed flex-1 mb-5">
+                In-studio recording and production sessions. Collaborative, creative, and hands-on.
+              </p>
+              <span className="text-xs font-black uppercase tracking-widest text-red-500 group-hover:text-red-400 transition-colors">
+                Book Now →
+              </span>
+            </Link>
+
+            {/* Production consulting */}
+            <Link
+              to="/shop/services"
+              className="group glass-shop rounded-2xl p-7 flex flex-col hover:border-red-600/30 transition-all duration-300"
+            >
+              <div className="mb-5 w-14 h-14 rounded-xl bg-white/[0.07] border border-white/[0.12] flex items-center justify-center">
+                <Package className="w-7 h-7 text-white/70" />
+              </div>
+              <h3 className="text-xl font-black text-white mb-2">Custom Packages</h3>
+              <p className="text-white/55 text-sm leading-relaxed flex-1 mb-5">
+                Need something specific? Get a custom production package that fits your project and budget.
+              </p>
+              <span className="text-xs font-black uppercase tracking-widest text-red-500 group-hover:text-red-400 transition-colors">
+                Get In Touch →
+              </span>
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* ─── ABOUT (shop-focused) ─── */}
+      <section
+        ref={aboutRef as React.RefObject<HTMLElement>}
+        className={`px-4 md:px-8 lg:px-12 py-16 bg-black border-t border-white/[0.04] transition-all duration-700 ${
+          aboutInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+        }`}
+      >
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            {/* Text */}
+            <div>
+              <p className="text-xs uppercase tracking-[0.4em] text-red-500 mb-3 font-black">About the Store</p>
+              <h2 className="text-4xl md:text-5xl font-black text-white tracking-tighter mb-6 leading-tight">
+                Music, Art &amp;<br />Brand — All J18
+              </h2>
+              <p className="text-white/65 text-base leading-relaxed mb-5">
+                JEIGHTEEN is the creative brand of Jonna Rincon — a producer, DJ, and visual artist from Tilburg. The store brings together everything that comes out of that creative process: high-quality beats for your music, professional audio services, original artwork, and branded merchandise.
+              </p>
+              <p className="text-white/50 text-sm leading-relaxed mb-8">
+                10+ years of production experience across Moombahton, Hip Hop, R&amp;B, EDM, and more. Every service and product in this store carries that same standard.
+              </p>
+              <div className="flex flex-wrap gap-3">
+                {['Beats', 'Mix & Master', 'Studio', 'Merchandise', 'Art'].map((tag) => (
+                  <span
+                    key={tag}
+                    className="px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-white/70 bg-white/[0.06] border border-white/[0.1] rounded-full"
                   >
-                    {/* Glassmorphism Card */}
-                    <div className="absolute inset-0 bg-white/[0.05] backdrop-blur-xl border border-white/[0.08] rounded-2xl overflow-hidden hover:border-white/[0.15] transition-all duration-500 hover:scale-[1.02] hover:bg-white/[0.08]">
-                      {/* Gradient Background */}
-                      <div
-                        className={`absolute inset-0 bg-gradient-to-br ${category.color} opacity-0 group-hover:opacity-10 transition-opacity duration-500`}
-                      />
-
-                      {/* Content */}
-                      <div className="relative z-10 h-full flex flex-col p-8 md:p-6">
-                        {/* Icon */}
-                        <div className="mb-6">
-                          <div className="w-16 h-16 rounded-xl bg-white/[0.08] border border-white/[0.12] flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                            <IconComponent className="w-8 h-8 text-white/80 group-hover:text-white transition-colors" />
-                          </div>
-                        </div>
-
-                        {/* Text Content */}
-                        <div className="flex-1">
-                          <h3 className="text-2xl md:text-xl font-bold mb-2 text-white group-hover:text-white transition-colors">
-                            {category.label}
-                          </h3>
-                          <p className="text-sm text-white/50 mb-4 group-hover:text-white/70 transition-colors">
-                            {category.subtitle}
-                          </p>
-                          <p className="text-sm text-white/40 leading-relaxed group-hover:text-white/60 transition-colors">
-                            {category.description}
-                          </p>
-                        </div>
-
-                        {/* CTA Arrow */}
-                        <div className="flex items-center justify-between mt-8 pt-6 border-t border-white/[0.06]">
-                          <span className="text-xs font-semibold uppercase tracking-widest text-white/30 group-hover:text-white/60 transition-colors">
-                            Explore
-                          </span>
-                          <ArrowUpRight className="w-5 h-5 text-white/20 group-hover:text-white/60 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all duration-300" />
-                        </div>
-                      </div>
-                    </div>
-                  </Link>
-                );
-              })}
+                    {tag}
+                  </span>
+                ))}
+              </div>
             </div>
-          ) : (
-            <div className="text-center py-20">
-              <p className="text-xl text-white/60">No items found for this filter</p>
+
+            {/* Visual block — photo grid */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="aspect-square overflow-hidden rounded-xl">
+                <img
+                  src="/DJI_20251115114029_0004_D.JPG"
+                  alt=""
+                  className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+                />
+              </div>
+              <div className="aspect-square overflow-hidden rounded-xl">
+                <img
+                  src="/JEIGHTENESIS.jpg"
+                  alt=""
+                  className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+                />
+              </div>
+              <div className="aspect-square overflow-hidden rounded-xl">
+                <img
+                  src="/edited-j18.png"
+                  alt=""
+                  className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+                />
+              </div>
+              <div className="aspect-square overflow-hidden rounded-xl bg-white/[0.04] border border-white/[0.08] flex flex-col items-center justify-center p-4">
+                <img src="/JEIGHTEEN-logo.png" alt="JEIGHTEEN" className="w-20 h-20 object-contain mb-3 opacity-80" />
+                <p className="text-xs font-black uppercase tracking-widest text-white/40 text-center">
+                  Est. J18
+                </p>
+              </div>
             </div>
-          )}
+          </div>
+        </div>
+      </section>
+
+      {/* ─── CTA BANNER ─── */}
+      <section
+        ref={ctaRef as React.RefObject<HTMLElement>}
+        className={`relative py-28 px-4 md:px-8 overflow-hidden transition-all duration-700 ${
+          ctaInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+        }`}
+      >
+        <div className="absolute inset-0">
+          <img
+            src="/DJI_20251017150728_0019_D.JPG"
+            alt=""
+            className="w-full h-full object-cover"
+            style={{ objectPosition: 'center 40%' }}
+          />
+          <div className="absolute inset-0 bg-black/75" />
+        </div>
+        <div className="relative z-10 max-w-3xl mx-auto text-center">
+          <p className="text-xs font-black uppercase tracking-[0.4em] text-red-500 mb-4">JEIGHTEEN</p>
+          <h2 className="text-4xl md:text-6xl font-black text-white tracking-tighter mb-5 leading-none">
+            Ready to create<br />something?
+          </h2>
+          <p className="text-white/60 text-lg mb-10 leading-relaxed">
+            Browse beats, book a session, grab some merch, or pick up original art.
+          </p>
+          <div className="flex flex-wrap gap-4 justify-center">
+            <Link
+              to="/shop/beats"
+              className="px-8 py-3.5 bg-red-600 hover:bg-red-700 text-white font-black text-sm uppercase tracking-widest transition-all duration-300 hover:scale-105 rounded-full"
+            >
+              Browse Beats
+            </Link>
+            <Link
+              to="/shop/services"
+              className="px-8 py-3.5 bg-white/10 border border-white/25 backdrop-blur-sm text-white font-black text-sm uppercase tracking-widest hover:bg-white/20 transition-all duration-300 rounded-full"
+            >
+              Book a Service
+            </Link>
+          </div>
         </div>
       </section>
 
       <Footer />
-
-      <style>{`
-        @keyframes fadeInUp {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-      `}</style>
     </div>
   );
 };
