@@ -2,13 +2,13 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, Music } from 'lucide-react';
 import { useCyberDecodeInView } from '../hooks/useCyberDecode';
 import { useAuth } from '../hooks/useAuth';
 import { useTrackDetail } from '../contexts/TrackDetailContext';
 import { useScrollToTop } from '../hooks/useScrollToTop';
 import LoadingSpinner from '../components/LoadingSpinner';
-import { setCurrentTrack, getCurrentTrack } from '../components/GlobalAudioPlayer';
+import { setCurrentTrack, getCurrentTrack, openPlayerModal, setPlayerDetailContext, registerAlbumDetailOpener } from '../components/GlobalAudioPlayer';
 import TrackListItem from '../components/TrackListItem';
 import { useTracks } from '../hooks/useTracks';
 import { useRemixes } from '../hooks/useRemixes';
@@ -247,6 +247,34 @@ export default function CataloguePage() {
 
   useEffect(() => { setExpandedAlbums(new Set()); }, [selectedType, selectedYear, selectedGenre, selectedCollab, activeTab]);
 
+  useEffect(() => {
+    registerAlbumDetailOpener((album) => setSelectedAlbum(album));
+  }, []);
+
+  const handleCoverClick = useCallback((track: Track) => {
+    if (!isAuthenticated) { setIsLoginModalOpen(true); return; }
+    handlePlayTrack(track);
+    setPlayerDetailContext('track', track as any);
+    openPlayerModal();
+  }, [isAuthenticated, handlePlayTrack]);
+
+  const handleAlbumCoverClick = useCallback((group: any) => {
+    const sorted = [...group.tracks].sort((a: Track, b: Track) => (a.trackNumber || 0) - (b.trackNumber || 0));
+    const firstTrack = sorted[0];
+    if (!firstTrack) return;
+    if (!isAuthenticated) { setIsLoginModalOpen(true); return; }
+    handlePlayTrack(firstTrack);
+    setPlayerDetailContext('album', {
+      name: group.albumName,
+      type: group.type,
+      artwork: group.artwork,
+      artist: group.displayTrack.artist,
+      year: group.displayTrack.year,
+      tracks: group.tracks,
+    });
+    openPlayerModal();
+  }, [isAuthenticated, handlePlayTrack]);
+
   return (
     <div className="min-h-screen text-white">
       <div className="fixed inset-0 w-full h-screen -z-10 bg-black/20" />
@@ -359,23 +387,30 @@ export default function CataloguePage() {
                       const isExpanded = expandedAlbums.has(albumKey);
                       return isAlbum ? (
                         <div key={albumKey}>
-                          <button
-                            onClick={() => toggleAlbumExpand(albumKey)}
-                            className="w-full px-6 py-4 flex items-center gap-4 border border-white/[0.06] rounded-xl hover:bg-white/[0.06] transition-all bg-white/[0.04] backdrop-blur-md group"
-                          >
-                            <button
-                              onClick={e => { e.stopPropagation(); setSelectedAlbum({ name: group.albumName, type: group.type, artwork: group.artwork, artist: group.displayTrack.artist, year: group.displayTrack.year, tracks: group.tracks }); }}
-                              className="flex-shrink-0 hover:scale-110 transition-transform"
+                          {/* Album row — same compact style as track rows */}
+                          <div className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 group ${isExpanded ? 'bg-white/[0.06]' : 'hover:bg-white/[0.05]'}`}>
+                            {/* Cover — click opens PlayerModal */}
+                            <div
+                              className="relative flex-shrink-0 w-10 h-10 rounded bg-white/[0.08] overflow-hidden cursor-pointer"
+                              onClick={() => handleAlbumCoverClick(group)}
                             >
-                              <img src={group.artwork} alt={group.albumName} loading="lazy" className="w-12 h-12 rounded object-cover" />
-                            </button>
-                            <div className="flex-1 min-w-0">
-                              <p className="font-bold text-white truncate">{group.albumName}</p>
-                              <p className="text-sm text-white/40">{group.tracks.length} track{group.tracks.length !== 1 ? 's' : ''}</p>
+                              {group.artwork ? (
+                                <img src={group.artwork} alt={group.albumName} loading="lazy" className="w-full h-full object-cover" />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center"><Music size={16} className="text-white/30" /></div>
+                              )}
                             </div>
-                            <span className="px-2 py-1 bg-red-600/20 border border-red-500/30 rounded-full text-[10px] font-bold text-red-400 uppercase tracking-wider flex-shrink-0">{group.type}</span>
-                            <ChevronDown size={18} className={`text-white/40 group-hover:text-white/60 transition-transform flex-shrink-0 ${isExpanded ? 'rotate-180' : ''}`} />
-                          </button>
+                            {/* Title + track count — click expands */}
+                            <div className="flex-1 min-w-0 cursor-pointer" onClick={() => toggleAlbumExpand(albumKey)}>
+                              <p className="text-sm font-semibold truncate leading-tight text-white">{group.albumName}</p>
+                              <p className="text-xs text-white/40 truncate leading-tight mt-0.5">{group.tracks.length} track{group.tracks.length !== 1 ? 's' : ''}</p>
+                            </div>
+                            {/* Type badge + chevron */}
+                            <div className="flex items-center gap-2 flex-shrink-0 cursor-pointer" onClick={() => toggleAlbumExpand(albumKey)}>
+                              <span className="text-[10px] uppercase font-bold text-white/30 hidden md:inline">{group.type}</span>
+                              <ChevronDown size={16} className={`text-white/40 group-hover:text-white/60 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                            </div>
+                          </div>
                           {isExpanded && (
                             <div className="mt-4 space-y-2 border-t border-white/[0.06] pt-4">
                               {group.tracks
@@ -384,7 +419,8 @@ export default function CataloguePage() {
                                   <div key={track.id} className="pl-6 md:pl-8">
                                     <TrackListItem
                                       track={track} onClickTrack={handleTrackClick} onPlay={handlePlayTrack}
-                                      onTogglePlay={handleTogglePlayTrack}                                      showType={false} showMetadata isAlbumTrack trackNumber={index + 1} isPlaying={isPlaying}
+                                      onTogglePlay={handleTogglePlayTrack} onCoverClick={handleCoverClick}
+                                      showType={false} showMetadata isAlbumTrack trackNumber={index + 1} isPlaying={isPlaying}
                                     />
                                   </div>
                                 ))}
@@ -394,7 +430,8 @@ export default function CataloguePage() {
                       ) : (
                         <TrackListItem
                           key={albumKey} track={group.displayTrack} onClickTrack={handleTrackClick}
-                          onPlay={handlePlayTrack} onTogglePlay={handleTogglePlayTrack}                          showType showMetadata isPlaying={isPlaying}
+                          onPlay={handlePlayTrack} onTogglePlay={handleTogglePlayTrack} onCoverClick={handleCoverClick}
+                          showType showMetadata isPlaying={isPlaying}
                         />
                       );
                     })}
@@ -464,7 +501,7 @@ export default function CataloguePage() {
                   ).map(remix => (
                       <TrackListItem
                         key={remix.id} track={remix} onClickTrack={handleTrackClick}
-                        onPlay={handlePlayTrack} onTogglePlay={handleTogglePlayTrack}
+                        onPlay={handlePlayTrack} onTogglePlay={handleTogglePlayTrack} onCoverClick={handleCoverClick}
                         showType={false} showMetadata isPlaying={isPlaying}
                         showDownload onDownload={(remix) => navigate(`/download/${remix.id}`)}
                       />
