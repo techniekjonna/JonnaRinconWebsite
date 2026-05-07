@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Music, Disc3, Headphones, Plus, ListMusic, ChevronDown, Library, Sliders, Shuffle, Disc } from 'lucide-react';
+import { Music, Disc3, Headphones, Plus, ListMusic, ChevronDown, Library, Sliders, Shuffle, Layers } from 'lucide-react';
 import { playlistService } from '../lib/firebase/services';
 import { Playlist } from '../lib/firebase/types';
 import { useAuth } from '../hooks/useAuth';
@@ -60,8 +60,7 @@ export default function CatalogueNavBar({
   const coreItems: SidebarNavItem[] = [
     { id: 'all', label: 'All', icon: <ListMusic size={16} /> },
     { id: 'tracks', label: 'Tracks', icon: <Music size={16} /> },
-    { id: 'albums', label: "Albums/EP's", icon: <Disc size={16} /> },
-    { id: 'singles', label: 'Singles', icon: <Disc3 size={16} /> },
+    { id: 'albums', label: "Albums/EP's", icon: <Layers size={16} /> },
     { id: 'remixes', label: 'Remixes', icon: <Disc3 size={16} /> },
     { id: 'djsets', label: 'DJ Sets', icon: <Headphones size={16} /> },
   ];
@@ -73,24 +72,24 @@ export default function CatalogueNavBar({
   return (
     <div className="w-full px-6 md:px-12 mb-6">
       <div className="max-w-7xl mx-auto">
-        <div className="flex items-center gap-2 flex-wrap bg-white/[0.04] backdrop-blur-xl border border-white/[0.08] rounded-2xl px-3 py-2.5 shadow-lg shadow-black/30">
+        <div className="flex items-center gap-2 bg-white/[0.04] backdrop-blur-xl border border-white/[0.08] rounded-2xl px-3 py-2.5 shadow-lg shadow-black/30 overflow-x-auto scrollbar-none">
 
           {/* Core navigation tabs */}
-          <div className="flex items-center gap-1 flex-1 flex-wrap">
+          <div className="flex items-center gap-1 flex-shrink-0">
             {coreItems.map(item => {
               const isActive = activeTab === item.id;
               return (
                 <button
                   key={item.id}
                   onClick={() => onTabChange(item.id)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${
+                  className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap flex-shrink-0 ${
                     isActive
                       ? 'bg-red-600 text-white shadow-md shadow-red-600/40'
                       : 'text-white/50 hover:text-white hover:bg-white/[0.08]'
                   }`}
                 >
                   <span className={isActive ? 'text-white' : 'text-white/50'}>{item.icon}</span>
-                  <span className="hidden sm:inline">{item.label}</span>
+                  <span>{item.label}</span>
                 </button>
               );
             })}
@@ -99,7 +98,7 @@ export default function CatalogueNavBar({
           {/* Filter + Shuffle icons */}
           {showFilterShuffle && (
             <>
-              <div className="h-6 w-px bg-white/[0.08] flex-shrink-0" />
+              <div className="h-6 w-px bg-white/[0.08] flex-shrink-0 ml-auto" />
               <div className="flex items-center gap-1 flex-shrink-0">
                 {onFilterClick && (
                   <button
