@@ -6,7 +6,7 @@ import {
 } from 'firebase/firestore';
 import {
   Plus, Trash2, Edit2, CheckCircle2, Circle, ChevronDown, ChevronRight,
-  X, Calendar, User, Paperclip, AlignLeft, MoreHorizontal,
+  X, Calendar, User, AlignLeft,
 } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -427,6 +427,7 @@ const TaskBoard: React.FC = () => {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [addingSection, setAddingSection] = useState(false);
   const [newSectionTitle, setNewSectionTitle] = useState('');
+  const [completedExpanded, setCompletedExpanded] = useState(false);
 
   // Load sections
   useEffect(() => {
@@ -507,13 +508,48 @@ const TaskBoard: React.FC = () => {
   const getTasksForSection = (sectionId: string) =>
     tasks.filter(t => t.sectionId === sectionId);
 
-  const completedCount = tasks.filter(t => t.completed && !t.parentTaskId).length;
+  const completedRootTasks = tasks.filter(t => t.completed && !t.parentTaskId);
+  const completedCount = completedRootTasks.length;
   const totalCount = tasks.filter(t => !t.parentTaskId).length;
 
   return (
     <div className="flex gap-0 relative">
       {/* Main board */}
       <div className={`flex-1 min-w-0 transition-all duration-200 ${selectedTask ? 'pr-2' : ''}`}>
+
+        {/* Voltooid — collapsed section at top */}
+        {completedCount > 0 && (
+          <div className="mb-4">
+            <button
+              onClick={() => setCompletedExpanded(!completedExpanded)}
+              className="flex items-center gap-1.5 py-1 text-white/25 hover:text-white/40 transition-colors w-full text-left"
+            >
+              {completedExpanded
+                ? <ChevronDown size={12} className="flex-shrink-0" />
+                : <ChevronRight size={12} className="flex-shrink-0" />}
+              <span className="text-xs font-medium uppercase tracking-wide">Voltooid ({completedCount})</span>
+            </button>
+            {completedExpanded && (
+              <div className="opacity-50 mt-1">
+                {completedRootTasks.map((task) => (
+                  <TaskRow
+                    key={task.id}
+                    task={task}
+                    subtasks={tasks.filter(t => t.parentTaskId === task.id)}
+                    depth={0}
+                    onToggle={toggleTask}
+                    onDelete={deleteTask}
+                    onUpdate={updateTask}
+                    onAddSubtask={addSubtask}
+                    onOpenModal={setSelectedTask}
+                  />
+                ))}
+              </div>
+            )}
+            <div className="h-px bg-white/[0.05] mt-3" />
+          </div>
+        )}
+
         {/* Header row */}
         <div className="flex items-center justify-between mb-4">
           <p className="text-xs text-white/30">{completedCount}/{totalCount} voltooid</p>

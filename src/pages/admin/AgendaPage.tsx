@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, Plus, Calendar, List, Filter, Trash2, Edit2, CheckCircle2, Circle, ChevronDown } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Calendar, List, Trash2, Edit2, CheckCircle2, Circle, ChevronDown, ClipboardList } from 'lucide-react';
 import AdminLayout from '../../components/admin/AdminLayout';
 import {
   getAgendaDaysByMonth,
@@ -10,9 +10,10 @@ import {
   updateAgendaTask,
   deleteAgendaTask,
   createAgendaStatus,
-  BUILT_IN_STATUSES,
 } from '../../lib/firebase/services/agendaService';
 import { AgendaDay, AgendaTask, AgendaStatus } from '../../lib/firebase/types';
+import { db } from '../../lib/firebase/config';
+import { collection, query, where, getDocs, updateDoc, doc } from 'firebase/firestore';
 
 type ViewMode = 'calendar' | 'list';
 type FilterType = 'all' | 'available' | 'absent' | 'studio' | 'completed' | 'pending';
@@ -54,6 +55,7 @@ export const AgendaContent: React.FC = () => {
   });
   const [expandedStatus, setExpandedStatus] = useState(true);
   const [expandedTasks, setExpandedTasks] = useState(true);
+  const [linkedTasks, setLinkedTasks] = useState<Array<{ id: string; title: string; completed: boolean; sectionId: string }>>([]);
 
   useEffect(() => {
     const loadStatuses = async () => {
@@ -213,6 +215,19 @@ export const AgendaContent: React.FC = () => {
     setNewStatusName('');
     setShowNewStatusInput(false);
     setCurrentDate(new Date(currentDate));
+  };
+
+  useEffect(() => {
+    if (!selectedDay) { setLinkedTasks([]); return; }
+    const q = query(collection(db, 'panelTasks'), where('dueDate', '==', selectedDay));
+    getDocs(q).then((snap) => {
+      setLinkedTasks(snap.docs.map(d => ({ id: d.id, ...(d.data() as any) })));
+    });
+  }, [selectedDay]);
+
+  const toggleLinkedTask = async (id: string, completed: boolean) => {
+    await updateDoc(doc(db, 'panelTasks', id), { completed: !completed });
+    setLinkedTasks(prev => prev.map(t => t.id === id ? { ...t, completed: !t.completed } : t));
   };
 
   const getStatusAbbrev = (status: AgendaStatus): string => {
@@ -526,6 +541,27 @@ export const AgendaContent: React.FC = () => {
                   </div>
                 )}
               </div>
+
+              {/* Linked Tasks from TaskBoard */}
+              {linkedTasks.length > 0 && (
+                <div className="bg-white/[0.03] border border-white/[0.05] rounded-lg overflow-hidden">
+                  <div className="flex items-center gap-2 px-4 py-3">
+                    <ClipboardList size={12} className="text-white/30" />
+                    <span className="text-xs font-semibold text-white/40 uppercase">Taken (Work Board)</span>
+                    <span className="text-[10px] text-white/25 ml-auto">{linkedTasks.filter(t => !t.completed).length} open</span>
+                  </div>
+                  <div className="border-t border-white/[0.05] px-4 py-2 space-y-1">
+                    {linkedTasks.map(task => (
+                      <div key={task.id} className="flex items-center gap-2 py-1">
+                        <button onClick={() => toggleLinkedTask(task.id, task.completed)} className="flex-shrink-0">
+                          {task.completed ? <CheckCircle2 size={13} className="text-emerald-400" /> : <Circle size={13} className="text-white/25" />}
+                        </button>
+                        <span className={`text-xs flex-1 ${task.completed ? 'text-white/30 line-through' : 'text-white/70'}`}>{task.title}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
