@@ -5,7 +5,11 @@ import { AgendaContent } from './AgendaPage';
 import { SocialPlannerContent } from './ContentPage';
 import ComingUpTab from '../../components/admin/ComingUpTab';
 import TaskBoard from '../../components/admin/TaskBoard';
-import { Calendar, FolderKanban, Instagram, Star, ClipboardList, LayoutDashboard, Clock, Briefcase, ChevronRight } from 'lucide-react';
+import WorkProjectsSection from '../../components/admin/WorkProjectsSection';
+import {
+  LayoutDashboard, Clock, Briefcase,
+  Calendar, Instagram, Star, FolderKanban, ClipboardList, Columns2,
+} from 'lucide-react';
 
 type MainTab = 'overview' | 'agenda' | 'work';
 type AgendaSub = 'calendar' | 'social' | 'coming-up';
@@ -24,9 +28,10 @@ const AGENDA_SECTIONS: SubSectionDef[] = [
   { id: 'coming-up', label: 'Coming Up', sublabel: 'Releases & events', icon: <Star size={16} /> },
 ];
 
-const WORK_SECTIONS: SubSectionDef[] = [
-  { id: 'projects', label: 'Projects', sublabel: 'Muziekproductieprojecten', icon: <FolderKanban size={16} /> },
-  { id: 'tasks', label: 'Tasks', sublabel: 'Taakbord', icon: <ClipboardList size={16} /> },
+const MAIN_PAGES = [
+  { id: 'board' as MainTab, label: 'BOARD', sublabel: 'Verzoeken & chat',         icon: <Columns2 size={16} /> },
+  { id: 'time'  as MainTab, label: 'TIME',  sublabel: 'Agenda, Social, Coming Up', icon: <Clock size={16} /> },
+  { id: 'work'  as MainTab, label: 'WORK',  sublabel: 'Projects & taken',          icon: <Briefcase size={16} /> },
 ];
 
 const SectionLanding: React.FC<{
@@ -59,25 +64,27 @@ const SectionLanding: React.FC<{
   </div>
 );
 
-const OverviewContent: React.FC<{
-  onNavigate: (main: MainTab) => void;
-}> = ({ onNavigate }) => {
-  const groups = [
-    {
-      id: 'agenda' as MainTab,
-      label: 'Agenda',
-      sublabel: 'Tijdgericht',
-      icon: <Clock size={18} />,
-      sections: AGENDA_SECTIONS,
-    },
-    {
-      id: 'work' as MainTab,
-      label: 'Work',
-      sublabel: 'Werkgericht',
-      icon: <Briefcase size={18} />,
-      sections: WORK_SECTIONS,
-    },
-  ];
+// ─── BOARD placeholder ────────────────────────────────────────────────────────
+
+const BoardContent: React.FC = () => (
+  <div className="flex flex-col items-center justify-center py-20 text-center">
+    <Columns2 size={32} className="text-white/20 mb-4" />
+    <p className="text-white/40 text-sm">BOARD komt binnenkort</p>
+  </div>
+);
+
+// ─── TIME section ─────────────────────────────────────────────────────────────
+
+const TimeSection: React.FC = () => {
+  const [activeSub, setActiveSub] = useState<TimeSubTab | null>(null);
+
+  if (!activeSub) {
+    return (
+      <div className="space-y-6">
+        <SubOverview pages={TIME_SUB_PAGES} onNavigate={setActiveSub} />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -143,7 +150,7 @@ const OverviewContent: React.FC<{
 
 const MAIN_TABS = [
   { id: 'overview' as MainTab, label: 'Overzicht', icon: <LayoutDashboard size={16} /> },
-  { id: 'board'    as MainTab, label: 'BOARD',     icon: <LayoutGrid size={16} /> },
+  { id: 'board'    as MainTab, label: 'BOARD',     icon: <Columns2 size={16} /> },
   { id: 'time'     as MainTab, label: 'TIME',      icon: <Clock size={16} /> },
   { id: 'work'     as MainTab, label: 'WORK',      icon: <Briefcase size={16} /> },
 ];
