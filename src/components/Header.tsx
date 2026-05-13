@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, ShoppingBag } from 'lucide-react';
 import { useCartContext } from '../contexts/CartContext';
@@ -7,9 +7,6 @@ import { useAuth } from '../contexts/AuthContext';
 const Header: React.FC = () => {
   const [hamburgerHovered, setHamburgerHovered] = useState(false);
   const location = useLocation();
-  const logoRef = useRef<HTMLDivElement>(null);
-  const [logoScale, setLogoScale] = useState(1);
-  const [headerOpacity, setHeaderOpacity] = useState(1);
   const { cartItems } = useCartContext();
   const { user } = useAuth();
 
@@ -25,17 +22,6 @@ const Header: React.FC = () => {
     location.pathname.startsWith('/manager') ||
     location.pathname.startsWith('/artist') ||
     location.pathname.startsWith('/customer');
-
-  useEffect(() => {
-    const handleSidebarStateChange = (e: CustomEvent) => {
-      const { isOpen } = e.detail;
-      setHeaderOpacity(isOpen ? 0.4 : 1);
-      setLogoScale(isOpen ? 0.8 : 1);
-    };
-
-    window.addEventListener('sidebar-state-change', handleSidebarStateChange as EventListener);
-    return () => window.removeEventListener('sidebar-state-change', handleSidebarStateChange as EventListener);
-  }, []);
 
   if (isProtectedRoute) return null;
 
@@ -87,8 +73,7 @@ const Header: React.FC = () => {
 
   return (
     <header
-      className="fixed top-0 left-0 right-0 z-40 pt-3 px-4 sm:px-6 lg:px-8 transition-opacity duration-300"
-      style={{ opacity: headerOpacity }}
+      className="fixed top-0 left-0 right-0 z-40 pt-3 px-4 sm:px-6 lg:px-8"
     >
       <div className="backdrop-blur-xl bg-black/30 border border-white/[0.08] rounded-2xl">
         <div className="flex items-center justify-between px-4 sm:px-6 h-16 md:h-20">
@@ -124,9 +109,7 @@ const Header: React.FC = () => {
 
               {/* Center brand — JEIGHTEEN logo on shop, text on main */}
               <div
-                ref={logoRef}
-                className="text-center px-12 border-x border-white/[0.08] flex-shrink-0 transition-transform duration-300"
-                style={{ transform: `scale(${logoScale})` }}
+                className="text-center px-12 border-x border-white/[0.08] flex-shrink-0"
               >
                 {isShopRoute ? (
                   <Link to="/shop">
