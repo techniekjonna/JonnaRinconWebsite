@@ -512,6 +512,10 @@ const TaskBoard: React.FC = () => {
   const completedCount = completedRootTasks.length;
   const totalCount = tasks.filter(t => !t.parentTaskId).length;
 
+  // Completed top-level tasks (across all sections)
+  const completedTopLevel = tasks.filter(t => t.completed && !t.parentTaskId);
+  const [completedOpen, setCompletedOpen] = useState(false);
+
   return (
     <div className="flex gap-0 relative">
       {/* Main board */}

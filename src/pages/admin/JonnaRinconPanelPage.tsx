@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import AdminLayout from '../../components/admin/AdminLayout';
 import ManagerLayout from '../../components/manager/ManagerLayout';
 import { AgendaContent } from './AgendaPage';
-import { ProjectsContent } from './ProjectsAdminPage';
 import { SocialPlannerContent } from './ContentPage';
 import ComingUpTab from '../../components/admin/ComingUpTab';
 import TaskBoard from '../../components/admin/TaskBoard';
@@ -81,10 +80,33 @@ const OverviewContent: React.FC<{
   ];
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-4">
+      {/* Sub-tab nav */}
+      <nav className="flex items-center gap-1 border-b border-white/[0.08] pb-0 overflow-x-auto">
+        {TIME_SUB_PAGES.map((p) => {
+          const isActive = activeSub === p.id;
+          return (
+            <button
+              key={p.id}
+              onClick={() => setActiveSub(p.id)}
+              className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium whitespace-nowrap border-b-2 transition-all duration-200 -mb-px ${
+                isActive
+                  ? 'border-red-500 text-white'
+                  : 'border-transparent text-white/40 hover:text-white/70 hover:border-white/20'
+              }`}
+            >
+              <span className={isActive ? 'text-red-400' : 'text-white/30'}>{p.icon}</span>
+              {p.label}
+            </button>
+          );
+        })}
+      </nav>
+
+      {/* Content */}
       <div>
-        <h2 className="text-2xl font-bold text-white">Welkom, Jonna</h2>
-        <p className="text-sm text-white/40 mt-1">Kies een onderdeel om mee te starten.</p>
+        {activeSub === 'agenda'     && <AgendaContent />}
+        {activeSub === 'social'     && <SocialPlannerContent />}
+        {activeSub === 'coming-up'  && <ComingUpTab />}
       </div>
       {groups.map((group) => (
         <div key={group.id} className="space-y-3">
@@ -116,6 +138,15 @@ const OverviewContent: React.FC<{
     </div>
   );
 };
+
+// ─── Main Panel ───────────────────────────────────────────────────────────────
+
+const MAIN_TABS = [
+  { id: 'overview' as MainTab, label: 'Overzicht', icon: <LayoutDashboard size={16} /> },
+  { id: 'board'    as MainTab, label: 'BOARD',     icon: <LayoutGrid size={16} /> },
+  { id: 'time'     as MainTab, label: 'TIME',      icon: <Clock size={16} /> },
+  { id: 'work'     as MainTab, label: 'WORK',      icon: <Briefcase size={16} /> },
+];
 
 export const JonnaRinconPanelContent: React.FC<{ isAdmin?: boolean }> = ({ isAdmin = true }) => {
   const [activeMain, setActiveMain] = useState<MainTab>('overview');
