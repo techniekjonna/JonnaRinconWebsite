@@ -7,8 +7,8 @@ import ComingUpTab from '../../components/admin/ComingUpTab';
 import TaskBoard from '../../components/admin/TaskBoard';
 import WorkProjectsSection from '../../components/admin/WorkProjectsSection';
 import {
-  LayoutDashboard, Clock, Briefcase, LayoutGrid,
-  Calendar, Instagram, Star, FolderKanban, ClipboardList,
+  LayoutDashboard, Clock, Briefcase,
+  Calendar, Instagram, Star, FolderKanban, ClipboardList, Columns2,
 } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -61,7 +61,7 @@ function SubOverview<T extends string>({
 // ─── Overzicht ────────────────────────────────────────────────────────────────
 
 const MAIN_PAGES = [
-  { id: 'board' as MainTab, label: 'BOARD', sublabel: 'Verzoeken & chat',         icon: <LayoutGrid size={16} /> },
+  { id: 'board' as MainTab, label: 'BOARD', sublabel: 'Verzoeken & chat',         icon: <Columns2 size={16} /> },
   { id: 'time'  as MainTab, label: 'TIME',  sublabel: 'Agenda, Social, Coming Up', icon: <Clock size={16} /> },
   { id: 'work'  as MainTab, label: 'WORK',  sublabel: 'Projects & taken',          icon: <Briefcase size={16} /> },
 ];
@@ -94,7 +94,7 @@ const OverviewContent: React.FC<{ onNavigate: (s: MainTab) => void }> = ({ onNav
 
 const BoardContent: React.FC = () => (
   <div className="flex flex-col items-center justify-center py-20 text-center">
-    <LayoutGrid size={32} className="text-white/20 mb-4" />
+    <Columns2 size={32} className="text-white/20 mb-4" />
     <p className="text-white/40 text-sm">BOARD komt binnenkort</p>
   </div>
 );
@@ -194,7 +194,7 @@ const WorkSection: React.FC<{ isAdmin: boolean }> = ({ isAdmin }) => {
 
 const MAIN_TABS = [
   { id: 'overview' as MainTab, label: 'Overzicht', icon: <LayoutDashboard size={16} /> },
-  { id: 'board'    as MainTab, label: 'BOARD',     icon: <LayoutGrid size={16} /> },
+  { id: 'board'    as MainTab, label: 'BOARD',     icon: <Columns2 size={16} /> },
   { id: 'time'     as MainTab, label: 'TIME',      icon: <Clock size={16} /> },
   { id: 'work'     as MainTab, label: 'WORK',      icon: <Briefcase size={16} /> },
 ];
