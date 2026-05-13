@@ -25,7 +25,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const [expandedShop, setExpandedShop] = useState(false);
   const [expandedCatalogue, setExpandedCatalogue] = useState(false);
   const [expandedArtist, setExpandedArtist] = useState(false);
-  const [expandedSocial, setExpandedSocial] = React.useState(false);
   const [expandedAnalytics, setExpandedAnalytics] = React.useState(false);
   const [expandedPanel, setExpandedPanel] = React.useState(false);
   const [sidebarPosition, setSidebarPositionState] = useState<SidebarPosition>(() => {
@@ -80,13 +79,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       label: 'ARTIST SUPPORT',
       subtitle: 'Artist Requests, Collab Requests, Chat',
       href: '/admin/board',
-      submenu: [],
-      expanded: false,
-    },
-    {
-      label: 'SOCIAL MEDIA',
-      subtitle: 'Content management',
-      href: '/admin/content',
       submenu: [],
       expanded: false,
     },
