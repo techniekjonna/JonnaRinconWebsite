@@ -46,14 +46,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     navigate('/admin/login');
   };
 
-  // Dispatch sidebar state change event
-  React.useEffect(() => {
-    const event = new CustomEvent('sidebar-state-change', {
-      detail: { isOpen: isMenuOpen }
-    });
-    window.dispatchEvent(event);
-  }, [isMenuOpen]);
-
   const setSidebarPosition = (pos: SidebarPosition) => {
     localStorage.setItem('admin-sidebar-position', pos);
     setSidebarPositionState(pos);

@@ -6,7 +6,7 @@ import {
 } from 'firebase/firestore';
 import {
   Plus, Trash2, Edit2, CheckCircle2, Circle, ChevronDown, ChevronRight,
-  X, Calendar, User, Paperclip, AlignLeft, MoreHorizontal,
+  X, Calendar, User, AlignLeft,
 } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -427,6 +427,7 @@ const TaskBoard: React.FC = () => {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [addingSection, setAddingSection] = useState(false);
   const [newSectionTitle, setNewSectionTitle] = useState('');
+  const [completedExpanded, setCompletedExpanded] = useState(false);
 
   // Load sections
   useEffect(() => {
@@ -507,12 +508,9 @@ const TaskBoard: React.FC = () => {
   const getTasksForSection = (sectionId: string) =>
     tasks.filter(t => t.sectionId === sectionId);
 
-  const completedCount = tasks.filter(t => t.completed && !t.parentTaskId).length;
+  const completedRootTasks = tasks.filter(t => t.completed && !t.parentTaskId);
+  const completedCount = completedRootTasks.length;
   const totalCount = tasks.filter(t => !t.parentTaskId).length;
-
-  // Completed top-level tasks (across all sections)
-  const completedTopLevel = tasks.filter(t => t.completed && !t.parentTaskId);
-  const [completedOpen, setCompletedOpen] = useState(false);
 
   return (
     <div className="flex gap-0 relative">
@@ -520,40 +518,31 @@ const TaskBoard: React.FC = () => {
       <div className={`flex-1 min-w-0 transition-all duration-200 ${selectedTask ? 'pr-2' : ''}`}>
 
         {/* Voltooid — collapsed section at top */}
-        {completedTopLevel.length > 0 && (
+        {completedCount > 0 && (
           <div className="mb-4">
             <button
-              onClick={() => setCompletedOpen((v) => !v)}
-              className="flex items-center gap-2 text-white/25 hover:text-white/40 transition-colors text-xs font-semibold uppercase tracking-wider py-1 w-full text-left"
+              onClick={() => setCompletedExpanded(!completedExpanded)}
+              className="flex items-center gap-1.5 py-1 text-white/25 hover:text-white/40 transition-colors w-full text-left"
             >
-              {completedOpen
-                ? <ChevronDown size={13} className="flex-shrink-0" />
-                : <ChevronRight size={13} className="flex-shrink-0" />}
-              Voltooid
-              <span className="font-normal text-white/20 ml-0.5">{completedTopLevel.length}</span>
+              {completedExpanded
+                ? <ChevronDown size={12} className="flex-shrink-0" />
+                : <ChevronRight size={12} className="flex-shrink-0" />}
+              <span className="text-xs font-medium uppercase tracking-wide">Voltooid ({completedCount})</span>
             </button>
-            {completedOpen && (
-              <div className="mt-1 opacity-55 space-y-0.5 pl-1">
-                {completedTopLevel.map((task) => (
-                  <div
+            {completedExpanded && (
+              <div className="opacity-50 mt-1">
+                {completedRootTasks.map((task) => (
+                  <TaskRow
                     key={task.id}
-                    onClick={() => setSelectedTask(task)}
-                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-white/[0.04] cursor-pointer group"
-                  >
-                    <button
-                      onClick={(e) => { e.stopPropagation(); toggleTask(task); }}
-                      className="flex-shrink-0"
-                    >
-                      <CheckCircle2 size={14} className="text-emerald-400" />
-                    </button>
-                    <span className="flex-1 text-xs text-white/30 line-through truncate">{task.title}</span>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); deleteTask(task.id); }}
-                      className="opacity-0 group-hover:opacity-100 p-0.5 text-white/20 hover:text-red-400 transition-all"
-                    >
-                      <X size={11} />
-                    </button>
-                  </div>
+                    task={task}
+                    subtasks={tasks.filter(t => t.parentTaskId === task.id)}
+                    depth={0}
+                    onToggle={toggleTask}
+                    onDelete={deleteTask}
+                    onUpdate={updateTask}
+                    onAddSubtask={addSubtask}
+                    onOpenModal={setSelectedTask}
+                  />
                 ))}
               </div>
             )}
