@@ -95,13 +95,14 @@ export default function MusicPreview() {
   const { tracks, loading: tracksLoading } = useTracks({ status: 'published' });
   const { remixes, loading: remixesLoading } = useRemixes({ status: 'published' });
 
-  const [activeTab, setActiveTab] = useState<TabKey>('beats');
+  const [activeTab, setActiveTab] = useState<TabKey>('tracks');
   const [tabCounts, setTabCounts] = useState<TabCounts>({ beats: 0, tracks: 0, remixes: 0 });
   const [sessionItems, setSessionItems] = useState<TabItems>({ beats: [], tracks: [], remixes: [] });
   const [built, setBuilt] = useState(false);
   const [currentId, setCurrentId] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [showGate, setShowGate] = useState(false);
+  const [pulsingTab, setPulsingTab] = useState<TabKey | null>(null);
   const autoTabRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const userPickedTab = useRef(false);
 
@@ -156,26 +157,21 @@ export default function MusicPreview() {
 
   function pickDefaultTab(items: TabItems) {
     if (userPickedTab.current) return;
-    for (const tab of ['beats', 'tracks', 'remixes'] as TabKey[]) {
+    for (const tab of ['tracks', 'beats', 'remixes'] as TabKey[]) {
       if (items[tab].length > 0) { setActiveTab(tab); return; }
     }
   }
 
-  // Auto-rotate tabs every 4s
+  // Cycle a subtle visual highlight through non-active tabs (beats & tracks) every 2.5s
   useEffect(() => {
-    if (!built || userPickedTab.current) return;
-    const tabs = TAB_CONFIG.map(t => t.key).filter(k => sessionItems[k].length > 0);
-    if (tabs.length <= 1) return;
-    autoTabRef.current = setInterval(() => {
-      if (!userPickedTab.current) {
-        setActiveTab(prev => {
-          const idx = tabs.indexOf(prev);
-          return tabs[(idx + 1) % tabs.length];
-        });
-      }
-    }, 4000);
-    return () => { if (autoTabRef.current) clearInterval(autoTabRef.current); };
-  }, [built, sessionItems]);
+    const highlightTargets: TabKey[] = ['beats', 'tracks'];
+    let idx = 0;
+    const interval = setInterval(() => {
+      setPulsingTab(highlightTargets[idx]);
+      idx = (idx + 1) % highlightTargets.length;
+    }, 2500);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     return subscribeToPlayerState((state) => {
@@ -240,24 +236,26 @@ export default function MusicPreview() {
           {TAB_CONFIG.map(({ key, label, icon: Icon }) => {
             const hasItems = sessionItems[key].length > 0;
             const tabLeft = Math.max(0, MAX_PER_TAB - tabCounts[key]);
+            const isPulsing = pulsingTab === key && activeTab !== key && hasItems;
             return (
               <button
                 key={key}
                 onClick={() => {
                   setActiveTab(key);
                   userPickedTab.current = true;
-                  if (autoTabRef.current) clearInterval(autoTabRef.current);
                 }}
                 disabled={!hasItems && built}
-                className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold uppercase tracking-widest transition-all border-b-2 -mb-px ${
+                className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold uppercase tracking-widest transition-all duration-300 border-b-2 -mb-px ${
                   activeTab === key
                     ? 'border-red-600 text-white'
+                    : isPulsing
+                    ? 'border-transparent text-red-400/70'
                     : hasItems || !built
                     ? 'border-transparent text-white/30 hover:text-white/60'
                     : 'border-transparent text-white/15 cursor-not-allowed'
                 }`}
               >
-                <Icon size={13} />
+                <Icon size={13} className={isPulsing ? 'animate-pulse' : ''} />
                 {label}
                 {built && hasItems && (
                   <span className={`text-[10px] ml-1 ${tabCounts[key] >= MAX_PER_TAB ? 'text-red-500/60' : 'text-white/20'}`}>
@@ -267,9 +265,6 @@ export default function MusicPreview() {
               </button>
             );
           })}
-          {!userPickedTab.current && built && (
-            <span className="ml-auto text-white/20 text-[10px] uppercase tracking-widest">auto</span>
-          )}
         </div>
 
         {/* Track list */}

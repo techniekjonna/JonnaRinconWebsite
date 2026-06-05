@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { Heart, Share2, Lock, ShoppingCart } from 'lucide-react';
 import ShopFooter from '../../components/ShopFooter';
+import ShopNav from '../../components/ShopNav';
 import { useCyberDecodeInView } from '../../hooks/useCyberDecode';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { useArt } from '../../hooks/useArt';
@@ -58,89 +59,83 @@ const ArtPage: React.FC = () => {
     <div className="min-h-screen text-white bg-[#0a0a0a]">
 
       {/* Hero Section */}
-      <section className="relative pt-40 pb-16 px-6 md:px-12 overflow-hidden">
+      <section className="relative pt-44 pb-20 px-6 md:px-12 overflow-hidden">
         <div className="absolute inset-0">
           <img src="/DJI_20251018172151_0031_D.JPG" alt="" className="w-full h-full object-cover" style={{ objectPosition: 'center 35%' }} />
-          <div className="absolute inset-0 bg-black/70" />
-          <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-[#0a0a0a] to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-br from-black/80 via-black/60 to-black/80" />
+          <div className="absolute inset-0" style={{ backgroundImage: 'radial-gradient(circle at 50% 60%, rgba(220,38,38,0.06) 0%, transparent 60%)' }} />
+          <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-[#0a0a0a] to-transparent" />
         </div>
-        <div className="relative z-10 max-w-7xl mx-auto w-full text-center">
-          <p className="text-xs font-black uppercase tracking-[0.45em] text-red-500 mb-5">JEIGHTEEN STORE</p>
-          <h1 ref={heroTitle.ref as React.RefObject<HTMLHeadingElement>} style={{fontSize: 'clamp(1.875rem, 8vw, 10.2rem)'}} className="font-black uppercase leading-[0.85] tracking-tighter mb-6 text-white">
+        <div className="relative z-10 max-w-7xl mx-auto w-full">
+          <p className="text-xs font-black uppercase tracking-[0.45em] text-red-500 mb-4">JEIGHTEEN STORE</p>
+          <h1 ref={heroTitle.ref as React.RefObject<HTMLHeadingElement>} style={{fontSize: 'clamp(2.5rem, 9vw, 10.2rem)'}} className="font-black uppercase leading-[0.85] tracking-tighter mb-5 text-white">
             {heroTitle.display}
           </h1>
-          <p className="text-white/60 text-sm md:text-base max-w-2xl mx-auto">
+          <p className="text-white/50 text-sm md:text-base max-w-xl">
             A curated portfolio of digital art, cover designs, visual art, and conceptual work. From album artwork to experimental visuals.
           </p>
         </div>
       </section>
 
-      {/* Type Filter */}
-      <section className="px-6 md:px-12 py-6 border-b border-white/[0.06]">
-        <div className="max-w-7xl mx-auto">
-          <p className="text-xs uppercase tracking-wider text-white/40 mb-3 font-bold">Filter by Type</p>
-          <div className="flex gap-3 overflow-x-auto pb-2">
+      <ShopNav />
+
+      {/* Filters */}
+      <section className="px-6 md:px-12 py-4 border-b border-white/[0.06]">
+        <div className="max-w-7xl mx-auto flex flex-wrap items-center gap-x-6 gap-y-3">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-[10px] uppercase tracking-widest text-white/25 font-bold">Type</span>
             <button
               onClick={() => setSelectedType(null)}
-              className={`px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider whitespace-nowrap transition-all ${
+              className={`px-3 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wider whitespace-nowrap transition-all ${
                 selectedType === null
-                  ? 'bg-red-600 text-white'
-                  : 'bg-white/[0.06] border border-white/[0.08] text-white/60 hover:bg-white/[0.10]'
+                  ? 'bg-red-600 text-white shadow-[0_0_12px_rgba(220,38,38,0.3)]'
+                  : 'bg-white/[0.05] border border-white/[0.08] text-white/50 hover:text-white/80'
               }`}
-            >
-              All Types
-            </button>
+            >All</button>
             {artTypes.map(type => (
               <button
                 key={type}
                 onClick={() => setSelectedType(type)}
-                className={`px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider whitespace-nowrap transition-all ${
+                className={`px-3 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wider whitespace-nowrap transition-all ${
                   selectedType === type
-                    ? 'bg-red-600 text-white'
-                    : 'bg-white/[0.06] border border-white/[0.08] text-white/60 hover:bg-white/[0.10]'
+                    ? 'bg-red-600 text-white shadow-[0_0_12px_rgba(220,38,38,0.3)]'
+                    : 'bg-white/[0.05] border border-white/[0.08] text-white/50 hover:text-white/80'
                 }`}
-              >
-                {type}
-              </button>
+              >{type}</button>
             ))}
           </div>
-        </div>
-      </section>
-
-      {/* Category Filter */}
-      <section className="px-6 md:px-12 py-6 border-b border-white/[0.06]">
-        <div className="max-w-7xl mx-auto">
-          <p className="text-xs uppercase tracking-wider text-white/40 mb-3 font-bold">Filter by Category</p>
-          <div className="flex gap-3 overflow-x-auto pb-2">
-            <button
-              onClick={() => setSelectedCategory(null)}
-              className={`px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider whitespace-nowrap transition-all ${
-                selectedCategory === null
-                  ? 'bg-red-600 text-white'
-                  : 'bg-white/[0.06] border border-white/[0.08] text-white/60 hover:bg-white/[0.10]'
-              }`}
-            >
-              All Works
-            </button>
-            {categories.map(category => (
-              <button
-                key={category}
-                onClick={() => setSelectedCategory(category)}
-                className={`px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider whitespace-nowrap transition-all ${
-                  selectedCategory === category
-                    ? 'bg-red-600 text-white'
-                    : 'bg-white/[0.06] border border-white/[0.08] text-white/60 hover:bg-white/[0.10]'
-                }`}
-              >
-                {category}
-              </button>
-            ))}
-          </div>
+          {categories.length > 0 && (
+            <>
+              <div className="h-4 w-px bg-white/[0.08] hidden md:block" />
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-[10px] uppercase tracking-widest text-white/25 font-bold">Category</span>
+                <button
+                  onClick={() => setSelectedCategory(null)}
+                  className={`px-3 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wider whitespace-nowrap transition-all ${
+                    selectedCategory === null
+                      ? 'bg-white/10 text-white'
+                      : 'bg-white/[0.05] border border-white/[0.08] text-white/50 hover:text-white/80'
+                  }`}
+                >All</button>
+                {categories.map(category => (
+                  <button
+                    key={category}
+                    onClick={() => setSelectedCategory(category)}
+                    className={`px-3 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wider whitespace-nowrap transition-all ${
+                      selectedCategory === category
+                        ? 'bg-white/10 text-white'
+                        : 'bg-white/[0.05] border border-white/[0.08] text-white/50 hover:text-white/80'
+                    }`}
+                  >{category}</button>
+                ))}
+              </div>
+            </>
+          )}
         </div>
       </section>
 
       {/* Art Gallery Grid */}
-      <section className="px-6 md:px-12 py-16 md:py-24">
+      <section className="px-6 md:px-12 py-12 md:py-16">
         <div className="max-w-7xl mx-auto">
           {/* Loading State */}
           {loading && (
@@ -153,12 +148,12 @@ const ArtPage: React.FC = () => {
 
           {!loading && (
             <>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
                 {filteredPieces.map((piece) => (
                   <button
                     key={piece.id}
                     onClick={() => setSelectedArt(piece)}
-                    className="group text-left bg-white/[0.04] backdrop-blur-md border border-white/[0.06] rounded-2xl overflow-hidden hover:border-white/[0.12] transition-all duration-500 hover:scale-[1.02] hover:bg-white/[0.08]"
+                    className="group text-left bg-white/[0.03] border border-white/[0.07] rounded-2xl overflow-hidden hover:border-white/[0.14] hover:bg-white/[0.06] transition-all duration-400 hover:-translate-y-0.5 hover:shadow-[0_16px_40px_rgba(0,0,0,0.5)]"
                   >
                     {/* Artwork Image */}
                     <div className="relative aspect-square overflow-hidden bg-white/[0.02]">
