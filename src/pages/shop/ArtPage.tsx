@@ -1,7 +1,6 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { Heart, Share2, Lock, ShoppingCart } from 'lucide-react';
 import ShopFooter from '../../components/ShopFooter';
-import ShopNav from '../../components/ShopNav';
 import { useCyberDecodeInView } from '../../hooks/useCyberDecode';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { useArt } from '../../hooks/useArt';
@@ -19,6 +18,7 @@ const ArtPage: React.FC = () => {
   const [selectedArt, setSelectedArt] = useState<Art | null>(null);
   const [likedPieces, setLikedPieces] = useState<string[]>([]);
   const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set());
+  const [gridSize, setGridSize] = useState<'large' | 'medium' | 'small'>('medium');
 
   const handleImageLoad = useCallback((id: string) => {
     setLoadedImages(prev => new Set(prev).add(id));
@@ -75,61 +75,123 @@ const ArtPage: React.FC = () => {
             A curated portfolio of digital art, cover designs, visual art, and conceptual work. From album artwork to experimental visuals.
           </p>
         </div>
-        <ShopNav />
       </section>
 
-      {/* Filters */}
+      {/* Filters + Grid Size Toggle */}
       <section className="px-6 md:px-12 py-4 border-b border-white/[0.06]">
-        <div className="max-w-7xl mx-auto flex flex-wrap items-center gap-x-6 gap-y-3">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-[10px] uppercase tracking-widest text-white/25 font-bold">Type</span>
-            <button
-              onClick={() => setSelectedType(null)}
-              className={`px-3 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wider whitespace-nowrap transition-all ${
-                selectedType === null
-                  ? 'bg-red-600 text-white shadow-[0_0_12px_rgba(220,38,38,0.3)]'
-                  : 'bg-white/[0.05] border border-white/[0.08] text-white/50 hover:text-white/80'
-              }`}
-            >All</button>
-            {artTypes.map(type => (
+        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-y-3">
+          {/* Filter pills */}
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-[10px] uppercase tracking-widest text-white/25 font-bold">Type</span>
               <button
-                key={type}
-                onClick={() => setSelectedType(type)}
+                onClick={() => setSelectedType(null)}
                 className={`px-3 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wider whitespace-nowrap transition-all ${
-                  selectedType === type
+                  selectedType === null
                     ? 'bg-red-600 text-white shadow-[0_0_12px_rgba(220,38,38,0.3)]'
                     : 'bg-white/[0.05] border border-white/[0.08] text-white/50 hover:text-white/80'
                 }`}
-              >{type}</button>
-            ))}
-          </div>
-          {categories.length > 0 && (
-            <>
-              <div className="h-4 w-px bg-white/[0.08] hidden md:block" />
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-[10px] uppercase tracking-widest text-white/25 font-bold">Category</span>
+              >All</button>
+              {artTypes.map(type => (
                 <button
-                  onClick={() => setSelectedCategory(null)}
+                  key={type}
+                  onClick={() => setSelectedType(type)}
                   className={`px-3 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wider whitespace-nowrap transition-all ${
-                    selectedCategory === null
-                      ? 'bg-white/10 text-white'
+                    selectedType === type
+                      ? 'bg-red-600 text-white shadow-[0_0_12px_rgba(220,38,38,0.3)]'
                       : 'bg-white/[0.05] border border-white/[0.08] text-white/50 hover:text-white/80'
                   }`}
-                >All</button>
-                {categories.map(category => (
+                >{type}</button>
+              ))}
+            </div>
+            {categories.length > 0 && (
+              <>
+                <div className="h-4 w-px bg-white/[0.08] hidden md:block" />
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-[10px] uppercase tracking-widest text-white/25 font-bold">Category</span>
                   <button
-                    key={category}
-                    onClick={() => setSelectedCategory(category)}
+                    onClick={() => setSelectedCategory(null)}
                     className={`px-3 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wider whitespace-nowrap transition-all ${
-                      selectedCategory === category
+                      selectedCategory === null
                         ? 'bg-white/10 text-white'
                         : 'bg-white/[0.05] border border-white/[0.08] text-white/50 hover:text-white/80'
                     }`}
-                  >{category}</button>
-                ))}
-              </div>
-            </>
-          )}
+                  >All</button>
+                  {categories.map(category => (
+                    <button
+                      key={category}
+                      onClick={() => setSelectedCategory(category)}
+                      className={`px-3 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wider whitespace-nowrap transition-all ${
+                        selectedCategory === category
+                          ? 'bg-white/10 text-white'
+                          : 'bg-white/[0.05] border border-white/[0.08] text-white/50 hover:text-white/80'
+                      }`}
+                    >{category}</button>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Grid size toggle */}
+          <div className="flex items-center gap-1 flex-shrink-0 ml-auto">
+            {/* Large: 2-col */}
+            <button
+              onClick={() => setGridSize('large')}
+              title="Large"
+              className={`p-2 rounded-lg transition-all ${gridSize === 'large' ? 'bg-white/[0.12] text-white' : 'text-white/30 hover:text-white/60'}`}
+            >
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <rect x="1" y="1" width="6" height="6" rx="1" fill="currentColor"/>
+                <rect x="9" y="1" width="6" height="6" rx="1" fill="currentColor"/>
+                <rect x="1" y="9" width="6" height="6" rx="1" fill="currentColor"/>
+                <rect x="9" y="9" width="6" height="6" rx="1" fill="currentColor"/>
+              </svg>
+            </button>
+            {/* Medium: 3-col */}
+            <button
+              onClick={() => setGridSize('medium')}
+              title="Medium"
+              className={`p-2 rounded-lg transition-all ${gridSize === 'medium' ? 'bg-white/[0.12] text-white' : 'text-white/30 hover:text-white/60'}`}
+            >
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <rect x="1" y="1" width="4" height="4" rx="0.8" fill="currentColor"/>
+                <rect x="6" y="1" width="4" height="4" rx="0.8" fill="currentColor"/>
+                <rect x="11" y="1" width="4" height="4" rx="0.8" fill="currentColor"/>
+                <rect x="1" y="6" width="4" height="4" rx="0.8" fill="currentColor"/>
+                <rect x="6" y="6" width="4" height="4" rx="0.8" fill="currentColor"/>
+                <rect x="11" y="6" width="4" height="4" rx="0.8" fill="currentColor"/>
+                <rect x="1" y="11" width="4" height="4" rx="0.8" fill="currentColor"/>
+                <rect x="6" y="11" width="4" height="4" rx="0.8" fill="currentColor"/>
+                <rect x="11" y="11" width="4" height="4" rx="0.8" fill="currentColor"/>
+              </svg>
+            </button>
+            {/* Small: 4-col */}
+            <button
+              onClick={() => setGridSize('small')}
+              title="Small"
+              className={`p-2 rounded-lg transition-all ${gridSize === 'small' ? 'bg-white/[0.12] text-white' : 'text-white/30 hover:text-white/60'}`}
+            >
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <rect x="1" y="1" width="3" height="3" rx="0.6" fill="currentColor"/>
+                <rect x="4.5" y="1" width="3" height="3" rx="0.6" fill="currentColor"/>
+                <rect x="8" y="1" width="3" height="3" rx="0.6" fill="currentColor"/>
+                <rect x="11.5" y="1" width="3" height="3" rx="0.6" fill="currentColor"/>
+                <rect x="1" y="4.5" width="3" height="3" rx="0.6" fill="currentColor"/>
+                <rect x="4.5" y="4.5" width="3" height="3" rx="0.6" fill="currentColor"/>
+                <rect x="8" y="4.5" width="3" height="3" rx="0.6" fill="currentColor"/>
+                <rect x="11.5" y="4.5" width="3" height="3" rx="0.6" fill="currentColor"/>
+                <rect x="1" y="8" width="3" height="3" rx="0.6" fill="currentColor"/>
+                <rect x="4.5" y="8" width="3" height="3" rx="0.6" fill="currentColor"/>
+                <rect x="8" y="8" width="3" height="3" rx="0.6" fill="currentColor"/>
+                <rect x="11.5" y="8" width="3" height="3" rx="0.6" fill="currentColor"/>
+                <rect x="1" y="11.5" width="3" height="3" rx="0.6" fill="currentColor"/>
+                <rect x="4.5" y="11.5" width="3" height="3" rx="0.6" fill="currentColor"/>
+                <rect x="8" y="11.5" width="3" height="3" rx="0.6" fill="currentColor"/>
+                <rect x="11.5" y="11.5" width="3" height="3" rx="0.6" fill="currentColor"/>
+              </svg>
+            </button>
+          </div>
         </div>
       </section>
 
@@ -147,7 +209,11 @@ const ArtPage: React.FC = () => {
 
           {!loading && (
             <>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
+              <div className={`grid gap-3 md:gap-4 transition-all ${
+                gridSize === 'large'  ? 'grid-cols-1 sm:grid-cols-2' :
+                gridSize === 'medium' ? 'grid-cols-2 md:grid-cols-3' :
+                                        'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5'
+              }`}>
                 {filteredPieces.map((piece) => (
                   <button
                     key={piece.id}

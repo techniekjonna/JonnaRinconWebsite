@@ -1,7 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { Zap, Headphones, Music, Volume2, Users, Palette, ArrowRight } from 'lucide-react';
 import ShopFooter from '../../components/ShopFooter';
-import ShopNav from '../../components/ShopNav';
 import { useCyberDecodeInView } from '../../hooks/useCyberDecode';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { useServices } from '../../hooks/useServices';
@@ -88,7 +87,6 @@ const ServicesPage: React.FC = () => {
             Professional music production services to elevate your sound. Get expert guidance from an experienced electronic music artist.
           </p>
         </div>
-        <ShopNav />
       </section>
 
       {/* Services Grid */}

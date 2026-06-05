@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import { Search, Filter, Grid3x3, List, Play, Pause, ShoppingCart, X, Sliders, ChevronLeft, ChevronRight, Package } from 'lucide-react';
 import { Beat, BeatPack } from '../../lib/firebase/types';
 import ShopFooter from '../../components/ShopFooter';
-import ShopNav from '../../components/ShopNav';
 import { useCyberDecodeInView } from '../../hooks/useCyberDecode';
 import { useCart } from '../../hooks/useCart';
 import { toDirectUrl } from '../../lib/utils/urlUtils';
@@ -196,7 +195,6 @@ const BeatsShop: React.FC = () => {
             High-quality instrumentals across every genre. Find your sound and elevate your music.
           </p>
         </div>
-        <ShopNav />
       </section>
 
       {/* Filter Modal */}
