@@ -13,9 +13,6 @@ export default function Footer() {
                 className="h-[100px] md:h-[130px] w-auto"
               />
             </div>
-            <p className="text-white/50 text-xs uppercase tracking-wider mb-2">
-              Management by Get Major Gigs
-            </p>
             <p className="text-white/30 text-sm leading-relaxed">
               Professional producer and beatmaker crafting premium beats for artists worldwide.
             </p>

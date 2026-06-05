@@ -116,7 +116,7 @@ const Header: React.FC = () => {
                     <img
                       src="/JEIGHTEEN-logo.png"
                       alt="JEIGHTEEN"
-                      className="h-10 w-auto object-contain opacity-90 hover:opacity-100 transition-opacity"
+                      className="h-16 w-auto object-contain opacity-90 hover:opacity-100 transition-opacity"
                     />
                   </Link>
                 ) : (
@@ -150,7 +150,7 @@ const Header: React.FC = () => {
           {/* Mobile: JEIGHTEEN logo on shop, text on main */}
           {isShopRoute ? (
             <Link to="/shop" className="md:hidden flex-1 flex justify-center">
-              <img src="/JEIGHTEEN-logo.png" alt="JEIGHTEEN" className="h-7 w-auto object-contain opacity-90" />
+              <img src="/JEIGHTEEN-logo.png" alt="JEIGHTEEN" className="h-10 w-auto object-contain opacity-90" />
             </Link>
           ) : (
             <Link to="/" className="md:hidden flex-1 flex justify-center">
