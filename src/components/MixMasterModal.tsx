@@ -186,7 +186,7 @@ export default function MixMasterModal({ service, isOpen, onClose }: MixMasterMo
 
   // ─── Info Page ───────────────────────────────────────────────────────────────
   const renderInfoPage = () => (
-    <div className="grid grid-cols-1 md:grid-cols-5 gap-0 overflow-y-auto max-h-[calc(90vh-60px)]">
+    <div className="grid grid-cols-1 md:grid-cols-5 gap-0 overflow-y-auto flex-1">
       {/* Left Column */}
       <div className="md:col-span-2 bg-gradient-to-b from-white/[0.08] to-transparent p-4 md:p-6 border-b md:border-b-0 md:border-r border-white/[0.1]">
         {/* Visual */}
@@ -670,17 +670,17 @@ export default function MixMasterModal({ service, isOpen, onClose }: MixMasterMo
   // ─── Render ──────────────────────────────────────────────────────────────────
   return (
     <>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 max-h-screen overflow-y-auto">
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
         {/* Backdrop */}
-        <div className="absolute inset-0 bg-black/50 backdrop-blur-md" onClick={onClose} />
+        <div className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={onClose} />
 
         {/* Modal */}
         <div
           ref={modalRef}
-          className="relative w-full max-w-2xl bg-gradient-to-br from-white/[0.12] to-white/[0.05] backdrop-blur-2xl border border-white/[0.2] rounded-3xl overflow-hidden shadow-2xl my-4 max-h-[90vh] flex flex-col"
+          className="relative w-full max-w-2xl bg-gradient-to-br from-white/[0.12] to-white/[0.05] backdrop-blur-2xl border border-white/[0.2] rounded-3xl overflow-hidden shadow-2xl max-h-[82vh] flex flex-col"
         >
           {/* Header */}
-          <div className="sticky top-0 z-20 bg-white/[0.06] backdrop-blur-sm border-b border-white/[0.15] px-6 py-4 flex items-center justify-between">
+          <div className="sticky top-0 z-20 bg-white/[0.06] backdrop-blur-sm border-b border-white/[0.15] px-6 py-4 flex items-center justify-between flex-shrink-0">
             {/* Featured Badge (info page only) */}
             {service.featured && page === 'info' ? (
               <div className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-purple-500/30 to-pink-500/30 border border-purple-400/30 rounded-full">
@@ -694,9 +694,9 @@ export default function MixMasterModal({ service, isOpen, onClose }: MixMasterMo
             {/* Close Button */}
             <button
               onClick={onClose}
-              className="p-2 bg-white/[0.1] hover:bg-white/[0.2] rounded-full text-white/60 hover:text-white transition-all duration-200"
+              className="p-2.5 bg-black/50 hover:bg-white/[0.15] border border-white/[0.15] rounded-full text-white/80 hover:text-white transition-all shadow-md"
             >
-              <X size={24} />
+              <X size={18} />
             </button>
           </div>
 
