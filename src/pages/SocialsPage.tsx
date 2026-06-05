@@ -156,8 +156,7 @@ export default function SocialsPage() {
                 </div>
               </div>
               <div className="border-t border-white/[0.06] pt-6">
-                <p className="text-white/25 text-xs uppercase tracking-wider mb-1">Management</p>
-                <p className="text-white/50 text-sm">Get Major Gigs</p>
+                <p className="text-white/25 text-xs uppercase tracking-wider mb-1">Contact</p>
                 <a href="mailto:jonnarincon@getmajorgigs.com" className="text-white/40 hover:text-red-400 transition-colors text-sm">
                   jonnarincon@getmajorgigs.com
                 </a>
