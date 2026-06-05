@@ -116,7 +116,7 @@ const Header: React.FC = () => {
                     <img
                       src="/JEIGHTEEN-logo.png"
                       alt="JEIGHTEEN"
-                      className="h-16 w-auto object-contain opacity-90 hover:opacity-100 transition-opacity"
+                      className="h-20 w-auto object-contain opacity-90 hover:opacity-100 transition-opacity"
                     />
                   </Link>
                 ) : (

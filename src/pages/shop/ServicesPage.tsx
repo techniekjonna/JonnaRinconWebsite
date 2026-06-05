@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { Zap, Headphones, Music, Volume2, Users, Palette, ArrowRight } from 'lucide-react';
-import Footer from '../../components/Footer';
+import ShopFooter from '../../components/ShopFooter';
 import { useCyberDecodeInView } from '../../hooks/useCyberDecode';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { useServices } from '../../hooks/useServices';
@@ -64,24 +64,26 @@ const ServicesPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen text-white">
-      {/* Fixed Dark Overlay */}
-      <div className="fixed inset-0 w-full h-screen -z-10 bg-black/20" />
-
+    <div className="min-h-screen text-white bg-[#0a0a0a]">
 
       {/* Hero Section */}
-      <section className="relative pt-40 px-6 md:px-12 pb-4">
-        <div className="relative z-10 max-w-7xl mx-auto w-full">
+      <section className="relative pt-40 pb-16 px-6 md:px-12 overflow-hidden">
+        <div className="absolute inset-0">
+          <img src="/DJI_20251018172151_0031_D.JPG" alt="" className="w-full h-full object-cover" style={{ objectPosition: 'center 35%' }} />
+          <div className="absolute inset-0 bg-black/70" />
+          <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-[#0a0a0a] to-transparent" />
+        </div>
+        <div className="relative z-10 max-w-7xl mx-auto w-full text-center">
+          <p className="text-xs font-black uppercase tracking-[0.45em] text-red-500 mb-5">JEIGHTEEN STORE</p>
           <h1
             ref={heroTitle.ref as React.RefObject<HTMLHeadingElement>}
             style={{ fontSize: 'clamp(1.875rem, 8vw, 10.2rem)' }}
-            className="font-black uppercase leading-[0.85] tracking-tighter mb-8 text-center"
+            className="font-black uppercase leading-[0.85] tracking-tighter mb-6 text-white"
           >
             {heroTitle.display}
           </h1>
-          <p className="text-white/30 text-sm md:text-base text-center max-w-2xl mx-auto">
-            Professional music production services to elevate your sound. Get expert guidance from
-            an experienced electronic music artist.
+          <p className="text-white/60 text-sm md:text-base max-w-2xl mx-auto">
+            Professional music production services to elevate your sound. Get expert guidance from an experienced electronic music artist.
           </p>
         </div>
       </section>
@@ -165,7 +167,7 @@ const ServicesPage: React.FC = () => {
         </div>
       </section>
 
-      <Footer />
+      <ShopFooter />
 
       {/* Service Modals */}
       {selectedService && isMixMasterService(selectedService) && (
