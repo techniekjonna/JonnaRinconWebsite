@@ -109,14 +109,14 @@ const Header: React.FC = () => {
 
               {/* Center brand — JEIGHTEEN logo on shop, text on main */}
               <div
-                className="text-center px-12 border-x border-white/[0.08] flex-shrink-0"
+                className="text-center px-6 border-x border-white/[0.08] flex-shrink-0"
               >
                 {isShopRoute ? (
                   <Link to="/shop">
                     <img
                       src="/JEIGHTEEN-logo.png"
                       alt="JEIGHTEEN"
-                      className="h-20 w-auto object-contain opacity-90 hover:opacity-100 transition-opacity"
+                      className="h-20 md:h-28 w-auto object-contain opacity-90 hover:opacity-100 transition-opacity"
                     />
                   </Link>
                 ) : (
@@ -150,7 +150,7 @@ const Header: React.FC = () => {
           {/* Mobile: JEIGHTEEN logo on shop, text on main */}
           {isShopRoute ? (
             <Link to="/shop" className="md:hidden flex-1 flex justify-center">
-              <img src="/JEIGHTEEN-logo.png" alt="JEIGHTEEN" className="h-10 w-auto object-contain opacity-90" />
+              <img src="/JEIGHTEEN-logo.png" alt="JEIGHTEEN" className="h-14 w-auto object-contain opacity-90" />
             </Link>
           ) : (
             <Link to="/" className="md:hidden flex-1 flex justify-center">

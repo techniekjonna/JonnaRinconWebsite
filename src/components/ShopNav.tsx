@@ -10,7 +10,7 @@ const NAV_ITEMS = [
 export default function ShopNav() {
   const { pathname } = useLocation();
   return (
-    <div className="relative z-10 bg-[#0a0a0a]/95 border-b border-white/[0.06]">
+    <div className="relative z-10 bg-black/40 backdrop-blur-sm border-t border-white/[0.08]">
       <div className="max-w-7xl mx-auto px-6 md:px-12">
         <div className="flex items-center overflow-x-auto scrollbar-none">
           <Link
@@ -29,7 +29,7 @@ export default function ShopNav() {
               className={`px-4 py-3.5 text-[11px] font-bold uppercase tracking-widest border-b-2 -mb-px transition-all whitespace-nowrap flex-shrink-0 ${
                 pathname === item.href
                   ? 'border-red-600 text-white'
-                  : 'border-transparent text-white/30 hover:text-white/70'
+                  : 'border-transparent text-white/40 hover:text-white/80'
               }`}
             >
               {item.label}

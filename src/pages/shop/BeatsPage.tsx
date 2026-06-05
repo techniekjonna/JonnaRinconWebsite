@@ -179,15 +179,15 @@ const BeatsShop: React.FC = () => {
   return (
     <div className="min-h-screen text-white bg-[#0a0a0a]">
 
-      {/* Hero Section */}
-      <section className="relative pt-44 pb-20 px-6 md:px-12 overflow-hidden">
+      {/* Hero Section — image extends behind header and ShopNav */}
+      <section className="relative overflow-hidden -mt-28 sm:-mt-32">
         <div className="absolute inset-0">
-          <img src="/DJI_20251017150728_0019_D.JPG" alt="" className="w-full h-full object-cover" style={{ objectPosition: 'center 40%' }} />
-          <div className="absolute inset-0 bg-gradient-to-br from-black/80 via-black/60 to-black/80" />
+          <img src="/stu.png" alt="" className="w-full h-full object-cover" style={{ objectPosition: 'center 40%' }} />
+          <div className="absolute inset-0 bg-gradient-to-br from-black/75 via-black/55 to-black/75" />
           <div className="absolute inset-0" style={{ backgroundImage: 'radial-gradient(circle at 80% 40%, rgba(220,38,38,0.07) 0%, transparent 60%)' }} />
-          <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-[#0a0a0a] to-transparent" />
+          <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-[#0a0a0a] to-transparent" />
         </div>
-        <div className="relative z-10 max-w-7xl mx-auto w-full">
+        <div className="relative z-10 pt-52 sm:pt-56 pb-12 px-6 md:px-12 max-w-7xl mx-auto w-full">
           <p className="text-xs font-black uppercase tracking-[0.45em] text-red-500 mb-4">JEIGHTEEN STORE</p>
           <h1 ref={heroTitle.ref as React.RefObject<HTMLHeadingElement>} style={{fontSize: 'clamp(2.5rem, 9vw, 10.2rem)'}} className="font-black uppercase leading-[0.85] tracking-tighter mb-5 text-white">
             {heroTitle.display}
@@ -196,9 +196,8 @@ const BeatsShop: React.FC = () => {
             High-quality instrumentals across every genre. Find your sound and elevate your music.
           </p>
         </div>
+        <ShopNav />
       </section>
-
-      <ShopNav />
 
       {/* Filter Modal */}
       <section className="px-6 md:px-12">
