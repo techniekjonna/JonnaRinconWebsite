@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowUpRight, Headphones, ChevronDown, Mic2, Package } from 'lucide-react';
 import ShopFooter from '../../components/ShopFooter';
@@ -122,6 +122,12 @@ const ShopPage: React.FC = () => {
   const categoriesRef = useRef<HTMLElement>(null);
   const [aboutRef, aboutInView] = useInView({ threshold: 0.1 });
   const [ctaRef, ctaInView] = useInView({ threshold: 0.1 });
+  const [heroReady, setHeroReady] = useState(false);
+
+  useEffect(() => {
+    const t = setTimeout(() => setHeroReady(true), 150);
+    return () => clearTimeout(t);
+  }, []);
 
   const scrollToCategories = () => {
     categoriesRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -145,14 +151,27 @@ const ShopPage: React.FC = () => {
           >
             <source src="/Shop home video.mp4" type="video/mp4" />
           </video>
-          {/* Overlay */}
-          <div className="absolute inset-0 bg-black/45" />
+          {/* Overlay — fades in from transparent */}
+          <div
+            className="absolute inset-0 transition-all duration-1000"
+            style={{ backgroundColor: heroReady ? 'rgba(0,0,0,0.45)' : 'rgba(0,0,0,0)' }}
+          />
           {/* Bottom fade into next section */}
-          <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-black to-transparent" />
+          <div
+            className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-black to-transparent transition-opacity duration-1000"
+            style={{ opacity: heroReady ? 1 : 0 }}
+          />
         </div>
 
-        {/* Hero content */}
-        <div className="relative z-10 text-center px-6 max-w-4xl mx-auto pt-32">
+        {/* Hero content — fades + slides up */}
+        <div
+          className="relative z-10 text-center px-6 max-w-4xl mx-auto pt-32 transition-all duration-700"
+          style={{
+            opacity: heroReady ? 1 : 0,
+            transform: heroReady ? 'translateY(0)' : 'translateY(24px)',
+            transitionDelay: heroReady ? '400ms' : '0ms',
+          }}
+        >
           <p className="text-xs font-black uppercase tracking-[0.45em] text-red-500 mb-5">
             JEIGHTEEN STORE
           </p>
@@ -180,10 +199,14 @@ const ShopPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Scroll indicator */}
+        {/* Scroll indicator — delayed fade in */}
         <button
           onClick={scrollToCategories}
-          className="absolute bottom-10 left-0 right-0 flex flex-col items-center gap-2 text-white/40 hover:text-white/70 transition-colors duration-300 cursor-pointer"
+          className="absolute bottom-10 left-0 right-0 flex flex-col items-center gap-2 text-white/40 hover:text-white/70 transition-all duration-700 cursor-pointer"
+          style={{
+            opacity: heroReady ? 1 : 0,
+            transitionDelay: heroReady ? '700ms' : '0ms',
+          }}
         >
           <span className="text-xs uppercase tracking-[0.3em] font-semibold">Scroll</span>
           <ChevronDown className="w-5 h-5 animate-bounce" />

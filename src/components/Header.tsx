@@ -176,11 +176,13 @@ const Header: React.FC = () => {
                       />
                     </button>
                   ) : (
-                    <img
-                      src="/JEIGHTEEN-logo.png"
-                      alt="JEIGHTEEN"
-                      className="h-20 md:h-24 w-auto object-contain opacity-90"
-                    />
+                    <Link to="/shop" className="hover:opacity-100 transition-opacity">
+                      <img
+                        src="/JEIGHTEEN-logo.png"
+                        alt="JEIGHTEEN"
+                        className="h-20 md:h-24 w-auto object-contain opacity-90"
+                      />
+                    </Link>
                   )
                 ) : (
                   isPlayingNow ? (
@@ -266,7 +268,9 @@ const Header: React.FC = () => {
                   <img src="/JEIGHTEEN-logo.png" alt="JEIGHTEEN" className="h-9 w-auto object-contain opacity-90" />
                 </button>
               ) : (
-                <img src="/JEIGHTEEN-logo.png" alt="JEIGHTEEN" className="h-9 w-auto object-contain opacity-90" />
+                <Link to="/shop" className="flex justify-center hover:opacity-100 transition-opacity">
+                  <img src="/JEIGHTEEN-logo.png" alt="JEIGHTEEN" className="h-9 w-auto object-contain opacity-90" />
+                </Link>
               )
             ) : (
               isPlayingNow ? (
