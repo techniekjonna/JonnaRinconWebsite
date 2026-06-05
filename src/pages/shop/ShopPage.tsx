@@ -132,15 +132,20 @@ const ShopPage: React.FC = () => {
 
       {/* ─── HERO ─── */}
       <section className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden -mt-28 sm:-mt-32">
-        {/* Background image */}
+        {/* Background video with image fallback */}
         <div className="absolute inset-0">
-          <img
-            src="/DJI_20251018172151_0031_D.JPG"
-            alt=""
-            className="w-full h-full object-cover"
+          <video
+            autoPlay
+            muted
+            loop
+            playsInline
+            poster="/DJI_20251018172151_0031_D.JPG"
+            className="absolute inset-0 w-full h-full object-cover"
             style={{ objectPosition: 'center 35%' }}
-          />
-          {/* Lighter overlay — key visual difference from main site */}
+          >
+            <source src="/Shop home video.mp4" type="video/mp4" />
+          </video>
+          {/* Overlay */}
           <div className="absolute inset-0 bg-black/45" />
           {/* Bottom fade into next section */}
           <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-black to-transparent" />
@@ -347,10 +352,10 @@ const ShopPage: React.FC = () => {
       >
         <div className="absolute inset-0">
           <img
-            src="/DJI_20251017150728_0019_D.JPG"
+            src="/DJI_20251018172151_0031_D.JPG"
             alt=""
             className="w-full h-full object-cover"
-            style={{ objectPosition: 'center 40%' }}
+            style={{ objectPosition: 'center 35%' }}
           />
           <div className="absolute inset-0 bg-black/75" />
         </div>
