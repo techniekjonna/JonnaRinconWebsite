@@ -148,7 +148,7 @@ export default function PromoSection() {
           {images.length > 0 && (
             <div className="relative flex flex-col gap-4">
               {/* Carousel frame */}
-              <div className="relative aspect-[3/4] overflow-hidden bg-white/[0.03] border border-white/[0.06]">
+              <div className="relative aspect-[4/3] overflow-hidden bg-white/[0.03] border border-white/[0.06] rounded-2xl">
                 {images.map((src, i) => (
                   <img
                     key={i}
