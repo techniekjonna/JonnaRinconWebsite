@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { Search, Filter, Grid3x3, List, Play, Pause, ShoppingCart, X, Sliders, ChevronLeft, ChevronRight, Package } from 'lucide-react';
 import { Beat, BeatPack } from '../../lib/firebase/types';
-import Footer from '../../components/Footer';
+import ShopFooter from '../../components/ShopFooter';
 import { useCyberDecodeInView } from '../../hooks/useCyberDecode';
 import { useCart } from '../../hooks/useCart';
 import { toDirectUrl } from '../../lib/utils/urlUtils';
@@ -176,23 +176,24 @@ const BeatsShop: React.FC = () => {
   const trendingBeats = filteredBeats.filter(b => b.trending);
 
   return (
-    <div className="min-h-screen text-white">
-      {/* Fixed Dark Overlay */}
-      <div className="fixed inset-0 w-full h-screen -z-10 bg-black/20" />
+    <div className="min-h-screen text-white bg-[#0a0a0a]">
 
-
-      {/* Hero Section - Centered Layout */}
-      <section className="relative pt-40 px-6 md:px-12 pb-4">
-        <div className="relative z-10 max-w-7xl mx-auto w-full">
-          <h1 ref={heroTitle.ref as React.RefObject<HTMLHeadingElement>} style={{fontSize: 'clamp(1.875rem, 8vw, 10.2rem)'}} className="font-black uppercase leading-[0.85] tracking-tighter mb-8 text-center">
+      {/* Hero Section */}
+      <section className="relative pt-40 pb-16 px-6 md:px-12 overflow-hidden">
+        <div className="absolute inset-0">
+          <img src="/DJI_20251018172151_0031_D.JPG" alt="" className="w-full h-full object-cover" style={{ objectPosition: 'center 35%' }} />
+          <div className="absolute inset-0 bg-black/70" />
+          <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-[#0a0a0a] to-transparent" />
+        </div>
+        <div className="relative z-10 max-w-7xl mx-auto w-full text-center">
+          <p className="text-xs font-black uppercase tracking-[0.45em] text-red-500 mb-5">JEIGHTEEN STORE</p>
+          <h1 ref={heroTitle.ref as React.RefObject<HTMLHeadingElement>} style={{fontSize: 'clamp(1.875rem, 8vw, 10.2rem)'}} className="font-black uppercase leading-[0.85] tracking-tighter mb-6 text-white">
             {heroTitle.display}
           </h1>
-
-          {/* Filter Button */}
           <div className="flex justify-center">
             <button
               onClick={() => setIsFilterModalOpen(true)}
-              className="flex items-center gap-2 px-4 py-2.5 bg-white/[0.06] border border-white/[0.1] rounded-lg text-xs font-bold uppercase tracking-wider text-white/60 hover:text-white hover:bg-white/[0.12] transition-all"
+              className="flex items-center gap-2 px-4 py-2.5 bg-white/[0.08] border border-white/[0.2] rounded-lg text-xs font-bold uppercase tracking-wider text-white/70 hover:text-white hover:bg-white/[0.15] transition-all"
             >
               <Sliders size={16} />
               Filters
@@ -609,7 +610,7 @@ const BeatsShop: React.FC = () => {
         )}
       </div>
 
-      <Footer />
+      <ShopFooter />
     </div>
   );
 };
