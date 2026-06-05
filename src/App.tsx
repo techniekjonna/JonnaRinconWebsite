@@ -2,6 +2,7 @@ import Hero from './components/Hero';
 import Footer from './components/Footer';
 import SectionCards from './components/SectionCards';
 import MusicPreview from './components/MusicPreview';
+import PromoSection from './components/PromoSection';
 
 function App() {
   return (
@@ -9,6 +10,7 @@ function App() {
       <main className="pt-20">
         <div id="hero"><Hero /></div>
         <SectionCards />
+        <PromoSection />
         <MusicPreview />
         <Footer />
       </main>
