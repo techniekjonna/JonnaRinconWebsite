@@ -61,7 +61,7 @@ export default function SectionCards() {
             <a
               key={card.id}
               href={card.link}
-              className="group relative overflow-hidden border border-white/10 hover:border-red-600/50 transition-all duration-500 hover:-translate-y-1 hover:shadow-[0_20px_40px_rgba(239,68,68,0.15)]"
+              className="group relative overflow-hidden rounded-2xl border border-white/10 hover:border-red-600/50 transition-all duration-500 hover:-translate-y-1 hover:shadow-[0_24px_48px_rgba(239,68,68,0.18)]"
               style={{ textDecoration: 'none', aspectRatio: '16/7' }}
             >
               <img
@@ -72,8 +72,9 @@ export default function SectionCards() {
                 loading="lazy"
                 decoding="async"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
-              <div className="absolute top-0 left-0 right-0 h-0.5 bg-red-600 scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-black/10" />
+              <div className="absolute inset-0 rounded-2xl ring-1 ring-inset ring-white/[0.06] group-hover:ring-red-500/30 transition-all duration-500" />
+              <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-red-600 to-red-400 scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left rounded-t-2xl" />
 
               {/* Icon top-left */}
               <div className="absolute top-4 left-4">

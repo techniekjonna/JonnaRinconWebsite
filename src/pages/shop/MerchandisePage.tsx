@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ShoppingCart, Star, ChevronLeft, ChevronRight } from 'lucide-react';
 import ShopFooter from '../../components/ShopFooter';
+import ShopNav from '../../components/ShopNav';
 import MerchandiseDetailModal from '../../components/MerchandiseDetailModal';
 import { useCyberDecodeInView } from '../../hooks/useCyberDecode';
 import { useMerchandise } from '../../hooks/useMerchandise';
@@ -162,45 +163,49 @@ const MerchandisePage: React.FC = () => {
     <div className="min-h-screen text-white bg-[#0a0a0a]">
 
       {/* Hero Section */}
-      <section className="relative pt-40 pb-16 px-6 md:px-12 overflow-hidden">
+      <section className="relative pt-44 pb-20 px-6 md:px-12 overflow-hidden">
         <div className="absolute inset-0">
-          <img src="/DJI_20251018172151_0031_D.JPG" alt="" className="w-full h-full object-cover" style={{ objectPosition: 'center 35%' }} />
-          <div className="absolute inset-0 bg-black/70" />
-          <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-[#0a0a0a] to-transparent" />
+          <img src="/Menu Foto 1.png" alt="" className="w-full h-full object-cover" style={{ objectPosition: 'center 40%' }} />
+          <div className="absolute inset-0 bg-gradient-to-br from-black/80 via-black/60 to-black/80" />
+          <div className="absolute inset-0" style={{ backgroundImage: 'radial-gradient(circle at 30% 50%, rgba(220,38,38,0.06) 0%, transparent 60%)' }} />
+          <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-[#0a0a0a] to-transparent" />
         </div>
-        <div className="relative z-10 max-w-7xl mx-auto w-full text-center">
-          <p className="text-xs font-black uppercase tracking-[0.45em] text-red-500 mb-5">JEIGHTEEN STORE</p>
-          <h1 ref={heroTitle.ref as React.RefObject<HTMLHeadingElement>} style={{fontSize: 'clamp(1.875rem, 8vw, 10.2rem)'}} className="font-black uppercase leading-[0.85] tracking-tighter mb-6 text-white">
+        <div className="relative z-10 max-w-7xl mx-auto w-full">
+          <p className="text-xs font-black uppercase tracking-[0.45em] text-red-500 mb-4">JEIGHTEEN STORE</p>
+          <h1 ref={heroTitle.ref as React.RefObject<HTMLHeadingElement>} style={{fontSize: 'clamp(2.5rem, 9vw, 10.2rem)'}} className="font-black uppercase leading-[0.85] tracking-tighter mb-5 text-white">
             {heroTitle.display}
           </h1>
-          <p className="text-white/60 text-sm md:text-base max-w-2xl mx-auto">
+          <p className="text-white/50 text-sm md:text-base max-w-xl">
             Exclusive merchandise and limited-edition items. Show your support and grab high-quality apparel, vinyl, and more.
           </p>
         </div>
       </section>
 
+      <ShopNav />
+
       {/* Category Filter */}
-      <section className="px-6 md:px-12 py-6 border-b border-white/[0.06]">
+      <section className="px-6 md:px-12 py-5 border-b border-white/[0.06]">
         <div className="max-w-7xl mx-auto">
-          <div className="flex gap-3 overflow-x-auto pb-2">
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+            <span className="text-[10px] uppercase tracking-widest text-white/25 font-bold flex-shrink-0 mr-1">Filter</span>
             <button
               onClick={() => setSelectedCategory(null)}
-              className={`px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider whitespace-nowrap transition-all ${
+              className={`px-4 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wider whitespace-nowrap transition-all flex-shrink-0 ${
                 selectedCategory === null
-                  ? 'bg-red-600 text-white'
-                  : 'bg-white/[0.06] border border-white/[0.08] text-white/60 hover:bg-white/[0.10]'
+                  ? 'bg-red-600 text-white shadow-[0_0_12px_rgba(220,38,38,0.3)]'
+                  : 'bg-white/[0.05] border border-white/[0.08] text-white/50 hover:bg-white/[0.09] hover:text-white/80'
               }`}
             >
-              All Items
+              All
             </button>
             {categories.map(category => (
               <button
                 key={category}
                 onClick={() => setSelectedCategory(category)}
-                className={`px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider whitespace-nowrap transition-all ${
+                className={`px-4 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wider whitespace-nowrap transition-all flex-shrink-0 ${
                   selectedCategory === category
-                    ? 'bg-red-600 text-white'
-                    : 'bg-white/[0.06] border border-white/[0.08] text-white/60 hover:bg-white/[0.10]'
+                    ? 'bg-red-600 text-white shadow-[0_0_12px_rgba(220,38,38,0.3)]'
+                    : 'bg-white/[0.05] border border-white/[0.08] text-white/50 hover:bg-white/[0.09] hover:text-white/80'
                 }`}
               >
                 {category}
@@ -211,13 +216,13 @@ const MerchandisePage: React.FC = () => {
       </section>
 
       {/* Merchandise Grid */}
-      <section className="px-6 md:px-12 py-16 md:py-24">
+      <section className="px-6 md:px-12 py-12 md:py-16">
         <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-5">
             {filteredItems.map((item) => (
               <div
                 key={item.id}
-                className="group bg-white/[0.04] backdrop-blur-md border border-white/[0.06] rounded-2xl overflow-hidden hover:border-white/[0.12] transition-all duration-500 hover:scale-[1.02] hover:bg-white/[0.08] flex flex-col cursor-pointer"
+                className="group bg-white/[0.03] border border-white/[0.07] rounded-2xl overflow-hidden hover:border-white/[0.14] hover:bg-white/[0.06] transition-all duration-400 hover:-translate-y-0.5 hover:shadow-[0_16px_40px_rgba(0,0,0,0.5)] flex flex-col cursor-pointer"
                 onClick={() => handleOpenModal(item)}
               >
                 {/* Product Image */}
@@ -273,25 +278,13 @@ const MerchandisePage: React.FC = () => {
                 </div>
 
                 {/* Product Info */}
-                <div className="p-5 md:p-6 flex-1 flex flex-col">
-                  <h3 className="text-base md:text-lg font-bold text-white mb-2 line-clamp-2">{item.name}</h3>
-
-                  {/* Rating */}
-                  <div className="flex items-center gap-1 mb-4">
-                    {Array.from({ length: 5 }).map((_, i) => (
-                      <Star
-                        key={i}
-                        size={14}
-                        className={i < Math.floor(item.rating || 0) ? 'fill-yellow-400 text-yellow-400' : 'text-white/20'}
-                      />
-                    ))}
-                    <span className="text-xs text-white/40 ml-1">({item.rating?.toFixed(1) || 'N/A'})</span>
-                  </div>
+                <div className="p-4 md:p-5 flex-1 flex flex-col">
+                  <h3 className="text-sm md:text-base font-bold text-white mb-3 line-clamp-2 leading-snug">{item.name}</h3>
 
                   {/* Price and Button */}
-                  <div className="mt-auto flex items-center justify-between pt-5 border-t border-white/[0.06]">
-                    <span className="text-lg md:text-xl font-black text-red-500">
-                      ${item.price.toFixed(2)}
+                  <div className="mt-auto flex items-center justify-between pt-3 border-t border-white/[0.06]">
+                    <span className="text-base md:text-lg font-black text-white">
+                      €{item.price.toFixed(2)}
                     </span>
                     <button
                       onClick={(e) => {
@@ -299,14 +292,14 @@ const MerchandisePage: React.FC = () => {
                         handleAddToCart(item.id);
                       }}
                       disabled={(item.totalStock ?? 0) === 0}
-                      className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold transition-all group-hover:scale-105 ${
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wide transition-all ${
                         (item.totalStock ?? 0) > 0
                           ? 'bg-red-600 hover:bg-red-700 text-white'
-                          : 'bg-white/[0.04] text-white/30 cursor-not-allowed'
+                          : 'bg-white/[0.04] text-white/25 cursor-not-allowed'
                       }`}
                     >
-                      <ShoppingCart size={14} />
-                      {(item.totalStock ?? 0) === 0 ? 'Out of Stock' : 'Add'}
+                      <ShoppingCart size={12} />
+                      {(item.totalStock ?? 0) === 0 ? 'Sold out' : 'Add'}
                     </button>
                   </div>
                 </div>

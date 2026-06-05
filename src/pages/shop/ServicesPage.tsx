@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Zap, Headphones, Music, Volume2, Users, Palette, ArrowRight } from 'lucide-react';
 import ShopFooter from '../../components/ShopFooter';
+import ShopNav from '../../components/ShopNav';
 import { useCyberDecodeInView } from '../../hooks/useCyberDecode';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { useServices } from '../../hooks/useServices';
@@ -67,29 +68,32 @@ const ServicesPage: React.FC = () => {
     <div className="min-h-screen text-white bg-[#0a0a0a]">
 
       {/* Hero Section */}
-      <section className="relative pt-40 pb-16 px-6 md:px-12 overflow-hidden">
+      <section className="relative pt-44 pb-20 px-6 md:px-12 overflow-hidden">
         <div className="absolute inset-0">
           <img src="/DJI_20251018172151_0031_D.JPG" alt="" className="w-full h-full object-cover" style={{ objectPosition: 'center 35%' }} />
-          <div className="absolute inset-0 bg-black/70" />
-          <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-[#0a0a0a] to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-br from-black/80 via-black/60 to-black/80" />
+          <div className="absolute inset-0" style={{ backgroundImage: 'radial-gradient(circle at 70% 50%, rgba(220,38,38,0.07) 0%, transparent 60%)' }} />
+          <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-[#0a0a0a] to-transparent" />
         </div>
-        <div className="relative z-10 max-w-7xl mx-auto w-full text-center">
-          <p className="text-xs font-black uppercase tracking-[0.45em] text-red-500 mb-5">JEIGHTEEN STORE</p>
+        <div className="relative z-10 max-w-7xl mx-auto w-full">
+          <p className="text-xs font-black uppercase tracking-[0.45em] text-red-500 mb-4">JEIGHTEEN STORE</p>
           <h1
             ref={heroTitle.ref as React.RefObject<HTMLHeadingElement>}
-            style={{ fontSize: 'clamp(1.875rem, 8vw, 10.2rem)' }}
-            className="font-black uppercase leading-[0.85] tracking-tighter mb-6 text-white"
+            style={{ fontSize: 'clamp(2.5rem, 9vw, 10.2rem)' }}
+            className="font-black uppercase leading-[0.85] tracking-tighter mb-5 text-white"
           >
             {heroTitle.display}
           </h1>
-          <p className="text-white/60 text-sm md:text-base max-w-2xl mx-auto">
+          <p className="text-white/50 text-sm md:text-base max-w-xl">
             Professional music production services to elevate your sound. Get expert guidance from an experienced electronic music artist.
           </p>
         </div>
       </section>
 
+      <ShopNav />
+
       {/* Services Grid */}
-      <section className="px-6 md:px-12 py-16 md:py-24">
+      <section className="px-6 md:px-12 py-14 md:py-20">
         <div className="max-w-7xl mx-auto">
           {loading ? (
             <div className="flex items-center justify-center py-16">
@@ -100,14 +104,14 @@ const ServicesPage: React.FC = () => {
               <div className="text-white/50">No services available at the moment.</div>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
               {formattedServices.map((service) => {
                 const Icon = getIcon(service.icon);
                 return (
                   <button
                     key={service.id}
                     onClick={() => handleServiceClick(service)}
-                    className="group relative bg-white/[0.04] backdrop-blur-md border border-white/[0.06] rounded-3xl p-6 md:p-8 hover:border-white/[0.12] transition-all duration-500 hover:scale-[1.02] hover:bg-white/[0.08] flex flex-col text-left cursor-pointer"
+                    className="group relative bg-white/[0.03] border border-white/[0.07] rounded-2xl p-6 md:p-7 hover:border-red-600/30 hover:bg-white/[0.06] transition-all duration-400 hover:-translate-y-0.5 hover:shadow-[0_16px_40px_rgba(0,0,0,0.4)] flex flex-col text-left cursor-pointer"
                   >
                     {service.coverUrl ? (
                       <div className="w-14 h-14 rounded-2xl overflow-hidden mb-6 group-hover:scale-110 transition-transform duration-300 flex-shrink-0">
@@ -150,19 +154,20 @@ const ServicesPage: React.FC = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="px-6 md:px-12 py-16 md:py-24">
+      <section className="px-6 md:px-12 py-14 md:py-20">
         <div className="max-w-7xl mx-auto">
-          <div className="bg-white/[0.04] backdrop-blur-md border border-white/[0.06] rounded-3xl p-8 md:p-12 text-center">
+          <div className="relative overflow-hidden bg-white/[0.03] border border-white/[0.07] rounded-2xl p-8 md:p-12 text-center">
+            <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: 'radial-gradient(ellipse at 50% 0%, rgba(220,38,38,0.08) 0%, transparent 70%)' }} />
+            <p className="text-xs font-black uppercase tracking-[0.3em] text-red-500 mb-4">Get In Touch</p>
             <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tight mb-3">
               Ready to Work Together?
             </h2>
-            <p className="text-white/30 text-sm md:text-base mb-8 max-w-md mx-auto">
-              Have a custom project or want to discuss something specific? Get in touch to get
-              started.
+            <p className="text-white/40 text-sm md:text-base mb-8 max-w-md mx-auto">
+              Have a custom project or want to discuss something specific? Get in touch to get started.
             </p>
-            <button className="px-8 md:px-10 py-3.5 bg-red-600 hover:bg-red-500 text-white rounded-2xl font-bold transition-all hover:scale-[1.03]">
-              Contact Me
-            </button>
+            <a href="/contact" className="inline-flex items-center gap-2 px-8 md:px-10 py-3.5 bg-red-600 hover:bg-red-500 text-white rounded-xl font-bold transition-all hover:scale-[1.03] uppercase tracking-wider text-sm">
+              Contact Me <ArrowRight size={16} />
+            </a>
           </div>
         </div>
       </section>

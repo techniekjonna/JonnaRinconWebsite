@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Search, Filter, Grid3x3, List, Play, Pause, ShoppingCart, X, Sliders, ChevronLeft, ChevronRight, Package } from 'lucide-react';
 import { Beat, BeatPack } from '../../lib/firebase/types';
 import ShopFooter from '../../components/ShopFooter';
+import ShopNav from '../../components/ShopNav';
 import { useCyberDecodeInView } from '../../hooks/useCyberDecode';
 import { useCart } from '../../hooks/useCart';
 import { toDirectUrl } from '../../lib/utils/urlUtils';
@@ -179,28 +180,25 @@ const BeatsShop: React.FC = () => {
     <div className="min-h-screen text-white bg-[#0a0a0a]">
 
       {/* Hero Section */}
-      <section className="relative pt-40 pb-16 px-6 md:px-12 overflow-hidden">
+      <section className="relative pt-44 pb-20 px-6 md:px-12 overflow-hidden">
         <div className="absolute inset-0">
-          <img src="/DJI_20251018172151_0031_D.JPG" alt="" className="w-full h-full object-cover" style={{ objectPosition: 'center 35%' }} />
-          <div className="absolute inset-0 bg-black/70" />
-          <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-[#0a0a0a] to-transparent" />
+          <img src="/DJI_20251017150728_0019_D.JPG" alt="" className="w-full h-full object-cover" style={{ objectPosition: 'center 40%' }} />
+          <div className="absolute inset-0 bg-gradient-to-br from-black/80 via-black/60 to-black/80" />
+          <div className="absolute inset-0" style={{ backgroundImage: 'radial-gradient(circle at 80% 40%, rgba(220,38,38,0.07) 0%, transparent 60%)' }} />
+          <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-[#0a0a0a] to-transparent" />
         </div>
-        <div className="relative z-10 max-w-7xl mx-auto w-full text-center">
-          <p className="text-xs font-black uppercase tracking-[0.45em] text-red-500 mb-5">JEIGHTEEN STORE</p>
-          <h1 ref={heroTitle.ref as React.RefObject<HTMLHeadingElement>} style={{fontSize: 'clamp(1.875rem, 8vw, 10.2rem)'}} className="font-black uppercase leading-[0.85] tracking-tighter mb-6 text-white">
+        <div className="relative z-10 max-w-7xl mx-auto w-full">
+          <p className="text-xs font-black uppercase tracking-[0.45em] text-red-500 mb-4">JEIGHTEEN STORE</p>
+          <h1 ref={heroTitle.ref as React.RefObject<HTMLHeadingElement>} style={{fontSize: 'clamp(2.5rem, 9vw, 10.2rem)'}} className="font-black uppercase leading-[0.85] tracking-tighter mb-5 text-white">
             {heroTitle.display}
           </h1>
-          <div className="flex justify-center">
-            <button
-              onClick={() => setIsFilterModalOpen(true)}
-              className="flex items-center gap-2 px-4 py-2.5 bg-white/[0.08] border border-white/[0.2] rounded-lg text-xs font-bold uppercase tracking-wider text-white/70 hover:text-white hover:bg-white/[0.15] transition-all"
-            >
-              <Sliders size={16} />
-              Filters
-            </button>
-          </div>
+          <p className="text-white/50 text-sm md:text-base max-w-xl">
+            High-quality instrumentals across every genre. Find your sound and elevate your music.
+          </p>
         </div>
       </section>
+
+      <ShopNav />
 
       {/* Filter Modal */}
       <section className="px-6 md:px-12">
@@ -238,37 +236,40 @@ const BeatsShop: React.FC = () => {
       </section>
 
       {/* Search Bar */}
-      <section className="px-6 md:px-12 py-6 border-b border-white/[0.06]">
+      <section className="px-6 md:px-12 py-5 border-b border-white/[0.06]">
         <div className="max-w-7xl mx-auto">
-          <div className="relative mb-6 flex gap-2">
+          <div className="flex gap-2">
             <div className="relative flex-1">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
               <input
                 type="text"
-                placeholder="Search beats..."
+                placeholder="Search beats, artist, tags..."
                 value={filter.search || ''}
                 onChange={(e) => setFilter({ ...filter, search: e.target.value })}
-                className="w-full pl-11 pr-4 py-3 bg-white/[0.05] border border-white/[0.08] rounded-full text-white placeholder-white/25 focus:outline-none focus:border-red-500/40 transition-all text-sm"
+                className="w-full pl-11 pr-4 py-3 bg-white/[0.04] border border-white/[0.08] rounded-xl text-white placeholder-white/25 focus:outline-none focus:border-red-500/30 focus:bg-white/[0.06] transition-all text-sm"
               />
             </div>
-
-            {/* View Mode & Clear */}
-            <div className="flex gap-2">
+            <button
+              onClick={() => setIsFilterModalOpen(true)}
+              className="flex items-center gap-2 px-4 py-3 bg-white/[0.04] border border-white/[0.08] rounded-xl text-xs font-bold uppercase tracking-wide text-white/50 hover:text-white hover:bg-white/[0.08] transition-all"
+            >
+              <Sliders size={14} />
+              <span className="hidden md:inline">Filters</span>
+            </button>
+            <button
+              onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
+              className="p-3 bg-white/[0.04] border border-white/[0.08] rounded-xl text-white/40 hover:text-white/70 hover:bg-white/[0.08] transition-all"
+            >
+              {viewMode === 'grid' ? <List className="w-4 h-4" /> : <Grid3x3 className="w-4 h-4" />}
+            </button>
+            {hasActiveFilters && (
               <button
-                onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
-                className="p-3 bg-white/[0.06] border border-white/[0.08] rounded-full text-white/40 hover:text-white/70 hover:bg-white/[0.10] transition-all"
+                onClick={() => setFilter({ sortBy: 'newest' })}
+                className="p-3 bg-red-600/10 border border-red-500/20 rounded-xl text-red-400 hover:bg-red-600/20 transition-all"
               >
-                {viewMode === 'grid' ? <List className="w-4 h-4" /> : <Grid3x3 className="w-4 h-4" />}
+                <X className="w-4 h-4" />
               </button>
-              {hasActiveFilters && (
-                <button
-                  onClick={() => setFilter({ sortBy: 'newest' })}
-                  className="p-3 bg-red-600/20 border border-red-500/30 rounded-full text-red-400 hover:bg-red-600/30 transition-all"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              )}
-            </div>
+            )}
           </div>
         </div>
       </section>
