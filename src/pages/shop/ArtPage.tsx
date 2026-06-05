@@ -61,7 +61,7 @@ const ArtPage: React.FC = () => {
       {/* Hero Section — image extends behind header and ShopNav */}
       <section className="relative overflow-hidden -mt-28 sm:-mt-32">
         <div className="absolute inset-0">
-          <img src="https://internedata.nl/index.php/s/KvBJM9BKu8iAwdZ/download" alt="" className="w-full h-full object-cover" style={{ objectPosition: 'center 40%' }} />
+          <img src="https://internedata.nl/index.php/s/KvBJM9BKu8iAwdZ/download" alt="" className="w-full h-full object-cover" style={{ objectPosition: 'center 20%', transform: 'scale(1.35)', transformOrigin: 'center 25%' }} />
           <div className="absolute inset-0 bg-gradient-to-br from-black/75 via-black/55 to-black/75" />
           <div className="absolute inset-0" style={{ backgroundImage: 'radial-gradient(circle at 50% 60%, rgba(220,38,38,0.06) 0%, transparent 60%)' }} />
           <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-[#0a0a0a] to-transparent" />
