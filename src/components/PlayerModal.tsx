@@ -1,15 +1,13 @@
 import React, { useRef, useEffect } from 'react';
-import { X, Play, Pause, SkipBack, SkipForward, Shuffle, Repeat, Volume2, VolumeX, Info } from 'lucide-react';
+import { ChevronDown, Play, Pause, SkipBack, SkipForward, Shuffle, Repeat, Volume2, VolumeX, Info } from 'lucide-react';
 import { formatDuration } from '../lib/utils/audioMetadata';
 import {
-  togglePlayPause,
-  getCurrentTrack,
-  getIsPlaying,
   toggleShuffle,
   getIsShuffle,
   getCurrentIndex,
   getQueue
 } from './GlobalAudioPlayer';
+import ModalPortal from './ModalPortal';
 
 interface PlayerModalProps {
   isOpen: boolean;
@@ -29,12 +27,12 @@ interface PlayerModalProps {
   onPreviousClick: () => void;
   onNextClick: () => void;
   onInfoClick?: () => void;
+  track: { title: string; artist: string; coverArt?: string } | null;
 }
 
 export default function PlayerModal({
   isOpen,
   onClose,
-  audioRef,
   isPlaying,
   onPlayPauseClick,
   currentTime,
@@ -49,9 +47,10 @@ export default function PlayerModal({
   onPreviousClick,
   onNextClick,
   onInfoClick,
+  track,
 }: PlayerModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
-  const track = getCurrentTrack();
+  const isShuffle = getIsShuffle();
 
   useEffect(() => {
     if (!isOpen) return;
@@ -78,145 +77,157 @@ export default function PlayerModal({
 
   if (!isOpen || !track) return null;
 
-  const isShuffle = getIsShuffle();
+  const progressPct = duration ? (currentTime / duration) * 100 : 0;
+  const volumePct = (isMuted ? 0 : volume) * 100;
+  const queueLen = getQueue().length;
+  const queueIdx = getCurrentIndex() || 0;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
-      <div
-        ref={modalRef}
-        className="relative w-full max-w-lg bg-black/90 backdrop-blur-2xl border border-white/[0.12] rounded-2xl shadow-2xl overflow-hidden max-h-[82vh] flex flex-col"
-      >
-        <button
-          onClick={onClose}
-          className="absolute top-3 right-3 z-20 p-2.5 bg-black/50 hover:bg-white/[0.15] border border-white/[0.15] rounded-full text-white/80 hover:text-white transition-all shadow-md"
+    <ModalPortal>
+      <div className="fixed inset-0 z-[300] flex items-end sm:items-center justify-center sm:p-6 bg-black/70 backdrop-blur-md">
+        <div
+          ref={modalRef}
+          className="relative w-full sm:max-w-sm bg-[#111] border border-white/[0.08] rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden"
+          style={{ maxHeight: '95dvh' }}
         >
-          <X className="w-4 h-4" />
-        </button>
+          {/* Drag handle (mobile) */}
+          <div className="sm:hidden flex justify-center pt-3 pb-1 flex-shrink-0">
+            <div className="w-10 h-1 rounded-full bg-white/20" />
+          </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-0 overflow-y-auto flex-1">
-          {/* Left: Cover Art */}
-          {track.coverArt && (
-            <div className="relative aspect-square rounded-none overflow-hidden shadow-xl md:rounded-l-2xl">
-              <img
-                src={track.coverArt}
-                alt={track.title}
-                className="w-full h-full object-cover"
-              />
+          {/* Top bar */}
+          <div className="flex items-center justify-between px-5 pt-3 pb-1 flex-shrink-0">
+            <button
+              onClick={onClose}
+              className="p-2 rounded-full text-white/40 hover:text-white hover:bg-white/[0.08] transition-all"
+              title="Close"
+            >
+              <ChevronDown size={22} />
+            </button>
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/30">
+              {queueLen > 0 ? `${queueIdx + 1} / ${queueLen}` : 'Now Playing'}
+            </p>
+            {onInfoClick ? (
+              <button
+                onClick={onInfoClick}
+                className="p-2 rounded-full text-white/40 hover:text-white hover:bg-white/[0.08] transition-all"
+                title="Track details"
+              >
+                <Info size={18} />
+              </button>
+            ) : (
+              <div className="w-9" />
+            )}
+          </div>
+
+          {/* Scrollable content */}
+          <div className="overflow-y-auto flex-1">
+            {/* Cover Art */}
+            <div className="px-6 pt-3 pb-5">
+              {track.coverArt ? (
+                <div className="relative aspect-square rounded-2xl overflow-hidden shadow-2xl shadow-black/60">
+                  <img src={track.coverArt} alt={track.title} className="w-full h-full object-cover" />
+                </div>
+              ) : (
+                <div className="aspect-square rounded-2xl bg-white/[0.05] border border-white/[0.08] flex items-center justify-center">
+                  <div className="w-16 h-16 rounded-full bg-red-600/20 flex items-center justify-center">
+                    <Play size={28} className="text-red-400 ml-1" />
+                  </div>
+                </div>
+              )}
             </div>
-          )}
 
-          {/* Right: Player Controls */}
-          <div className="pt-8 pb-8 px-6 flex flex-col justify-between">
-            {/* Track Info */}
-            <div className="mb-8 text-center md:text-left">
-              <h2 className="text-2xl font-black text-white mb-2 truncate">{track.title}</h2>
-              <p className="text-white/60 text-sm truncate">{track.artist}</p>
+            {/* Track info */}
+            <div className="px-6 pb-5">
+              <h2 className="text-2xl font-black text-white truncate leading-tight">{track.title}</h2>
+              <p className="text-base text-white/50 mt-0.5 truncate">{track.artist}</p>
             </div>
 
-            {/* Progress Bar */}
-            <div className="mb-6">
+            {/* Progress bar — full width of modal */}
+            <div className="px-6 pb-2">
               <input
                 type="range"
                 min="0"
                 max={duration || 0}
                 value={currentTime}
                 onChange={onProgressChange}
-                className="player-modal-range w-full rounded-full cursor-pointer"
+                className="player-modal-range w-full cursor-pointer"
                 style={{
                   WebkitAppearance: 'none',
                   appearance: 'none',
-                  height: '4px',
-                  background: `linear-gradient(to right, rgb(220,38,38) 0%, rgb(220,38,38) ${duration ? (currentTime / duration) * 100 : 0}%, rgba(255,255,255,0.2) ${duration ? (currentTime / duration) * 100 : 0}%, rgba(255,255,255,0.2) 100%)`,
+                  height: '5px',
+                  borderRadius: '99px',
+                  background: `linear-gradient(to right, #fff 0%, #fff ${progressPct}%, rgba(255,255,255,0.15) ${progressPct}%, rgba(255,255,255,0.15) 100%)`,
                 }}
               />
-              <div className="flex justify-between text-xs text-white/40 mt-2">
+              <div className="flex justify-between text-xs text-white/30 mt-2">
                 <span>{formatDuration(currentTime)}</span>
                 <span>{formatDuration(duration)}</span>
               </div>
             </div>
 
-            {/* Control Buttons */}
-            <div className="flex items-center justify-center gap-6 mb-8">
+            {/* Main controls */}
+            <div className="px-6 py-4 flex items-center justify-between">
               <button
-                className={`p-2 rounded-full transition-all ${isShuffle ? 'bg-red-600' : 'bg-white/[0.08] hover:bg-white/[0.15]'}`}
                 onClick={toggleShuffle}
+                className={`p-2 rounded-full transition-all relative ${isShuffle ? 'text-red-400' : 'text-white/30 hover:text-white'}`}
                 title="Shuffle"
               >
-                <Shuffle size={20} className={isShuffle ? 'text-white' : 'text-white/70'} />
-              </button>
-
-              <button
-                className="p-3 rounded-full bg-white/[0.08] hover:bg-white/[0.15] transition-all"
-                onClick={onPreviousClick}
-                title="Previous"
-              >
-                <SkipBack size={20} className="text-white/70" />
-              </button>
-
-              <button
-                className="p-4 rounded-full bg-red-600 hover:bg-red-700 transition-all"
-                onClick={onPlayPauseClick}
-                title={isPlaying ? 'Pause' : 'Play'}
-              >
-                {isPlaying ? (
-                  <Pause size={32} className="text-white" fill="currentColor" />
-                ) : (
-                  <Play size={32} className="text-white" fill="currentColor" />
+                <Shuffle size={20} />
+                {isShuffle && (
+                  <span className="absolute bottom-1.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-red-400" />
                 )}
               </button>
 
               <button
-                className="p-3 rounded-full bg-white/[0.08] hover:bg-white/[0.15] transition-all"
-                onClick={onNextClick}
-                title="Next"
+                onClick={onPreviousClick}
+                className="p-3 text-white/70 hover:text-white transition-colors"
+                title="Previous"
               >
-                <SkipForward size={20} className="text-white/70" />
+                <SkipBack size={26} fill="currentColor" />
               </button>
 
               <button
-                className={`p-2 rounded-full transition-all ${repeat !== 'off' ? 'bg-red-600' : 'bg-white/[0.08] hover:bg-white/[0.15]'}`}
-                onClick={onRepeatToggle}
-                title={repeat === 'off' ? 'Repeat off' : repeat === 'all' ? 'Repeat all' : 'Repeat 1x'}
-                style={{ position: 'relative' }}
+                onClick={onPlayPauseClick}
+                className="w-16 h-16 rounded-full bg-white hover:bg-white/90 active:scale-95 flex items-center justify-center transition-all shadow-lg"
+                title={isPlaying ? 'Pause' : 'Play'}
               >
-                <Repeat size={20} className={repeat !== 'off' ? 'text-white' : 'text-white/70'} />
+                {isPlaying ? (
+                  <Pause size={28} className="text-black" fill="currentColor" />
+                ) : (
+                  <Play size={28} className="text-black ml-1" fill="currentColor" />
+                )}
+              </button>
+
+              <button
+                onClick={onNextClick}
+                className="p-3 text-white/70 hover:text-white transition-colors"
+                title="Next"
+              >
+                <SkipForward size={26} fill="currentColor" />
+              </button>
+
+              <button
+                onClick={onRepeatToggle}
+                className={`p-2 rounded-full transition-all relative ${repeat !== 'off' ? 'text-red-400' : 'text-white/30 hover:text-white'}`}
+                title={repeat === 'off' ? 'Repeat off' : repeat === 'all' ? 'Repeat all' : 'Repeat 1x'}
+              >
+                <Repeat size={20} />
                 {repeat === 'one' && (
-                  <span
-                    style={{
-                      position: 'absolute',
-                      top: '-4px',
-                      right: '-4px',
-                      width: '16px',
-                      height: '16px',
-                      borderRadius: '50%',
-                      backgroundColor: 'white',
-                      color: 'rgb(220, 38, 38)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: '10px',
-                      fontWeight: 'bold',
-                      lineHeight: '1',
-                    }}
-                  >
+                  <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center">
                     1
                   </span>
+                )}
+                {repeat !== 'off' && (
+                  <span className="absolute bottom-1.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-red-400" />
                 )}
               </button>
             </div>
 
-            {/* Volume Control */}
-            <div className="flex items-center gap-4 px-2 mb-6">
-              <button
-                className={`p-2 rounded-full transition-all flex-shrink-0 ${isMuted ? 'bg-red-600' : 'bg-white/[0.08] hover:bg-white/[0.15]'}`}
-                onClick={onMuteToggle}
-                title={isMuted ? 'Unmute' : 'Mute'}
-              >
-                {isMuted ? (
-                  <VolumeX size={18} className="text-white" />
-                ) : (
-                  <Volume2 size={18} className="text-white/70" />
-                )}
+            {/* Volume control */}
+            <div className="px-6 pb-7 flex items-center gap-3">
+              <button onClick={onMuteToggle} className="text-white/30 hover:text-white transition-colors flex-shrink-0">
+                {isMuted || volume === 0 ? <VolumeX size={18} /> : <Volume2 size={18} />}
               </button>
               <input
                 type="range"
@@ -225,37 +236,22 @@ export default function PlayerModal({
                 step="0.01"
                 value={isMuted ? 0 : volume}
                 onChange={onVolumeChange}
-                className="player-modal-volume flex-1 rounded-full cursor-pointer"
+                className="player-modal-volume flex-1 cursor-pointer"
                 title="Volume"
                 style={{
                   WebkitAppearance: 'none',
                   appearance: 'none',
                   height: '4px',
-                  background: `linear-gradient(to right, rgb(220,38,38) 0%, rgb(220,38,38) ${(isMuted ? 0 : volume) * 100}%, rgba(255,255,255,0.2) ${(isMuted ? 0 : volume) * 100}%, rgba(255,255,255,0.2) 100%)`,
-                  opacity: isMuted ? 0.5 : 1,
+                  borderRadius: '99px',
+                  background: `linear-gradient(to right, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0.7) ${volumePct}%, rgba(255,255,255,0.15) ${volumePct}%, rgba(255,255,255,0.15) 100%)`,
+                  opacity: isMuted ? 0.4 : 1,
                 }}
               />
-            </div>
-
-            {/* Queue Info + Detail link */}
-            <div className="pt-6 border-t border-white/[0.08] flex items-center justify-between">
-              <p className="text-xs text-white/40">
-                {getQueue().length > 0 ? `Track ${(getCurrentIndex() || 0) + 1} of ${getQueue().length}` : 'No queue'}
-              </p>
-              {onInfoClick && (
-                <button
-                  onClick={onInfoClick}
-                  className="flex items-center gap-1.5 text-xs text-white/40 hover:text-white transition-colors"
-                  title="Track details"
-                >
-                  <Info size={13} />
-                  Details
-                </button>
-              )}
+              <Volume2 size={18} className="text-white/30 flex-shrink-0" />
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </ModalPortal>
   );
 }

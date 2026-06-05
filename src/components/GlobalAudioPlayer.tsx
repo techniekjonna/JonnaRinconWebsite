@@ -463,6 +463,7 @@ export default function GlobalAudioPlayer({ onCoverClick }: { onCoverClick?: () 
         onPreviousClick={handlePreviousClick}
         onNextClick={handleNextClick}
         onInfoClick={playerDetailContext ? handlePlayerInfoClick : undefined}
+        track={displayTrack}
       />
       <audio
         ref={audioRef}
@@ -470,7 +471,8 @@ export default function GlobalAudioPlayer({ onCoverClick }: { onCoverClick?: () 
         autoPlay
         volume={isMuted ? 0 : volume}
       />
-      <div className="fixed bottom-0 left-0 right-0 z-40 jonna-audio-player">
+      {/* Hidden bottom bar — replaced by waveform in header */}
+      <div className="hidden">
         {/* Progress Bar at Top - Spotify Style with Times */}
         <div className="jonna-progress-container">
           <span className="jonna-current-time">{formatTime(currentTime)}</span>
@@ -609,27 +611,9 @@ export default function GlobalAudioPlayer({ onCoverClick }: { onCoverClick?: () 
               aria-label="Volume"
               style={{ opacity: isMuted ? 0.5 : 1, cursor: 'pointer' }}
             />
-            <button
-              className="jonna-close-btn"
-              onClick={handleClose}
-              title="Close player"
-              aria-label="Close player"
-            >
-              <X size={20} />
-            </button>
-          </div>
+            </div>
         </div>
       </div>
-      <style>{`
-        body {
-          padding-bottom: ${displayTrack ? '120px' : '0'};
-        }
-        @media (max-width: 768px) {
-          body {
-            padding-bottom: ${displayTrack ? '100px' : '0'} !important;
-          }
-        }
-      `}</style>
     </>
   );
 }

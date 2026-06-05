@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import { Service } from '../lib/firebase/types';
 import { useAuth } from '../contexts/AuthContext';
 import LoginModal from './LoginModal';
+import ModalPortal from './ModalPortal';
 
 interface MixMasterEntry {
   trackTitle: string;
@@ -188,9 +189,9 @@ export default function MixMasterModal({ service, isOpen, onClose }: MixMasterMo
   const renderInfoPage = () => (
     <div className="grid grid-cols-1 md:grid-cols-5 gap-0 overflow-y-auto flex-1">
       {/* Left Column */}
-      <div className="md:col-span-2 bg-gradient-to-b from-white/[0.08] to-transparent p-4 md:p-6 border-b md:border-b-0 md:border-r border-white/[0.1]">
+      <div className="md:col-span-2 bg-gradient-to-b from-red-950/10 to-transparent p-4 md:p-6 border-b md:border-b-0 md:border-r border-red-900/20">
         {/* Visual */}
-        <div className="relative aspect-square rounded-2xl overflow-hidden mb-4 bg-gradient-to-br from-purple-900/40 to-red-900/40 flex items-center justify-center">
+        <div className="relative aspect-square rounded-2xl overflow-hidden mb-4 bg-gradient-to-br from-red-950/60 to-black flex items-center justify-center">
           {service.coverUrl ? (
             <img
               src={service.coverUrl}
@@ -308,7 +309,7 @@ export default function MixMasterModal({ service, isOpen, onClose }: MixMasterMo
           <div className="grid grid-cols-2 gap-2">
             <button
               onClick={() => { navigate('/tracks'); onClose(); }}
-              className="px-4 py-2.5 bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-400/30 hover:border-purple-400/50 rounded-lg text-xs font-bold text-purple-200 uppercase tracking-wider transition-all flex items-center justify-center gap-2"
+              className="px-4 py-2.5 bg-gradient-to-r from-red-600/15 to-red-900/15 border border-red-600/25 hover:border-red-500/40 rounded-lg text-xs font-bold text-red-300 uppercase tracking-wider transition-all flex items-center justify-center gap-2"
             >
               <Music size={14} />
               Tracks
@@ -670,22 +671,26 @@ export default function MixMasterModal({ service, isOpen, onClose }: MixMasterMo
   // ─── Render ──────────────────────────────────────────────────────────────────
   return (
     <>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <ModalPortal>
+      <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
         {/* Backdrop */}
-        <div className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={onClose} />
+        <div className="absolute inset-0 bg-black/70 backdrop-blur-md" onClick={onClose} />
 
         {/* Modal */}
         <div
           ref={modalRef}
-          className="relative w-full max-w-2xl bg-gradient-to-br from-white/[0.12] to-white/[0.05] backdrop-blur-2xl border border-white/[0.2] rounded-3xl overflow-hidden shadow-2xl max-h-[82vh] flex flex-col"
+          className="relative w-full max-w-2xl bg-[#0d0d0d] border border-white/[0.08] rounded-3xl overflow-hidden shadow-2xl max-h-[82vh] flex flex-col"
         >
+          {/* Red accent top line */}
+          <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-red-600/60 to-transparent z-30" />
+
           {/* Header */}
-          <div className="sticky top-0 z-20 bg-white/[0.06] backdrop-blur-sm border-b border-white/[0.15] px-6 py-4 flex items-center justify-between flex-shrink-0">
+          <div className="sticky top-0 z-20 bg-[#0d0d0d]/95 backdrop-blur-sm border-b border-red-900/20 px-6 py-4 flex items-center justify-between flex-shrink-0">
             {/* Featured Badge (info page only) */}
             {service.featured && page === 'info' ? (
-              <div className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-purple-500/30 to-pink-500/30 border border-purple-400/30 rounded-full">
-                <Star size={14} className="text-purple-300" />
-                <span className="text-xs font-bold text-purple-200 uppercase tracking-wider">
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-red-600/20 to-red-900/20 border border-red-600/30 rounded-full">
+                <Star size={14} className="text-red-400" />
+                <span className="text-xs font-bold text-red-300 uppercase tracking-wider">
                   Featured
                 </span>
               </div>
@@ -694,7 +699,7 @@ export default function MixMasterModal({ service, isOpen, onClose }: MixMasterMo
             {/* Close Button */}
             <button
               onClick={onClose}
-              className="p-2.5 bg-black/50 hover:bg-white/[0.15] border border-white/[0.15] rounded-full text-white/80 hover:text-white transition-all shadow-md"
+              className="p-2.5 bg-black/60 hover:bg-white/[0.12] border border-white/[0.12] rounded-full text-white/70 hover:text-white transition-all shadow-md"
             >
               <X size={18} />
             </button>
@@ -714,6 +719,7 @@ export default function MixMasterModal({ service, isOpen, onClose }: MixMasterMo
         title="Sign In to Order"
         description="You need an account to place an order. Your completed mix & master will appear in My Products."
       />
+      </ModalPortal>
     </>
   );
 }

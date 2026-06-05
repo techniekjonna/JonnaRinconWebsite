@@ -1,14 +1,53 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, ShoppingBag } from 'lucide-react';
 import { useCartContext } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
+import { subscribeToPlayerState, openPlayerModal } from './GlobalAudioPlayer';
+
+const WAVEFORM_HEIGHTS = [5, 10, 14, 8, 16, 11, 14, 9, 16, 12, 8, 14, 10, 6, 12];
+const CYCLE_MS = 2500;
 
 const Header: React.FC = () => {
   const [hamburgerHovered, setHamburgerHovered] = useState(false);
   const location = useLocation();
   const { cartItems } = useCartContext();
   const { user } = useAuth();
+
+  // Player state for waveform banner
+  const [isPlayingNow, setIsPlayingNow] = useState(false);
+  const [bannerTrack, setBannerTrack] = useState<{ title: string; artist: string } | null>(null);
+  const [cyclePhase, setCyclePhase] = useState<0 | 1 | 2>(0); // 0=label, 1=title, 2=artist
+  const [textVisible, setTextVisible] = useState(true);
+  const cycleRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    return subscribeToPlayerState((store) => {
+      const playing = store.isPlaying && !!store.currentTrack;
+      setIsPlayingNow(playing);
+      setBannerTrack(store.currentTrack ? { title: store.currentTrack.title, artist: store.currentTrack.artist } : null);
+    });
+  }, []);
+
+  // Cycle "Now playing" / title / artist
+  useEffect(() => {
+    if (cycleRef.current) clearInterval(cycleRef.current);
+    if (!isPlayingNow) { setCyclePhase(0); setTextVisible(true); return; }
+    cycleRef.current = setInterval(() => {
+      setTextVisible(false);
+      setTimeout(() => {
+        setCyclePhase(p => ((p + 1) % 3) as 0 | 1 | 2);
+        setTextVisible(true);
+      }, 350);
+    }, CYCLE_MS);
+    return () => { if (cycleRef.current) clearInterval(cycleRef.current); };
+  }, [isPlayingNow]);
+
+  const nowPlayingText = cyclePhase === 0
+    ? 'Now Playing'
+    : cyclePhase === 1
+    ? (bannerTrack?.title ?? '')
+    : (bannerTrack?.artist ?? '');
 
   const openNavPanel = () => {
     window.dispatchEvent(new CustomEvent('open-nav-panel'));
@@ -58,27 +97,23 @@ const Header: React.FC = () => {
     >
       <span
         className="absolute inset-0 flex items-center justify-center transition-all duration-300"
-        style={{ opacity: hamburgerHovered ? 0 : 1, transform: hamburgerHovered ? 'translateY(-6px)' : 'translateY(0)' }}
       >
-        <Menu size={20} />
+        <Menu size={20} className={`transition-all duration-300 ${hamburgerHovered ? 'opacity-0 scale-75' : 'opacity-100 scale-100'}`} />
       </span>
       <span
-        className="absolute inset-0 flex items-center justify-center text-xs font-black uppercase tracking-[0.2em] transition-all duration-300"
-        style={{ opacity: hamburgerHovered ? 1 : 0, transform: hamburgerHovered ? 'translateY(0)' : 'translateY(6px)' }}
+        className="absolute inset-0 flex items-center justify-center transition-all duration-300"
       >
-        MENU
+        <span className={`text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${hamburgerHovered ? 'opacity-100' : 'opacity-0'}`}>Menu</span>
       </span>
     </button>
   );
 
   return (
-    <header
-      className="fixed top-0 left-0 right-0 z-40 pt-3 px-4 sm:px-6 lg:px-8"
-    >
+    <header className="fixed top-0 left-0 right-0 z-40 pt-3 px-4 sm:px-6 lg:px-8">
       <div className="backdrop-blur-xl bg-black/30 border border-white/[0.08] rounded-2xl">
         <div className="flex items-center justify-between px-4 sm:px-6 h-16 md:h-20">
 
-          {/* Logo left — always JR logo, links to homepage */}
+          {/* Logo left */}
           <Link to="/" className="flex items-center justify-center flex-shrink-0 w-14 h-14 md:w-24 md:h-24">
             <img
               src="/Jonna Rincon Logo WH.png"
@@ -107,10 +142,8 @@ const Header: React.FC = () => {
                 ))}
               </div>
 
-              {/* Center brand — JEIGHTEEN logo on shop, text on main */}
-              <div
-                className="text-center px-6 border-x border-white/[0.08] flex-shrink-0"
-              >
+              {/* Center brand — with now-playing waveform */}
+              <div className="text-center px-6 border-x border-white/[0.08] flex-shrink-0 flex flex-col items-center gap-1.5">
                 {isShopRoute ? (
                   <Link to="/shop">
                     <img
@@ -125,6 +158,39 @@ const Header: React.FC = () => {
                       JONNA RINCON
                     </h1>
                   </Link>
+                )}
+
+                {/* Now Playing waveform */}
+                {isPlayingNow && bannerTrack && (
+                  <button
+                    onClick={() => openPlayerModal()}
+                    className="group flex flex-col items-center gap-1 px-3 py-1 rounded-full hover:bg-white/[0.06] transition-all"
+                    title={`Now playing: ${bannerTrack.title}`}
+                  >
+                    <div className="flex items-end gap-[2px] h-4">
+                      {WAVEFORM_HEIGHTS.map((h, i) => (
+                        <div
+                          key={i}
+                          className="w-[2px] rounded-full bg-white animate-waveform-bar"
+                          style={{
+                            height: `${h}px`,
+                            boxShadow: '0 0 5px rgba(255,255,255,0.7)',
+                            animationDuration: `${0.55 + (i % 5) * 0.1}s`,
+                            animationDelay: `${i * 55}ms`,
+                          }}
+                        />
+                      ))}
+                    </div>
+                    <span
+                      className="text-[9px] font-semibold text-white/50 group-hover:text-white/80 transition-all tracking-wide truncate max-w-[130px]"
+                      style={{
+                        opacity: textVisible ? 1 : 0,
+                        transition: 'opacity 0.35s ease',
+                      }}
+                    >
+                      {nowPlayingText}
+                    </span>
+                  </button>
                 )}
               </div>
 
@@ -147,16 +213,46 @@ const Header: React.FC = () => {
             </div>
           </nav>
 
-          {/* Mobile: JEIGHTEEN logo on shop, text on main */}
-          {isShopRoute ? (
-            <Link to="/shop" className="md:hidden flex-1 flex justify-center">
-              <img src="/JEIGHTEEN-logo.png" alt="JEIGHTEEN" className="h-14 w-auto object-contain opacity-90" />
-            </Link>
-          ) : (
-            <Link to="/" className="md:hidden flex-1 flex justify-center">
-              <span className="text-base font-black text-white tracking-tighter">JONNA RINCON</span>
-            </Link>
-          )}
+          {/* Mobile: brand + waveform */}
+          <div className="md:hidden flex-1 flex flex-col items-center justify-center gap-1">
+            {isShopRoute ? (
+              <Link to="/shop" className="flex justify-center">
+                <img src="/JEIGHTEEN-logo.png" alt="JEIGHTEEN" className="h-10 w-auto object-contain opacity-90" />
+              </Link>
+            ) : (
+              <Link to="/">
+                <span className="text-base font-black text-white tracking-tighter">JONNA RINCON</span>
+              </Link>
+            )}
+            {isPlayingNow && bannerTrack && (
+              <button
+                onClick={() => openPlayerModal()}
+                className="flex items-center gap-1.5 group"
+                title={`Now playing: ${bannerTrack.title}`}
+              >
+                <div className="flex items-end gap-[2px] h-3">
+                  {WAVEFORM_HEIGHTS.slice(0, 9).map((h, i) => (
+                    <div
+                      key={i}
+                      className="w-[2px] rounded-full bg-white animate-waveform-bar"
+                      style={{
+                        height: `${Math.max(3, h * 0.65)}px`,
+                        boxShadow: '0 0 4px rgba(255,255,255,0.6)',
+                        animationDuration: `${0.55 + (i % 5) * 0.1}s`,
+                        animationDelay: `${i * 60}ms`,
+                      }}
+                    />
+                  ))}
+                </div>
+                <span
+                  className="text-[9px] text-white/40 group-hover:text-white/70 transition-colors truncate max-w-[90px]"
+                  style={{ opacity: textVisible ? 1 : 0, transition: 'opacity 0.35s ease' }}
+                >
+                  {cyclePhase === 0 ? 'Now Playing' : cyclePhase === 1 ? bannerTrack.title : bannerTrack.artist}
+                </span>
+              </button>
+            )}
+          </div>
 
           {/* Right: Cart + Hamburger */}
           <div className="flex items-center gap-2">

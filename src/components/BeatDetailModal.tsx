@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { X, ShoppingCart, Play, Pause, Music, Zap, Download, Globe, Disc3, TrendingUp, BadgeCheck, Users, Headphones, Radio, Copy, Check } from 'lucide-react';
 import { Beat } from '../lib/firebase/types';
 import { getCurrentTrack } from './GlobalAudioPlayer';
+import ModalPortal from './ModalPortal';
 
 interface BeatDetailModalProps {
   beat: Beat | null;
@@ -90,42 +91,45 @@ export default function BeatDetailModal({
   // License type badge color
   const getLicenseColor = () => {
     if (exclusiveLicense) return 'from-orange-500/30 to-amber-500/30 border-orange-400/40';
-    return 'from-purple-500/20 to-pink-500/20 border-purple-400/30';
+    return 'from-red-600/15 to-red-900/15 border-red-600/25';
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <ModalPortal>
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-md"
+        className="absolute inset-0 bg-black/70 backdrop-blur-md"
         onClick={onClose}
       />
 
       {/* Modal */}
       <div
         ref={modalRef}
-        className="relative w-full max-w-2xl bg-gradient-to-br from-white/[0.12] to-white/[0.05] backdrop-blur-2xl border border-white/[0.2] rounded-3xl overflow-hidden shadow-2xl max-h-[82vh] flex flex-col"
+        className="relative w-full max-w-2xl bg-[#0d0d0d] border border-white/[0.08] rounded-3xl overflow-hidden shadow-2xl max-h-[82vh] flex flex-col"
       >
+        {/* Red accent top line */}
+        <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-red-600/60 to-transparent z-30" />
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 z-20 p-2.5 bg-black/50 hover:bg-white/[0.15] border border-white/[0.15] rounded-full text-white/80 hover:text-white transition-all shadow-md"
+          className="absolute top-4 right-4 z-20 p-2.5 bg-black/60 hover:bg-white/[0.12] border border-white/[0.12] rounded-full text-white/70 hover:text-white transition-all shadow-md"
         >
           <X size={18} />
         </button>
 
         {/* Featured Badge */}
         {beat.featured && (
-          <div className="absolute top-6 left-6 z-20 flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-purple-500/30 to-pink-500/30 border border-purple-400/30 rounded-full">
-            <BadgeCheck size={14} className="text-purple-300" />
-            <span className="text-xs font-bold text-purple-200 uppercase tracking-wider">Featured</span>
+          <div className="absolute top-6 left-6 z-20 flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-red-600/25 to-red-900/20 border border-red-600/30 rounded-full">
+            <BadgeCheck size={14} className="text-red-300" />
+            <span className="text-xs font-bold text-red-200 uppercase tracking-wider">Featured</span>
           </div>
         )}
 
         {/* Main Content */}
         <div className="grid grid-cols-1 md:grid-cols-5 gap-0 overflow-y-auto flex-1">
           {/* Left Column - Artwork & Quick Stats */}
-          <div className="md:col-span-2 bg-gradient-to-b from-white/[0.08] to-transparent p-4 md:p-6 pt-16 md:pt-6 border-b md:border-b-0 md:border-r border-white/[0.1]">
+          <div className="md:col-span-2 bg-gradient-to-b from-red-950/15 to-transparent p-4 md:p-6 pt-16 md:pt-6 border-b md:border-b-0 md:border-r border-red-900/20">
             {/* Artwork */}
             <div className="relative aspect-square rounded-2xl overflow-hidden mb-4 group">
               <img
@@ -221,7 +225,7 @@ export default function BeatDetailModal({
                   {beat.tags.map((tag) => (
                     <span
                       key={tag}
-                      className="px-3 py-1.5 bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-400/30 rounded-full text-xs text-purple-200 uppercase tracking-wider font-semibold"
+                      className="px-3 py-1.5 bg-gradient-to-r from-red-600/15 to-red-900/15 border border-red-600/25 rounded-full text-xs text-red-300 uppercase tracking-wider font-semibold"
                     >
                       {tag}
                     </span>
@@ -234,8 +238,8 @@ export default function BeatDetailModal({
             <div className="mb-6 p-4 bg-white/[0.06] border border-white/[0.1] rounded-xl">
               <p className="text-white/40 text-xs uppercase tracking-wider font-semibold mb-2">Producer</p>
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500/30 to-pink-500/30 border border-purple-400/20 flex items-center justify-center flex-shrink-0">
-                  <Headphones size={20} className="text-purple-300" />
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-red-600/25 to-red-900/25 border border-red-600/20 flex items-center justify-center flex-shrink-0">
+                  <Headphones size={20} className="text-red-300" />
                 </div>
                 <div>
                   <p className="text-white font-bold text-sm">{beat.artist}</p>
@@ -451,5 +455,6 @@ export default function BeatDetailModal({
         </div>
       </div>
     </div>
+    </ModalPortal>
   );
 }
