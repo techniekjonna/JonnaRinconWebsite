@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { ShoppingCart, Star, ChevronLeft, ChevronRight } from 'lucide-react';
 import ShopFooter from '../../components/ShopFooter';
-import ShopNav from '../../components/ShopNav';
 import MerchandiseDetailModal from '../../components/MerchandiseDetailModal';
 import { useCyberDecodeInView } from '../../hooks/useCyberDecode';
 import { useMerchandise } from '../../hooks/useMerchandise';
@@ -179,7 +178,6 @@ const MerchandisePage: React.FC = () => {
             Exclusive merchandise and limited-edition items. Show your support and grab high-quality apparel, vinyl, and more.
           </p>
         </div>
-        <ShopNav />
       </section>
 
       {/* Category Filter */}
