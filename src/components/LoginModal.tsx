@@ -117,14 +117,14 @@ export default function LoginModal({ isOpen, onClose, title, description }: Logi
       {/* Modal */}
       <div
         ref={modalRef}
-        className="relative w-full max-w-md bg-white/[0.08] backdrop-blur-xl border border-white/[0.15] rounded-3xl overflow-hidden shadow-2xl max-h-[90vh] overflow-y-auto"
+        className="relative w-full max-w-md bg-white/[0.08] backdrop-blur-xl border border-white/[0.15] rounded-3xl overflow-hidden shadow-2xl max-h-[82vh] overflow-y-auto"
       >
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 z-10 p-2 bg-white/[0.1] hover:bg-white/[0.15] rounded-full text-white/60 hover:text-white transition-all"
+          className="absolute top-3 right-3 z-10 p-2.5 bg-black/50 hover:bg-white/[0.15] border border-white/[0.15] rounded-full text-white/80 hover:text-white transition-all shadow-md"
         >
-          <X size={20} />
+          <X size={16} />
         </button>
 
         {/* Content */}

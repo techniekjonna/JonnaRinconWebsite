@@ -81,19 +81,19 @@ export default function PlayerModal({
   const isShuffle = getIsShuffle();
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-md">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
       <div
         ref={modalRef}
-        className="relative w-full max-w-4xl bg-black/90 backdrop-blur-2xl border border-white/[0.12] rounded-2xl shadow-2xl overflow-hidden"
+        className="relative w-full max-w-lg bg-black/90 backdrop-blur-2xl border border-white/[0.12] rounded-2xl shadow-2xl overflow-hidden max-h-[82vh] flex flex-col"
       >
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 z-20 p-2 bg-white/[0.08] hover:bg-white/[0.15] rounded-full transition-all"
+          className="absolute top-3 right-3 z-20 p-2.5 bg-black/50 hover:bg-white/[0.15] border border-white/[0.15] rounded-full text-white/80 hover:text-white transition-all shadow-md"
         >
-          <X className="w-5 h-5 text-white" />
+          <X className="w-4 h-4" />
         </button>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-0">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-0 overflow-y-auto flex-1">
           {/* Left: Cover Art */}
           {track.coverArt && (
             <div className="relative aspect-square rounded-none overflow-hidden shadow-xl md:rounded-l-2xl">

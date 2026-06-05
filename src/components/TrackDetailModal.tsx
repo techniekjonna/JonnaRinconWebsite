@@ -162,15 +162,15 @@ export default function TrackDetailModal({
       {/* Modal */}
       <div
         ref={modalRef}
-        className="relative w-full max-w-4xl bg-white/[0.08] backdrop-blur-xl border border-white/[0.15] rounded-3xl overflow-hidden shadow-2xl max-h-[90vh] flex flex-col"
+        className="relative w-full max-w-2xl bg-white/[0.08] backdrop-blur-xl border border-white/[0.15] rounded-3xl overflow-hidden shadow-2xl max-h-[82vh] flex flex-col"
       >
         {/* Header with Close Button */}
-        <div className="sticky top-0 z-10 bg-white/[0.04] backdrop-blur-sm border-b border-white/[0.1] px-6 md:px-8 py-4 flex items-center justify-end">
+        <div className="sticky top-0 z-10 bg-white/[0.04] backdrop-blur-sm border-b border-white/[0.1] px-6 md:px-8 py-3 flex items-center justify-end flex-shrink-0">
           <button
             onClick={onClose}
-            className="p-2 bg-white/[0.1] hover:bg-white/[0.15] rounded-full text-white/60 hover:text-white transition-all"
+            className="p-2.5 bg-black/50 hover:bg-white/[0.15] border border-white/[0.15] rounded-full text-white/80 hover:text-white transition-all shadow-md"
           >
-            <X size={20} />
+            <X size={16} />
           </button>
         </div>
 

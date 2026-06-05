@@ -345,39 +345,40 @@
 /* Mobile/Tablet responsive */
 @media (max-width: 768px) {
   .jonna-progress-container {
-    padding: 6px 12px;
+    padding: 5px 10px;
     gap: 6px;
   }
 
   .jonna-progress-container .jonna-current-time,
   .jonna-progress-container .jonna-total-time {
     font-size: 10px;
-    min-width: 28px;
+    min-width: 26px;
   }
 
   .jonna-player-content {
     flex-direction: row;
     flex-wrap: nowrap;
-    gap: 6px;
-    padding: 6px 10px;
+    gap: 4px;
+    padding: 5px 8px 8px;
     min-height: auto;
     justify-content: space-between;
     align-items: center;
   }
 
+  /* Cover + track info: flexible, shrinks to give space to controls */
   .jonna-cover-section {
     display: flex !important;
     flex-direction: row;
     gap: 8px;
     align-items: center;
-    flex-shrink: 1;
-    min-width: 0;
     flex: 1;
+    min-width: 0;
+    max-width: 38%;
   }
 
   .jonna-cover-wrapper {
-    width: 48px;
-    height: 48px;
+    width: 44px;
+    height: 44px;
     border-radius: 6px;
     flex-shrink: 0;
   }
@@ -390,20 +391,21 @@
   }
 
   .jonna-track-title {
-    font-size: 12px;
-    max-width: 100%;
-  }
-
-  .jonna-track-artist {
     font-size: 11px;
     max-width: 100%;
   }
 
+  .jonna-track-artist {
+    font-size: 10px;
+    max-width: 100%;
+  }
+
+  /* Center: prev + play + next (compact) */
   .jonna-center-section {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 4px;
+    gap: 2px;
     flex-shrink: 0;
   }
 
@@ -411,30 +413,34 @@
     gap: 2px;
   }
 
+  /* Right: shuffle + repeat + mute + close (all visible on mobile) */
   .jonna-right-controls {
-    display: none;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    flex-shrink: 0;
   }
 
   .jonna-skip-btn {
-    width: 32px;
-    height: 32px;
+    width: 30px;
+    height: 30px;
   }
 
   .jonna-play-pause-btn {
-    width: 44px;
-    height: 44px;
+    width: 42px;
+    height: 42px;
     flex-shrink: 0;
   }
 
   .jonna-control-btn {
-    width: 32px;
-    height: 32px;
+    width: 30px;
+    height: 30px;
     flex-shrink: 0;
   }
 
   .jonna-close-btn {
-    width: 32px;
-    height: 32px;
+    width: 30px;
+    height: 30px;
     flex-shrink: 0;
   }
 }

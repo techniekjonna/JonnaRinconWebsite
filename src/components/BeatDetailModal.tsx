@@ -94,24 +94,24 @@ export default function BeatDetailModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 max-h-screen overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-md"
+        className="absolute inset-0 bg-black/60 backdrop-blur-md"
         onClick={onClose}
       />
 
       {/* Modal */}
       <div
         ref={modalRef}
-        className="relative w-full max-w-2xl bg-gradient-to-br from-white/[0.12] to-white/[0.05] backdrop-blur-2xl border border-white/[0.2] rounded-3xl overflow-hidden shadow-2xl my-4 max-h-[90vh]"
+        className="relative w-full max-w-2xl bg-gradient-to-br from-white/[0.12] to-white/[0.05] backdrop-blur-2xl border border-white/[0.2] rounded-3xl overflow-hidden shadow-2xl max-h-[82vh] flex flex-col"
       >
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-6 right-6 z-20 p-2 bg-white/[0.1] hover:bg-white/[0.2] rounded-full text-white/60 hover:text-white transition-all duration-200"
+          className="absolute top-4 right-4 z-20 p-2.5 bg-black/50 hover:bg-white/[0.15] border border-white/[0.15] rounded-full text-white/80 hover:text-white transition-all shadow-md"
         >
-          <X size={24} />
+          <X size={18} />
         </button>
 
         {/* Featured Badge */}
@@ -123,7 +123,7 @@ export default function BeatDetailModal({
         )}
 
         {/* Main Content */}
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-0 overflow-y-auto max-h-[calc(90vh-60px)]">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-0 overflow-y-auto flex-1">
           {/* Left Column - Artwork & Quick Stats */}
           <div className="md:col-span-2 bg-gradient-to-b from-white/[0.08] to-transparent p-4 md:p-6 pt-16 md:pt-6 border-b md:border-b-0 md:border-r border-white/[0.1]">
             {/* Artwork */}
