@@ -3,6 +3,7 @@ import { X, ChevronLeft, ChevronRight, ShoppingCart, ArrowRight } from 'lucide-r
 import { useNavigate } from 'react-router-dom';
 import { Service } from '../lib/firebase/types';
 import { useAuth } from '../contexts/AuthContext';
+import ModalPortal from './ModalPortal';
 import { useCartContext } from '../contexts/CartContext';
 import LoginModal from './LoginModal';
 import {
@@ -140,18 +141,21 @@ const StudioSessionModal: React.FC<StudioSessionModalProps> = ({ service, isOpen
 
   return (
     <>
-      <div className={`fixed inset-0 z-50 transition-all duration-300 ${isOpen ? 'opacity-100 visible' : 'opacity-0 invisible'}`}>
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <ModalPortal>
+      <div className={`fixed inset-0 z-[200] transition-all duration-300 ${isOpen ? 'opacity-100 visible' : 'opacity-0 invisible'}`}>
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
 
         <div className="fixed inset-0 flex items-center justify-center p-4">
-          <div className="relative bg-black border border-white/10 rounded-3xl max-w-lg w-full max-h-[82vh] flex flex-col">
+          <div className="relative bg-[#0d0d0d] border border-white/[0.08] rounded-3xl max-w-lg w-full max-h-[82vh] flex flex-col">
+            {/* Red accent top line */}
+            <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-red-600/60 to-transparent z-30 rounded-t-3xl" />
             {/* Header */}
-            <div className="sticky top-0 z-10 bg-black/80 backdrop-blur-sm border-b border-white/10 px-6 md:px-8 py-4 flex items-center justify-between rounded-t-3xl flex-shrink-0">
+            <div className="sticky top-0 z-10 bg-[#0d0d0d]/95 backdrop-blur-sm border-b border-red-900/20 px-6 md:px-8 py-4 flex items-center justify-between rounded-t-3xl flex-shrink-0">
               <div>
                 <h2 className="text-xl md:text-2xl font-bold text-white">{service.name}</h2>
                 <p className="text-white/40 text-xs mt-0.5">{page === 'overview' ? 'Configure your session' : 'Select available date'}</p>
               </div>
-              <button onClick={onClose} className="p-2.5 bg-black/50 hover:bg-white/[0.12] border border-white/[0.12] rounded-full text-white/70 hover:text-white transition-all shadow-md">
+              <button onClick={onClose} className="p-2.5 bg-black/60 hover:bg-white/[0.12] border border-white/[0.12] rounded-full text-white/70 hover:text-white transition-all shadow-md">
                 <X size={18} />
               </button>
             </div>
@@ -356,6 +360,7 @@ const StudioSessionModal: React.FC<StudioSessionModalProps> = ({ service, isOpen
       </div>
 
       {showLoginModal && <LoginModal isOpen={showLoginModal} onClose={() => setShowLoginModal(false)} />}
+      </ModalPortal>
     </>
   );
 };

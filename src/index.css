@@ -118,6 +118,22 @@
     background: linear-gradient(180deg, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 100%);
   }
 
+  @keyframes waveform-pulse {
+    0%, 100% { transform: scaleY(0.25); opacity: 0.5; }
+    50% { transform: scaleY(1); opacity: 1; }
+  }
+
+  .animate-waveform-bar {
+    transform-origin: bottom center;
+    animation: waveform-pulse ease-in-out infinite;
+  }
+
+  @keyframes now-playing-fade {
+    0% { opacity: 0; transform: translateY(4px); }
+    15%, 85% { opacity: 1; transform: translateY(0); }
+    100% { opacity: 0; transform: translateY(-4px); }
+  }
+
   @keyframes float {
     0%, 100% {
       transform: translateY(0px);
