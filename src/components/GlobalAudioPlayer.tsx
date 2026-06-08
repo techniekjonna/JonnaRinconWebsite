@@ -464,6 +464,7 @@ export default function GlobalAudioPlayer({ onCoverClick }: { onCoverClick?: () 
         onNextClick={handleNextClick}
         onInfoClick={playerDetailContext ? handlePlayerInfoClick : undefined}
         track={displayTrack}
+        trackDetail={playerDetailContext?.data}
       />
       <audio
         ref={audioRef}

@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
-import { Lightbulb, Music2, Heart, Play, ChevronLeft, ChevronRight, Award, Headphones } from 'lucide-react';
-import { useCyberDecodeInView } from '../hooks/useCyberDecode';
+import { Lightbulb, Music2, Heart, Play, ChevronLeft, ChevronRight, Award } from 'lucide-react';
 import { useScrollToTop } from '../hooks/useScrollToTop';
+import { useInView } from '../hooks/useInView';
+import { Link } from 'react-router-dom';
 
 const tabs = [
-  { id: 'productions', label: 'Productions', icon: Lightbulb },
-  { id: 'streams', label: 'Streams', icon: Music2 },
-  { id: 'community', label: 'Community', icon: Heart },
+  { id: 'productions', label: 'Productions', icon: Lightbulb, desc: 'Production workflow, skills & discography' },
+  { id: 'streams', label: 'Streams', icon: Music2, desc: 'Spotify, YouTube & streaming platforms' },
+  { id: 'community', label: 'Community', icon: Heart, desc: 'Co-signs, media & streaming numbers' },
 ];
 
 const spotifyPlaylists = [
@@ -58,243 +59,367 @@ const supportMentions = [
 const skills = [
   { title: 'Producer', desc: 'Creating and arranging full tracks from concept to completion' },
   { title: 'Beatmaker', desc: 'Crafting instrumentals and beats across all genres' },
-  { title: 'Artist', desc: 'Writing, performing, and recording vocals — combining everything into a finished track' },
-  { title: 'Audio Engineer', desc: 'The technical art of recording, editing, and processing audio to achieve professional sound quality' },
-  { title: 'Mix & Master', desc: 'Balancing, EQ-ing, and finalizing tracks for distribution-ready quality' },
+  { title: 'Artist', desc: 'Writing, performing, and recording vocals' },
+  { title: 'Audio Engineer', desc: 'Recording, editing, and processing audio to professional quality' },
+  { title: 'Mix & Master', desc: 'Balancing, EQ-ing, and finalizing tracks for distribution' },
   { title: 'DJ', desc: 'Live mixing and performing sets across multiple genres' },
   { title: 'Visual Designer', desc: 'Self-made cover arts, video editing, and visual branding' },
   { title: 'Web Developer', desc: 'This website was designed and built by Jonna Rincon' },
 ];
 
+function HeroSection({ onTabSelect }: { onTabSelect: (tab: string) => void }) {
+  const [ref, inView] = useInView({ threshold: 0.05 });
+
+  return (
+    <section
+      ref={ref as React.RefObject<HTMLElement>}
+      className="relative min-h-screen flex flex-col items-center justify-end overflow-hidden -mt-28 sm:-mt-32 pb-0"
+    >
+      {/* Background */}
+      <div className="absolute inset-0">
+        <img
+          src="/DJI_20251115114029_0004_D.JPG"
+          alt=""
+          className="w-full h-full object-cover"
+          style={{ objectPosition: 'center 30%' }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/20 to-black/90" />
+      </div>
+
+      {/* Bio content — centered vertically */}
+      <div
+        className="relative z-10 text-center px-6 max-w-2xl mx-auto transition-all duration-700"
+        style={{
+          opacity: inView ? 1 : 0,
+          transform: inView ? 'translateY(0)' : 'translateY(24px)',
+          transitionDelay: '200ms',
+          marginTop: 'auto',
+          paddingTop: '10rem',
+        }}
+      >
+        <p className="text-xs font-black uppercase tracking-[0.45em] text-red-500 mb-4">
+          Producer · DJ · Artist
+        </p>
+        <h1
+          className="font-black uppercase leading-none tracking-tighter mb-6 text-white"
+          style={{ fontSize: 'clamp(3.5rem, 12vw, 9rem)' }}
+        >
+          JONNA<br />RINCON
+        </h1>
+        <p className="text-white/70 text-base md:text-lg leading-relaxed mb-8 max-w-lg mx-auto">
+          Producer, DJ, and visual artist from Tilburg. Making music since age 13 — 10+ years of FL Studio,
+          Moombahton, Hip Hop, R&amp;B, EDM and more. Self-produced, self-mixed, self-mastered.
+          Full creative control from start to finish.
+        </p>
+        <div className="flex flex-wrap gap-2 justify-center mb-10">
+          {['Moombahton', 'Hip Hop', 'R&B', 'EDM', 'Trap', 'Afrobeats'].map(g => (
+            <span key={g} className="px-3 py-1 text-xs font-bold uppercase tracking-wider text-white/60 bg-white/[0.08] border border-white/[0.12] rounded-full">
+              {g}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      {/* 3 Tab Buttons at bottom of hero */}
+      <div
+        className="relative z-10 w-full grid grid-cols-3 transition-all duration-700"
+        style={{ opacity: inView ? 1 : 0, transitionDelay: '400ms' }}
+      >
+        {tabs.map((tab) => {
+          const Icon = tab.icon;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => onTabSelect(tab.id)}
+              className="group flex flex-col items-center justify-center gap-2 py-6 md:py-8 px-4 bg-black/40 backdrop-blur-md border-t border-r last:border-r-0 border-white/[0.08] hover:bg-red-600/20 hover:border-red-500/30 transition-all duration-300"
+            >
+              <Icon size={22} className="text-red-500 group-hover:text-red-400 transition-colors" />
+              <span className="text-xs font-black uppercase tracking-widest text-white group-hover:text-white transition-colors">
+                {tab.label}
+              </span>
+              <span className="hidden md:block text-[10px] text-white/30 text-center leading-tight max-w-[120px]">
+                {tab.desc}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
 export default function AboutMePage() {
   useScrollToTop();
-  const heroTitle = useCyberDecodeInView('ABOUT ME');
   const [activeTab, setActiveTab] = useState('productions');
   const [currentPlaylist, setCurrentPlaylist] = useState(0);
 
+  const handleTabSelect = (tab: string) => {
+    setActiveTab(tab);
+    setTimeout(() => {
+      document.getElementById('about-content')?.scrollIntoView({ behavior: 'smooth' });
+    }, 100);
+  };
+
   return (
     <div className="min-h-screen text-white">
-      <div className="fixed inset-0 w-full h-screen -z-10 bg-black/20" />
+      <div className="fixed inset-0 w-full h-screen -z-10 bg-black" />
       <Navigation isDarkOverlay={true} />
 
-      {/* Hero */}
-      <section className="relative pt-28 px-6 md:px-12 pb-2" />
+      {/* Hero with biography and tab buttons */}
+      <HeroSection onTabSelect={handleTabSelect} />
 
-      {/* Tab Bar */}
-      <section className="px-6 md:px-12 pb-2">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-3 gap-2">
-            {tabs.map(tab => {
+      {/* Tab Content */}
+      <div id="about-content">
+        {/* Tab Switcher Bar */}
+        <section className="sticky top-[72px] z-30 px-4 md:px-8 bg-black/80 backdrop-blur-xl border-b border-white/[0.06]">
+          <div className="max-w-7xl mx-auto flex items-center">
+            {tabs.map((tab) => {
               const Icon = tab.icon;
+              const isActive = activeTab === tab.id;
               return (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-bold uppercase tracking-wider text-sm transition-all border ${
-                    activeTab === tab.id
-                      ? 'bg-red-600 text-white border-red-500/50 shadow-lg shadow-red-600/20'
-                      : 'bg-white/[0.06] text-white/60 border-white/[0.1] hover:text-white hover:bg-white/[0.12] hover:border-white/[0.15]'
+                  className={`flex items-center gap-2 px-4 md:px-6 py-4 text-xs font-black uppercase tracking-widest transition-all border-b-2 ${
+                    isActive
+                      ? 'text-white border-red-500'
+                      : 'text-white/40 border-transparent hover:text-white/70'
                   }`}
                 >
-                  <Icon size={16} />
+                  <Icon size={14} />
                   <span className="hidden sm:inline">{tab.label}</span>
-                  <span className="sm:hidden text-xs">{tab.label}</span>
                 </button>
               );
             })}
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* ── PRODUCTIONS TAB ── */}
-      {activeTab === 'productions' && (
-        <section className="px-6 md:px-12 pt-6 pb-20">
-          <div className="max-w-7xl mx-auto">
-            <div className="bg-white/[0.04] backdrop-blur-md border border-white/[0.06] rounded-3xl p-5 md:p-8 mb-8">
-              <h3 className="text-xl font-black uppercase tracking-tight mb-6">Mixed & Mastered by Jonna Rincon</h3>
-              <div className="rounded-2xl overflow-hidden">
-                <iframe
-                  style={{ borderRadius: '16px' }}
-                  src="https://open.spotify.com/embed/playlist/5smfHiU4egb6uyHYzgmqdC?utm_source=generator"
-                  width="100%"
-                  height="400"
-                  frameBorder="0"
-                  allowFullScreen
-                  allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                  loading="lazy"
-                />
-              </div>
-            </div>
+        {/* ── PRODUCTIONS TAB ── */}
+        {activeTab === 'productions' && (
+          <section className="px-4 md:px-8 lg:px-12 pt-10 pb-20 bg-[#0a0a0a]">
+            <div className="max-w-7xl mx-auto">
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-12">
-              <div className="bg-white/[0.04] backdrop-blur-md border border-white/[0.06] rounded-2xl p-6">
-                <h3 className="text-lg font-black uppercase tracking-tight mb-3">The Process</h3>
-                <p className="text-white/30 text-sm leading-relaxed">
-                  Every track starts in FL Studio — the DAW where it all began over 10 years ago. From the first beat to the final master,
-                  every step is handled in-house. Self-made cover arts, self-mixed, self-mastered. Full creative control from start to finish.
+              {/* Section header */}
+              <div className="mb-10">
+                <p className="text-xs uppercase tracking-[0.4em] text-red-500 mb-2 font-black">The Work</p>
+                <h2 className="text-4xl md:text-6xl font-black text-white tracking-tighter mb-4">Productions</h2>
+                <p className="text-white/40 text-sm max-w-xl">
+                  Every track starts in FL Studio — self-produced, mixed & mastered. Full creative control from start to finish.
                 </p>
               </div>
-              <div className="bg-white/[0.04] backdrop-blur-md border border-white/[0.06] rounded-2xl p-6">
-                <h3 className="text-lg font-black uppercase tracking-tight mb-3">Genres</h3>
-                <div className="flex flex-wrap gap-2">
-                  {['Moombahton', 'Hip Hop', 'R&B', 'Trap', 'EDM', 'Lo-Fi', 'House', 'Drill', 'Afrobeats', 'Reggaeton', 'Pop', 'Latin'].map(genre => (
-                    <span key={genre} className="px-3 py-1.5 bg-white/[0.06] rounded-full text-xs font-bold text-white/50 uppercase tracking-wider">
-                      {genre}
-                    </span>
-                  ))}
+
+              {/* Spotify embed */}
+              <div className="bg-white/[0.04] backdrop-blur-md border border-white/[0.06] rounded-3xl p-5 md:p-8 mb-8">
+                <h3 className="text-lg font-black uppercase tracking-tight mb-6">Mixed & Mastered by Jonna Rincon</h3>
+                <div className="rounded-2xl overflow-hidden">
+                  <iframe
+                    style={{ borderRadius: '16px' }}
+                    src="https://open.spotify.com/embed/playlist/5smfHiU4egb6uyHYzgmqdC?utm_source=generator"
+                    width="100%"
+                    height="380"
+                    frameBorder="0"
+                    allowFullScreen
+                    allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                    loading="lazy"
+                  />
                 </div>
               </div>
-            </div>
 
-            {/* Skills */}
-            <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tight mb-3">What I Do</h2>
-            <p className="text-white/25 text-sm mb-10">25 years old — making music since age 13-15 in FL Studio</p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {skills.map(skill => (
-                <div key={skill.title} className="bg-white/[0.04] backdrop-blur-md border border-white/[0.06] rounded-2xl p-5 hover:border-white/[0.12] transition-all duration-300 hover:bg-white/[0.06]">
-                  <h3 className="text-base font-black text-white uppercase tracking-tight mb-2">{skill.title}</h3>
-                  <p className="text-white/30 text-xs leading-relaxed">{skill.desc}</p>
+              {/* Process + Genres */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-12">
+                <div className="bg-white/[0.04] backdrop-blur-md border border-white/[0.06] rounded-2xl p-6">
+                  <h3 className="text-base font-black uppercase tracking-tight mb-3">The Process</h3>
+                  <p className="text-white/40 text-sm leading-relaxed">
+                    Every track starts in FL Studio — the DAW where it all began over 10 years ago. From the first beat to the final master,
+                    every step is handled in-house. Self-made cover arts, self-mixed, self-mastered.
+                  </p>
                 </div>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* ── STREAMS TAB ── */}
-      {activeTab === 'streams' && (
-        <section className="px-6 md:px-12 pt-6 pb-20">
-          <div className="max-w-7xl mx-auto">
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-6 mb-12">
-              {compilations.map(comp => (
-                <a key={comp.id} href={comp.url} target="_blank" rel="noopener noreferrer" className="group">
-                  <div className="relative aspect-square rounded-2xl overflow-hidden border border-white/[0.06] mb-3">
-                    <img src={comp.cover} alt={comp.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all duration-300 flex items-center justify-center">
-                      <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 w-12 h-12 rounded-full bg-red-600 flex items-center justify-center">
-                        <Play size={20} className="text-white ml-0.5" fill="white" />
-                      </div>
-                    </div>
+                <div className="bg-white/[0.04] backdrop-blur-md border border-white/[0.06] rounded-2xl p-6">
+                  <h3 className="text-base font-black uppercase tracking-tight mb-3">Genres</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {['Moombahton', 'Hip Hop', 'R&B', 'Trap', 'EDM', 'Lo-Fi', 'House', 'Drill', 'Afrobeats', 'Reggaeton', 'Pop', 'Latin'].map(genre => (
+                      <span key={genre} className="px-2.5 py-1 bg-white/[0.06] rounded-full text-[11px] font-bold text-white/50 uppercase tracking-wider">
+                        {genre}
+                      </span>
+                    ))}
                   </div>
-                  <h3 className="text-sm font-bold text-white group-hover:text-red-400 transition-colors">{comp.name}</h3>
-                  <p className="text-[10px] text-white/25 uppercase tracking-wider">{comp.type}</p>
-                </a>
-              ))}
-            </div>
-
-            <div className="bg-white/[0.04] backdrop-blur-md border border-white/[0.06] rounded-3xl p-5 md:p-8">
-              <div className="flex items-center justify-between mb-8">
-                <p className="text-lg font-bold text-white">{spotifyPlaylists[currentPlaylist].name}</p>
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={() => setCurrentPlaylist(Math.max(0, currentPlaylist - 1))}
-                    className="w-10 h-10 rounded-full border border-white/[0.08] flex items-center justify-center hover:bg-white/[0.06] transition-all"
-                    disabled={currentPlaylist === 0}
-                  >
-                    <ChevronLeft size={18} className={currentPlaylist === 0 ? 'text-white/10' : 'text-white/40'} />
-                  </button>
-                  <button
-                    onClick={() => setCurrentPlaylist(Math.min(spotifyPlaylists.length - 1, currentPlaylist + 1))}
-                    className="w-10 h-10 rounded-full border border-white/[0.08] flex items-center justify-center hover:bg-white/[0.06] transition-all"
-                    disabled={currentPlaylist === spotifyPlaylists.length - 1}
-                  >
-                    <ChevronRight size={18} className={currentPlaylist === spotifyPlaylists.length - 1 ? 'text-white/10' : 'text-white/40'} />
-                  </button>
                 </div>
               </div>
 
-              <div className="flex items-center gap-4 mb-6">
-                <div className="flex gap-2">
-                  {spotifyPlaylists.map((_, i) => (
-                    <button
-                      key={i}
-                      onClick={() => setCurrentPlaylist(i)}
-                      className={`h-1.5 rounded-full transition-all duration-300 ${i === currentPlaylist ? 'bg-red-500 w-6' : 'bg-white/10 w-1.5 hover:bg-white/20'}`}
-                    />
-                  ))}
-                </div>
-              </div>
-
-              <div className="rounded-2xl overflow-hidden relative">
-                {spotifyPlaylists.map((playlist, i) => (
-                  <div key={i} className={`transition-opacity duration-500 ${i === currentPlaylist ? 'opacity-100' : 'opacity-0 absolute inset-0'}`}>
-                    <iframe
-                      style={{ borderRadius: '16px' }}
-                      src={playlist.embedUrl}
-                      width="100%"
-                      height="400"
-                      frameBorder="0"
-                      allowFullScreen
-                      allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                      loading="lazy"
-                    />
+              {/* Skills grid */}
+              <h2 className="text-3xl md:text-4xl font-black uppercase tracking-tight mb-2">What I Do</h2>
+              <p className="text-white/30 text-sm mb-8">25 years old — making music since age 13</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+                {skills.map(skill => (
+                  <div key={skill.title} className="bg-white/[0.04] backdrop-blur-md border border-white/[0.06] rounded-2xl p-5 hover:border-white/[0.12] transition-all duration-300 hover:bg-white/[0.06]">
+                    <h3 className="text-sm font-black text-white uppercase tracking-tight mb-2">{skill.title}</h3>
+                    <p className="text-white/30 text-xs leading-relaxed">{skill.desc}</p>
                   </div>
                 ))}
               </div>
 
-              <a
-                href="https://open.spotify.com/artist/6o3BlWTeK4EKUyByo35y6F"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-6 w-full inline-block text-center py-3.5 bg-red-600 hover:bg-red-500 text-white rounded-2xl font-bold transition-all duration-300 hover:scale-[1.02]"
-              >
-                Open in Spotify
-              </a>
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* ── COMMUNITY TAB ── */}
-      {activeTab === 'community' && (
-        <section className="px-6 md:px-12 pt-6 pb-20">
-          <div className="max-w-7xl mx-auto">
-            <div className="bg-gradient-to-br from-red-600/20 to-red-900/10 backdrop-blur-md border border-red-500/20 rounded-3xl p-6 md:p-10 mb-8">
-              <div className="flex items-center gap-3 mb-4">
-                <Award size={28} className="text-red-400" />
-                <h3 className="text-2xl font-black uppercase tracking-tight">MTV Featured</h3>
+              {/* CTA */}
+              <div className="flex flex-wrap gap-4">
+                <Link to="/catalogue" className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-black text-xs uppercase tracking-widest transition-all rounded-full">
+                  Browse Catalogue
+                </Link>
+                <Link to="/shop/services" className="px-6 py-3 bg-white/[0.08] border border-white/[0.15] text-white font-black text-xs uppercase tracking-widest hover:bg-white/[0.15] transition-all rounded-full">
+                  Book a Session
+                </Link>
               </div>
-              <p className="text-white/50 text-sm md:text-base leading-relaxed">
-                Jonna Rincon has been featured on MTV multiple times — gaining international exposure
-                and recognition for his unique sound and production style.
-              </p>
             </div>
+          </section>
+        )}
 
-            <h3 className="text-xl font-black uppercase tracking-tight mb-6">Artist Co-Signs & Support</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-12">
-              {supportMentions.filter(s => s.type === 'Artist').map(mention => (
-                <div
-                  key={mention.name}
-                  className="bg-white/[0.04] backdrop-blur-md border border-white/[0.06] rounded-2xl p-5 hover:border-white/[0.12] transition-all duration-300"
-                >
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="w-8 h-8 rounded-full bg-white/[0.08] flex items-center justify-center">
-                      <span className="text-xs font-black text-white/60">{mention.name.charAt(0)}</span>
+        {/* ── STREAMS TAB ── */}
+        {activeTab === 'streams' && (
+          <section className="px-4 md:px-8 lg:px-12 pt-10 pb-20 bg-[#0a0a0a]">
+            <div className="max-w-7xl mx-auto">
+
+              <div className="mb-10">
+                <p className="text-xs uppercase tracking-[0.4em] text-red-500 mb-2 font-black">Listen</p>
+                <h2 className="text-4xl md:text-6xl font-black text-white tracking-tighter">Streams</h2>
+              </div>
+
+              {/* Compilations */}
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-12">
+                {compilations.map(comp => (
+                  <a key={comp.id} href={comp.url} target="_blank" rel="noopener noreferrer" className="group">
+                    <div className="relative aspect-square rounded-2xl overflow-hidden border border-white/[0.06] mb-3">
+                      <img src={comp.cover} alt={comp.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all duration-300 flex items-center justify-center">
+                        <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 w-12 h-12 rounded-full bg-red-600 flex items-center justify-center">
+                          <Play size={20} className="text-white ml-0.5" fill="white" />
+                        </div>
+                      </div>
                     </div>
-                    <h4 className="text-base font-black text-white">{mention.name}</h4>
-                  </div>
-                  <p className="text-white/30 text-xs leading-relaxed">{mention.description}</p>
-                </div>
-              ))}
-            </div>
+                    <h3 className="text-sm font-bold text-white group-hover:text-red-400 transition-colors truncate">{comp.name}</h3>
+                    <p className="text-[10px] text-white/25 uppercase tracking-wider">{comp.type}</p>
+                  </a>
+                ))}
+              </div>
 
-            <h3 className="text-xl font-black uppercase tracking-tight mb-6">Streaming Numbers</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {[
-                { value: '1M+', label: 'Spotify Streams' },
-                { value: '100K+', label: 'YouTube Views' },
-                { value: '100+', label: 'Tracks Released' },
-                { value: '100+', label: 'Remixes & Edits' },
-              ].map(stat => (
-                <div key={stat.label} className="bg-white/[0.04] backdrop-blur-md border border-white/[0.06] rounded-2xl p-6 text-center">
-                  <p className="text-3xl md:text-4xl font-black text-red-400">{stat.value}</p>
-                  <p className="text-white/30 text-xs uppercase tracking-wider mt-2">{stat.label}</p>
+              {/* Spotify carousel */}
+              <div className="bg-white/[0.04] backdrop-blur-md border border-white/[0.06] rounded-3xl p-5 md:p-8">
+                <div className="flex items-center justify-between mb-6">
+                  <p className="text-base font-bold text-white">{spotifyPlaylists[currentPlaylist].name}</p>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setCurrentPlaylist(Math.max(0, currentPlaylist - 1))}
+                      className="w-9 h-9 rounded-full border border-white/[0.08] flex items-center justify-center hover:bg-white/[0.06] transition-all"
+                      disabled={currentPlaylist === 0}
+                    >
+                      <ChevronLeft size={16} className={currentPlaylist === 0 ? 'text-white/10' : 'text-white/40'} />
+                    </button>
+                    <button
+                      onClick={() => setCurrentPlaylist(Math.min(spotifyPlaylists.length - 1, currentPlaylist + 1))}
+                      className="w-9 h-9 rounded-full border border-white/[0.08] flex items-center justify-center hover:bg-white/[0.06] transition-all"
+                      disabled={currentPlaylist === spotifyPlaylists.length - 1}
+                    >
+                      <ChevronRight size={16} className={currentPlaylist === spotifyPlaylists.length - 1 ? 'text-white/10' : 'text-white/40'} />
+                    </button>
+                  </div>
                 </div>
-              ))}
+
+                <div className="flex gap-1.5 mb-5">
+                  {spotifyPlaylists.map((_, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setCurrentPlaylist(i)}
+                      className={`h-1.5 rounded-full transition-all duration-300 ${i === currentPlaylist ? 'bg-red-500 w-5' : 'bg-white/10 w-1.5 hover:bg-white/20'}`}
+                    />
+                  ))}
+                </div>
+
+                <div className="rounded-2xl overflow-hidden relative">
+                  {spotifyPlaylists.map((playlist, i) => (
+                    <div key={i} className={`transition-opacity duration-500 ${i === currentPlaylist ? 'opacity-100' : 'opacity-0 absolute inset-0'}`}>
+                      <iframe
+                        style={{ borderRadius: '16px' }}
+                        src={playlist.embedUrl}
+                        width="100%"
+                        height="380"
+                        frameBorder="0"
+                        allowFullScreen
+                        allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                        loading="lazy"
+                      />
+                    </div>
+                  ))}
+                </div>
+
+                <a
+                  href="https://open.spotify.com/artist/6o3BlWTeK4EKUyByo35y6F"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-6 w-full inline-block text-center py-3 bg-red-600 hover:bg-red-500 text-white rounded-2xl font-bold transition-all hover:scale-[1.02] text-sm"
+                >
+                  Open in Spotify
+                </a>
+              </div>
             </div>
-          </div>
-        </section>
-      )}
+          </section>
+        )}
+
+        {/* ── COMMUNITY TAB ── */}
+        {activeTab === 'community' && (
+          <section className="px-4 md:px-8 lg:px-12 pt-10 pb-20 bg-[#0a0a0a]">
+            <div className="max-w-7xl mx-auto">
+
+              <div className="mb-10">
+                <p className="text-xs uppercase tracking-[0.4em] text-red-500 mb-2 font-black">Recognition</p>
+                <h2 className="text-4xl md:text-6xl font-black text-white tracking-tighter">Community</h2>
+              </div>
+
+              {/* MTV Feature */}
+              <div className="bg-gradient-to-br from-red-600/20 to-red-900/10 backdrop-blur-md border border-red-500/20 rounded-3xl p-6 md:p-10 mb-8">
+                <div className="flex items-center gap-3 mb-4">
+                  <Award size={28} className="text-red-400" />
+                  <h3 className="text-2xl font-black uppercase tracking-tight">MTV Featured</h3>
+                </div>
+                <p className="text-white/50 text-sm md:text-base leading-relaxed">
+                  Jonna Rincon has been featured on MTV multiple times — gaining international exposure
+                  and recognition for his unique sound and production style.
+                </p>
+              </div>
+
+              {/* Stats */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+                {[
+                  { value: '1M+', label: 'Spotify Streams' },
+                  { value: '100K+', label: 'YouTube Views' },
+                  { value: '100+', label: 'Tracks Released' },
+                  { value: '100+', label: 'Remixes & Edits' },
+                ].map(stat => (
+                  <div key={stat.label} className="bg-white/[0.04] backdrop-blur-md border border-white/[0.06] rounded-2xl p-6 text-center">
+                    <p className="text-3xl md:text-4xl font-black text-red-400 mb-1">{stat.value}</p>
+                    <p className="text-white/30 text-xs uppercase tracking-wider">{stat.label}</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Artist co-signs */}
+              <h3 className="text-xl font-black uppercase tracking-tight mb-6">Artist Co-Signs & Support</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {supportMentions.filter(s => s.type === 'Artist').map(mention => (
+                  <div
+                    key={mention.name}
+                    className="bg-white/[0.04] backdrop-blur-md border border-white/[0.06] rounded-2xl p-4 hover:border-white/[0.12] transition-all duration-300"
+                  >
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className="w-8 h-8 rounded-full bg-white/[0.08] flex items-center justify-center flex-shrink-0">
+                        <span className="text-xs font-black text-white/60">{mention.name.charAt(0)}</span>
+                      </div>
+                      <h4 className="text-sm font-black text-white truncate">{mention.name}</h4>
+                    </div>
+                    <p className="text-white/30 text-xs leading-relaxed">{mention.description}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
+      </div>
 
       <Footer />
     </div>

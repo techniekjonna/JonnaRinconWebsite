@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, ChevronDown } from 'lucide-react';
+import { X, Check } from 'lucide-react';
 
 interface FilterOption {
   label: string;
@@ -21,11 +21,6 @@ export default function FilterModal({
   onClose,
   onReset,
 }: FilterModalProps) {
-  const [expandedFilter, setExpandedFilter] = useState<string | null>(
-    filters.length > 0 ? filters[0].label : null
-  );
-
-  // Prevent body scroll when modal is open
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
@@ -39,112 +34,89 @@ export default function FilterModal({
 
   if (!isOpen) return null;
 
-  // Count active filters
   const activeFilterCount = filters.filter((f) => f.value !== 'All').length;
 
   return (
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/40 backdrop-blur-md z-40"
+        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
         onClick={onClose}
       />
 
-      {/* Modal */}
-      <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
-        <div className="bg-white/[0.08] backdrop-blur-xl border border-white/[0.15] rounded-2xl w-full max-w-md max-h-[90vh] overflow-hidden shadow-2xl flex flex-col">
+      {/* Modal — clicks inside don't bubble to backdrop */}
+      <div
+        className="fixed inset-0 flex items-end sm:items-center justify-center z-50 sm:p-4 pointer-events-none"
+      >
+        <div
+          className="pointer-events-auto w-full sm:max-w-sm bg-[#111] border border-white/[0.10] rounded-t-3xl sm:rounded-2xl shadow-2xl flex flex-col"
+          style={{ maxHeight: '80dvh' }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Drag handle (mobile) */}
+          <div className="sm:hidden flex justify-center pt-3 pb-2 flex-shrink-0">
+            <div className="w-10 h-1 rounded-full bg-white/20" />
+          </div>
+
           {/* Header */}
-          <div className="flex items-center justify-between p-6 border-b border-white/[0.08] bg-white/[0.04]">
-            <div>
-              <h2 className="text-sm font-bold uppercase tracking-wider text-white">
-                Filters
-              </h2>
+          <div className="flex items-center justify-between px-5 pt-3 pb-3 flex-shrink-0 border-b border-white/[0.06]">
+            <div className="flex items-center gap-2">
+              <h2 className="text-sm font-bold uppercase tracking-wider text-white">Filters</h2>
               {activeFilterCount > 0 && (
-                <p className="text-xs text-white/40 mt-1">
-                  {activeFilterCount} active
-                </p>
+                <span className="text-[10px] font-bold text-white bg-red-600 rounded-full px-2 py-0.5">
+                  {activeFilterCount}
+                </span>
               )}
             </div>
             <button
               onClick={onClose}
-              className="p-2 hover:bg-white/[0.1] rounded-lg transition-colors text-white/60 hover:text-white"
-              aria-label="Close filters"
+              className="p-1.5 hover:bg-white/[0.1] rounded-lg transition-colors text-white/50 hover:text-white"
             >
-              <X size={18} />
+              <X size={16} />
             </button>
           </div>
 
-          {/* Filters */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-2">
+          {/* Filters — compact rows */}
+          <div className="flex-1 overflow-y-auto p-4 space-y-4">
             {filters.map((filter) => (
-              <div
-                key={filter.label}
-                className="bg-white/[0.06] border border-white/[0.08] rounded-lg overflow-hidden backdrop-blur-sm hover:bg-white/[0.08] transition-colors"
-              >
-                {/* Filter Header - Clickable */}
-                <button
-                  onClick={() =>
-                    setExpandedFilter(
-                      expandedFilter === filter.label ? null : filter.label
-                    )
-                  }
-                  className="w-full flex items-center justify-between p-4 text-left hover:bg-white/[0.04] transition-colors"
-                >
-                  <div className="flex-1">
-                    <p className="text-xs font-bold uppercase tracking-wider text-white/60">
-                      {filter.label}
-                    </p>
-                    <p className="text-sm font-semibold text-white mt-1">
-                      {filter.value}
-                    </p>
-                  </div>
-                  <ChevronDown
-                    size={16}
-                    className={`text-white/40 transition-transform flex-shrink-0 ${
-                      expandedFilter === filter.label ? 'rotate-180' : ''
-                    }`}
-                  />
-                </button>
-
-                {/* Filter Options - Expandable */}
-                {expandedFilter === filter.label && (
-                  <div className="border-t border-white/[0.08] bg-black/20 p-3 space-y-2">
-                    {filter.options.map((option) => (
+              <div key={filter.label}>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-white/40 mb-2">
+                  {filter.label}
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {filter.options.map((option) => {
+                    const isSelected = filter.value === option;
+                    return (
                       <button
-                        key={option}
-                        onClick={() => {
-                          filter.onChange(option);
-                          // Keep accordion open after selection
-                        }}
-                        className={`w-full px-3 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all text-left ${
-                          filter.value === option
-                            ? 'bg-white/[0.2] border border-white/[0.3] text-white'
-                            : 'bg-white/[0.06] border border-white/[0.1] text-white/60 hover:text-white hover:bg-white/[0.12]'
+                        key={String(option)}
+                        onClick={() => filter.onChange(option)}
+                        className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wide transition-all ${
+                          isSelected
+                            ? 'bg-red-600 text-white shadow-md shadow-red-600/30'
+                            : 'bg-white/[0.06] border border-white/[0.08] text-white/50 hover:text-white hover:bg-white/[0.12]'
                         }`}
                       >
-                        {option}
+                        {isSelected && <Check size={10} />}
+                        {String(option)}
                       </button>
-                    ))}
-                  </div>
-                )}
+                    );
+                  })}
+                </div>
               </div>
             ))}
           </div>
 
           {/* Footer */}
-          <div className="flex gap-3 p-4 border-t border-white/[0.08] bg-white/[0.04]">
+          <div className="flex gap-2 p-4 border-t border-white/[0.06] flex-shrink-0">
             <button
-              onClick={() => {
-                onReset();
-                setExpandedFilter(filters.length > 0 ? filters[0].label : null);
-              }}
-              className="px-4 py-2.5 bg-white/[0.08] border border-white/[0.15] rounded-lg font-bold uppercase tracking-wider text-xs text-white/60 hover:text-white hover:bg-white/[0.12] transition-all"
+              onClick={onReset}
+              className="px-4 py-2.5 bg-white/[0.06] border border-white/[0.1] rounded-xl font-bold uppercase tracking-wider text-xs text-white/50 hover:text-white hover:bg-white/[0.12] transition-all"
             >
               Reset
             </button>
             <button
               onClick={onClose}
-              className="flex-1 px-4 py-2.5 bg-white/[0.15] border border-white/[0.2] rounded-lg font-bold uppercase tracking-wider text-xs text-white hover:bg-white/[0.25] transition-all backdrop-blur-sm"
+              className="flex-1 px-4 py-2.5 bg-white text-black rounded-xl font-bold uppercase tracking-wider text-xs hover:bg-white/90 transition-all"
             >
               Done
             </button>
@@ -154,4 +126,3 @@ export default function FilterModal({
     </>
   );
 }
-

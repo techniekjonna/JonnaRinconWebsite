@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
-import { Instagram, Youtube, Music2, ExternalLink, Mail, ArrowRight } from 'lucide-react';
-import { useCyberDecodeInView } from '../hooks/useCyberDecode';
+import { Instagram, Youtube, Music2, ExternalLink, ChevronLeft, ChevronRight, Send, Check } from 'lucide-react';
 import { useScrollToTop } from '../hooks/useScrollToTop';
+import { useAuth } from '../hooks/useAuth';
+import { Link } from 'react-router-dom';
 
 const platforms = [
   {
@@ -11,75 +12,101 @@ const platforms = [
     handle: '@jonnarincon',
     icon: Instagram,
     url: 'https://www.instagram.com/jonnarincon/',
-    gradient: 'from-purple-600 via-pink-500 to-orange-400',
-    description: 'Behind the scenes, studio sessions, and daily life',
-    stats: 'Photos & Reels',
+    color: 'from-purple-600 via-pink-500 to-orange-400',
   },
   {
     name: 'YouTube',
     handle: 'Jonna Rincon',
     icon: Youtube,
     url: 'https://www.youtube.com/jonnarincon',
-    gradient: 'from-red-600 to-red-500',
-    description: 'DJ sets, music videos, vlogs, and tutorials',
-    stats: 'Videos & Sets',
+    color: 'from-red-600 to-red-500',
   },
   {
     name: 'Spotify',
     handle: 'Jonna Rincon',
     icon: Music2,
     url: 'https://open.spotify.com/artist/6o3BlWTeK4EKUyByo35y6F',
-    gradient: 'from-red-600 to-red-400',
-    description: 'Stream all tracks, playlists, and collaborations',
-    stats: 'All Releases',
+    color: 'from-green-600 to-green-500',
   },
   {
     name: 'SoundCloud',
     handle: 'jonnarincon',
     icon: Music2,
     url: 'https://soundcloud.com/jonnarincon',
-    gradient: 'from-orange-500 to-orange-400',
-    description: 'Exclusive uploads, remixes, and unreleased tracks',
-    stats: 'Exclusives',
+    color: 'from-orange-500 to-orange-400',
   },
   {
     name: 'TikTok',
     handle: '@jonnarincon',
     icon: Music2,
     url: '#',
-    gradient: 'from-cyan-400 via-black to-pink-500',
-    description: 'Short-form content, beat previews, and trends',
-    stats: 'Short Videos',
+    color: 'from-cyan-500 to-pink-500',
   },
   {
     name: 'Apple Music',
     handle: 'Jonna Rincon',
     icon: Music2,
     url: '#',
-    gradient: 'from-pink-500 to-red-500',
-    description: 'Stream in lossless audio quality',
-    stats: 'Hi-Res Audio',
+    color: 'from-pink-500 to-red-500',
   },
 ];
 
+const contactCategories = {
+  'Jonna Rincon': ['Productions', 'Remixes & Edits', 'DJ Sets', 'Community', 'Other'],
+  'Shop': ['Beat Shop', 'Mix & Master', 'Studio Sessions', 'Merchandise', 'Art', 'Other'],
+};
+
+type CategoryKey = keyof typeof contactCategories;
+
+type ContactStep = 'compose' | 'details' | 'sent';
+
 export default function SocialsPage() {
   useScrollToTop();
+  const { isAuthenticated } = useAuth();
+
+  // Contact form state
+  const [contactStep, setContactStep] = useState<ContactStep>('compose');
+  const [selectedCategory, setSelectedCategory] = useState<CategoryKey | null>(null);
+  const [selectedSub, setSelectedSub] = useState<string | null>(null);
+  const [message, setMessage] = useState('');
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const heroTitle = useCyberDecodeInView('Socials');
+
+  const canSendMessage = selectedCategory && selectedSub && message.trim().length > 0;
+
+  const handleSend = () => {
+    if (!canSendMessage) return;
+    setContactStep('details');
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name.trim() || !email.trim()) return;
+    setContactStep('sent');
+  };
+
+  const resetForm = () => {
+    setContactStep('compose');
+    setSelectedCategory(null);
+    setSelectedSub(null);
+    setMessage('');
+    setName('');
+    setEmail('');
+  };
 
   return (
     <div className="min-h-screen text-white">
-      {/* Fixed Dark Overlay */}
       <div className="fixed inset-0 w-full h-screen -z-10 bg-black/20" />
-<Navigation isDarkOverlay={true} isLightMode={false} />
+      <Navigation isDarkOverlay={true} isLightMode={false} />
 
-      {/* Hero Section */}
+      {/* Hero spacer */}
       <section className="relative pt-28 px-6 md:px-12 pb-4" />
 
-      {/* Platforms Grid */}
-      <section className="px-6 md:px-12 py-8 md:py-12">
+      {/* Social Icons Row */}
+      <section className="px-6 md:px-12 pb-10">
         <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+          <p className="text-xs font-black uppercase tracking-[0.4em] text-white/30 mb-5">Follow</p>
+          <div className="flex flex-wrap gap-3">
             {platforms.map((platform) => {
               const Icon = platform.icon;
               return (
@@ -88,24 +115,17 @@ export default function SocialsPage() {
                   href={platform.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group relative bg-white/[0.04] backdrop-blur-md border border-white/[0.06] rounded-2xl p-4 hover:border-white/[0.12] transition-all duration-500 hover:scale-[1.02] hover:bg-white/[0.08]"
+                  title={`${platform.name} — ${platform.handle}`}
+                  className="group flex items-center gap-2.5 px-4 py-2.5 bg-white/[0.05] border border-white/[0.08] rounded-2xl hover:bg-white/[0.10] hover:border-white/[0.15] transition-all duration-300"
                 >
-                  <div className="flex items-center justify-between mb-3">
-                    <div className={`w-9 h-9 rounded-xl bg-gradient-to-br ${platform.gradient} flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}>
-                      <Icon className="w-4 h-4 text-white" />
-                    </div>
-                    <ExternalLink size={13} className="text-white/10 group-hover:text-white/40 transition-colors" />
+                  <div className={`w-7 h-7 rounded-xl bg-gradient-to-br ${platform.color} flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-300`}>
+                    <Icon className="w-3.5 h-3.5 text-white" />
                   </div>
-
-                  <h3 className="text-sm font-black text-white mb-0.5 uppercase tracking-tight">{platform.name}</h3>
-                  <p className="text-white/30 text-[10px] mb-2">{platform.handle}</p>
-
-                  <div className="flex items-center justify-between pt-2 border-t border-white/[0.06]">
-                    <span className="text-[9px] text-white/25 uppercase tracking-wider font-medium">{platform.stats}</span>
-                    <span className="text-[10px] text-white/30 group-hover:text-red-400 transition-colors font-bold uppercase tracking-wider">
-                      Follow
-                    </span>
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold text-white truncate leading-none">{platform.name}</p>
+                    <p className="text-[10px] text-white/30 truncate leading-none mt-0.5">{platform.handle}</p>
                   </div>
+                  <ExternalLink size={11} className="text-white/20 group-hover:text-white/50 transition-colors flex-shrink-0" />
                 </a>
               );
             })}
@@ -113,94 +133,187 @@ export default function SocialsPage() {
         </div>
       </section>
 
-      {/* Newsletter */}
-      <section className="px-6 md:px-12 py-16 md:py-24">
-        <div className="max-w-7xl mx-auto">
-          <div className="bg-white/[0.04] backdrop-blur-md border border-white/[0.06] rounded-3xl p-8 md:p-12 text-center">
-            <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tight mb-3">Stay in the Loop</h2>
-            <p className="text-white/30 text-sm md:text-base mb-8 max-w-md mx-auto">
-              Subscribe for early access to new beats, exclusive content, and special offers
-            </p>
-            <div className="flex gap-3 max-w-md mx-auto">
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Enter your email"
-                className="flex-1 px-5 py-3.5 bg-white/[0.05] border border-white/[0.08] text-white placeholder-white/25 rounded-2xl focus:outline-none focus:border-red-500/40 transition-all"
-              />
-              <button className="px-6 md:px-8 py-3.5 bg-red-600 hover:bg-red-500 text-white rounded-2xl font-bold transition-all hover:scale-[1.03]">
-                Subscribe
-              </button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Contact */}
+      {/* Contact section */}
       <section className="px-6 md:px-12 pb-24">
-        <div className="max-w-7xl mx-auto">
-          <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tight mb-8 text-center">Contact</h2>
-          <div className="grid md:grid-cols-2 gap-6">
-            {/* Contact info */}
-            <div className="bg-white/[0.04] border border-white/[0.06] rounded-3xl p-8 space-y-6">
-              <div className="flex items-start gap-4">
-                <div className="p-3 bg-white/[0.06] rounded-2xl">
-                  <Mail className="w-5 h-5 text-white/50" />
-                </div>
-                <div>
-                  <p className="text-white font-semibold mb-1">Email</p>
-                  <a href="mailto:contact@jonnarincon.com" className="text-white/40 hover:text-red-400 transition-colors text-sm">
-                    contact@jonnarincon.com
-                  </a>
-                </div>
-              </div>
-              <div className="border-t border-white/[0.06] pt-6">
-                <p className="text-white/25 text-xs uppercase tracking-wider mb-1">Contact</p>
-                <a href="mailto:jonnarincon@getmajorgigs.com" className="text-white/40 hover:text-red-400 transition-colors text-sm">
-                  jonnarincon@getmajorgigs.com
-                </a>
-              </div>
-              <div className="border-t border-white/[0.06] pt-6">
-                <p className="text-white/25 text-xs uppercase tracking-wider mb-1">Response Time</p>
-                <p className="text-white/50 text-sm">Usually within 24 hours</p>
-              </div>
-              <a
-                href="/studio-session"
-                className="group flex items-center justify-between p-4 bg-white/[0.04] border border-white/10 hover:border-red-600/40 transition-all"
-              >
-                <span className="text-white/60 text-sm group-hover:text-white transition-colors">Book a studio session</span>
-                <ArrowRight size={16} className="text-red-500" />
-              </a>
+        <div className="max-w-2xl mx-auto">
+          <p className="text-xs font-black uppercase tracking-[0.4em] text-red-500 mb-3">Get In Touch</p>
+          <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tighter mb-8">Contact</h2>
+
+          <div className="bg-white/[0.04] border border-white/[0.08] rounded-3xl overflow-hidden">
+
+            {/* Step indicator */}
+            <div className="flex items-center border-b border-white/[0.06] px-5 py-3">
+              {(['compose', 'details', 'sent'] as ContactStep[]).map((step, i) => {
+                const isActive = contactStep === step;
+                const isDone = (['compose', 'details', 'sent'] as ContactStep[]).indexOf(contactStep) > i;
+                return (
+                  <div key={step} className="flex items-center">
+                    <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-black transition-all ${
+                      isDone ? 'bg-red-600 text-white' : isActive ? 'bg-white text-black' : 'bg-white/[0.08] text-white/30'
+                    }`}>
+                      {isDone ? <Check size={10} /> : i + 1}
+                    </div>
+                    <span className={`ml-2 text-[10px] font-bold uppercase tracking-wider transition-colors ${isActive ? 'text-white' : 'text-white/25'}`}>
+                      {step === 'compose' ? 'Message' : step === 'details' ? 'Your Info' : 'Sent'}
+                    </span>
+                    {i < 2 && <ChevronRight size={12} className="mx-3 text-white/20" />}
+                  </div>
+                );
+              })}
             </div>
 
-            {/* Contact form */}
-            <div className="bg-white/[0.04] border border-white/[0.06] rounded-3xl p-8">
-              <h3 className="text-xl font-bold mb-6 text-white">Send a Message</h3>
-              <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
-                <input
-                  type="text"
-                  placeholder="Your name"
-                  className="w-full px-4 py-3 bg-white/[0.05] border border-white/[0.08] text-white placeholder-white/20 rounded-2xl focus:outline-none focus:border-red-500/40 transition-all text-sm"
-                />
-                <input
-                  type="email"
-                  placeholder="your@email.com"
-                  className="w-full px-4 py-3 bg-white/[0.05] border border-white/[0.08] text-white placeholder-white/20 rounded-2xl focus:outline-none focus:border-red-500/40 transition-all text-sm"
-                />
-                <textarea
-                  rows={4}
-                  placeholder="Your message..."
-                  className="w-full px-4 py-3 bg-white/[0.05] border border-white/[0.08] text-white placeholder-white/20 rounded-2xl focus:outline-none focus:border-red-500/40 transition-all text-sm resize-none"
-                />
+            {/* ── STEP 1: Compose ── */}
+            {contactStep === 'compose' && (
+              <div className="p-5 space-y-5">
+                {/* Category selection */}
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-white/40 mb-2">Category</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {(Object.keys(contactCategories) as CategoryKey[]).map((cat) => (
+                      <button
+                        key={cat}
+                        onClick={() => { setSelectedCategory(cat); setSelectedSub(null); }}
+                        className={`py-3 px-4 rounded-2xl text-sm font-bold uppercase tracking-wider transition-all border ${
+                          selectedCategory === cat
+                            ? 'bg-red-600 border-red-500 text-white shadow-md shadow-red-600/30'
+                            : 'bg-white/[0.04] border-white/[0.08] text-white/50 hover:text-white hover:bg-white/[0.08]'
+                        }`}
+                      >
+                        {cat}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Sub-category */}
+                {selectedCategory && (
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-white/40 mb-2">Subject</p>
+                    <div className="flex flex-wrap gap-2">
+                      {contactCategories[selectedCategory].map((sub) => (
+                        <button
+                          key={sub}
+                          onClick={() => setSelectedSub(sub)}
+                          className={`px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wide transition-all ${
+                            selectedSub === sub
+                              ? 'bg-white text-black'
+                              : 'bg-white/[0.06] border border-white/[0.08] text-white/50 hover:text-white hover:bg-white/[0.12]'
+                          }`}
+                        >
+                          {sub}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Message */}
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-white/40 mb-2">Message</p>
+                  <textarea
+                    rows={5}
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    placeholder="Type your message here..."
+                    className="w-full px-4 py-3 bg-white/[0.04] border border-white/[0.08] text-white placeholder-white/20 rounded-2xl focus:outline-none focus:border-red-500/50 transition-all text-sm resize-none"
+                  />
+                  {isAuthenticated && (
+                    <p className="text-[10px] text-white/25 mt-2 leading-relaxed">
+                      Als je ingelogd bent kun je ook gebruik maken van de chat in het{' '}
+                      <Link to="/customer/messages" className="text-white/40 hover:text-white/60 underline transition-colors">
+                        dashboard
+                      </Link>.
+                    </p>
+                  )}
+                  {!isAuthenticated && (
+                    <p className="text-[10px] text-white/25 mt-2 leading-relaxed">
+                      Ingelogde gebruikers kunnen ook gebruik maken van de chat in het dashboard.
+                    </p>
+                  )}
+                </div>
+
                 <button
-                  type="submit"
-                  className="w-full py-3.5 bg-red-600 hover:bg-red-500 text-white font-bold rounded-2xl transition-all hover:scale-[1.02] text-sm uppercase tracking-widest"
+                  onClick={handleSend}
+                  disabled={!canSendMessage}
+                  className="w-full py-3.5 bg-red-600 hover:bg-red-500 disabled:bg-white/[0.05] disabled:text-white/20 text-white font-bold rounded-2xl transition-all hover:scale-[1.02] disabled:scale-100 text-sm uppercase tracking-widest flex items-center justify-center gap-2"
                 >
+                  <Send size={15} />
                   Send Message
                 </button>
-              </form>
-            </div>
+              </div>
+            )}
+
+            {/* ── STEP 2: Details ── */}
+            {contactStep === 'details' && (
+              <div className="p-5 space-y-5">
+                <div className="p-4 bg-white/[0.04] rounded-2xl border border-white/[0.06] text-sm">
+                  <p className="text-white/40 text-xs mb-1">{selectedCategory} › {selectedSub}</p>
+                  <p className="text-white/80 leading-relaxed line-clamp-3">{message}</p>
+                </div>
+
+                <form onSubmit={handleSubmit} className="space-y-3">
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-white/40 mb-2">Your Name</p>
+                    <input
+                      type="text"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="First name / Artist name"
+                      required
+                      className="w-full px-4 py-3 bg-white/[0.04] border border-white/[0.08] text-white placeholder-white/20 rounded-2xl focus:outline-none focus:border-red-500/50 transition-all text-sm"
+                    />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-white/40 mb-2">Email Address</p>
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="your@email.com"
+                      required
+                      className="w-full px-4 py-3 bg-white/[0.04] border border-white/[0.08] text-white placeholder-white/20 rounded-2xl focus:outline-none focus:border-red-500/50 transition-all text-sm"
+                    />
+                  </div>
+
+                  <div className="flex gap-2 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => setContactStep('compose')}
+                      className="px-4 py-3 bg-white/[0.06] border border-white/[0.1] text-white/60 hover:text-white rounded-2xl font-bold text-xs uppercase tracking-wider transition-all flex items-center gap-1.5"
+                    >
+                      <ChevronLeft size={14} /> Back
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={!name.trim() || !email.trim()}
+                      className="flex-1 py-3 bg-red-600 hover:bg-red-500 disabled:bg-white/[0.05] disabled:text-white/20 text-white font-bold rounded-2xl transition-all hover:scale-[1.01] text-sm uppercase tracking-widest flex items-center justify-center gap-2"
+                    >
+                      <Send size={15} /> Submit
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
+
+            {/* ── STEP 3: Sent ── */}
+            {contactStep === 'sent' && (
+              <div className="p-8 text-center space-y-4">
+                <div className="w-14 h-14 rounded-full bg-red-600/20 border border-red-500/30 flex items-center justify-center mx-auto">
+                  <Check size={24} className="text-red-400" />
+                </div>
+                <h3 className="text-xl font-black uppercase tracking-tight text-white">Message Sent!</h3>
+                <p className="text-white/40 text-sm leading-relaxed">
+                  Thanks, {name}. Your message has been received and will be replied to within 24 hours at{' '}
+                  <span className="text-white/60">{email}</span>.
+                </p>
+                <button
+                  onClick={resetForm}
+                  className="px-6 py-2.5 bg-white/[0.08] border border-white/[0.12] text-white/60 hover:text-white rounded-2xl font-bold text-xs uppercase tracking-wider transition-all"
+                >
+                  New Message
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </section>
