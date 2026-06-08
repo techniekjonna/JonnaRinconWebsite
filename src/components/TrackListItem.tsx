@@ -212,15 +212,13 @@ export default function TrackListItem({
 
         {/* Download */}
         {showDownload && track.audioUrl && (
-          <a
-            href={track.audioUrl}
-            download
+          <button
             className="text-white/30 hover:text-red-400 transition-colors"
             title="Download"
             onClick={e => { e.stopPropagation(); onDownload?.(track); }}
           >
             <Download size={13} />
-          </a>
+          </button>
         )}
       </div>
     </div>

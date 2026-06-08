@@ -210,7 +210,12 @@ export default function CataloguePage() {
     return a;
   }, []);
 
-  const handleTrackClick = (track: Track) => { setSelectedTrack(track); setIsModalOpen(true); };
+  const handleTrackClick = (track: Track) => {
+    if (!isAuthenticated) { setIsLoginModalOpen(true); return; }
+    handlePlayTrack(track);
+    setPlayerDetailContext('track', track as any);
+    openPlayerModal();
+  };
 
   const filteredTracks = demoTracks.filter(track => {
     return getTabTypeFilter(track) &&

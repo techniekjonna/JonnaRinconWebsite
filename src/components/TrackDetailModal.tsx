@@ -450,8 +450,8 @@ export default function TrackDetailModal({
               </div>
             )}
 
-            {/* Download Button - routes through gated /download page so the raw storage URL isn't exposed */}
-            {track.audioUrl && (
+            {/* Download Button - only for remixes/edits/bootlegs, routes through gated /download page */}
+            {track.audioUrl && track.remixType && (
               <button
                 type="button"
                 onClick={() => {

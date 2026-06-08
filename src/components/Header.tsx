@@ -172,7 +172,7 @@ const Header: React.FC = () => {
                       <img
                         src="/JEIGHTEEN-logo.png"
                         alt="JEIGHTEEN"
-                        className="h-20 md:h-24 w-auto object-contain opacity-90"
+                        className="h-[88px] md:h-[106px] w-auto object-contain opacity-90"
                       />
                     </button>
                   ) : (
@@ -180,7 +180,7 @@ const Header: React.FC = () => {
                       <img
                         src="/JEIGHTEEN-logo.png"
                         alt="JEIGHTEEN"
-                        className="h-20 md:h-24 w-auto object-contain opacity-90"
+                        className="h-[88px] md:h-[106px] w-auto object-contain opacity-90"
                       />
                     </Link>
                   )
@@ -265,11 +265,11 @@ const Header: React.FC = () => {
             {isShopRoute ? (
               isPlayingNow ? (
                 <button onClick={() => openPlayerModal()} className="flex justify-center hover:opacity-100 transition-opacity">
-                  <img src="/JEIGHTEEN-logo.png" alt="JEIGHTEEN" className="h-9 w-auto object-contain opacity-90" />
+                  <img src="/JEIGHTEEN-logo.png" alt="JEIGHTEEN" className="h-10 w-auto object-contain opacity-90" />
                 </button>
               ) : (
                 <Link to="/shop" className="flex justify-center hover:opacity-100 transition-opacity">
-                  <img src="/JEIGHTEEN-logo.png" alt="JEIGHTEEN" className="h-9 w-auto object-contain opacity-90" />
+                  <img src="/JEIGHTEEN-logo.png" alt="JEIGHTEEN" className="h-10 w-auto object-contain opacity-90" />
                 </Link>
               )
             ) : (

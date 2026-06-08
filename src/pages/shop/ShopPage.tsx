@@ -123,6 +123,7 @@ const ShopPage: React.FC = () => {
   const [aboutRef, aboutInView] = useInView({ threshold: 0.1 });
   const [ctaRef, ctaInView] = useInView({ threshold: 0.1 });
   const [heroReady, setHeroReady] = useState(false);
+  const [videoLoaded, setVideoLoaded] = useState(false);
 
   useEffect(() => {
     const t = setTimeout(() => setHeroReady(true), 150);
@@ -138,16 +139,22 @@ const ShopPage: React.FC = () => {
 
       {/* ─── HERO ─── */}
       <section className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden -mt-28 sm:-mt-32">
-        {/* Background video with image fallback */}
-        <div className="absolute inset-0">
+        {/* Background video with lazy load spinner */}
+        <div className="absolute inset-0 bg-black">
+          {/* Loading spinner — shown while video loads */}
+          {!videoLoaded && (
+            <div className="absolute inset-0 flex items-center justify-center z-10">
+              <div className="w-10 h-10 border-2 border-white/20 border-t-white/80 rounded-full animate-spin" />
+            </div>
+          )}
           <video
             autoPlay
             muted
             loop
             playsInline
-            poster="/DJI_20251018172151_0031_D.JPG"
-            className="absolute inset-0 w-full h-full object-cover"
-            style={{ objectPosition: 'center 35%' }}
+            onLoadedData={() => setVideoLoaded(true)}
+            className="absolute inset-0 w-full h-full object-cover transition-opacity duration-700"
+            style={{ objectPosition: 'center 35%', opacity: videoLoaded ? 1 : 0 }}
           >
             <source src="/Shop home video.mp4" type="video/mp4" />
           </video>
