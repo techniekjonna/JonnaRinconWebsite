@@ -735,6 +735,17 @@ export interface Order {
   customerNote?: string;
   adminNote?: string;
 
+  // Fulfillment tracking (per order)
+  fulfillmentSteps?: {
+    paymentConfirmed?: boolean;
+    scheduledWithClient?: boolean; // services
+    inProgress?: boolean;          // services
+    filesDelivered?: boolean;      // beats / tracks / services
+    packaged?: boolean;            // art / merchandise
+    shipped?: boolean;             // art / merchandise
+    delivered?: boolean;           // art / merchandise
+  };
+
   // Timestamps
   createdAt: Timestamp;
   updatedAt: Timestamp;

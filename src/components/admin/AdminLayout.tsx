@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { useOrderNotifications } from '../../hooks/useOrderNotifications';
 import {
   LayoutDashboard,
   Settings,
@@ -32,6 +33,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     return saved || 'floating';
   });
   const { user, signOut } = useAuth();
+  const { pendingCount, newSinceLastSeen } = useOrderNotifications();
   const navigate = useNavigate();
   const location = useLocation();
   const closeTimeout = useRef<NodeJS.Timeout | null>(null);
@@ -84,22 +86,25 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     },
     {
       label: 'ORDERS AND STATS',
-      subtitle: 'Orders, Products, Analytics',
+      subtitle: 'Bestellingen, Producten, Kortingscodes',
       action: () => setExpandedAnalytics(!expandedAnalytics),
+      badge: newSinceLastSeen > 0 ? newSinceLastSeen : (pendingCount > 0 ? pendingCount : 0),
       submenu: [
-        { label: 'Orders', subtitle: 'Order management', href: '/admin/orders' },
-        { label: 'Product Management', subtitle: 'Customer purchases', href: '/admin/product-management' },
-        { label: 'Analytics', subtitle: 'Dashboard analytics', href: '/admin/analytics' },
+        { label: 'Bestellingen', subtitle: 'Beheer bestellingen', href: '/admin/orders', badge: pendingCount },
+        { label: 'Product Management', subtitle: 'Klantaankopen', href: '/admin/product-management' },
         { label: 'Discount Codes', subtitle: 'Promo codes', href: '/admin/discount-codes' },
       ],
       expanded: expandedAnalytics,
     },
     {
       label: 'JONNA RINCON PANEL',
-      subtitle: 'Projects, Agenda, Social & More',
-      href: '/admin/jonna-rincon-panel',
-      submenu: [],
-      expanded: false,
+      subtitle: 'Projects, Agenda, Analytics & More',
+      action: () => setExpandedPanel(!expandedPanel),
+      submenu: [
+        { label: 'Panel', subtitle: 'Jonna Rincon overzicht', href: '/admin/jonna-rincon-panel' },
+        { label: 'Analytics', subtitle: 'Dashboard analytics', href: '/admin/analytics' },
+      ],
+      expanded: expandedPanel,
     },
   ];
 
@@ -242,10 +247,15 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                   }}
                   className="group w-full text-left px-5 py-3.5 border-b border-white/[0.04] hover:bg-white/[0.04] transition-colors flex items-center justify-between"
                 >
-                  <div className="min-w-0">
+                  <div className="min-w-0 flex items-center gap-2">
                     <span className="block text-[11px] font-bold text-white/60 group-hover:text-white uppercase tracking-widest transition-colors">
                       {item.label}
                     </span>
+                    {'badge' in item && item.badge > 0 && (
+                      <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-amber-500 text-[10px] font-bold text-black leading-none">
+                        {item.badge > 99 ? '99+' : item.badge}
+                      </span>
+                    )}
                   </div>
                   {!('href' in item && item.href) && (
                     <ChevronRight
@@ -259,9 +269,14 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                     <button
                       key={sub.href}
                       onClick={() => navigate(sub.href)}
-                      className="group w-full text-left px-8 py-2.5 border-b border-white/[0.03] hover:bg-white/[0.04] transition-colors"
+                      className="group w-full text-left px-8 py-2.5 border-b border-white/[0.03] hover:bg-white/[0.04] transition-colors flex items-center justify-between"
                     >
                       <span className="block text-xs text-white/50 group-hover:text-white transition-colors">{sub.label}</span>
+                      {'badge' in sub && sub.badge > 0 && (
+                        <span className="inline-flex items-center justify-center min-w-[16px] h-[16px] px-1 rounded-full bg-amber-500/20 text-[10px] font-bold text-amber-400 leading-none">
+                          {sub.badge > 99 ? '99+' : sub.badge}
+                        </span>
+                      )}
                     </button>
                   ))}
                 </div>
@@ -423,9 +438,16 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                     >
                       <div className={`flex items-center justify-between transition-transform duration-300 ${!item.expanded && !('href' in item && item.href) ? 'group-hover:translate-x-2' : ''}`}>
                         <div>
-                          <span className="block text-3xl md:text-4xl font-semibold text-white/90 group-hover:text-white transition-colors duration-300 tracking-tight">
-                            {item.label}
-                          </span>
+                          <div className="flex items-center gap-3">
+                            <span className="block text-3xl md:text-4xl font-semibold text-white/90 group-hover:text-white transition-colors duration-300 tracking-tight">
+                              {item.label}
+                            </span>
+                            {'badge' in item && item.badge > 0 && (
+                              <span className="inline-flex items-center justify-center min-w-[22px] h-[22px] px-1.5 rounded-full bg-amber-500 text-[11px] font-bold text-black leading-none">
+                                {item.badge > 99 ? '99+' : item.badge}
+                              </span>
+                            )}
+                          </div>
                           <span className="block text-xs text-white/25 mt-1 uppercase tracking-widest font-medium group-hover:text-red-400/60 transition-colors duration-300">
                             {item.subtitle}
                           </span>
@@ -442,18 +464,25 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                           <button
                             key={sub.href}
                             onClick={() => { navigate(sub.href); closeMenu(); }}
-                            className="group w-full text-left py-3 md:py-4 cursor-pointer border-b border-white/[0.04] hover:translate-x-1.5 transition-transform duration-300"
+                            className="group w-full text-left py-3 md:py-4 cursor-pointer border-b border-white/[0.04] hover:translate-x-1.5 transition-transform duration-300 flex items-center justify-between"
                             style={{
                               animation: item.expanded && !isMenuClosing ? `menu-item-reveal 0.4s cubic-bezier(0.16, 1, 0.3, 1) ${0.05 + si * 0.04}s both` : 'none',
                               paddingLeft: '2rem',
                             }}
                           >
-                            <span className="block text-lg font-semibold text-white/60 group-hover:text-white transition-colors duration-300 tracking-tight">
-                              {sub.label}
-                            </span>
-                            <span className="block text-xs text-white/20 mt-0.5 uppercase tracking-widest font-medium group-hover:text-white/40 transition-colors duration-300">
-                              {sub.subtitle}
-                            </span>
+                            <div>
+                              <span className="block text-lg font-semibold text-white/60 group-hover:text-white transition-colors duration-300 tracking-tight">
+                                {sub.label}
+                              </span>
+                              <span className="block text-xs text-white/20 mt-0.5 uppercase tracking-widest font-medium group-hover:text-white/40 transition-colors duration-300">
+                                {sub.subtitle}
+                              </span>
+                            </div>
+                            {'badge' in sub && sub.badge > 0 && (
+                              <span className="inline-flex items-center justify-center min-w-[20px] h-[20px] px-1 rounded-full bg-amber-500/20 text-[11px] font-bold text-amber-400 leading-none mr-4">
+                                {sub.badge > 99 ? '99+' : sub.badge}
+                              </span>
+                            )}
                           </button>
                         ))}
                       </div>

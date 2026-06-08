@@ -1,23 +1,53 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import AdminLayout from '../../components/admin/AdminLayout';
-import { useOrderStatistics } from '../../hooks/useOrders';
+import { useOrderStatistics, useOrders } from '../../hooks/useOrders';
+import { useOrderNotifications } from '../../hooks/useOrderNotifications';
 import { useCollaborationStats } from '../../hooks/useCollaborations';
 import { beatService, orderService } from '../../lib/firebase/services';
-import { TrendingUp, DollarSign, ShoppingBag, Music, Handshake, Users } from 'lucide-react';
+import { TrendingUp, DollarSign, ShoppingBag, Music, Handshake, Users, Bell, ArrowRight } from 'lucide-react';
+
+const TYPE_LABELS: Record<string, string> = {
+  beat: 'Beat', track: 'Track', remix: 'Remix', edit: 'Edit',
+  art: 'Art', merchandise: 'Merch', service: 'Service',
+};
+const TYPE_COLORS: Record<string, string> = {
+  beat: 'bg-purple-500/20 text-purple-400',
+  track: 'bg-pink-500/20 text-pink-400',
+  remix: 'bg-rose-500/20 text-rose-400',
+  edit: 'bg-fuchsia-500/20 text-fuchsia-400',
+  art: 'bg-amber-500/20 text-amber-400',
+  merchandise: 'bg-emerald-500/20 text-emerald-400',
+  service: 'bg-cyan-500/20 text-cyan-400',
+};
 
 const DashboardPage: React.FC = () => {
   const { stats: orderStats } = useOrderStatistics();
   const { stats: collabStats } = useCollaborationStats();
+  const { pendingCount, newSinceLastSeen } = useOrderNotifications();
+  const { orders } = useOrders();
   const [totalBeats, setTotalBeats] = useState(0);
   const [recentOrders, setRecentOrders] = useState<any[]>([]);
+
+  // Orders needing action (pending/processing), sorted oldest first
+  const actionOrders = React.useMemo(
+    () => orders
+      .filter((o) => o.status === 'pending' || o.status === 'processing')
+      .sort((a, b) => {
+        const aMs = (a.createdAt as any)?.seconds ?? 0;
+        const bMs = (b.createdAt as any)?.seconds ?? 0;
+        return aMs - bMs;
+      })
+      .slice(0, 5),
+    [orders]
+  );
 
   useEffect(() => {
     const fetchData = async () => {
       const beats = await beatService.getAllBeats();
       setTotalBeats(beats.data.length);
-      const orders = await orderService.getRecentOrders(5);
-      setRecentOrders(orders);
+      const recentOrdrs = await orderService.getRecentOrders(5);
+      setRecentOrders(recentOrdrs);
     };
     fetchData();
   }, []);
@@ -62,6 +92,60 @@ const DashboardPage: React.FC = () => {
             );
           })}
         </div>
+
+        {/* Notifications / Actie Vereist */}
+        {(newSinceLastSeen > 0 || actionOrders.length > 0) && (
+          <div className={`border rounded-3xl p-5 sm:p-6 ${newSinceLastSeen > 0 ? 'bg-amber-500/[0.06] border-amber-500/20' : 'bg-white/[0.08] border-white/[0.06]'}`}>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <div className={`w-8 h-8 rounded-2xl flex items-center justify-center ${newSinceLastSeen > 0 ? 'bg-amber-500/20' : 'bg-white/[0.06]'}`}>
+                  <Bell size={16} className={newSinceLastSeen > 0 ? 'text-amber-400' : 'text-white/40'} />
+                </div>
+                <div>
+                  <h2 className="text-base font-bold text-white">
+                    {newSinceLastSeen > 0
+                      ? `${newSinceLastSeen} nieuwe bestelling${newSinceLastSeen !== 1 ? 'en' : ''}`
+                      : 'Actie vereist'}
+                  </h2>
+                  {pendingCount > 0 && (
+                    <p className="text-xs text-white/30">{pendingCount} bestellingen wachten op verwerking</p>
+                  )}
+                </div>
+              </div>
+              <Link
+                to="/admin/orders"
+                className="flex items-center gap-1 text-xs text-white/40 hover:text-white/80 transition-colors"
+              >
+                Alles bekijken <ArrowRight size={12} />
+              </Link>
+            </div>
+            <div className="space-y-2">
+              {actionOrders.map((order) => {
+                const primaryType = order.items?.[0]?.productType ?? 'beat';
+                const typeColor = TYPE_COLORS[primaryType] ?? 'bg-white/[0.06] text-white/40';
+                const typeLabel = TYPE_LABELS[primaryType] ?? primaryType;
+                const createdAt = (order.createdAt as any)?.seconds
+                  ? new Date((order.createdAt as any).seconds * 1000).toLocaleDateString('nl-NL', { day: '2-digit', month: '2-digit' })
+                  : '';
+                return (
+                  <Link
+                    key={order.id}
+                    to="/admin/orders"
+                    className="flex items-center gap-3 p-3 bg-white/[0.04] hover:bg-white/[0.07] rounded-2xl transition-all"
+                  >
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full flex-shrink-0 ${typeColor}`}>{typeLabel}</span>
+                    <p className="text-sm text-white font-mono flex-shrink-0">{order.orderNumber}</p>
+                    <p className="text-xs text-white/30 truncate flex-1">{order.customerEmail}</p>
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full flex-shrink-0 ${
+                      order.status === 'pending' ? 'bg-amber-500/20 text-amber-400' : 'bg-blue-500/20 text-blue-400'
+                    }`}>{order.status}</span>
+                    <p className="text-sm font-semibold text-white flex-shrink-0">€{order.total.toFixed(2)}</p>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Recent Orders */}
         <div className="bg-white/[0.08] backdrop-blur-sm border border-white/[0.06] rounded-3xl p-5 sm:p-6">
