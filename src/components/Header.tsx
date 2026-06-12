@@ -110,7 +110,7 @@ const Header: React.FC = () => {
 
   return (
     <header className="fixed top-0 left-0 right-0 z-40 pt-3 px-4 sm:px-6 lg:px-8">
-      <div className="backdrop-blur-xl bg-black/30 border border-white/[0.08] rounded-2xl">
+      <div className="backdrop-blur-xl bg-black/30 border border-white/[0.08] rounded-2xl overflow-hidden">
         <div className="flex items-center justify-between px-4 sm:px-6 h-16 md:h-20">
 
           {/* Logo left */}
@@ -172,7 +172,7 @@ const Header: React.FC = () => {
                       <img
                         src="/JEIGHTEEN-logo.png"
                         alt="JEIGHTEEN"
-                        className="h-[88px] md:h-[106px] w-auto object-contain opacity-90"
+                        className="h-8 md:h-9 w-auto object-contain opacity-90"
                       />
                     </button>
                   ) : (
@@ -180,7 +180,7 @@ const Header: React.FC = () => {
                       <img
                         src="/JEIGHTEEN-logo.png"
                         alt="JEIGHTEEN"
-                        className="h-[88px] md:h-[106px] w-auto object-contain opacity-90"
+                        className="h-8 md:h-9 w-auto object-contain opacity-90"
                       />
                     </Link>
                   )
@@ -265,11 +265,11 @@ const Header: React.FC = () => {
             {isShopRoute ? (
               isPlayingNow ? (
                 <button onClick={() => openPlayerModal()} className="flex justify-center hover:opacity-100 transition-opacity">
-                  <img src="/JEIGHTEEN-logo.png" alt="JEIGHTEEN" className="h-10 w-auto object-contain opacity-90" />
+                  <img src="/JEIGHTEEN-logo.png" alt="JEIGHTEEN" className="h-8 w-auto object-contain opacity-90" />
                 </button>
               ) : (
                 <Link to="/shop" className="flex justify-center hover:opacity-100 transition-opacity">
-                  <img src="/JEIGHTEEN-logo.png" alt="JEIGHTEEN" className="h-10 w-auto object-contain opacity-90" />
+                  <img src="/JEIGHTEEN-logo.png" alt="JEIGHTEEN" className="h-8 w-auto object-contain opacity-90" />
                 </Link>
               )
             ) : (
