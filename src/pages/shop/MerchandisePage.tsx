@@ -215,7 +215,21 @@ const MerchandisePage: React.FC = () => {
       {/* Merchandise Grid */}
       <section className="px-6 md:px-12 py-12 md:py-16">
         <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-5">
+          {loading && (
+            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-5">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div key={i} className="bg-white/[0.03] border border-white/[0.07] rounded-2xl overflow-hidden flex flex-col">
+                  <div className="aspect-square bg-white/[0.04] shimmer" />
+                  <div className="p-4 space-y-3">
+                    <div className="h-4 bg-white/[0.05] rounded shimmer" />
+                    <div className="h-3 bg-white/[0.04] rounded w-2/3 shimmer" />
+                    <div className="h-8 bg-white/[0.04] rounded shimmer" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          {!loading && (<><div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-5">
             {filteredItems.map((item) => (
               <div
                 key={item.id}
@@ -225,14 +239,15 @@ const MerchandisePage: React.FC = () => {
                 {/* Product Image */}
                 <div className="relative aspect-square overflow-hidden bg-white/[0.02]">
                   <img
-                    src={item.image}
+                    src={item.imageUrl || item.image}
                     alt={item.name}
+                    loading="lazy"
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
 
-                  {/* Stock Badge - Show only when totalStock is 0 */}
-                  {(item.totalStock ?? 0) === 0 && (
+                  {/* Stock Badge - Only show after data has loaded and stock is confirmed 0 */}
+                  {!loading && merchandise.length > 0 && item.totalStock === 0 && (
                     <div className="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm">
                       <span className="text-white font-bold text-lg">Out of Stock</span>
                     </div>
@@ -288,15 +303,15 @@ const MerchandisePage: React.FC = () => {
                         e.stopPropagation();
                         handleAddToCart(item.id);
                       }}
-                      disabled={(item.totalStock ?? 0) === 0}
+                      disabled={!loading && merchandise.length > 0 && item.totalStock === 0}
                       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wide transition-all ${
-                        (item.totalStock ?? 0) > 0
-                          ? 'bg-red-600 hover:bg-red-700 text-white'
-                          : 'bg-white/[0.04] text-white/25 cursor-not-allowed'
+                        (!loading && merchandise.length > 0 && item.totalStock === 0)
+                          ? 'bg-white/[0.04] text-white/25 cursor-not-allowed'
+                          : 'bg-red-600 hover:bg-red-700 text-white'
                       }`}
                     >
                       <ShoppingCart size={12} />
-                      {(item.totalStock ?? 0) === 0 ? 'Sold out' : 'Add'}
+                      {(!loading && merchandise.length > 0 && item.totalStock === 0) ? 'Sold out' : 'Add'}
                     </button>
                   </div>
                 </div>
@@ -324,6 +339,7 @@ const MerchandisePage: React.FC = () => {
               </span>
             </div>
           )}
+          </>)}
         </div>
       </section>
 

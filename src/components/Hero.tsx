@@ -1,86 +1,180 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { ArrowRight, Play } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+
+const roles = [
+  { label: 'Artist', to: '/catalogue' },
+  { label: 'Producer', to: '/about' },
+  { label: 'DJ', to: '/dj' },
+  { label: 'Sound Engineer', to: '/mix-master' },
+];
+
+const browseLabels = [
+  { text: 'Browse Beats', to: '/shop/beats' },
+  { text: 'Merchandise', to: '/shop/merchandise' },
+  { text: 'Art', to: '/shop/art' },
+  { text: 'Mix Master', to: '/mix-master' },
+  { text: 'Studio Session', to: '/studio-session' },
+  { text: 'Shop', to: '/shop' },
+  { text: 'Services', to: '/shop/services' },
+];
+
+const listenLabels = [
+  { text: 'Listen Now', to: '/catalogue' },
+  { text: 'Remixes', to: '/remixes' },
+  { text: 'Exclusives', to: '/catalogue' },
+  { text: 'Albums', to: '/catalogue' },
+  { text: 'New Music', to: '/catalogue' },
+  { text: "EP's", to: '/catalogue' },
+];
 
 export default function Hero() {
+  const navigate = useNavigate();
   const [visible, setVisible] = useState(false);
+  const [roleIndex, setRoleIndex] = useState(0);
+  const [roleFading, setRoleFading] = useState(false);
+  const [browseIndex, setBrowseIndex] = useState(0);
+  const [browseFading, setBrowseFading] = useState(false);
+  const [listenIndex, setListenIndex] = useState(0);
+  const [listenFading, setListenFading] = useState(false);
 
   useEffect(() => {
     const t = setTimeout(() => setVisible(true), 200);
     return () => clearTimeout(t);
   }, []);
 
+  // Cycle roles every 8 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setRoleFading(true);
+      setTimeout(() => {
+        setRoleIndex(i => (i + 1) % roles.length);
+        setRoleFading(false);
+      }, 400);
+    }, 8000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Cycle browse button text every 3 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setBrowseFading(true);
+      setTimeout(() => {
+        setBrowseIndex(i => (i + 1) % browseLabels.length);
+        setBrowseFading(false);
+      }, 300);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Cycle listen button text every 3 seconds (offset)
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      const interval = setInterval(() => {
+        setListenFading(true);
+        setTimeout(() => {
+          setListenIndex(i => (i + 1) % listenLabels.length);
+          setListenFading(false);
+        }, 300);
+      }, 3000);
+      return () => clearInterval(interval);
+    }, 1500);
+    return () => clearTimeout(timeout);
+  }, []);
+
+  const currentRole = roles[roleIndex];
+  const currentBrowse = browseLabels[browseIndex];
+  const currentListen = listenLabels[listenIndex];
+
   return (
     <section
       className="relative w-full flex flex-col items-center justify-center"
       style={{ minHeight: '68vh' }}
     >
-      {/* Content */}
       <div
         className="relative z-10 flex flex-col items-center text-center px-6 max-w-4xl mx-auto transition-opacity duration-700"
         style={{ opacity: visible ? 1 : 0 }}
       >
-        {/* Badge — clickable roles */}
-        <div className="mb-5 px-4 py-1.5 border border-white/20 rounded-full text-xs uppercase tracking-widest text-white/50 flex items-center gap-1.5 flex-wrap justify-center">
-          {[
-            { label: 'Artist', to: '/catalogue' },
-            { label: 'Producer', to: '/about' },
-            { label: 'DJ', to: '/dj' },
-            { label: 'Sound Engineer', to: '/mix-master' },
-          ].map(({ label, to }, i, arr) => (
-            <span key={label} className="flex items-center gap-1.5">
-              <Link
-                to={to}
-                className="hover:text-white transition-all duration-300 hover:[text-shadow:0_0_14px_rgba(255,255,255,0.8)] cursor-pointer"
-              >
-                {label}
-              </Link>
-              {i < arr.length - 1 && <span className="opacity-40">·</span>}
-            </span>
-          ))}
+        {/* Rotating role badge */}
+        <div className="mb-5 px-5 py-2 border border-white/20 rounded-full text-xs uppercase tracking-widest text-white/50 flex items-center gap-2">
+          <Link
+            to={currentRole.to}
+            className="transition-all duration-300 hover:text-white hover:[text-shadow:0_0_14px_rgba(255,255,255,0.8)] cursor-pointer"
+            style={{
+              opacity: roleFading ? 0 : 1,
+              transform: roleFading ? 'translateY(-4px)' : 'translateY(0)',
+              transition: 'opacity 0.4s ease, transform 0.4s ease',
+              display: 'inline-block',
+              minWidth: '9ch',
+            }}
+          >
+            {currentRole.label}
+          </Link>
         </div>
 
         {/* Subtitle */}
-        <p className="text-white/50 text-base md:text-lg uppercase tracking-widest mb-10">
+        <p className="text-white/50 text-base md:text-lg uppercase tracking-widest mb-10"
+          style={{ animation: visible ? 'slide-up 0.7s ease-out 0.3s both' : 'none' }}>
           Your soon to be favourite artist
         </p>
 
-        {/* CTAs */}
-        <div className="flex flex-col sm:flex-row gap-3">
-          <a
-            href="/shop"
-            className="flex items-center justify-center gap-2 px-8 py-3.5 bg-red-600 text-white font-bold text-sm uppercase tracking-widest hover:bg-red-700 transition-all duration-300 hover:scale-105 active:scale-95"
+        {/* CTAs — 2 main buttons */}
+        <div className="flex flex-col sm:flex-row gap-3"
+          style={{ animation: visible ? 'slide-up 0.7s ease-out 0.5s both' : 'none' }}>
+          <button
+            onClick={() => navigate(currentBrowse.to)}
+            className="flex items-center justify-center gap-2 px-8 py-3.5 bg-red-600 text-white font-bold text-sm uppercase tracking-widest hover:bg-red-700 transition-all duration-300 hover:scale-105 active:scale-95 rounded-xl"
+            style={{ minWidth: '180px' }}
           >
-            Browse Beats
-            <ArrowRight size={16} />
-          </a>
-          <a
-            href="/catalogue"
-            className="flex items-center justify-center gap-2 px-8 py-3.5 bg-white/10 border border-white/20 text-white font-bold text-sm uppercase tracking-widest hover:bg-white/20 transition-all duration-300 hover:scale-105 active:scale-95 backdrop-blur-sm"
+            <span
+              style={{
+                opacity: browseFading ? 0 : 1,
+                transform: browseFading ? 'translateY(-6px)' : 'translateY(0)',
+                transition: 'opacity 0.3s ease, transform 0.3s ease',
+                display: 'inline-block',
+              }}
+            >
+              {currentBrowse.text}
+            </span>
+            <ArrowRight size={16} className="flex-shrink-0" />
+          </button>
+          <button
+            onClick={() => navigate(currentListen.to)}
+            className="flex items-center justify-center gap-2 px-8 py-3.5 bg-white/10 border border-white/20 text-white font-bold text-sm uppercase tracking-widest hover:bg-white/20 transition-all duration-300 hover:scale-105 active:scale-95 backdrop-blur-sm rounded-xl"
+            style={{ minWidth: '180px' }}
           >
-            <Play size={16} />
-            Listen Now
+            <Play size={16} className="flex-shrink-0" />
+            <span
+              style={{
+                opacity: listenFading ? 0 : 1,
+                transform: listenFading ? 'translateY(-6px)' : 'translateY(0)',
+                transition: 'opacity 0.3s ease, transform 0.3s ease',
+                display: 'inline-block',
+              }}
+            >
+              {currentListen.text}
+            </span>
+          </button>
+        </div>
+
+        {/* Studio session + contact */}
+        <div className="mt-5 flex flex-col items-center gap-2"
+          style={{ animation: visible ? 'slide-up 0.7s ease-out 0.7s both' : 'none' }}>
+          <a href="/studio-session" className="group flex items-center gap-2">
+            <span className="text-white/35 text-xs uppercase tracking-widest group-hover:text-red-500 transition-colors duration-300">
+              Studio session with Jonna?
+            </span>
+            <span className="text-white/70 text-xs font-bold uppercase tracking-widest group-hover:text-white group-hover:[text-shadow:0_0_12px_rgba(255,255,255,0.6)] transition-all duration-300">
+              Book here →
+            </span>
           </a>
           <a
             href="/contact"
-            className="flex items-center justify-center gap-2 px-8 py-3.5 bg-white/10 border border-white/20 text-white font-bold text-sm uppercase tracking-widest hover:bg-white/20 transition-all duration-300 hover:scale-105 active:scale-95 backdrop-blur-sm"
+            className="text-white/25 text-[10px] uppercase tracking-widest hover:text-white/50 transition-colors duration-300"
           >
             Contact
           </a>
         </div>
-
-        {/* Studio session CTA */}
-        <a
-          href="/studio-session"
-          className="group mt-5 flex items-center gap-2"
-        >
-          <span className="text-white/35 text-xs uppercase tracking-widest group-hover:text-red-500 transition-colors duration-300">
-            Studio session with Jonna?
-          </span>
-          <span className="text-white/70 text-xs font-bold uppercase tracking-widest group-hover:text-white group-hover:[text-shadow:0_0_12px_rgba(255,255,255,0.6)] transition-all duration-300">
-            Book here →
-          </span>
-        </a>
       </div>
     </section>
   );
