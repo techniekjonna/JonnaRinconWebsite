@@ -100,6 +100,7 @@ export default function CataloguePage() {
   const [playingDjSet, setPlayingDjSet] = useState<string | null>(null);
 
   const heroTitle = useCyberDecodeInView('CATALOGUE');
+  const relatedTracks = useRelatedTracks(selectedTrack, []);
 
   const demoTracks: Track[] = firebaseTracks.map(t => ({
     id: t.id,
@@ -283,7 +284,6 @@ export default function CataloguePage() {
 
   return (
     <div className="min-h-screen text-white">
-      <div className="fixed inset-0 w-full h-screen -z-10 bg-black/20" />
       <Navigation isDarkOverlay={true} />
 
       <LoginModal isOpen={isLoginModalOpen} onClose={() => setIsLoginModalOpen(false)} />
@@ -294,7 +294,7 @@ export default function CataloguePage() {
         onClose={() => setIsModalOpen(false)}
         isPlaying={false}
         onPlay={handlePlayTrack}
-        relatedTracks={useRelatedTracks(selectedTrack, [])}
+        relatedTracks={relatedTracks}
         onAddToPlaylist={handleAddToPlaylist}
       />
 
@@ -385,6 +385,8 @@ export default function CataloguePage() {
                         <div key={albumKey}>
                           {/* Album row — same compact style as track rows */}
                           <div className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 group ${isExpanded ? 'bg-white/[0.06]' : 'hover:bg-white/[0.05]'}`}>
+                            {/* Spacer to align with TrackListItem rows that have a w-7 track number column */}
+                            <div className="w-7 flex-shrink-0" />
                             {/* Cover — click opens PlayerModal */}
                             <div
                               className="relative flex-shrink-0 w-10 h-10 rounded bg-white/[0.08] overflow-hidden cursor-pointer"
@@ -449,24 +451,26 @@ export default function CataloguePage() {
         </>
       )}
 
-      {/* ── REMIXES TAB ── */}
-      {activeTab === 'remixes' && (
+      {/* ── REMIXES TAB (also shown appended in 'all') ── */}
+      {(activeTab === 'remixes' || activeTab === 'all') && (
         <>
-          <section className="px-6 md:px-12 pt-2 pb-2">
-            <div className="max-w-7xl mx-auto">
-              <FilterModal
-                isOpen={isFilterModalOpen}
-                onClose={() => setIsFilterModalOpen(false)}
-                onReset={() => { setSelectedRemixType('All'); setSelectedRemixYear('All'); setSelectedRemixCollab('All'); setSelectedRemixGenre('All'); }}
-                filters={[
-                  { label: 'Type', options: ['All', 'Remix', 'Edit', 'Bootleg'], value: selectedRemixType, onChange: v => setSelectedRemixType(v as any) },
-                  { label: 'Year', options: ['All', ...Array.from(new Set(remixTracks.map(t => t.year))).sort((a, b) => b - a)], value: selectedRemixYear, onChange: v => setSelectedRemixYear(v as any) },
-                  { label: 'Collab', options: ['All', 'Solo', 'Collab'], value: selectedRemixCollab, onChange: v => setSelectedRemixCollab(v as any) },
-                  { label: 'Genre', options: ['All', ...remixGenres], value: selectedRemixGenre, onChange: v => setSelectedRemixGenre(v as any) },
-                ]}
-              />
-            </div>
-          </section>
+          {activeTab === 'remixes' && (
+            <section className="px-6 md:px-12 pt-2 pb-2">
+              <div className="max-w-7xl mx-auto">
+                <FilterModal
+                  isOpen={isFilterModalOpen}
+                  onClose={() => setIsFilterModalOpen(false)}
+                  onReset={() => { setSelectedRemixType('All'); setSelectedRemixYear('All'); setSelectedRemixCollab('All'); setSelectedRemixGenre('All'); }}
+                  filters={[
+                    { label: 'Type', options: ['All', 'Remix', 'Edit', 'Bootleg'], value: selectedRemixType, onChange: v => setSelectedRemixType(v as any) },
+                    { label: 'Year', options: ['All', ...Array.from(new Set(remixTracks.map(t => t.year))).sort((a, b) => b - a)], value: selectedRemixYear, onChange: v => setSelectedRemixYear(v as any) },
+                    { label: 'Collab', options: ['All', 'Solo', 'Collab'], value: selectedRemixCollab, onChange: v => setSelectedRemixCollab(v as any) },
+                    { label: 'Genre', options: ['All', ...remixGenres], value: selectedRemixGenre, onChange: v => setSelectedRemixGenre(v as any) },
+                  ]}
+                />
+              </div>
+            </section>
+          )}
 
           {remixesLoading && (
             <section className="px-6 md:px-12 py-16">
@@ -477,23 +481,32 @@ export default function CataloguePage() {
           {!remixesLoading && (
             <section className="px-6 md:px-12 py-2 md:py-4">
               <div className="max-w-7xl mx-auto">
+                {activeTab === 'all' && remixTracks.length > 0 && (
+                  <div className="flex items-center gap-3 mb-3 pb-2 border-b border-white/[0.06]">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-white/30">Remixes / Edits / Bootlegs</p>
+                  </div>
+                )}
                 <div className="space-y-3">
                   {(shuffle
                     ? shuffleArray(
                         remixTracks.filter(t =>
-                          (selectedRemixType === 'All' || t.remixType === selectedRemixType) &&
-                          (selectedRemixYear === 'All' || t.year === selectedRemixYear) &&
-                          (selectedRemixCollab === 'All' || t.collab === selectedRemixCollab) &&
-                          genreMatches(t.genre, selectedRemixGenre)
+                          activeTab === 'all' || (
+                            (selectedRemixType === 'All' || t.remixType === selectedRemixType) &&
+                            (selectedRemixYear === 'All' || t.year === selectedRemixYear) &&
+                            (selectedRemixCollab === 'All' || t.collab === selectedRemixCollab) &&
+                            genreMatches(t.genre, selectedRemixGenre)
+                          )
                         ),
                         shuffleSeed
                       )
                     : remixTracks
                         .filter(t =>
-                          (selectedRemixType === 'All' || t.remixType === selectedRemixType) &&
-                          (selectedRemixYear === 'All' || t.year === selectedRemixYear) &&
-                          (selectedRemixCollab === 'All' || t.collab === selectedRemixCollab) &&
-                          genreMatches(t.genre, selectedRemixGenre)
+                          activeTab === 'all' || (
+                            (selectedRemixType === 'All' || t.remixType === selectedRemixType) &&
+                            (selectedRemixYear === 'All' || t.year === selectedRemixYear) &&
+                            (selectedRemixCollab === 'All' || t.collab === selectedRemixCollab) &&
+                            genreMatches(t.genre, selectedRemixGenre)
+                          )
                         )
                         .sort((a, b) => {
                           const aSort = a.sortOrder ?? Number.MAX_VALUE;
@@ -502,25 +515,27 @@ export default function CataloguePage() {
                           return b.createdAt - a.createdAt;
                         })
                   ).map(remix => (
-                      <TrackListItem
-                        key={remix.id} track={remix} onClickTrack={handleTrackClick}
-                        onPlay={handlePlayTrack} onTogglePlay={handleTogglePlayTrack} onCoverClick={handleCoverClick}
-                        showType={false} showMetadata isPlaying={isPlaying}
-                        showDownload onDownload={(remix) => navigate(`/download/${remix.id}`)}
-                      />
-                    ))}
+                    <TrackListItem
+                      key={remix.id} track={remix} onClickTrack={handleTrackClick}
+                      onPlay={handlePlayTrack} onTogglePlay={handleTogglePlayTrack} onCoverClick={handleCoverClick}
+                      showType={false} showMetadata isPlaying={isPlaying}
+                      showDownload onDownload={(remix) => navigate(`/download/${remix.id}`)}
+                    />
+                  ))}
                 </div>
-                <div className="flex items-center justify-between mt-8 pt-4 border-t border-white/[0.1]">
-                  <p className="text-[10px] md:text-xs text-red-500/60 uppercase tracking-[0.4em]">Discography</p>
-                  <p className="text-[10px] md:text-xs text-white/30 uppercase tracking-widest">
-                    {remixTracks.filter(t =>
-                      (selectedRemixType === 'All' || t.remixType === selectedRemixType) &&
-                      (selectedRemixYear === 'All' || t.year === selectedRemixYear) &&
-                      (selectedRemixCollab === 'All' || t.collab === selectedRemixCollab) &&
-                      genreMatches(t.genre, selectedRemixGenre)
-                    ).length} Remixes
-                  </p>
-                </div>
+                {activeTab === 'remixes' && (
+                  <div className="flex items-center justify-between mt-8 pt-4 border-t border-white/[0.1]">
+                    <p className="text-[10px] md:text-xs text-red-500/60 uppercase tracking-[0.4em]">Discography</p>
+                    <p className="text-[10px] md:text-xs text-white/30 uppercase tracking-widest">
+                      {remixTracks.filter(t =>
+                        (selectedRemixType === 'All' || t.remixType === selectedRemixType) &&
+                        (selectedRemixYear === 'All' || t.year === selectedRemixYear) &&
+                        (selectedRemixCollab === 'All' || t.collab === selectedRemixCollab) &&
+                        genreMatches(t.genre, selectedRemixGenre)
+                      ).length} Remixes
+                    </p>
+                  </div>
+                )}
               </div>
             </section>
           )}

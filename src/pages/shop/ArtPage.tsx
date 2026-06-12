@@ -67,7 +67,7 @@ const ArtPage: React.FC = () => {
           <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-[#0a0a0a] to-transparent" />
         </div>
         <div className="relative z-10 pt-52 sm:pt-56 pb-12 px-6 md:px-12 max-w-7xl mx-auto w-full">
-          <p className="text-xs font-black uppercase tracking-[0.45em] text-red-500 mb-4">JEIGHTEEN STORE</p>
+          <p className="text-xs font-black uppercase tracking-[0.45em] text-red-500 mb-4">JONNA RINCON STORE</p>
           <h1 ref={heroTitle.ref as React.RefObject<HTMLHeadingElement>} style={{fontSize: 'clamp(2.5rem, 9vw, 10.2rem)'}} className="font-black uppercase leading-[0.85] tracking-tighter mb-5 text-white">
             {heroTitle.display}
           </h1>

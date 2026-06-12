@@ -162,7 +162,6 @@ export default function AboutMePage() {
 
   return (
     <div className="min-h-screen text-white">
-      <div className="fixed inset-0 w-full h-screen -z-10 bg-black" />
       <Navigation isDarkOverlay={true} />
 
       {/* Hero with biography and tab buttons */}

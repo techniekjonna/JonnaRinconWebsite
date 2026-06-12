@@ -180,7 +180,7 @@ const ShopPage: React.FC = () => {
           }}
         >
           <p className="text-xs font-black uppercase tracking-[0.45em] text-red-500 mb-5">
-            JEIGHTEEN STORE
+            JONNA RINCON STORE
           </p>
           <h1
             className="font-black uppercase leading-none tracking-tighter mb-6 text-white"
