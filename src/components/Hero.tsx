@@ -43,39 +43,27 @@ export default function Hero() {
     return () => clearTimeout(t);
   }, []);
 
-  // Cycle roles every 8 seconds
   useEffect(() => {
     const interval = setInterval(() => {
       setRoleFading(true);
-      setTimeout(() => {
-        setRoleIndex(i => (i + 1) % roles.length);
-        setRoleFading(false);
-      }, 400);
+      setTimeout(() => { setRoleIndex(i => (i + 1) % roles.length); setRoleFading(false); }, 400);
     }, 8000);
     return () => clearInterval(interval);
   }, []);
 
-  // Cycle browse button text every 3 seconds
   useEffect(() => {
     const interval = setInterval(() => {
       setBrowseFading(true);
-      setTimeout(() => {
-        setBrowseIndex(i => (i + 1) % browseLabels.length);
-        setBrowseFading(false);
-      }, 300);
+      setTimeout(() => { setBrowseIndex(i => (i + 1) % browseLabels.length); setBrowseFading(false); }, 300);
     }, 3000);
     return () => clearInterval(interval);
   }, []);
 
-  // Cycle listen button text every 3 seconds (offset by 1.5s)
   useEffect(() => {
     const timeout = setTimeout(() => {
       const interval = setInterval(() => {
         setListenFading(true);
-        setTimeout(() => {
-          setListenIndex(i => (i + 1) % listenLabels.length);
-          setListenFading(false);
-        }, 300);
+        setTimeout(() => { setListenIndex(i => (i + 1) % listenLabels.length); setListenFading(false); }, 300);
       }, 3000);
       return () => clearInterval(interval);
     }, 1500);
@@ -95,67 +83,64 @@ export default function Hero() {
         className="relative z-10 flex flex-col items-center text-center px-6 max-w-4xl mx-auto transition-opacity duration-700"
         style={{ opacity: visible ? 1 : 0 }}
       >
-        {/* Subtitle with cycling role word */}
+        {/* Subtitle — single inline block, cycling word sits inline */}
         <p
-          className="text-white/50 text-base md:text-lg uppercase tracking-widest mb-10 flex items-baseline gap-2 flex-wrap justify-center"
+          className="text-white/50 text-base md:text-lg uppercase tracking-widest mb-10"
           style={{ animation: visible ? 'slide-up 0.7s ease-out 0.3s both' : 'none' }}
         >
-          Your soon to be favourite
+          Your soon to be favourite{' '}
           <Link
             to={currentRole.to}
-            className="text-white hover:text-red-400 transition-colors duration-300 hover:[text-shadow:0_0_14px_rgba(255,255,255,0.6)] cursor-pointer"
+            className="text-white hover:text-red-400 transition-colors duration-300 hover:[text-shadow:0_0_14px_rgba(255,255,255,0.6)]"
             style={{
               opacity: roleFading ? 0 : 1,
               transform: roleFading ? 'translateY(-6px)' : 'translateY(0)',
               transition: 'opacity 0.4s ease, transform 0.4s ease',
               display: 'inline-block',
-              minWidth: '13ch',
+              verticalAlign: 'baseline',
             }}
           >
             {currentRole.label}
           </Link>
         </p>
 
-        {/* CTAs — 2 main buttons with fixed width so text-swap never resizes them */}
+        {/* CTAs — fixed-width buttons, icon pinned, text centered in remaining space */}
         <div
           className="flex flex-col sm:flex-row gap-3"
           style={{ animation: visible ? 'slide-up 0.7s ease-out 0.5s both' : 'none' }}
         >
+          {/* Browse button: [text flex-1 center] [icon fixed right] */}
           <button
             onClick={() => navigate(currentBrowse.to)}
-            className="flex items-center justify-center gap-2 py-3.5 bg-red-600 text-white font-bold text-sm uppercase tracking-widest hover:bg-red-700 transition-all duration-300 hover:scale-105 active:scale-95 rounded-xl overflow-hidden"
-            style={{ width: '220px' }}
+            className="flex items-center py-3.5 bg-red-600 text-white font-bold text-sm uppercase tracking-widest hover:bg-red-700 transition-all duration-300 hover:scale-105 active:scale-95 rounded-xl"
+            style={{ width: '220px', paddingLeft: '20px', paddingRight: '12px' }}
           >
-            {/* Fixed-size text slot — text fades in-place, button never grows */}
             <span
-              className="overflow-hidden text-ellipsis whitespace-nowrap"
+              className="flex-1 text-center whitespace-nowrap overflow-hidden"
               style={{
                 opacity: browseFading ? 0 : 1,
                 transform: browseFading ? 'translateY(-6px)' : 'translateY(0)',
                 transition: 'opacity 0.3s ease, transform 0.3s ease',
-                display: 'inline-block',
-                maxWidth: '148px',
               }}
             >
               {currentBrowse.text}
             </span>
-            <ArrowRight size={16} className="flex-shrink-0" />
+            <ArrowRight size={16} className="flex-shrink-0 ml-2" />
           </button>
 
+          {/* Listen button: [icon fixed left] [text flex-1 center] */}
           <button
             onClick={() => navigate(currentListen.to)}
-            className="flex items-center justify-center gap-2 py-3.5 bg-white/10 border border-white/20 text-white font-bold text-sm uppercase tracking-widest hover:bg-white/20 transition-all duration-300 hover:scale-105 active:scale-95 backdrop-blur-sm rounded-xl overflow-hidden"
-            style={{ width: '220px' }}
+            className="flex items-center py-3.5 bg-white/10 border border-white/20 text-white font-bold text-sm uppercase tracking-widest hover:bg-white/20 transition-all duration-300 hover:scale-105 active:scale-95 backdrop-blur-sm rounded-xl"
+            style={{ width: '220px', paddingLeft: '12px', paddingRight: '20px' }}
           >
-            <Play size={16} className="flex-shrink-0" />
+            <Play size={16} className="flex-shrink-0 mr-2" />
             <span
-              className="overflow-hidden text-ellipsis whitespace-nowrap"
+              className="flex-1 text-center whitespace-nowrap overflow-hidden"
               style={{
                 opacity: listenFading ? 0 : 1,
                 transform: listenFading ? 'translateY(-6px)' : 'translateY(0)',
                 transition: 'opacity 0.3s ease, transform 0.3s ease',
-                display: 'inline-block',
-                maxWidth: '148px',
               }}
             >
               {currentListen.text}
