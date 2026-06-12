@@ -285,11 +285,16 @@ export default function CataloguePage() {
   const isLoading = tracksLoading || remixesLoading;
   const [splashDone, setSplashDone] = useState(false);
   const [splashFading, setSplashFading] = useState(false);
+  const splashStartRef = useState(() => Date.now())[0];
 
   useEffect(() => {
     if (!isLoading && !splashDone) {
-      setSplashFading(true);
-      const t = setTimeout(() => setSplashDone(true), 600);
+      const elapsed = Date.now() - splashStartRef;
+      const remaining = Math.max(0, 3000 - elapsed);
+      const t = setTimeout(() => {
+        setSplashFading(true);
+        setTimeout(() => setSplashDone(true), 600);
+      }, remaining);
       return () => clearTimeout(t);
     }
   }, [isLoading, splashDone]);
