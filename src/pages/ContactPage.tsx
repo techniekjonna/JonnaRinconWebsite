@@ -48,8 +48,6 @@ export default function ContactPage() {
 
   return (
     <div className="min-h-screen text-white">
-      {/* Fixed Dark Overlay — lets the site background show through */}
-      <div className="fixed inset-0 w-full h-screen -z-10 bg-black/20" />
       <Navigation isDarkOverlay={true} isLightMode={false} />
 
       <div className="relative pt-[120px] md:pt-[160px] pb-12 px-6 md:px-10">

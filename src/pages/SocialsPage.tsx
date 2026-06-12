@@ -96,7 +96,6 @@ export default function SocialsPage() {
 
   return (
     <div className="min-h-screen text-white">
-      <div className="fixed inset-0 w-full h-screen -z-10 bg-black/20" />
       <Navigation isDarkOverlay={true} isLightMode={false} />
 
       {/* Hero spacer */}
@@ -104,9 +103,9 @@ export default function SocialsPage() {
 
       {/* Social Icons Row */}
       <section className="px-6 md:px-12 pb-10">
-        <div className="max-w-7xl mx-auto">
+        <div className="max-w-7xl mx-auto text-center">
           <p className="text-xs font-black uppercase tracking-[0.4em] text-white/30 mb-5">Follow</p>
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap gap-3 justify-center">
             {platforms.map((platform) => {
               const Icon = platform.icon;
               return (
