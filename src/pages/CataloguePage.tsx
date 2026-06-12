@@ -315,9 +315,10 @@ export default function CataloguePage() {
           {/* Spinner */}
           <div className="mb-8 w-10 h-10 border-2 border-white/10 border-t-red-500 rounded-full"
             style={{ animation: 'rotate-slow 0.8s linear infinite' }} />
-          <p className="text-white/70 text-sm md:text-base font-light tracking-wider text-center max-w-sm px-6 mb-3">
-            Welcome to my catalogue, this is not fast food music.
-            <br />Take your time and have a listen.
+          <p className="text-white/70 text-xs md:text-sm font-light tracking-wider text-center max-w-xl px-6 mb-3">
+            Welcome to my catalogue, this is not fast food music.{' '}
+            <br className="block sm:hidden" />
+            Take your time and have a listen.
           </p>
           <p className="text-white/30 text-xs tracking-widest uppercase">— Jonathan (Jonna Rincon)</p>
         </div>

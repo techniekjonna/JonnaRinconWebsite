@@ -19,30 +19,21 @@ const browseLabels = [
   { text: 'Services', to: '/shop/services' },
 ];
 
-const listenLabels = [
-  { text: 'Listen Now', to: '/catalogue' },
-  { text: 'Remixes', to: '/remixes' },
-  { text: 'Exclusives', to: '/catalogue' },
-  { text: 'Albums', to: '/catalogue' },
-  { text: 'New Music', to: '/catalogue' },
-  { text: "EP's", to: '/catalogue' },
-];
-
 export default function Hero() {
   const navigate = useNavigate();
+  // Delayed so background is fully visible before content appears (intro animation)
   const [visible, setVisible] = useState(false);
   const [roleIndex, setRoleIndex] = useState(0);
   const [roleFading, setRoleFading] = useState(false);
   const [browseIndex, setBrowseIndex] = useState(0);
   const [browseFading, setBrowseFading] = useState(false);
-  const [listenIndex, setListenIndex] = useState(0);
-  const [listenFading, setListenFading] = useState(false);
 
   useEffect(() => {
-    const t = setTimeout(() => setVisible(true), 200);
+    const t = setTimeout(() => setVisible(true), 1200);
     return () => clearTimeout(t);
   }, []);
 
+  // Cycle roles every 8 seconds
   useEffect(() => {
     const interval = setInterval(() => {
       setRoleFading(true);
@@ -51,6 +42,7 @@ export default function Hero() {
     return () => clearInterval(interval);
   }, []);
 
+  // Cycle browse button text every 3 seconds
   useEffect(() => {
     const interval = setInterval(() => {
       setBrowseFading(true);
@@ -59,20 +51,8 @@ export default function Hero() {
     return () => clearInterval(interval);
   }, []);
 
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      const interval = setInterval(() => {
-        setListenFading(true);
-        setTimeout(() => { setListenIndex(i => (i + 1) % listenLabels.length); setListenFading(false); }, 300);
-      }, 3000);
-      return () => clearInterval(interval);
-    }, 1500);
-    return () => clearTimeout(timeout);
-  }, []);
-
   const currentRole = roles[roleIndex];
   const currentBrowse = browseLabels[browseIndex];
-  const currentListen = listenLabels[listenIndex];
 
   return (
     <section
@@ -80,18 +60,21 @@ export default function Hero() {
       style={{ minHeight: '68vh' }}
     >
       <div
-        className="relative z-10 flex flex-col items-center text-center px-6 max-w-4xl mx-auto transition-opacity duration-700"
-        style={{ opacity: visible ? 1 : 0 }}
+        className="relative z-10 flex flex-col items-center text-center px-6 max-w-4xl mx-auto"
+        style={{
+          opacity: visible ? 1 : 0,
+          transform: visible ? 'translateY(0)' : 'translateY(16px)',
+          transition: 'opacity 0.8s ease, transform 0.8s ease',
+        }}
       >
-        {/* Subtitle — single inline block, cycling word sits inline */}
-        <p
-          className="text-white/50 text-base md:text-lg uppercase tracking-widest mb-10"
-          style={{ animation: visible ? 'slide-up 0.7s ease-out 0.3s both' : 'none' }}
-        >
+        {/* Subtitle with cycling role — inline on desktop, block-centered on mobile */}
+        <p className="text-white/50 text-base md:text-lg uppercase tracking-widest mb-10">
           Your soon to be favourite{' '}
+          {/* On mobile: breaks to its own centered line. On sm+: stays inline. */}
+          <br className="block sm:hidden" />
           <Link
             to={currentRole.to}
-            className="text-white hover:text-red-400 transition-colors duration-300 hover:[text-shadow:0_0_14px_rgba(255,255,255,0.6)]"
+            className="text-white hover:text-red-400 transition-colors duration-300 hover:[text-shadow:0_0_14px_rgba(255,255,255,0.6)] sm:inline-block"
             style={{
               opacity: roleFading ? 0 : 1,
               transform: roleFading ? 'translateY(-6px)' : 'translateY(0)',
@@ -104,12 +87,9 @@ export default function Hero() {
           </Link>
         </p>
 
-        {/* CTAs — fixed-width buttons, icon pinned, text centered in remaining space */}
-        <div
-          className="flex flex-col sm:flex-row gap-3"
-          style={{ animation: visible ? 'slide-up 0.7s ease-out 0.5s both' : 'none' }}
-        >
-          {/* Browse button: [text flex-1 center] [icon fixed right] */}
+        {/* CTAs */}
+        <div className="flex flex-col sm:flex-row gap-3">
+          {/* Browse button — cycling text, icon pinned right */}
           <button
             onClick={() => navigate(currentBrowse.to)}
             className="flex items-center py-3.5 bg-red-600 text-white font-bold text-sm uppercase tracking-widest hover:bg-red-700 transition-all duration-300 hover:scale-105 active:scale-95 rounded-xl"
@@ -128,31 +108,19 @@ export default function Hero() {
             <ArrowRight size={16} className="flex-shrink-0 ml-2" />
           </button>
 
-          {/* Listen button: [icon fixed left] [text flex-1 center] */}
+          {/* Listen Now — static, no cycling */}
           <button
-            onClick={() => navigate(currentListen.to)}
-            className="flex items-center py-3.5 bg-white/10 border border-white/20 text-white font-bold text-sm uppercase tracking-widest hover:bg-white/20 transition-all duration-300 hover:scale-105 active:scale-95 backdrop-blur-sm rounded-xl"
-            style={{ width: '220px', paddingLeft: '12px', paddingRight: '20px' }}
+            onClick={() => navigate('/catalogue')}
+            className="flex items-center justify-center gap-2 py-3.5 bg-white/10 border border-white/20 text-white font-bold text-sm uppercase tracking-widest hover:bg-white/20 transition-all duration-300 hover:scale-105 active:scale-95 backdrop-blur-sm rounded-xl"
+            style={{ width: '220px' }}
           >
-            <Play size={16} className="flex-shrink-0 mr-2" />
-            <span
-              className="flex-1 text-center whitespace-nowrap overflow-hidden"
-              style={{
-                opacity: listenFading ? 0 : 1,
-                transform: listenFading ? 'translateY(-6px)' : 'translateY(0)',
-                transition: 'opacity 0.3s ease, transform 0.3s ease',
-              }}
-            >
-              {currentListen.text}
-            </span>
+            <Play size={16} className="flex-shrink-0" />
+            Listen Now
           </button>
         </div>
 
         {/* Studio session + contact */}
-        <div
-          className="mt-5 flex flex-col items-center gap-2"
-          style={{ animation: visible ? 'slide-up 0.7s ease-out 0.7s both' : 'none' }}
-        >
+        <div className="mt-5 flex flex-col items-center gap-2">
           <a href="/studio-session" className="group flex items-center gap-2">
             <span className="text-white/35 text-xs uppercase tracking-widest group-hover:text-red-500 transition-colors duration-300">
               Studio session with Jonna?
