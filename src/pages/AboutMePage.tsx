@@ -67,7 +67,7 @@ const skills = [
   { title: 'Web Developer', desc: 'This website was designed and built by Jonna Rincon' },
 ];
 
-function HeroSection({ onTabSelect }: { onTabSelect: (tab: string) => void }) {
+function HeroSection() {
   const [ref, inView] = useInView({ threshold: 0.05 });
 
   return (
@@ -120,30 +120,6 @@ function HeroSection({ onTabSelect }: { onTabSelect: (tab: string) => void }) {
         </div>
       </div>
 
-      {/* 3 Tab Buttons at bottom of hero */}
-      <div
-        className="relative z-10 w-full grid grid-cols-3 transition-all duration-700"
-        style={{ opacity: inView ? 1 : 0, transitionDelay: '400ms' }}
-      >
-        {tabs.map((tab) => {
-          const Icon = tab.icon;
-          return (
-            <button
-              key={tab.id}
-              onClick={() => onTabSelect(tab.id)}
-              className="group flex flex-col items-center justify-center gap-2 py-6 md:py-8 px-4 bg-black/40 backdrop-blur-md border-t border-r last:border-r-0 border-white/[0.08] hover:bg-red-600/20 hover:border-red-500/30 transition-all duration-300"
-            >
-              <Icon size={22} className="text-red-500 group-hover:text-red-400 transition-colors" />
-              <span className="text-xs font-black uppercase tracking-widest text-white group-hover:text-white transition-colors">
-                {tab.label}
-              </span>
-              <span className="hidden md:block text-[10px] text-white/30 text-center leading-tight max-w-[120px]">
-                {tab.desc}
-              </span>
-            </button>
-          );
-        })}
-      </div>
     </section>
   );
 }
@@ -153,22 +129,15 @@ export default function AboutMePage() {
   const [activeTab, setActiveTab] = useState('productions');
   const [currentPlaylist, setCurrentPlaylist] = useState(0);
 
-  const handleTabSelect = (tab: string) => {
-    setActiveTab(tab);
-    setTimeout(() => {
-      document.getElementById('about-content')?.scrollIntoView({ behavior: 'smooth' });
-    }, 100);
-  };
-
   return (
-    <div className="min-h-screen text-white">
+    <div className="min-h-screen text-white bg-[#0a0a0a]">
       <Navigation isDarkOverlay={true} />
 
-      {/* Hero with biography and tab buttons */}
-      <HeroSection onTabSelect={handleTabSelect} />
+      {/* Hero with biography */}
+      <HeroSection />
 
       {/* Tab Content */}
-      <div id="about-content">
+      <div id="about-content" className="bg-[#0a0a0a]">
         {/* Tab Switcher Bar */}
         <section className="sticky top-[72px] z-30 px-4 md:px-8 bg-black/80 backdrop-blur-xl border-b border-white/[0.06]">
           <div className="max-w-7xl mx-auto flex items-center">
