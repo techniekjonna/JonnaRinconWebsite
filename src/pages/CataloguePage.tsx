@@ -215,7 +215,6 @@ export default function CataloguePage() {
     if (!isAuthenticated) { setIsLoginModalOpen(true); return; }
     handlePlayTrack(track);
     setPlayerDetailContext('track', track as any);
-    openPlayerModal();
   };
 
   const filteredTracks = demoTracks.filter(track => {

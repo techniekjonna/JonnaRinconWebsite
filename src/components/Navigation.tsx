@@ -19,6 +19,9 @@ interface NavigationProps {
 export default function Navigation({ cartItemCount = 0, onCartClick, isDarkOverlay = false, isLightMode = false, onMenuToggle }: NavigationProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isMenuClosing, setIsMenuClosing] = useState(false);
+  const isMenuOpenRef = useRef(false);
+  const isMenuClosingRef = useRef(false);
+  const recentlyClosedRef = useRef(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
   const [authEmail, setAuthEmail] = useState('');
@@ -38,6 +41,10 @@ export default function Navigation({ cartItemCount = 0, onCartClick, isDarkOverl
   const location = useLocation();
   const closeTimeout = useRef<NodeJS.Timeout | null>(null);
   const scrollPositionRef = useRef(0);
+
+  // Keep refs in sync with state so event listeners always read current values
+  isMenuOpenRef.current = isMenuOpen;
+  isMenuClosingRef.current = isMenuClosing;
 
   // Smart color detection for menu button and logo
   const smartColor = useContrastColor();
@@ -60,7 +67,13 @@ export default function Navigation({ cartItemCount = 0, onCartClick, isDarkOverl
 
   // Listen for external open event (from Header hamburger button)
   useEffect(() => {
-    const handleOpenPanel = () => openMenu();
+    const handleOpenPanel = () => {
+      // Guard against stale-closure reopens, closing animation, and mobile ghost clicks
+      if (isMenuOpenRef.current || isMenuClosingRef.current || recentlyClosedRef.current) return;
+      if (closeTimeout.current) clearTimeout(closeTimeout.current);
+      setIsMenuClosing(false);
+      setIsMenuOpen(true);
+    };
     window.addEventListener('open-nav-panel', handleOpenPanel);
     return () => window.removeEventListener('open-nav-panel', handleOpenPanel);
   }, []);
@@ -166,15 +179,19 @@ export default function Navigation({ cartItemCount = 0, onCartClick, isDarkOverl
   };
 
   const closeMenu = () => {
+    if (isMenuClosing || !isMenuOpen) return;
     setIsMenuClosing(true);
     closeTimeout.current = setTimeout(() => {
       setIsMenuOpen(false);
       setIsMenuClosing(false);
+      // Lockout reopening for 350ms to prevent mobile ghost-click bounce
+      recentlyClosedRef.current = true;
+      setTimeout(() => { recentlyClosedRef.current = false; }, 350);
     }, 500);
   };
 
   const openMenu = () => {
-    if (isMenuOpen && !isMenuClosing) return; // prevent double-open
+    if (isMenuOpenRef.current && !isMenuClosingRef.current) return; // prevent double-open
     if (closeTimeout.current) clearTimeout(closeTimeout.current);
     setIsMenuClosing(false);
     setIsMenuOpen(true);
