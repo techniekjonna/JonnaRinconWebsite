@@ -23,16 +23,21 @@ export default function Footer() {
 
           <div>
             <h3 className="text-lg font-bold mb-4 text-white">Quick Links</h3>
-            <div className="space-y-2.5">
-              <a href="#beats" className="block text-white/30 hover:text-white transition-colors text-sm">
-                Browse Beats
-              </a>
-              <a href="#music" className="block text-white/30 hover:text-white transition-colors text-sm">
-                Listen to Music
-              </a>
-              <a href="#contact" className="block text-white/30 hover:text-white transition-colors text-sm">
-                Get in Touch
-              </a>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+              <a href="/" className="block text-white/30 hover:text-white transition-colors text-sm">Home</a>
+              <a href="/catalogue" className="block text-white/30 hover:text-white transition-colors text-sm">Catalogue</a>
+              <a href="/shop/beats" className="block text-white/30 hover:text-white transition-colors text-sm">Beats</a>
+              <a href="/shop/merchandise" className="block text-white/30 hover:text-white transition-colors text-sm">Merchandise</a>
+              <a href="/shop/art" className="block text-white/30 hover:text-white transition-colors text-sm">Art</a>
+              <a href="/shop/services" className="block text-white/30 hover:text-white transition-colors text-sm">Services</a>
+              <a href="/remixes" className="block text-white/30 hover:text-white transition-colors text-sm">Remixes</a>
+              <a href="/dj-sets" className="block text-white/30 hover:text-white transition-colors text-sm">DJ Sets</a>
+              <a href="/studio-session" className="block text-white/30 hover:text-white transition-colors text-sm">Studio Session</a>
+              <a href="/mix-master" className="block text-white/30 hover:text-white transition-colors text-sm">Mix &amp; Master</a>
+              <a href="/dj" className="block text-white/30 hover:text-white transition-colors text-sm">DJ Bookings</a>
+              <a href="/about" className="block text-white/30 hover:text-white transition-colors text-sm">About</a>
+              <a href="/contact" className="block text-white/30 hover:text-white transition-colors text-sm">Contact</a>
+              <a href="/socials" className="block text-white/30 hover:text-white transition-colors text-sm">Socials</a>
             </div>
           </div>
 
