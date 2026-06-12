@@ -108,7 +108,7 @@ const ServicesPage: React.FC = () => {
                   <button
                     key={service.id}
                     onClick={() => handleServiceClick(service)}
-                    className="group relative bg-white/[0.03] border border-white/[0.07] rounded-2xl p-6 md:p-7 hover:border-red-600/30 hover:bg-white/[0.06] transition-all duration-400 hover:-translate-y-0.5 hover:shadow-[0_16px_40px_rgba(0,0,0,0.4)] flex flex-col text-left cursor-pointer"
+                    className="group relative bg-black border border-white/[0.07] rounded-2xl p-6 md:p-7 hover:border-red-600/30 hover:bg-[#111] transition-all duration-400 hover:-translate-y-0.5 hover:shadow-[0_16px_40px_rgba(0,0,0,0.4)] flex flex-col text-left cursor-pointer"
                   >
                     {service.coverUrl ? (
                       <div className="w-14 h-14 rounded-2xl overflow-hidden mb-6 group-hover:scale-110 transition-transform duration-300 flex-shrink-0">

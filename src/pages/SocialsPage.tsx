@@ -122,7 +122,7 @@ export default function SocialsPage() {
                   </div>
                   <div className="min-w-0">
                     <p className="text-xs font-bold text-white truncate leading-none">{platform.name}</p>
-                    <p className="text-[10px] text-white/30 truncate leading-none mt-0.5">{platform.handle}</p>
+                    <p className="text-[10px] text-white/30 truncate leading-none mt-1.5">{platform.handle}</p>
                   </div>
                   <ExternalLink size={11} className="text-white/20 group-hover:text-white/50 transition-colors flex-shrink-0" />
                 </a>

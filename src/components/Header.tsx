@@ -17,7 +17,7 @@ const Header: React.FC = () => {
   // Player state for waveform banner
   const [isPlayingNow, setIsPlayingNow] = useState(false);
   const [bannerTrack, setBannerTrack] = useState<{ title: string; artist: string } | null>(null);
-  const [cyclePhase, setCyclePhase] = useState<0 | 1 | 2>(0); // 0=label, 1=title, 2=artist
+  const [cyclePhase, setCyclePhase] = useState<0 | 1 | 2 | 3>(0); // 0=click-hint, 1=label, 2=title, 3=artist
   const [textVisible, setTextVisible] = useState(true);
   const cycleRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -36,7 +36,7 @@ const Header: React.FC = () => {
     cycleRef.current = setInterval(() => {
       setTextVisible(false);
       setTimeout(() => {
-        setCyclePhase(p => ((p + 1) % 3) as 0 | 1 | 2);
+        setCyclePhase(p => ((p + 1) % 4) as 0 | 1 | 2 | 3);
         setTextVisible(true);
       }, 350);
     }, CYCLE_MS);
@@ -44,8 +44,10 @@ const Header: React.FC = () => {
   }, [isPlayingNow]);
 
   const nowPlayingText = cyclePhase === 0
-    ? 'Now Playing'
+    ? 'Click here for more info'
     : cyclePhase === 1
+    ? 'Now Playing'
+    : cyclePhase === 2
     ? (bannerTrack?.title ?? '')
     : (bannerTrack?.artist ?? '');
 
