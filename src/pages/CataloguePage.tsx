@@ -226,12 +226,24 @@ export default function CataloguePage() {
       genreMatches(track.genre, selectedGenre);
   });
 
+  // In 'all' tab, merge remix tracks (filtered by common filters) into the display list
+  const displayItems: Track[] = activeTab === 'all'
+    ? [
+        ...filteredTracks,
+        ...remixTracks.filter(t =>
+          (selectedYear === 'All' || t.year === selectedYear) &&
+          (selectedCollab === 'All' || t.collab === selectedCollab) &&
+          genreMatches(t.genre, selectedGenre)
+        )
+      ]
+    : filteredTracks;
+
   const years = Array.from(new Set(demoTracks.map(t => t.year).filter(Boolean))).sort((a, b) => b - a) as number[];
 
   const trackGenres = useMemo(() => extractUniqueGenres(demoTracks, { sort: true }), [demoTracks]);
   const remixGenres = useMemo(() => extractUniqueGenres(remixTracks, { sort: true }), [remixTracks]);
 
-  const groupedTracks = filteredTracks.reduce((acc, track) => {
+  const groupedTracks = displayItems.reduce((acc, track) => {
     if (track.type === 'Album' || track.type === 'EP') {
       const albumName = track.album || track.title;
       const albumKey = `${track.type}:${albumName}`;
@@ -290,7 +302,7 @@ export default function CataloguePage() {
   useEffect(() => {
     if (!isLoading && !splashDone) {
       const elapsed = Date.now() - splashStartRef;
-      const remaining = Math.max(0, 3000 - elapsed);
+      const remaining = Math.max(0, 1500 - elapsed);
       const t = setTimeout(() => {
         setSplashFading(true);
         setTimeout(() => setSplashDone(true), 600);
@@ -304,9 +316,11 @@ export default function CataloguePage() {
       {/* Welcome loading splash */}
       {!splashDone && (
         <div
-          className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#0a0a0a]"
+          className="fixed inset-0 z-50 flex flex-col items-center justify-center"
           style={{
-            backdropFilter: 'blur(8px)',
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
+            background: 'rgba(10,10,10,0.80)',
             opacity: splashFading ? 0 : 1,
             transition: 'opacity 0.6s ease',
             pointerEvents: splashFading ? 'none' : 'auto',
@@ -316,8 +330,7 @@ export default function CataloguePage() {
           <div className="mb-8 w-10 h-10 border-2 border-white/10 border-t-red-500 rounded-full"
             style={{ animation: 'rotate-slow 0.8s linear infinite' }} />
           <p className="text-white/70 text-xs md:text-sm font-light tracking-wider text-center max-w-xl px-6 mb-3">
-            Welcome to my catalogue, this is not fast food music.{' '}
-            <br className="block sm:hidden" />
+            Welcome to my catalogue, this is not fast food music.<br />
             Take your time and have a listen.
           </p>
           <p className="text-white/30 text-xs tracking-widest uppercase">— Jonathan (Jonna Rincon)</p>
@@ -357,7 +370,7 @@ export default function CataloguePage() {
       )}
 
       {/* Hero */}
-      <section className="relative pt-28 px-6 md:px-12 pb-2" />
+      <section className="relative pt-20 px-6 md:px-12 pb-2" />
 
       {/* Horizontal navigation bar */}
       <CatalogueSidebar
@@ -412,8 +425,9 @@ export default function CataloguePage() {
                   {(shuffle
                     ? shuffleArray(Object.entries(groupedTracks), shuffleSeed)
                     : Object.entries(groupedTracks).sort(([, a], [, b]) => {
+                        const dir = selectedSort === 'oldest' ? 1 : -1;
                         if ((a.albumName && b.albumName) || (!a.albumName && !b.albumName)) {
-                          return (b.displayTrack.sortOrder ?? b.displayTrack.createdAt) - (a.displayTrack.sortOrder ?? a.displayTrack.createdAt);
+                          return dir * ((b.displayTrack.sortOrder ?? b.displayTrack.createdAt) - (a.displayTrack.sortOrder ?? a.displayTrack.createdAt));
                         }
                         return a.albumName ? -1 : 1;
                       })
@@ -483,7 +497,7 @@ export default function CataloguePage() {
                 </div>
                 <div className="flex items-center justify-between mt-8 pt-4 border-t border-white/[0.1]">
                   <p className="text-[10px] md:text-xs text-red-500/60 uppercase tracking-[0.4em]">Discography</p>
-                  <p className="text-[10px] md:text-xs text-white/30 uppercase tracking-widest">{filteredTracks.length} Track{filteredTracks.length !== 1 ? 's' : ''}</p>
+                  <p className="text-[10px] md:text-xs text-white/30 uppercase tracking-widest">{displayItems.length} Track{displayItems.length !== 1 ? 's' : ''}</p>
                 </div>
               </div>
             </section>
@@ -491,26 +505,24 @@ export default function CataloguePage() {
         </>
       )}
 
-      {/* ── REMIXES TAB (also shown appended in 'all') ── */}
-      {(activeTab === 'remixes' || activeTab === 'all') && (
+      {/* ── REMIXES TAB ── */}
+      {activeTab === 'remixes' && (
         <>
-          {activeTab === 'remixes' && (
-            <section className="px-6 md:px-12 pt-2 pb-2">
-              <div className="max-w-7xl mx-auto">
-                <FilterModal
-                  isOpen={isFilterModalOpen}
-                  onClose={() => setIsFilterModalOpen(false)}
-                  onReset={() => { setSelectedRemixType('All'); setSelectedRemixYear('All'); setSelectedRemixCollab('All'); setSelectedRemixGenre('All'); }}
-                  filters={[
-                    { label: 'Type', options: ['All', 'Remix', 'Edit', 'Bootleg'], value: selectedRemixType, onChange: v => setSelectedRemixType(v as any) },
-                    { label: 'Year', options: ['All', ...Array.from(new Set(remixTracks.map(t => t.year))).sort((a, b) => b - a)], value: selectedRemixYear, onChange: v => setSelectedRemixYear(v as any) },
-                    { label: 'Collab', options: ['All', 'Solo', 'Collab'], value: selectedRemixCollab, onChange: v => setSelectedRemixCollab(v as any) },
-                    { label: 'Genre', options: ['All', ...remixGenres], value: selectedRemixGenre, onChange: v => setSelectedRemixGenre(v as any) },
-                  ]}
-                />
-              </div>
-            </section>
-          )}
+          <section className="px-6 md:px-12 pt-2 pb-2">
+            <div className="max-w-7xl mx-auto">
+              <FilterModal
+                isOpen={isFilterModalOpen}
+                onClose={() => setIsFilterModalOpen(false)}
+                onReset={() => { setSelectedRemixType('All'); setSelectedRemixYear('All'); setSelectedRemixCollab('All'); setSelectedRemixGenre('All'); }}
+                filters={[
+                  { label: 'Type', options: ['All', 'Remix', 'Edit', 'Bootleg'], value: selectedRemixType, onChange: v => setSelectedRemixType(v as any) },
+                  { label: 'Year', options: ['All', ...Array.from(new Set(remixTracks.map(t => t.year))).sort((a, b) => b - a)], value: selectedRemixYear, onChange: v => setSelectedRemixYear(v as any) },
+                  { label: 'Collab', options: ['All', 'Solo', 'Collab'], value: selectedRemixCollab, onChange: v => setSelectedRemixCollab(v as any) },
+                  { label: 'Genre', options: ['All', ...remixGenres], value: selectedRemixGenre, onChange: v => setSelectedRemixGenre(v as any) },
+                ]}
+              />
+            </div>
+          </section>
 
           {remixesLoading && (
             <section className="px-6 md:px-12 py-16">
@@ -521,38 +533,30 @@ export default function CataloguePage() {
           {!remixesLoading && (
             <section className="px-6 md:px-12 py-2 md:py-4">
               <div className="max-w-7xl mx-auto">
-                {activeTab === 'all' && remixTracks.length > 0 && (
-                  <div className="flex items-center gap-3 mb-3 pb-2 border-b border-white/[0.06]">
-                    <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-white/30">Remixes / Edits / Bootlegs</p>
-                  </div>
-                )}
                 <div className="space-y-3">
                   {(shuffle
                     ? shuffleArray(
                         remixTracks.filter(t =>
-                          activeTab === 'all' || (
-                            (selectedRemixType === 'All' || t.remixType === selectedRemixType) &&
-                            (selectedRemixYear === 'All' || t.year === selectedRemixYear) &&
-                            (selectedRemixCollab === 'All' || t.collab === selectedRemixCollab) &&
-                            genreMatches(t.genre, selectedRemixGenre)
-                          )
+                          (selectedRemixType === 'All' || t.remixType === selectedRemixType) &&
+                          (selectedRemixYear === 'All' || t.year === selectedRemixYear) &&
+                          (selectedRemixCollab === 'All' || t.collab === selectedRemixCollab) &&
+                          genreMatches(t.genre, selectedRemixGenre)
                         ),
                         shuffleSeed
                       )
                     : remixTracks
                         .filter(t =>
-                          activeTab === 'all' || (
-                            (selectedRemixType === 'All' || t.remixType === selectedRemixType) &&
-                            (selectedRemixYear === 'All' || t.year === selectedRemixYear) &&
-                            (selectedRemixCollab === 'All' || t.collab === selectedRemixCollab) &&
-                            genreMatches(t.genre, selectedRemixGenre)
-                          )
+                          (selectedRemixType === 'All' || t.remixType === selectedRemixType) &&
+                          (selectedRemixYear === 'All' || t.year === selectedRemixYear) &&
+                          (selectedRemixCollab === 'All' || t.collab === selectedRemixCollab) &&
+                          genreMatches(t.genre, selectedRemixGenre)
                         )
                         .sort((a, b) => {
+                          const dir = selectedSort === 'oldest' ? 1 : -1;
                           const aSort = a.sortOrder ?? Number.MAX_VALUE;
                           const bSort = b.sortOrder ?? Number.MAX_VALUE;
-                          if (aSort !== bSort) return bSort - aSort;
-                          return b.createdAt - a.createdAt;
+                          if (aSort !== bSort) return dir * (bSort - aSort);
+                          return dir * (b.createdAt - a.createdAt);
                         })
                   ).map(remix => (
                     <TrackListItem
@@ -563,19 +567,17 @@ export default function CataloguePage() {
                     />
                   ))}
                 </div>
-                {activeTab === 'remixes' && (
-                  <div className="flex items-center justify-between mt-8 pt-4 border-t border-white/[0.1]">
-                    <p className="text-[10px] md:text-xs text-red-500/60 uppercase tracking-[0.4em]">Discography</p>
-                    <p className="text-[10px] md:text-xs text-white/30 uppercase tracking-widest">
-                      {remixTracks.filter(t =>
-                        (selectedRemixType === 'All' || t.remixType === selectedRemixType) &&
-                        (selectedRemixYear === 'All' || t.year === selectedRemixYear) &&
-                        (selectedRemixCollab === 'All' || t.collab === selectedRemixCollab) &&
-                        genreMatches(t.genre, selectedRemixGenre)
-                      ).length} Remixes
-                    </p>
-                  </div>
-                )}
+                <div className="flex items-center justify-between mt-8 pt-4 border-t border-white/[0.1]">
+                  <p className="text-[10px] md:text-xs text-red-500/60 uppercase tracking-[0.4em]">Discography</p>
+                  <p className="text-[10px] md:text-xs text-white/30 uppercase tracking-widest">
+                    {remixTracks.filter(t =>
+                      (selectedRemixType === 'All' || t.remixType === selectedRemixType) &&
+                      (selectedRemixYear === 'All' || t.year === selectedRemixYear) &&
+                      (selectedRemixCollab === 'All' || t.collab === selectedRemixCollab) &&
+                      genreMatches(t.genre, selectedRemixGenre)
+                    ).length} Remixes
+                  </p>
+                </div>
               </div>
             </section>
           )}
