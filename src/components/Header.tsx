@@ -143,27 +143,23 @@ const Header: React.FC = () => {
               </div>
 
               {/* Center brand — now playing above, logo middle, waveform below */}
-              <div className="text-center px-6 border-x border-white/[0.08] flex-shrink-0 flex flex-col items-center gap-1">
+              <div className="text-center px-6 border-x border-white/[0.08] flex-shrink-0 flex flex-col items-center justify-center gap-1 self-stretch overflow-hidden">
 
                 {/* "Now playing" cycling text — above logo, visible when playing */}
-                <div className="h-4 flex items-center justify-center">
-                  {isPlayingNow && bannerTrack ? (
-                    <button
-                      onClick={() => openPlayerModal()}
-                      className="group"
-                      title={`Now playing: ${bannerTrack.title}`}
+                {isPlayingNow && bannerTrack && (
+                  <button
+                    onClick={() => openPlayerModal()}
+                    className="group"
+                    title={`Now playing: ${bannerTrack.title}`}
+                  >
+                    <span
+                      className="text-[9px] font-bold uppercase tracking-[0.18em] text-white/40 group-hover:text-white/70 transition-colors"
+                      style={{ opacity: textVisible ? 1 : 0, transition: 'opacity 0.35s ease' }}
                     >
-                      <span
-                        className="text-[9px] font-bold uppercase tracking-[0.18em] text-white/40 group-hover:text-white/70 transition-colors"
-                        style={{ opacity: textVisible ? 1 : 0, transition: 'opacity 0.35s ease' }}
-                      >
-                        {nowPlayingText}
-                      </span>
-                    </button>
-                  ) : (
-                    <span className="h-4 block" />
-                  )}
-                </div>
+                      {nowPlayingText}
+                    </span>
+                  </button>
+                )}
 
                 {/* Logo — clickable to player when playing, no action when not */}
                 {isShopRoute ? (
@@ -172,7 +168,7 @@ const Header: React.FC = () => {
                       <img
                         src="/JEIGHTEEN-logo.png"
                         alt="JEIGHTEEN"
-                        className="h-8 md:h-9 w-auto object-contain opacity-90"
+                        className="h-14 md:h-16 w-auto object-contain opacity-90"
                       />
                     </button>
                   ) : (
@@ -180,7 +176,7 @@ const Header: React.FC = () => {
                       <img
                         src="/JEIGHTEEN-logo.png"
                         alt="JEIGHTEEN"
-                        className="h-8 md:h-9 w-auto object-contain opacity-90"
+                        className="h-14 md:h-16 w-auto object-contain opacity-90"
                       />
                     </Link>
                   )
@@ -199,30 +195,26 @@ const Header: React.FC = () => {
                 )}
 
                 {/* Waveform — below logo, visible when playing */}
-                <div className="h-5 flex items-center justify-center">
-                  {isPlayingNow && bannerTrack ? (
-                    <button
-                      onClick={() => openPlayerModal()}
-                      className="group flex items-end gap-[2px] h-full px-1"
-                      title={`Now playing: ${bannerTrack.title}`}
-                    >
-                      {WAVEFORM_HEIGHTS.map((h, i) => (
-                        <div
-                          key={i}
-                          className="w-[2px] rounded-full bg-white animate-waveform-bar group-hover:bg-red-200 transition-colors"
-                          style={{
-                            height: `${h}px`,
-                            boxShadow: '0 0 5px rgba(255,255,255,0.7)',
-                            animationDuration: `${0.55 + (i % 5) * 0.1}s`,
-                            animationDelay: `${i * 55}ms`,
-                          }}
-                        />
-                      ))}
-                    </button>
-                  ) : (
-                    <span className="h-5 block" />
-                  )}
-                </div>
+                {isPlayingNow && bannerTrack && (
+                  <button
+                    onClick={() => openPlayerModal()}
+                    className="group flex items-end gap-[2px] px-1"
+                    title={`Now playing: ${bannerTrack.title}`}
+                  >
+                    {WAVEFORM_HEIGHTS.map((h, i) => (
+                      <div
+                        key={i}
+                        className="w-[2px] rounded-full bg-white animate-waveform-bar group-hover:bg-red-200 transition-colors"
+                        style={{
+                          height: `${h}px`,
+                          boxShadow: '0 0 5px rgba(255,255,255,0.7)',
+                          animationDuration: `${0.55 + (i % 5) * 0.1}s`,
+                          animationDelay: `${i * 55}ms`,
+                        }}
+                      />
+                    ))}
+                  </button>
+                )}
               </div>
 
               <div className="flex gap-8">
@@ -265,11 +257,11 @@ const Header: React.FC = () => {
             {isShopRoute ? (
               isPlayingNow ? (
                 <button onClick={() => openPlayerModal()} className="flex justify-center hover:opacity-100 transition-opacity">
-                  <img src="/JEIGHTEEN-logo.png" alt="JEIGHTEEN" className="h-8 w-auto object-contain opacity-90" />
+                  <img src="/JEIGHTEEN-logo.png" alt="JEIGHTEEN" className="h-12 w-auto object-contain opacity-90" />
                 </button>
               ) : (
                 <Link to="/shop" className="flex justify-center hover:opacity-100 transition-opacity">
-                  <img src="/JEIGHTEEN-logo.png" alt="JEIGHTEEN" className="h-8 w-auto object-contain opacity-90" />
+                  <img src="/JEIGHTEEN-logo.png" alt="JEIGHTEEN" className="h-12 w-auto object-contain opacity-90" />
                 </Link>
               )
             ) : (
