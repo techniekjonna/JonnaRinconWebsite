@@ -363,7 +363,7 @@ const ShopPage: React.FC = () => {
                 />
               </div>
               <div className="aspect-square overflow-hidden rounded-xl bg-white/[0.04] border border-white/[0.08] flex flex-col items-center justify-center p-4">
-                <img src="/JEIGHTEEN-logo.png" alt="JEIGHTEEN" className="w-20 h-20 object-contain mb-3 opacity-80" />
+                <img src="/JEIGHTEEN-logo.png" alt="JEIGHTEEN" className="w-28 h-28 md:w-36 md:h-36 object-contain mb-3 opacity-80" />
                 <p className="text-xs font-black uppercase tracking-widest text-white/40 text-center">
                   Est. J18
                 </p>

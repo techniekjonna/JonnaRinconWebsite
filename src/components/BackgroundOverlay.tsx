@@ -1,10 +1,21 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 
-/** Dark overlay on top of the global background image so all page content stays readable. */
 const BackgroundOverlay: React.FC = () => {
   const { pathname } = useLocation();
-  // Shop pages have their own solid backgrounds — fully cover the global JEIGHTENESIS background
+  const isHome = pathname === '/';
+
+  // On home page start transparent so the background shows at 100%, then fade in
+  const [ready, setReady] = useState(!isHome);
+
+  useEffect(() => {
+    if (isHome) {
+      const t = setTimeout(() => setReady(true), 500);
+      return () => clearTimeout(t);
+    }
+    setReady(true);
+  }, [pathname]);
+
   if (pathname.startsWith('/shop')) {
     return (
       <div
@@ -13,10 +24,16 @@ const BackgroundOverlay: React.FC = () => {
       />
     );
   }
+
   return (
     <div
-      className="fixed inset-0 w-full h-screen -z-10 bg-black/70 pointer-events-none"
+      className="fixed inset-0 w-full h-screen -z-10 pointer-events-none"
       aria-hidden="true"
+      style={{
+        backgroundColor: 'rgba(0,0,0,0.70)',
+        opacity: ready ? 1 : 0,
+        transition: ready ? 'opacity 2s ease' : 'none',
+      }}
     />
   );
 };
