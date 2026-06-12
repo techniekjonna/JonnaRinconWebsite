@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { ArrowRight, Play } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 
@@ -67,7 +67,7 @@ export default function Hero() {
     return () => clearInterval(interval);
   }, []);
 
-  // Cycle listen button text every 3 seconds (offset)
+  // Cycle listen button text every 3 seconds (offset by 1.5s)
   useEffect(() => {
     const timeout = setTimeout(() => {
       const interval = setInterval(() => {
@@ -95,61 +95,67 @@ export default function Hero() {
         className="relative z-10 flex flex-col items-center text-center px-6 max-w-4xl mx-auto transition-opacity duration-700"
         style={{ opacity: visible ? 1 : 0 }}
       >
-        {/* Rotating role badge */}
-        <div className="mb-5 px-5 py-2 border border-white/20 rounded-full text-xs uppercase tracking-widest text-white/50 flex items-center gap-2">
+        {/* Subtitle with cycling role word */}
+        <p
+          className="text-white/50 text-base md:text-lg uppercase tracking-widest mb-10 flex items-baseline gap-2 flex-wrap justify-center"
+          style={{ animation: visible ? 'slide-up 0.7s ease-out 0.3s both' : 'none' }}
+        >
+          Your soon to be favourite
           <Link
             to={currentRole.to}
-            className="transition-all duration-300 hover:text-white hover:[text-shadow:0_0_14px_rgba(255,255,255,0.8)] cursor-pointer"
+            className="text-white hover:text-red-400 transition-colors duration-300 hover:[text-shadow:0_0_14px_rgba(255,255,255,0.6)] cursor-pointer"
             style={{
               opacity: roleFading ? 0 : 1,
-              transform: roleFading ? 'translateY(-4px)' : 'translateY(0)',
+              transform: roleFading ? 'translateY(-6px)' : 'translateY(0)',
               transition: 'opacity 0.4s ease, transform 0.4s ease',
               display: 'inline-block',
-              minWidth: '9ch',
+              minWidth: '13ch',
             }}
           >
             {currentRole.label}
           </Link>
-        </div>
-
-        {/* Subtitle */}
-        <p className="text-white/50 text-base md:text-lg uppercase tracking-widest mb-10"
-          style={{ animation: visible ? 'slide-up 0.7s ease-out 0.3s both' : 'none' }}>
-          Your soon to be favourite artist
         </p>
 
-        {/* CTAs — 2 main buttons */}
-        <div className="flex flex-col sm:flex-row gap-3"
-          style={{ animation: visible ? 'slide-up 0.7s ease-out 0.5s both' : 'none' }}>
+        {/* CTAs — 2 main buttons with fixed width so text-swap never resizes them */}
+        <div
+          className="flex flex-col sm:flex-row gap-3"
+          style={{ animation: visible ? 'slide-up 0.7s ease-out 0.5s both' : 'none' }}
+        >
           <button
             onClick={() => navigate(currentBrowse.to)}
-            className="flex items-center justify-center gap-2 px-8 py-3.5 bg-red-600 text-white font-bold text-sm uppercase tracking-widest hover:bg-red-700 transition-all duration-300 hover:scale-105 active:scale-95 rounded-xl"
-            style={{ minWidth: '180px' }}
+            className="flex items-center justify-center gap-2 py-3.5 bg-red-600 text-white font-bold text-sm uppercase tracking-widest hover:bg-red-700 transition-all duration-300 hover:scale-105 active:scale-95 rounded-xl overflow-hidden"
+            style={{ width: '220px' }}
           >
+            {/* Fixed-size text slot — text fades in-place, button never grows */}
             <span
+              className="overflow-hidden text-ellipsis whitespace-nowrap"
               style={{
                 opacity: browseFading ? 0 : 1,
                 transform: browseFading ? 'translateY(-6px)' : 'translateY(0)',
                 transition: 'opacity 0.3s ease, transform 0.3s ease',
                 display: 'inline-block',
+                maxWidth: '148px',
               }}
             >
               {currentBrowse.text}
             </span>
             <ArrowRight size={16} className="flex-shrink-0" />
           </button>
+
           <button
             onClick={() => navigate(currentListen.to)}
-            className="flex items-center justify-center gap-2 px-8 py-3.5 bg-white/10 border border-white/20 text-white font-bold text-sm uppercase tracking-widest hover:bg-white/20 transition-all duration-300 hover:scale-105 active:scale-95 backdrop-blur-sm rounded-xl"
-            style={{ minWidth: '180px' }}
+            className="flex items-center justify-center gap-2 py-3.5 bg-white/10 border border-white/20 text-white font-bold text-sm uppercase tracking-widest hover:bg-white/20 transition-all duration-300 hover:scale-105 active:scale-95 backdrop-blur-sm rounded-xl overflow-hidden"
+            style={{ width: '220px' }}
           >
             <Play size={16} className="flex-shrink-0" />
             <span
+              className="overflow-hidden text-ellipsis whitespace-nowrap"
               style={{
                 opacity: listenFading ? 0 : 1,
                 transform: listenFading ? 'translateY(-6px)' : 'translateY(0)',
                 transition: 'opacity 0.3s ease, transform 0.3s ease',
                 display: 'inline-block',
+                maxWidth: '148px',
               }}
             >
               {currentListen.text}
@@ -158,8 +164,10 @@ export default function Hero() {
         </div>
 
         {/* Studio session + contact */}
-        <div className="mt-5 flex flex-col items-center gap-2"
-          style={{ animation: visible ? 'slide-up 0.7s ease-out 0.7s both' : 'none' }}>
+        <div
+          className="mt-5 flex flex-col items-center gap-2"
+          style={{ animation: visible ? 'slide-up 0.7s ease-out 0.7s both' : 'none' }}
+        >
           <a href="/studio-session" className="group flex items-center gap-2">
             <span className="text-white/35 text-xs uppercase tracking-widest group-hover:text-red-500 transition-colors duration-300">
               Studio session with Jonna?
