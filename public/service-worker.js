@@ -1,4 +1,5 @@
-const CACHE_NAME = 'jonna-rincon-v1.5.0';
+const CACHE_NAME = 'jonna-rincon-v1.6.0';
+const IMAGE_CACHE_NAME = 'jonna-rincon-images-v1';
 const urlsToCache = [
   '/',
   '/icon-192x192.png',
@@ -23,7 +24,7 @@ self.addEventListener('activate', (event) => {
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME) {
+          if (cacheName !== CACHE_NAME && cacheName !== IMAGE_CACHE_NAME) {
             console.log('Deleting old cache:', cacheName);
             return caches.delete(cacheName);
           }
@@ -55,6 +56,34 @@ self.addEventListener('fetch', (event) => {
 
   // Skip API calls - they should always hit the network
   if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/.netlify/')) {
+    return;
+  }
+
+  // Cross-origin images (e.g. internedata.nl/Nextcloud) often send
+  // "Cache-Control: no-store" on their share links, forcing a re-download on
+  // every view. Cache them ourselves (stale-while-revalidate) so repeat
+  // views are instant regardless of the remote server's cache headers.
+  if (request.destination === 'image' && url.origin !== self.location.origin) {
+    event.respondWith(
+      caches.open(IMAGE_CACHE_NAME).then(async (cache) => {
+        const cached = await cache.match(request);
+        const networkFetch = fetch(request, { mode: 'cors' })
+          .then((response) => {
+            if (response && response.status === 200) {
+              cache.put(request, response.clone()).catch(() => {});
+            }
+            return response;
+          })
+          .catch(() => null);
+
+        if (cached) {
+          networkFetch.catch(() => {});
+          return cached;
+        }
+
+        return (await networkFetch) || offlineFallbackResponse();
+      })
+    );
     return;
   }
 
