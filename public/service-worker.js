@@ -1,4 +1,4 @@
-const CACHE_NAME = 'jonna-rincon-v1.6.0';
+const CACHE_NAME = 'jonna-rincon-v1.6.1';
 const IMAGE_CACHE_NAME = 'jonna-rincon-images-v1';
 const urlsToCache = [
   '/',
@@ -63,13 +63,18 @@ self.addEventListener('fetch', (event) => {
   // "Cache-Control: no-store" on their share links, forcing a re-download on
   // every view. Cache them ourselves (stale-while-revalidate) so repeat
   // views are instant regardless of the remote server's cache headers.
+  // Keep the request's original mode (typically "no-cors" for plain <img>
+  // tags without a crossorigin attribute) - forcing "cors" here would send
+  // credentials and break against servers using a wildcard ACAO header.
   if (request.destination === 'image' && url.origin !== self.location.origin) {
     event.respondWith(
       caches.open(IMAGE_CACHE_NAME).then(async (cache) => {
         const cached = await cache.match(request);
-        const networkFetch = fetch(request, { mode: 'cors' })
+        // Opaque (no-cors) responses always report status 0 and can't be
+        // inspected, so cache them as long as the fetch itself didn't throw.
+        const networkFetch = fetch(request)
           .then((response) => {
-            if (response && response.status === 200) {
+            if (response) {
               cache.put(request, response.clone()).catch(() => {});
             }
             return response;
