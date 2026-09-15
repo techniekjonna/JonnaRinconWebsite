@@ -66,7 +66,7 @@ const ServicesPage: React.FC = () => {
   return (
     <div className="min-h-screen text-white bg-[#0a0a0a]">
 
-      {/* Hero Section — image extends behind header and ShopNav */}
+      {/* Hero Section — image extends behind header */}
       <section className="relative overflow-hidden -mt-28 sm:-mt-32">
         <div className="absolute inset-0">
           <img src="/DJI_20251017150728_0019_D.JPG" alt="" className="w-full h-full object-cover" style={{ objectPosition: 'center 35%' }} />

@@ -30,10 +30,6 @@ export default function Navigation({ cartItemCount = 0, onCartClick, isDarkOverl
   const [authError, setAuthError] = useState('');
   const [authLoading, setAuthLoading] = useState(false);
   const [showClearAuthConfirm, setShowClearAuthConfirm] = useState(false);
-  const [expandedShop, setExpandedShop] = useState(false);
-  const [expandedCatalogue, setExpandedCatalogue] = useState(false);
-  const [expandedAboutMe, setExpandedAboutMe] = useState(false);
-  const [expandedGetInTouch, setExpandedGetInTouch] = useState(false);
   const { user, signIn, signUp, signOut } = useAuth();
   const { cartItems, isOpen: isCartOpen, setIsOpen: setIsCartOpen, removeFromCart, clearCart } = useCartContext();
   const { tracks } = useTracks();
@@ -216,30 +212,6 @@ export default function Navigation({ cartItemCount = 0, onCartClick, isDarkOverl
   // Use smartColor for both logo and menu based on background brightness
   const useWhiteNav = true;  // Always use white logo and white text for nav
   const useBlackNav = false;
-
-  const shopSubmenu = [
-    { label: 'Beat Shop', subtitle: 'Browse instrumentals', href: '/shop/beats' },
-    { label: 'Services', subtitle: 'Professional audio services', href: '/shop/services' },
-    { label: 'Merchandise', subtitle: 'Official branded products', href: '/shop/merchandise' },
-    { label: 'Art', subtitle: 'Digital & visual art', href: '/shop/art' },
-  ];
-
-  const catalogueSubmenu = [
-    { label: 'Tracks', subtitle: 'Full discography', href: '/catalogue' },
-    { label: 'Remixes', subtitle: 'Remixes and edits', href: '/catalogue' },
-    { label: 'DJ Sets', subtitle: 'Live DJ performances', href: '/catalogue' },
-  ];
-
-  const aboutMeSubmenu = [
-    { label: 'Productions', subtitle: 'Production work & collaborations', href: '/about' },
-    { label: 'Streams', subtitle: 'Stream on all platforms', href: '/about' },
-    { label: 'Community', subtitle: 'Artist support & features', href: '/about' },
-  ];
-
-  const getInTouchSubmenu = [
-    { label: 'Social Media', subtitle: 'Follow on all platforms', href: '/socials', action: () => { closeMenu(); navigate('/socials'); } },
-    { label: 'Contact', subtitle: 'For serious inquiries', href: '#contact', action: () => { closeMenu(); navigate('/contact'); } },
-  ];
 
   const menuItems: { label: string; subtitle: string; href?: string; action?: () => void; submenu?: Array<{ label: string; subtitle: string; href: string; action?: () => void }>; expanded?: boolean; mobileOnly?: boolean }[] = [
     { label: 'SHOP', subtitle: 'Browse our catalog', action: () => { closeMenu(); navigate('/shop'); } },

@@ -1,22 +1,6 @@
-import { Music, User, Library, Briefcase } from 'lucide-react';
+import { Music, Mail, Library, Briefcase } from 'lucide-react';
 
 const CARDS = [
-  {
-    id: 'about',
-    title: 'About',
-    description: 'The story behind the music',
-    icon: User,
-    image: '/IMG_1027.jpg',
-    link: '/about',
-  },
-  {
-    id: 'catalogue',
-    title: 'Catalogue',
-    description: 'Tracks, remixes & DJ sets',
-    icon: Library,
-    image: '/DJ Screenshot 3-2-26.png',
-    link: '/catalogue',
-  },
   {
     id: 'beats',
     title: 'Beat Shop',
@@ -32,6 +16,22 @@ const CARDS = [
     icon: Briefcase,
     image: '/DJI_20251115114029_0004_D.JPG',
     link: '/shop/services',
+  },
+  {
+    id: 'catalogue',
+    title: 'Catalogue',
+    description: 'Tracks, remixes & DJ sets',
+    icon: Library,
+    image: '/DJ Screenshot 3-2-26.png',
+    link: '/catalogue',
+  },
+  {
+    id: 'contact',
+    title: 'Contact',
+    description: 'Get in touch with Jonna',
+    icon: Mail,
+    image: '/IMG_1027.jpg',
+    link: '/contact',
   },
 ];
 
