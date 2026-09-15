@@ -25,8 +25,6 @@ import RegisterPage from './pages/RegisterPage';
 import ShopHub from './pages/shop/ShopPage';
 import BeatsShop from './pages/shop/BeatsPage';
 import ServicesShop from './pages/shop/ServicesPage';
-import MerchandiseShop from './pages/shop/MerchandisePage';
-import ArtShop from './pages/shop/ArtPage';
 
 // Standalone pages (public)
 import TracksPage from './pages/TracksPage';
@@ -84,9 +82,7 @@ import AdminBoard from './pages/admin/AdminBoardPage';
 import AdminSettings from './pages/admin/SettingsPage';
 import AdminChat from './pages/admin/ChatPage';
 import AdminDiscountCodes from './pages/admin/DiscountCodesPage';
-import AdminArt from './pages/admin/ArtAdminPage';
 import AdminServices from './pages/admin/ServicesPage';
-import AdminMerchandise from './pages/admin/MerchandiseAdminPage';
 import AdminPlaylists from './pages/admin/PlaylistsPage';
 import AdminAgenda from './pages/admin/AgendaPage';
 import AdminProjects from './pages/admin/ProjectsAdminPage';
@@ -225,8 +221,6 @@ const MainApp: React.FC = () => {
                   <Route path="/shop" element={<ShopHub />} />
                   <Route path="/shop/beats" element={<BeatsShop />} />
                   <Route path="/shop/services" element={<ServicesShop />} />
-                  <Route path="/shop/merchandise" element={<MerchandiseShop />} />
-                  <Route path="/shop/art" element={<ArtShop />} />
 
                   {/* Standalone Pages (public) */}
                   <Route path="/catalogue" element={<ProtectedRoute><CataloguePage /></ProtectedRoute>} />
@@ -402,14 +396,6 @@ const MainApp: React.FC = () => {
             }
           />
           <Route
-            path="/admin/art"
-            element={
-              <ProtectedRoute allowedRoles={['admin']}>
-                <AdminArt />
-              </ProtectedRoute>
-            }
-          />
-          <Route
             path="/admin/beats"
             element={
               <ProtectedRoute allowedRoles={['admin']}>
@@ -561,15 +547,6 @@ const MainApp: React.FC = () => {
               </ProtectedRoute>
             }
           />
-          <Route
-            path="/admin/merchandise"
-            element={
-              <ProtectedRoute allowedRoles={['admin']}>
-                <AdminMerchandise />
-              </ProtectedRoute>
-            }
-          />
-
           {/* Redirect /admin to dashboard */}
           <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
 

@@ -50,7 +50,7 @@ const contactDefs: Record<RecipientGroup, { name: string; description: string }>
 
 const categoryGroups: Record<string, string[]> = {
   CATALOGUE: ['Tracks', 'Remixes', 'Support'],
-  SHOP: ['Beats', 'Services', 'Merchandise', 'Art'],
+  SHOP: ['Beats', 'Services'],
   'SOCIAL MEDIA': ['Content', 'Collaboration'],
   DASHBOARD: ['Orders', 'Downloads'],
   SUPPORT: ['Support', 'Overig'],
@@ -787,7 +787,7 @@ export const AdminChatContent: React.FC = () => {
 
                 <p className="text-xs text-white/40 uppercase tracking-widest font-semibold mb-2">Kies categorie</p>
                 <div className="flex-1 overflow-y-auto space-y-2 min-h-0">
-                  {['Tracks', 'Remixes', 'Support', 'Beats', 'Services', 'Merchandise', 'Art', 'Content', 'Collaboration', 'Orders', 'Downloads'].map((cat) => (
+                  {['Tracks', 'Remixes', 'Support', 'Beats', 'Services', 'Content', 'Collaboration', 'Orders', 'Downloads'].map((cat) => (
                     <button key={cat} onClick={() => setSelectedNewChatCategory(cat)}
                       className={`w-full px-3 py-2 rounded-lg text-sm transition-colors ${
                         selectedNewChatCategory === cat

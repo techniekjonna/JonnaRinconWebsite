@@ -5,7 +5,7 @@ import { useOrderNotifications } from '../../hooks/useOrderNotifications';
 import { orderService } from '../../lib/firebase/services';
 import { Order, OrderStatus, ProductCategory } from '../../lib/firebase/types';
 import {
-  Eye, EyeOff, ChevronDown, ChevronUp, Music, Palette, Package, Wrench,
+  Eye, EyeOff, ChevronDown, ChevronUp, Music, Wrench,
   CheckCircle2, Circle, AlertCircle, Clock, TrendingUp, ShoppingBag,
   DollarSign, Filter, Search, StickyNote, Check,
 } from 'lucide-react';
@@ -28,8 +28,6 @@ const TYPE_CONFIG: Record<ProductCategory, { label: string; color: string; icon:
   track:       { label: 'Track',          color: 'bg-pink-500/20 text-pink-400',      icon: Music },
   remix:       { label: 'Remix',          color: 'bg-rose-500/20 text-rose-400',      icon: Music },
   edit:        { label: 'Edit',           color: 'bg-fuchsia-500/20 text-fuchsia-400', icon: Music },
-  art:         { label: 'Art',            color: 'bg-amber-500/20 text-amber-400',    icon: Palette },
-  merchandise: { label: 'Merchandise',    color: 'bg-emerald-500/20 text-emerald-400', icon: Package },
   service:     { label: 'Service',        color: 'bg-cyan-500/20 text-cyan-400',      icon: Wrench },
 };
 
@@ -56,18 +54,6 @@ const FULFILLMENT_STEPS: Record<string, { key: keyof NonNullable<Order['fulfillm
     { key: 'inProgress',           label: 'In uitvoering' },
     { key: 'filesDelivered',       label: 'Geleverd aan klant' },
   ],
-  art: [
-    { key: 'paymentConfirmed', label: 'Betaling bevestigd' },
-    { key: 'packaged',         label: 'Ingepakt' },
-    { key: 'shipped',          label: 'Verstuurd' },
-    { key: 'delivered',        label: 'Geleverd' },
-  ],
-  merchandise: [
-    { key: 'paymentConfirmed', label: 'Betaling bevestigd' },
-    { key: 'packaged',         label: 'Ingepakt' },
-    { key: 'shipped',          label: 'Verstuurd' },
-    { key: 'delivered',        label: 'Geleverd' },
-  ],
 };
 
 const getPrimaryType = (order: Order): ProductCategory =>
@@ -76,7 +62,6 @@ const getPrimaryType = (order: Order): ProductCategory =>
 const getActionLabel = (type: ProductCategory): string => {
   if (type === 'beat' || type === 'track' || type === 'remix' || type === 'edit') return 'Stuur download link';
   if (type === 'service') return 'Plan & lever service';
-  if (type === 'art' || type === 'merchandise') return 'Pak in & verstuur';
   return 'Verwerk bestelling';
 };
 

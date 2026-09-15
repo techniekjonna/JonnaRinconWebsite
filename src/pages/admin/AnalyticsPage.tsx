@@ -6,8 +6,6 @@ import { useRemixes } from '../../hooks/useRemixes';
 import { useOrders } from '../../hooks/useOrders';
 import { useContent } from '../../hooks/useContent';
 import { useCollaborations } from '../../hooks/useCollaborations';
-import { useArt } from '../../hooks/useArt';
-import { useMerchandise } from '../../hooks/useMerchandise';
 import { useServices } from '../../hooks/useServices';
 import { usePlaylists } from '../../hooks/usePlaylists';
 import { useEdits } from '../../hooks/useEdits';
@@ -23,8 +21,6 @@ import {
   Users,
   FileText,
   MessageSquare,
-  Palette,
-  Shirt,
   Briefcase,
   ListMusic,
   Disc3,
@@ -42,8 +38,6 @@ const AnalyticsPage: React.FC = () => {
   const { orders, statistics: orderStats } = useOrders();
   const { content } = useContent();
   const { collaborations, statistics: collabStats } = useCollaborations();
-  const { art } = useArt();
-  const { merchandise } = useMerchandise();
   const { services } = useServices();
   const { playlists } = usePlaylists();
   const { edits } = useEdits();
@@ -271,10 +265,6 @@ const AnalyticsPage: React.FC = () => {
   const publishedContent = content.filter((c) => c.status === 'published').length;
 
   // Catalog breakdown
-  const publishedArt = art.filter((a) => a.status === 'published').length;
-  const featuredArt = art.filter((a) => a.featured).length;
-  const publishedMerch = merchandise.filter((m) => m.status === 'published').length;
-  const featuredMerch = merchandise.filter((m) => m.featured).length;
   const publishedServices = services.filter((s) => s.status === 'published').length;
   const featuredServices = services.filter((s) => s.featured).length;
   const publishedEdits = edits.filter((e) => e.status === 'published').length;
@@ -517,28 +507,6 @@ const AnalyticsPage: React.FC = () => {
               <p className="text-2xl font-bold text-white">{edits.length}</p>
               <p className="text-xs text-white/40 mt-1">
                 {publishedEdits} published · {featuredEdits} featured
-              </p>
-            </div>
-
-            <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-5">
-              <div className="flex items-center justify-between mb-1">
-                <p className="text-white/40 text-sm">Art</p>
-                <Palette className="text-fuchsia-400" size={18} />
-              </div>
-              <p className="text-2xl font-bold text-white">{art.length}</p>
-              <p className="text-xs text-white/40 mt-1">
-                {publishedArt} published · {featuredArt} featured
-              </p>
-            </div>
-
-            <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-5">
-              <div className="flex items-center justify-between mb-1">
-                <p className="text-white/40 text-sm">Merchandise</p>
-                <Shirt className="text-amber-400" size={18} />
-              </div>
-              <p className="text-2xl font-bold text-white">{merchandise.length}</p>
-              <p className="text-xs text-white/40 mt-1">
-                {publishedMerch} published · {featuredMerch} featured
               </p>
             </div>
 

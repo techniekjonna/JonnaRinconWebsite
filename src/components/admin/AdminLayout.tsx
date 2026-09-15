@@ -55,13 +55,11 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const menuItems = [
     {
       label: 'SHOP',
-      subtitle: 'Art, Beats, Services, Merchandise',
+      subtitle: 'Beats, Services',
       action: () => setExpandedShop(!expandedShop),
       submenu: [
-        { label: 'Art', subtitle: 'Digital & visual art', href: '/admin/art' },
         { label: 'Beats', subtitle: 'Beat instrumentals', href: '/admin/beats' },
         { label: 'Services', subtitle: 'Audio services', href: '/admin/services' },
-        { label: 'Merchandise', subtitle: 'Branded products', href: '/admin/merchandise' },
       ],
       expanded: expandedShop,
     },

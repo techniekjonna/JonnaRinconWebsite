@@ -1,7 +1,6 @@
 // Admin pages barrel export - ENSURES all pages are bundled
 export { default as LoginPage } from './LoginPage';
 export { default as DashboardPage } from './DashboardPage';
-export { default as ArtAdminPage } from './ArtAdminPage';
 export { default as BeatsPage } from './BeatsPage';
 export { default as TracksPage } from './TracksPage';
 export { default as AlbumsPage } from './AlbumsPage';

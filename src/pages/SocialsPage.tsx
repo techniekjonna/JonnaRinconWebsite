@@ -53,7 +53,7 @@ const platforms = [
 
 const contactCategories = {
   'Jonna Rincon': ['Productions', 'Remixes & Edits', 'DJ Sets', 'Community', 'Other'],
-  'Shop': ['Beat Shop', 'Mix & Master', 'Studio Sessions', 'Merchandise', 'Art', 'Other'],
+  'Shop': ['Beat Shop', 'Mix & Master', 'Studio Sessions', 'Other'],
 };
 
 type CategoryKey = keyof typeof contactCategories;

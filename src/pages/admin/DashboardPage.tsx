@@ -8,16 +8,13 @@ import { beatService, orderService } from '../../lib/firebase/services';
 import { TrendingUp, DollarSign, ShoppingBag, Music, Handshake, Users, Bell, ArrowRight } from 'lucide-react';
 
 const TYPE_LABELS: Record<string, string> = {
-  beat: 'Beat', track: 'Track', remix: 'Remix', edit: 'Edit',
-  art: 'Art', merchandise: 'Merch', service: 'Service',
+  beat: 'Beat', track: 'Track', remix: 'Remix', edit: 'Edit', service: 'Service',
 };
 const TYPE_COLORS: Record<string, string> = {
   beat: 'bg-purple-500/20 text-purple-400',
   track: 'bg-pink-500/20 text-pink-400',
   remix: 'bg-rose-500/20 text-rose-400',
   edit: 'bg-fuchsia-500/20 text-fuchsia-400',
-  art: 'bg-amber-500/20 text-amber-400',
-  merchandise: 'bg-emerald-500/20 text-emerald-400',
   service: 'bg-cyan-500/20 text-cyan-400',
 };
 

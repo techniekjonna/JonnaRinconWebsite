@@ -49,7 +49,7 @@ const contactDefs: Record<RecipientGroup, { name: string; description: string }>
 
 const categoryGroups: Record<string, string[]> = {
   CATALOGUE: ['Tracks', 'Remixes', 'Support'],
-  SHOP: ['Beats', 'Services', 'Merchandise', 'Art'],
+  SHOP: ['Beats', 'Services'],
   'SOCIAL MEDIA': ['Content', 'Collaboration'],
   DASHBOARD: ['Orders', 'Downloads'],
   SUPPORT: ['Support', 'Overig'],
