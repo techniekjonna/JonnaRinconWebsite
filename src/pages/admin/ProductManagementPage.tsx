@@ -55,8 +55,6 @@ const ProductManagementPage: React.FC = () => {
       track: 'bg-purple-500/20 text-purple-400',
       remix: 'bg-pink-500/20 text-pink-400',
       edit: 'bg-blue-500/20 text-blue-400',
-      art: 'bg-yellow-500/20 text-yellow-400',
-      merchandise: 'bg-green-500/20 text-green-400',
       service: 'bg-cyan-500/20 text-cyan-400',
     };
     return colors[category];
@@ -95,8 +93,6 @@ const ProductManagementPage: React.FC = () => {
               <option value="track">Tracks</option>
               <option value="remix">Remixes</option>
               <option value="edit">Edits</option>
-              <option value="art">Art</option>
-              <option value="merchandise">Merchandise</option>
               <option value="service">Services</option>
             </select>
 

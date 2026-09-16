@@ -50,7 +50,7 @@ const recipientGroups: Record<RecipientGroup, { name: string; description: strin
 
 const categoryOptions: Record<string, string[]> = {
   CATALOGUE: ['Tracks', 'Remixes', 'Support'],
-  SHOP: ['Beats', 'Services', 'Merchandise', 'Art'],
+  SHOP: ['Beats', 'Services'],
   'SOCIAL MEDIA': ['Content', 'Collaboration'],
   DASHBOARD: ['Orders', 'Downloads'],
   SUPPORT: ['Support', 'Overig'],

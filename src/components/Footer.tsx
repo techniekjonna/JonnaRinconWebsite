@@ -27,8 +27,6 @@ export default function Footer() {
               <a href="/" className="block text-white/30 hover:text-white transition-colors text-sm">Home</a>
               <a href="/catalogue" className="block text-white/30 hover:text-white transition-colors text-sm">Catalogue</a>
               <a href="/shop/beats" className="block text-white/30 hover:text-white transition-colors text-sm">Beats</a>
-              <a href="/shop/merchandise" className="block text-white/30 hover:text-white transition-colors text-sm">Merchandise</a>
-              <a href="/shop/art" className="block text-white/30 hover:text-white transition-colors text-sm">Art</a>
               <a href="/shop/services" className="block text-white/30 hover:text-white transition-colors text-sm">Services</a>
               <a href="/remixes" className="block text-white/30 hover:text-white transition-colors text-sm">Remixes</a>
               <a href="/dj-sets" className="block text-white/30 hover:text-white transition-colors text-sm">DJ Sets</a>

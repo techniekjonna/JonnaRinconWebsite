@@ -11,8 +11,6 @@ const roles = [
 
 const browseLabels = [
   { text: 'Browse Beats', to: '/shop/beats' },
-  { text: 'Merchandise', to: '/shop/merchandise' },
-  { text: 'Art', to: '/shop/art' },
   { text: 'Mix Master', to: '/mix-master' },
   { text: 'Studio Session', to: '/studio-session' },
   { text: 'Shop', to: '/shop' },

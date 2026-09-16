@@ -1,5 +1,4 @@
 export { authService } from './authService';
-export { artService } from './artService';
 export { beatService } from './beatService';
 export { trackService } from './trackService';
 export { albumService } from './albumService';
@@ -14,7 +13,6 @@ export { fileUploadService } from './fileUploadService';
 export { settingsService } from './settingsService';
 export { discountCodeService } from './discountCodeService';
 export { followGateService } from './followGateService';
-export { merchandiseService } from './merchandiseService';
 export { playlistService } from './playlistService';
 export { beatPackService } from './beatPackService';
 export { projectService } from './projectService';

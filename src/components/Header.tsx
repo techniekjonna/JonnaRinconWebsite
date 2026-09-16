@@ -66,23 +66,12 @@ const Header: React.FC = () => {
 
   if (isProtectedRoute) return null;
 
-  const isShopRoute = location.pathname.startsWith('/shop');
-
-  const mainNavItems = [
+  const navItems = [
     { label: 'Shop', href: '/shop', position: 'left' },
     { label: 'Catalogue', href: '/catalogue', position: 'left' },
     { label: 'Socials', href: '/socials', position: 'right' },
     { label: 'About Me', href: '/about', position: 'right' },
   ];
-
-  const shopNavItems = [
-    { label: 'Beat Shop', href: '/shop/beats', position: 'left' },
-    { label: 'Services', href: '/shop/services', position: 'left' },
-    { label: 'Merchandise', href: '/shop/merchandise', position: 'right' },
-    { label: 'Art', href: '/shop/art', position: 'right' },
-  ];
-
-  const navItems = isShopRoute ? shopNavItems : mainNavItems;
 
   const isActive = (href: string) => {
     if (href === '/shop') return location.pathname === '/shop';
@@ -164,36 +153,16 @@ const Header: React.FC = () => {
                 )}
 
                 {/* Logo — clickable to player when playing, no action when not */}
-                {isShopRoute ? (
-                  isPlayingNow ? (
-                    <button onClick={() => openPlayerModal()} className="hover:opacity-100 transition-opacity">
-                      <img
-                        src="/JEIGHTEEN-logo.png"
-                        alt="JEIGHTEEN"
-                        className="h-14 md:h-16 w-auto object-contain opacity-90"
-                      />
-                    </button>
-                  ) : (
-                    <Link to="/shop" className="hover:opacity-100 transition-opacity">
-                      <img
-                        src="/JEIGHTEEN-logo.png"
-                        alt="JEIGHTEEN"
-                        className="h-14 md:h-16 w-auto object-contain opacity-90"
-                      />
-                    </Link>
-                  )
-                ) : (
-                  isPlayingNow ? (
-                    <button onClick={() => openPlayerModal()} className="group">
-                      <h1 className="text-lg font-black text-white tracking-tighter group-hover:text-white/80 transition-colors">
-                        JONNA RINCON
-                      </h1>
-                    </button>
-                  ) : (
-                    <h1 className="text-lg font-black text-white tracking-tighter">
+                {isPlayingNow ? (
+                  <button onClick={() => openPlayerModal()} className="group">
+                    <h1 className="text-lg font-black text-white tracking-tighter group-hover:text-white/80 transition-colors">
                       JONNA RINCON
                     </h1>
-                  )
+                  </button>
+                ) : (
+                  <h1 className="text-lg font-black text-white tracking-tighter">
+                    JONNA RINCON
+                  </h1>
                 )}
 
                 {/* Waveform — below logo, visible when playing */}
@@ -256,24 +225,12 @@ const Header: React.FC = () => {
             </div>
 
             {/* Logo — opens player when playing, no action when not */}
-            {isShopRoute ? (
-              isPlayingNow ? (
-                <button onClick={() => openPlayerModal()} className="flex justify-center hover:opacity-100 transition-opacity">
-                  <img src="/JEIGHTEEN-logo.png" alt="JEIGHTEEN" className="h-12 w-auto object-contain opacity-90" />
-                </button>
-              ) : (
-                <Link to="/shop" className="flex justify-center hover:opacity-100 transition-opacity">
-                  <img src="/JEIGHTEEN-logo.png" alt="JEIGHTEEN" className="h-12 w-auto object-contain opacity-90" />
-                </Link>
-              )
+            {isPlayingNow ? (
+              <button onClick={() => openPlayerModal()} className="group">
+                <span className="text-sm font-black text-white tracking-tighter group-hover:text-white/80 transition-colors">JONNA RINCON</span>
+              </button>
             ) : (
-              isPlayingNow ? (
-                <button onClick={() => openPlayerModal()} className="group">
-                  <span className="text-sm font-black text-white tracking-tighter group-hover:text-white/80 transition-colors">JONNA RINCON</span>
-                </button>
-              ) : (
-                <span className="text-sm font-black text-white tracking-tighter">JONNA RINCON</span>
-              )
+              <span className="text-sm font-black text-white tracking-tighter">JONNA RINCON</span>
             )}
 
             {/* Waveform — below logo */}
