@@ -70,6 +70,20 @@ export interface SecuritySettings {
   updatedBy?: string;
 }
 
+export interface ContactSettings {
+  categories: string[];
+  updatedAt?: any;
+  updatedBy?: string;
+}
+
+export const DEFAULT_CONTACT_CATEGORIES = [
+  'General Inquiry',
+  'Booking Request',
+  'Collaboration',
+  'Business Proposal',
+  'Other',
+];
+
 
 class SettingsService {
   private collectionName = 'settings';
@@ -235,6 +249,47 @@ class SettingsService {
     } catch (error: any) {
       console.error('Save security settings error:', error);
       throw new Error(error.message || 'Failed to save security settings');
+    }
+  }
+
+  async getContactSettings(): Promise<ContactSettings | null> {
+    try {
+      const docRef = doc(db, this.collectionName, 'contact');
+      const docSnap = await getDoc(docRef);
+
+      if (docSnap.exists()) {
+        return docSnap.data() as ContactSettings;
+      }
+      return null;
+    } catch (error: any) {
+      console.error('Get contact settings error:', error);
+      throw new Error(error.message || 'Failed to get contact settings');
+    }
+  }
+
+  async saveContactSettings(settings: ContactSettings): Promise<void> {
+    const user = authService.getCurrentUser();
+    if (!user || (user.role !== 'admin' && user.role !== 'manager')) {
+      throw new Error('Unauthorized: Only admins and managers can save settings');
+    }
+
+    try {
+      const docRef = doc(db, this.collectionName, 'contact');
+      const settingsWithMeta = {
+        ...settings,
+        updatedAt: serverTimestamp(),
+        updatedBy: user.uid,
+      };
+
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        await updateDoc(docRef, settingsWithMeta);
+      } else {
+        await setDoc(docRef, settingsWithMeta);
+      }
+    } catch (error: any) {
+      console.error('Save contact settings error:', error);
+      throw new Error(error.message || 'Failed to save contact settings');
     }
   }
 

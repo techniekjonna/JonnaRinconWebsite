@@ -68,9 +68,9 @@ const Header: React.FC = () => {
 
   const navItems = [
     { label: 'Shop', href: '/shop', position: 'left' },
-    { label: 'Catalogue', href: '/catalogue', position: 'left' },
+    { label: 'Music', href: '/catalogue', position: 'left' },
     { label: 'Socials', href: '/socials', position: 'right' },
-    { label: 'About Me', href: '/about', position: 'right' },
+    { label: 'Contact', href: '/contact', position: 'right' },
   ];
 
   const isActive = (href: string) => {

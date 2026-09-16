@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import AdminLayout from '../../components/admin/AdminLayout';
-import { Store, Bell, Shield, Save, Megaphone, Eye, EyeOff, Plus, Trash2, Music2, X, ChevronUp, ChevronDown, Image } from 'lucide-react';
-import { settingsService, ShopSettings, GeneralSettings, NotificationSettings, SecuritySettings } from '../../lib/firebase/services/settingsService';
+import { Store, Bell, Shield, Save, Megaphone, Eye, EyeOff, Plus, Trash2, Music2, X, ChevronUp, ChevronDown, Image, MessageCircle } from 'lucide-react';
+import { settingsService, ShopSettings, GeneralSettings, NotificationSettings, SecuritySettings, DEFAULT_CONTACT_CATEGORIES } from '../../lib/firebase/services/settingsService';
 import { promoSectionService, PromoSectionData, PromoButton } from '../../lib/firebase/services/promoSectionService';
 import { useTracks } from '../../hooks/useTracks';
 import { fileUploadService } from '../../lib/firebase/services';
 
 const AdminSettings: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'shop' | 'notifications' | 'security' | 'promo'>('shop');
+  const [activeTab, setActiveTab] = useState<'shop' | 'notifications' | 'security' | 'promo' | 'contact'>('shop');
   const [loading, setLoading] = useState(true);
   const [shopSettings, setShopSettings] = useState<ShopSettings>({
     storeName: '',
@@ -60,21 +60,26 @@ const AdminSettings: React.FC = () => {
   const [showTrackSearch, setShowTrackSearch] = useState(false);
   const { tracks: allTracks } = useTracks({ status: 'published' });
 
+  const [contactCategories, setContactCategories] = useState<string[]>(DEFAULT_CONTACT_CATEGORIES);
+  const [newContactCategory, setNewContactCategory] = useState('');
+
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   useEffect(() => {
     const loadSettings = async () => {
       try {
         setLoading(true);
-        const [shopData, notificationData, securityData] = await Promise.all([
+        const [shopData, notificationData, securityData, contactData] = await Promise.all([
           settingsService.getShopSettings(),
           settingsService.getNotificationSettings(),
           settingsService.getSecuritySettings(),
+          settingsService.getContactSettings(),
         ]);
 
         if (shopData) setShopSettings(shopData);
         if (notificationData) setNotificationSettings(notificationData);
         if (securityData) setSecuritySettings(securityData);
+        if (contactData?.categories?.length) setContactCategories(contactData.categories);
       } catch (error) {
         console.error('Failed to load settings:', error);
       } finally {
@@ -101,6 +106,32 @@ const AdminSettings: React.FC = () => {
       setTimeout(() => setMessage(null), 3000);
     } catch (error) {
       console.error('Failed to save shop settings:', error);
+      setMessage({ type: 'error', text: 'Failed to save settings. Please try again.' });
+    }
+  };
+
+  const handleAddContactCategory = () => {
+    const name = newContactCategory.trim();
+    if (!name || contactCategories.includes(name)) return;
+    setContactCategories([...contactCategories, name]);
+    setNewContactCategory('');
+  };
+
+  const handleRemoveContactCategory = (name: string) => {
+    setContactCategories(contactCategories.filter((c) => c !== name));
+  };
+
+  const handleSaveContactSettings = async () => {
+    if (contactCategories.length === 0) {
+      setMessage({ type: 'error', text: 'Keep at least one contact category.' });
+      return;
+    }
+    try {
+      await settingsService.saveContactSettings({ categories: contactCategories });
+      setMessage({ type: 'success', text: 'Contact categories saved successfully!' });
+      setTimeout(() => setMessage(null), 3000);
+    } catch (error) {
+      console.error('Failed to save contact settings:', error);
       setMessage({ type: 'error', text: 'Failed to save settings. Please try again.' });
     }
   };
@@ -245,6 +276,7 @@ const AdminSettings: React.FC = () => {
     { id: 'notifications' as const, name: 'Notifications', icon: Bell },
     { id: 'security' as const, name: 'Security', icon: Shield },
     { id: 'promo' as const, name: 'Promo Section', icon: Megaphone },
+    { id: 'contact' as const, name: 'Contact Categories', icon: MessageCircle },
   ];
 
   return (
@@ -1003,6 +1035,74 @@ const AdminSettings: React.FC = () => {
               >
                 <Save size={20} />
                 Save Promo Section
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Contact Categories Tab */}
+        {activeTab === 'contact' && (
+          <div className="space-y-6">
+            <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-6">
+              <h2 className="text-xl font-bold text-white mb-2 flex items-center gap-2">
+                <MessageCircle size={24} className="text-red-400" />
+                Contact Categories
+              </h2>
+              <p className="text-sm text-white/40 mb-6">
+                These categories appear on the public Contact page and are used to sort incoming
+                messages under the Contact tab in Chat. Changes apply everywhere immediately.
+              </p>
+
+              <div className="flex gap-2 mb-5">
+                <input
+                  type="text"
+                  value={newContactCategory}
+                  onChange={(e) => setNewContactCategory(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddContactCategory(); } }}
+                  placeholder="New category name..."
+                  className="flex-1 bg-white/[0.06] border border-white/[0.08] rounded-lg px-4 py-2.5 text-white placeholder-white/30 focus:outline-none focus:border-red-500"
+                />
+                <button
+                  onClick={handleAddContactCategory}
+                  disabled={!newContactCategory.trim()}
+                  className="flex items-center gap-1.5 px-4 py-2.5 bg-white/[0.08] hover:bg-white/[0.14] disabled:opacity-40 disabled:cursor-not-allowed rounded-lg text-white font-medium text-sm transition-all"
+                >
+                  <Plus size={16} />
+                  Add
+                </button>
+              </div>
+
+              <div className="space-y-2">
+                {contactCategories.length === 0 ? (
+                  <p className="text-sm text-white/30 italic">No categories yet — add at least one.</p>
+                ) : (
+                  contactCategories.map((cat) => (
+                    <div
+                      key={cat}
+                      className="flex items-center justify-between px-4 py-2.5 bg-white/[0.06] rounded-lg"
+                    >
+                      <span className="text-white text-sm">{cat}</span>
+                      <button
+                        onClick={() => handleRemoveContactCategory(cat)}
+                        className="text-white/30 hover:text-red-400 transition-colors"
+                        title="Remove category"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
+            {/* Save */}
+            <div className="flex justify-end">
+              <button
+                onClick={handleSaveContactSettings}
+                className="flex items-center gap-2 bg-gradient-to-r from-red-600 to-red-500 hover:from-red-700 hover:to-red-600 px-6 py-3 rounded-lg text-white font-medium transition-all"
+              >
+                <Save size={20} />
+                Save Contact Categories
               </button>
             </div>
           </div>

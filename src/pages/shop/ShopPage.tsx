@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowUpRight, Music, Headphones, Radio } from 'lucide-react';
-import ShopFooter from '../../components/ShopFooter';
+import Footer from '../../components/Footer';
 import { useScrollToTop } from '../../hooks/useScrollToTop';
 import { useInView } from '../../hooks/useInView';
 
@@ -64,7 +64,7 @@ const CategoryCard: React.FC<CategoryCardProps> = ({ category, index }) => {
     >
       <Link
         to={category.href}
-        className="group relative min-h-[320px] md:min-h-[420px] overflow-hidden rounded-2xl block"
+        className="group relative min-h-[320px] md:min-h-[420px] overflow-hidden rounded-2xl block border border-white/10 hover:border-red-600/50 transition-all duration-500"
       >
         {/* Background image */}
         <img
@@ -114,19 +114,13 @@ const ShopPage: React.FC = () => {
 
   return (
     <div className="min-h-screen text-white">
+      <main className="pt-20">
 
-      {/* ─── COMPACT PHOTO HERO ─── */}
-      <section className="relative overflow-hidden -mt-28 sm:-mt-32">
-        <div className="absolute inset-0">
-          <img
-            src="/DJI_20251018172151_0031_D.JPG"
-            alt=""
-            className="w-full h-full object-cover"
-            style={{ objectPosition: 'center 35%' }}
-          />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/60 to-[#0a0a0a]" />
-        </div>
-        <div className="relative z-10 pt-40 sm:pt-48 pb-12 px-6 md:px-12 max-w-7xl mx-auto w-full text-center">
+        {/* ─── HEADER ─── */}
+        <section
+          className="relative w-full flex flex-col items-center justify-center text-center px-6"
+          style={{ minHeight: '38vh' }}
+        >
           <p className="text-xs font-black uppercase tracking-[0.45em] text-red-500 mb-4">
             JONNA RINCON STORE
           </p>
@@ -139,129 +133,120 @@ const ShopPage: React.FC = () => {
           <p className="text-white/70 text-base md:text-lg max-w-xl mx-auto">
             Beats, services, and studio sessions — all in one place.
           </p>
-        </div>
-      </section>
+        </section>
 
-      {/* ─── CATEGORIES ─── */}
-      <section className="px-4 md:px-8 lg:px-12 py-12 bg-[#0a0a0a]">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5">
-            {categories.map((cat, i) => (
-              <CategoryCard key={cat.id} category={cat} index={i} />
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ─── ABOUT (shop-focused) ─── */}
-      <section
-        ref={aboutRef as React.RefObject<HTMLElement>}
-        className={`px-4 md:px-8 lg:px-12 py-16 bg-[#0f0f0f] border-t border-white/[0.04] transition-all duration-700 ${
-          aboutInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-        }`}
-      >
-        <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            {/* Text */}
-            <div>
-              <p className="text-xs uppercase tracking-[0.4em] text-red-500 mb-3 font-black">About the Store</p>
-              <h2 className="text-4xl md:text-5xl font-black text-white tracking-tighter mb-6 leading-tight">
-                Beats, Sound &amp;<br />Sessions — All J18
-              </h2>
-              <p className="text-white/65 text-base leading-relaxed mb-5">
-                JEIGHTEEN is the creative brand of Jonna Rincon — a producer, DJ, and studio engineer from Tilburg. The store brings together high-quality beats, professional audio services, and in-studio sessions.
-              </p>
-              <p className="text-white/50 text-sm leading-relaxed mb-8">
-                10+ years of production experience across Moombahton, Hip Hop, R&amp;B, EDM, and more. Every service and product in this store carries that same standard.
-              </p>
-              <div className="flex flex-wrap gap-3">
-                {['Beats', 'Mix & Master', 'Studio Sessions'].map((tag) => (
-                  <span
-                    key={tag}
-                    className="px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-white/70 bg-white/[0.06] border border-white/[0.1] rounded-full"
-                  >
-                    {tag}
-                  </span>
-                ))}
-              </div>
+        {/* ─── CATEGORIES ─── */}
+        <section className="px-4 md:px-8 lg:px-12 py-12">
+          <div className="max-w-7xl mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5">
+              {categories.map((cat, i) => (
+                <CategoryCard key={cat.id} category={cat} index={i} />
+              ))}
             </div>
+          </div>
+        </section>
 
-            {/* Visual block — photo grid */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="aspect-square overflow-hidden rounded-xl">
-                <img
-                  src="/DJI_20251115114029_0004_D.JPG"
-                  alt=""
-                  className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
-                />
-              </div>
-              <div className="aspect-square overflow-hidden rounded-xl">
-                <img
-                  src="/stu.png"
-                  alt=""
-                  className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
-                />
-              </div>
-              <div className="aspect-square overflow-hidden rounded-xl">
-                <img
-                  src="/DJI_20251017150728_0019_D.JPG"
-                  alt=""
-                  className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
-                />
-              </div>
-              <div className="aspect-square overflow-hidden rounded-xl bg-white/[0.04] border border-white/[0.08] flex flex-col items-center justify-center p-4">
-                <img src="/JEIGHTEEN-logo.png" alt="JEIGHTEEN" className="w-28 h-28 md:w-36 md:h-36 object-contain mb-3 opacity-80" />
-                <p className="text-xs font-black uppercase tracking-widest text-white/40 text-center">
-                  Est. J18
+        {/* ─── ABOUT (shop-focused) ─── */}
+        <section
+          ref={aboutRef as React.RefObject<HTMLElement>}
+          className={`px-4 md:px-8 lg:px-12 py-16 transition-all duration-700 ${
+            aboutInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+          }`}
+        >
+          <div className="max-w-7xl mx-auto">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+              {/* Text */}
+              <div>
+                <p className="text-xs uppercase tracking-[0.4em] text-red-500 mb-3 font-black">About the Store</p>
+                <h2 className="text-4xl md:text-5xl font-black text-white tracking-tighter mb-6 leading-tight">
+                  Beats, Sound &amp;<br />Sessions
+                </h2>
+                <p className="text-white/65 text-base leading-relaxed mb-5">
+                  Jonna Rincon is a producer and audio engineer based in Tilburg. The store brings together high-quality beats, professional audio services, and in-studio sessions.
                 </p>
+                <p className="text-white/50 text-sm leading-relaxed mb-8">
+                  10+ years of production experience across Moombahton, Hip Hop, R&amp;B, EDM, and more. Every service and product in this store carries that same standard.
+                </p>
+                <div className="flex flex-wrap gap-3">
+                  {['Beats', 'Mix & Master', 'Studio Sessions'].map((tag) => (
+                    <span
+                      key={tag}
+                      className="px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-white/70 bg-white/[0.06] border border-white/[0.1] rounded-full"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              {/* Visual block — photo grid */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="aspect-square overflow-hidden rounded-xl">
+                  <img
+                    src="/DJI_20251115114029_0004_D.JPG"
+                    alt=""
+                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+                  />
+                </div>
+                <div className="aspect-square overflow-hidden rounded-xl">
+                  <img
+                    src="/stu.png"
+                    alt=""
+                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+                  />
+                </div>
+                <div className="aspect-square overflow-hidden rounded-xl">
+                  <img
+                    src="/DJI_20251017150728_0019_D.JPG"
+                    alt=""
+                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+                  />
+                </div>
+                <div className="aspect-square overflow-hidden rounded-xl bg-white/[0.04] border border-white/[0.08] flex flex-col items-center justify-center p-4">
+                  <img src="/Jonna Rincon Logo WH.png" alt="Jonna Rincon" className="w-24 h-24 md:w-28 md:h-28 object-contain mb-3 opacity-80" />
+                  <p className="text-xs font-black uppercase tracking-widest text-white/40 text-center">
+                    Jonna Rincon
+                  </p>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* ─── CTA BANNER ─── */}
-      <section
-        ref={ctaRef as React.RefObject<HTMLElement>}
-        className={`relative py-28 px-4 md:px-8 overflow-hidden transition-all duration-700 ${
-          ctaInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-        }`}
-      >
-        <div className="absolute inset-0">
-          <img
-            src="/DJI_20251018172151_0031_D.JPG"
-            alt=""
-            className="w-full h-full object-cover"
-            style={{ objectPosition: 'center 35%' }}
-          />
-          <div className="absolute inset-0 bg-black/75" />
-        </div>
-        <div className="relative z-10 max-w-3xl mx-auto text-center">
-          <p className="text-xs font-black uppercase tracking-[0.4em] text-red-500 mb-4">JEIGHTEEN</p>
-          <h2 className="text-4xl md:text-6xl font-black text-white tracking-tighter mb-5 leading-none">
-            Ready to create<br />something?
-          </h2>
-          <p className="text-white/60 text-lg mb-10 leading-relaxed">
-            Browse beats, book a service, or reserve a studio session.
-          </p>
-          <div className="flex flex-wrap gap-4 justify-center">
-            <Link
-              to="/shop/beats"
-              className="px-8 py-3.5 bg-red-600 hover:bg-red-700 text-white font-black text-sm uppercase tracking-widest transition-all duration-300 hover:scale-105 rounded-full"
-            >
-              Browse Beats
-            </Link>
-            <Link
-              to="/shop/services"
-              className="px-8 py-3.5 bg-white/10 border border-white/25 backdrop-blur-sm text-white font-black text-sm uppercase tracking-widest hover:bg-white/20 transition-all duration-300 rounded-full"
-            >
-              Book a Service
-            </Link>
+        {/* ─── CTA ─── */}
+        <section
+          ref={ctaRef as React.RefObject<HTMLElement>}
+          className={`px-4 md:px-8 py-20 text-center transition-all duration-700 ${
+            ctaInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+          }`}
+        >
+          <div className="max-w-3xl mx-auto">
+            <p className="text-xs font-black uppercase tracking-[0.4em] text-red-500 mb-4">JONNA RINCON</p>
+            <h2 className="text-4xl md:text-6xl font-black text-white tracking-tighter mb-5 leading-none">
+              Ready to create<br />something?
+            </h2>
+            <p className="text-white/60 text-lg mb-10 leading-relaxed">
+              Browse beats, book a service, or reserve a studio session.
+            </p>
+            <div className="flex flex-wrap gap-4 justify-center">
+              <Link
+                to="/shop/beats"
+                className="px-8 py-3.5 bg-red-600 hover:bg-red-700 text-white font-black text-sm uppercase tracking-widest transition-all duration-300 hover:scale-105 rounded-full"
+              >
+                Browse Beats
+              </Link>
+              <Link
+                to="/shop/services"
+                className="px-8 py-3.5 bg-white/10 border border-white/25 backdrop-blur-sm text-white font-black text-sm uppercase tracking-widest hover:bg-white/20 transition-all duration-300 rounded-full"
+              >
+                Book a Service
+              </Link>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <ShopFooter />
+        <Footer />
+      </main>
     </div>
   );
 };

@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import ManagerLayout from '../../components/manager/ManagerLayout';
 import { MessageSquare, Send, Check, CheckCheck, Briefcase, Headphones, ArrowLeft, Search, SlidersHorizontal, ChevronDown, Plus, X, Edit2 } from 'lucide-react';
 import { db } from '../../lib/firebase/config';
 import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, Timestamp, where, updateDoc, doc } from 'firebase/firestore';
 import { useAuth } from '../../contexts/AuthContext';
+import { useContactCategories } from '../../hooks/useContactCategories';
 
 interface ChatMessage {
   id?: string;
@@ -39,7 +40,7 @@ interface ChatThread {
 type RecipientGroup = 'manager' | 'support' | 'private';
 type LeftView = 'contacts' | 'users' | 'threads';
 type SortOrder = 'newest' | 'oldest';
-type CategoryFilter = 'all' | 'CATALOGUE' | 'SHOP' | 'SOCIAL MEDIA' | 'DASHBOARD';
+type CategoryFilter = 'all' | 'CATALOGUE' | 'SHOP' | 'SOCIAL MEDIA' | 'DASHBOARD' | 'CONTACT';
 
 const contactDefs: Record<RecipientGroup, { name: string; description: string }> = {
   manager: { name: 'Manager', description: 'Business inquiries & samenwerking' },
@@ -47,19 +48,14 @@ const contactDefs: Record<RecipientGroup, { name: string; description: string }>
   private: { name: 'Privé', description: 'Privé chats' },
 };
 
-const categoryGroups: Record<string, string[]> = {
+// Static category groups. CONTACT is merged in per-render from the admin-managed
+// contact category list (Settings → Contact Categories), so it stays in sync.
+const baseCategoryGroups: Record<string, string[]> = {
   CATALOGUE: ['Tracks', 'Remixes', 'Support'],
   SHOP: ['Beats', 'Services'],
   'SOCIAL MEDIA': ['Content', 'Collaboration'],
   DASHBOARD: ['Orders', 'Downloads'],
   SUPPORT: ['Support', 'Overig'],
-};
-
-const getCategoryGroup = (category: string): string => {
-  for (const [group, items] of Object.entries(categoryGroups)) {
-    if (items.includes(category)) return group;
-  }
-  return 'OVERIG';
 };
 
 const ContactAvatar = ({ group, size = 'md' }: { group: RecipientGroup; size?: 'sm' | 'md' }) => {
@@ -78,6 +74,17 @@ const ContactAvatar = ({ group, size = 'md' }: { group: RecipientGroup; size?: '
 
 const ManagerChat: React.FC = () => {
   const { user } = useAuth();
+  const { categories: contactCategories } = useContactCategories();
+  const categoryGroups = useMemo<Record<string, string[]>>(
+    () => ({ ...baseCategoryGroups, CONTACT: contactCategories }),
+    [contactCategories]
+  );
+  const getCategoryGroup = (category: string): string => {
+    for (const [group, items] of Object.entries(categoryGroups)) {
+      if (items.includes(category)) return group;
+    }
+    return 'OVERIG';
+  };
   const [allMessages, setAllMessages] = useState<ChatMessage[]>([]);
   const [leftView, setLeftView] = useState<LeftView>('contacts');
   const [selectedGroup, setSelectedGroup] = useState<RecipientGroup | null>(null);
@@ -239,7 +246,7 @@ const ManagerChat: React.FC = () => {
 
   const filteredUsers = getFilteredUsers();
   const groupedUsers = getGroupedUsers(filteredUsers);
-  const groupOrder = ['CATALOGUE', 'SHOP', 'SOCIAL MEDIA', 'DASHBOARD', 'OVERIG'];
+  const groupOrder = ['CATALOGUE', 'SHOP', 'SOCIAL MEDIA', 'DASHBOARD', 'CONTACT', 'OVERIG'];
   const selectedUserEntry = users.find((u) => u.userId === selectedUserId);
 
   return (
@@ -321,7 +328,7 @@ const ManagerChat: React.FC = () => {
                       </div>
                       <div className="border-t border-white/[0.08] pt-3">
                         <p className="text-[10px] text-white/30 uppercase tracking-widest mb-1.5 font-semibold">Categorie</p>
-                        {(['all', 'CATALOGUE', 'SHOP', 'SOCIAL MEDIA', 'DASHBOARD'] as CategoryFilter[]).map((c) => (
+                        {(['all', 'CATALOGUE', 'SHOP', 'SOCIAL MEDIA', 'DASHBOARD', 'CONTACT'] as CategoryFilter[]).map((c) => (
                           <button key={c} onClick={() => setCategoryFilter(c)}
                             className={`block w-full text-left px-2 py-1.5 text-xs rounded-lg transition ${categoryFilter === c ? 'text-white bg-white/[0.08]' : 'text-white/50 hover:text-white hover:bg-white/[0.04]'}`}>
                             {c === 'all' ? 'Alle categorieën' : c}

@@ -25,14 +25,13 @@ export default function Footer() {
             <h3 className="text-lg font-bold mb-4 text-white">Quick Links</h3>
             <div className="grid grid-cols-2 gap-x-4 gap-y-2">
               <a href="/" className="block text-white/30 hover:text-white transition-colors text-sm">Home</a>
-              <a href="/catalogue" className="block text-white/30 hover:text-white transition-colors text-sm">Catalogue</a>
+              <a href="/catalogue" className="block text-white/30 hover:text-white transition-colors text-sm">Music</a>
               <a href="/shop/beats" className="block text-white/30 hover:text-white transition-colors text-sm">Beats</a>
               <a href="/shop/services" className="block text-white/30 hover:text-white transition-colors text-sm">Services</a>
               <a href="/remixes" className="block text-white/30 hover:text-white transition-colors text-sm">Remixes</a>
               <a href="/dj-sets" className="block text-white/30 hover:text-white transition-colors text-sm">DJ Sets</a>
               <a href="/studio-session" className="block text-white/30 hover:text-white transition-colors text-sm">Studio Session</a>
               <a href="/mix-master" className="block text-white/30 hover:text-white transition-colors text-sm">Mix &amp; Master</a>
-              <a href="/dj" className="block text-white/30 hover:text-white transition-colors text-sm">DJ Bookings</a>
               <a href="/about" className="block text-white/30 hover:text-white transition-colors text-sm">About</a>
               <a href="/contact" className="block text-white/30 hover:text-white transition-colors text-sm">Contact</a>
               <a href="/socials" className="block text-white/30 hover:text-white transition-colors text-sm">Socials</a>

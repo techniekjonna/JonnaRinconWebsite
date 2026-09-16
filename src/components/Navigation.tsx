@@ -215,8 +215,7 @@ export default function Navigation({ cartItemCount = 0, onCartClick, isDarkOverl
 
   const menuItems: { label: string; subtitle: string; href?: string; action?: () => void; submenu?: Array<{ label: string; subtitle: string; href: string; action?: () => void }>; expanded?: boolean; mobileOnly?: boolean }[] = [
     { label: 'SHOP', subtitle: 'Browse our catalog', action: () => { closeMenu(); navigate('/shop'); } },
-    { label: 'CATALOGUE', subtitle: 'Tracks, remixes & DJ sets', action: () => { closeMenu(); navigate('/catalogue'); } },
-    { label: 'ABOUT ME', subtitle: 'Productions, streams & community', action: () => { closeMenu(); navigate('/about'); }, mobileOnly: true },
+    { label: 'MUSIC', subtitle: 'Tracks, remixes & DJ sets', action: () => { closeMenu(); navigate('/catalogue'); } },
     { label: 'GET IN TOUCH', subtitle: 'Connect with Jonna', action: () => { closeMenu(); navigate('/contact'); } },
   ];
 

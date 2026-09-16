@@ -343,7 +343,7 @@ export default function MusicPreview() {
 
         {/* Mix master CTA */}
         <a
-          href="/services"
+          href="/shop/services"
           className="flex items-center justify-between px-4 py-4 border border-white/10 hover:border-red-600/40 bg-white/[0.03] hover:bg-white/[0.06] transition-all duration-300 group"
         >
           <span className="text-white/40 text-sm group-hover:text-white/70 transition-colors">
@@ -364,11 +364,11 @@ export default function MusicPreview() {
             <p className="text-white/40 text-sm mb-2 leading-relaxed">
               You've used all {MAX_PER_TAB} previews for this tab.
             </p>
-            <p className="text-white/30 text-xs mb-6">Switch tabs for more, or visit the full catalogue.</p>
+            <p className="text-white/30 text-xs mb-6">Switch tabs for more, or visit the full music page.</p>
             <div className="flex flex-col gap-3">
               {isAuthenticated ? (
                 <>
-                  <a href="/catalogue" className="py-3 bg-red-600 hover:bg-red-700 text-white font-bold uppercase tracking-widest text-sm transition-all">Full Catalogue</a>
+                  <a href="/catalogue" className="py-3 bg-red-600 hover:bg-red-700 text-white font-bold uppercase tracking-widest text-sm transition-all">Full Music</a>
                   <a href="/shop/beats" className="py-3 bg-white/10 border border-white/20 text-white font-bold uppercase tracking-widest text-sm hover:bg-white/20 transition-all">Beat Shop</a>
                 </>
               ) : (
