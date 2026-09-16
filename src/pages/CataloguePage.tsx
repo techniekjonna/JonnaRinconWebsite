@@ -99,7 +99,7 @@ export default function CataloguePage() {
   const [isPlaylistDetailOpen, setIsPlaylistDetailOpen] = useState(false);
   const [playingDjSet, setPlayingDjSet] = useState<string | null>(null);
 
-  const heroTitle = useCyberDecodeInView('CATALOGUE');
+  const heroTitle = useCyberDecodeInView('MUSIC');
   const relatedTracks = useRelatedTracks(selectedTrack, []);
 
   const demoTracks: Track[] = firebaseTracks.map(t => ({

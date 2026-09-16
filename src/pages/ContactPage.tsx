@@ -1,20 +1,31 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
 import { Mail, Phone, MapPin, ArrowUpRight } from 'lucide-react';
 import { useScrollToTop } from '../hooks/useScrollToTop';
+import { useContactCategories } from '../hooks/useContactCategories';
+import { db } from '../lib/firebase/config';
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 
 export default function ContactPage() {
   useScrollToTop();
+  const { categories } = useContactCategories();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     subject: '',
-    category: 'general',
+    category: '',
     message: '',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
+
+  // Default the category select to the first available category once loaded
+  useEffect(() => {
+    if (categories.length > 0 && !formData.category) {
+      setFormData(prev => ({ ...prev, category: categories[0] }));
+    }
+  }, [categories]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -26,14 +37,26 @@ export default function ContactPage() {
     setIsSubmitting(true);
 
     try {
-      console.log('Form submitted:', formData);
+      await addDoc(collection(db, 'supportMessages'), {
+        senderId: `contact:${formData.email.trim().toLowerCase()}`,
+        senderName: formData.name.trim(),
+        senderEmail: formData.email.trim(),
+        senderRole: 'contact',
+        recipientGroup: 'support',
+        category: formData.category || categories[0] || 'General Inquiry',
+        message: formData.subject.trim()
+          ? `${formData.subject.trim()}\n\n${formData.message.trim()}`
+          : formData.message.trim(),
+        createdAt: serverTimestamp(),
+        status: 'sent',
+      });
       setSubmitStatus('success');
       setTimeout(() => {
         setFormData({
           name: '',
           email: '',
           subject: '',
-          category: 'general',
+          category: categories[0] || '',
           message: '',
         });
         setSubmitStatus('idle');
@@ -168,11 +191,9 @@ export default function ContactPage() {
                   onChange={handleInputChange}
                   className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-white/30 focus:bg-white/10 transition-all cursor-pointer"
                 >
-                  <option value="general" className="bg-black">General Inquiry</option>
-                  <option value="booking" className="bg-black">Booking Request</option>
-                  <option value="collaboration" className="bg-black">Collaboration</option>
-                  <option value="business" className="bg-black">Business Proposal</option>
-                  <option value="other" className="bg-black">Other</option>
+                  {categories.map((cat) => (
+                    <option key={cat} value={cat} className="bg-black">{cat}</option>
+                  ))}
                 </select>
               </div>
 

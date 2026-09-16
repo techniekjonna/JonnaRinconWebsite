@@ -4,6 +4,7 @@ import Footer from './components/Footer';
 import SectionCards from './components/SectionCards';
 import MusicPreview from './components/MusicPreview';
 import PromoSection from './components/PromoSection';
+import About from './components/About';
 
 // Duration the overlay takes to fade in + small buffer
 const INTRO_DURATION = 3000;
@@ -28,6 +29,7 @@ function App() {
         <SectionCards />
         <PromoSection />
         <MusicPreview />
+        <About />
         <Footer />
       </main>
     </div>

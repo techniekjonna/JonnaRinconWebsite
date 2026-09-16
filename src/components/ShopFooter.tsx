@@ -7,12 +7,9 @@ export default function ShopFooter() {
       <div className="max-w-7xl mx-auto">
         <div className="grid md:grid-cols-3 gap-10 mb-8">
           <div>
-            <img src="/JEIGHTEEN-logo.png" alt="JEIGHTEEN" className="h-12 w-auto object-contain mb-4 opacity-80" />
+            <img src="/Jonna Rincon Logo WH.png" alt="Jonna Rincon" className="h-12 w-auto object-contain mb-4 opacity-80" />
             <p className="text-white/30 text-sm leading-relaxed">
               Professional producer and beatmaker crafting premium beats for artists worldwide.
-            </p>
-            <p className="text-white/40 text-xs mt-3 leading-relaxed">
-              Also does: Art, Graphic Design, Editing, Producer Tutorials, Youtube
             </p>
           </div>
           <div>

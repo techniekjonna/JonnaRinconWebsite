@@ -229,7 +229,7 @@ export default function AboutMePage() {
               {/* CTA */}
               <div className="flex flex-wrap gap-4">
                 <Link to="/catalogue" className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-black text-xs uppercase tracking-widest transition-all rounded-full">
-                  Browse Catalogue
+                  Browse Music
                 </Link>
                 <Link to="/shop/services" className="px-6 py-3 bg-white/[0.08] border border-white/[0.15] text-white font-black text-xs uppercase tracking-widest hover:bg-white/[0.15] transition-all rounded-full">
                   Book a Session

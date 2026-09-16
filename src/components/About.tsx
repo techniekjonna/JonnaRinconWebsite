@@ -20,9 +20,9 @@ const SLIDES: SlideContent[] = [
     title: 'The Story',
     text: (
       <>
-        Jonathan aka <span className="text-white font-semibold">j18</span> is a human being with a creative mind which is described by many people as{' '}
+        Jonathan aka <span className="text-white font-semibold">Jonna Rincon</span> is a human being with a creative mind which is described by many people as{' '}
         <span className="italic text-gray-300">"not from this world"</span>. You may already recognize his{' '}
-        <span className="text-white font-semibold">J18 tag</span> at the beginning and/or end of every track, or by the clock sound in his work.
+        <span className="text-white font-semibold">Jonna Rincon tag</span> at the beginning and/or end of every track, or by the clock sound in his work.
       </>
     ),
     imageSrc: '/DJI_20251115114029_0004_D.JPG',
@@ -84,7 +84,7 @@ const SLIDES: SlideContent[] = [
     title: 'The Roots',
     text: (
       <>
-        <span className="italic text-gray-300">(J18=Jeighteen)</span> — his tag, his clothing brand & his nickname. Everything started in{' '}
+        <span className="text-white font-semibold">Jonna Rincon</span> — his tag and his nickname. Everything started in{' '}
         <span className="text-white font-semibold">Maastricht</span>. The city where the roots are. Born and raised, now based in the Netherlands working with artists worldwide.
       </>
     ),

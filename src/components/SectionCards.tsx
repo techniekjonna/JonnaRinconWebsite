@@ -19,7 +19,7 @@ const CARDS = [
   },
   {
     id: 'catalogue',
-    title: 'Catalogue',
+    title: 'Music',
     description: 'Tracks, remixes & DJ sets',
     icon: Library,
     image: '/DJ Screenshot 3-2-26.png',
