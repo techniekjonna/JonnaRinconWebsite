@@ -1,128 +1,73 @@
-import { useState, type ReactNode } from 'react';
-import SocialCardCarousel from './SocialCard';
+import { Link } from 'react-router-dom';
+import { ArrowRight } from 'lucide-react';
+import PhotoCarousel from './PhotoCarousel';
 import { useInView } from '../hooks/useInView';
 
 // Soft hyphen in filename — matches actual file on disk
-const SCHERM_PREFIX = 'Scherm\u00ADafbeelding';
+const SCHERM_PREFIX = 'Scherm­afbeelding';
 
-interface SlideContent {
-  title: string;
-  text: ReactNode;
-  imageSrc: string;
-  imageAlt: string;
-  location: string;
-  caption: string;
-  likes: number;
-}
-
-const SLIDES: SlideContent[] = [
-  {
-    title: 'The Story',
-    text: (
-      <>
-        Jonathan aka <span className="text-white font-semibold">Jonna Rincon</span> is a human being with a creative mind which is described by many people as{' '}
-        <span className="italic text-gray-300">"not from this world"</span>. You may already recognize his{' '}
-        <span className="text-white font-semibold">Jonna Rincon tag</span> at the beginning and/or end of every track, or by the clock sound in his work.
-      </>
-    ),
-    imageSrc: '/DJI_20251115114029_0004_D.JPG',
-    imageAlt: 'Jonna Rincon aerial',
-    location: 'Netherlands',
-    caption: 'Creative mind at work. The story continues...',
-    likes: 847,
-  },
-  {
-    title: 'The Sound',
-    text: (
-      <>
-        Mostly known for his raw and authentic{' '}
-        <span className="text-white/80 font-medium">moombahton</span> style in tracks or beats. But have in mind that this young man has much to offer. From modern{' '}
-        <span className="text-white/80 font-medium">rap beats</span> to the dirty old classic{' '}
-        <span className="text-white/80 font-medium">hip hop</span> beats, from warm and smooth{' '}
-        <span className="text-white/80 font-medium">r&b</span> instrumentals to the world of{' '}
-        <span className="text-white/80 font-medium">EDM</span> to studying to jonna's{' '}
-        <span className="text-white/80 font-medium">lo-fi</span> instrumentals which he made on his trip on earth.
-      </>
-    ),
-    imageSrc: '/DJ Screenshot 3-2-26.png',
-    imageAlt: 'Jonna Rincon DJ',
-    location: 'DJ Set',
-    caption: 'Raw and authentic. From moombahton to lo-fi.',
-    likes: 623,
-  },
-  {
-    title: 'The Journey',
-    text: (
-      <>
-        Born in <span className="text-white font-semibold">Maastricht, The Netherlands</span> & based in{' '}
-        <span className="text-white font-semibold">Tilburg</span> he began making music when first made contact with any music instrument nearby. When he visited his nephews in{' '}
-        <span className="text-white font-semibold">Dominican Republic</span>, he was shown{' '}
-        <span className="text-white font-semibold">FL Studio</span> for the first time. When Jonna saw that it was possible to make a track with a PC, he made his first track immediately together with his oldest nephew and that's where the music production journey started.
-      </>
-    ),
-    imageSrc: `/${SCHERM_PREFIX} 2025-12-16 om 17.09.27.png`,
-    imageAlt: 'Jonna Rincon studio',
-    location: 'In the studio',
-    caption: 'Where it all began. FL Studio changed everything.',
-    likes: 512,
-  },
-  {
-    title: 'The Grind',
-    text: (
-      <>
-        With over <span className="text-white font-semibold">10+ years</span> of production under his belt, Jonna continues to push boundaries. From his home base in{' '}
-        <span className="text-white font-semibold">Tilburg</span> he works with artists worldwide, always staying true to his roots while exploring new sounds.
-      </>
-    ),
-    imageSrc: '/IMG_1027.jpg',
-    imageAlt: 'Jonna Rincon',
-    location: 'Tilburg, NL',
-    caption: '10+ years of production. The grind never stops.',
-    likes: 934,
-  },
-  {
-    title: 'The Roots',
-    text: (
-      <>
-        <span className="text-white font-semibold">Jonna Rincon</span> — his tag and his nickname. Everything started in{' '}
-        <span className="text-white font-semibold">Maastricht</span>. The city where the roots are. Born and raised, now based in the Netherlands working with artists worldwide.
-      </>
-    ),
-    imageSrc: '/Maastricht Screenshot 15-12-25.png',
-    imageAlt: 'Jonna Rincon Maastricht',
-    location: 'Maastricht, NL',
-    caption: 'Where the roots are. Born and raised.',
-    likes: 718,
-  },
+const PHOTOS = [
+  { src: '/DJI_20251115114029_0004_D.JPG', alt: 'Jonna Rincon aerial' },
+  { src: '/DJI_20251017150728_0019_D.JPG', alt: 'Jonna Rincon in the studio' },
+  { src: `/${SCHERM_PREFIX} 2025-12-16 om 17.09.27.png`, alt: 'Jonna Rincon studio session' },
+  { src: '/IMG_1027.jpg', alt: 'Jonna Rincon' },
+  { src: '/Maastricht Screenshot 15-12-25.png', alt: 'Jonna Rincon in Maastricht' },
 ];
 
+const SKILLS = ['Producer', 'Beatmaker', 'Artist', 'Audio Engineer', 'Mix & Master', 'Visual Designer', 'Web Developer'];
+
 export default function About() {
-  const [activeIndex, setActiveIndex] = useState(0);
-  const [ref] = useInView();
+  const [ref, inView] = useInView({ threshold: 0.1 });
 
   return (
     <section
-      ref={ref}
+      ref={ref as React.RefObject<HTMLElement>}
       id="about"
-      className="py-12 md:py-20 px-4 bg-transparent"
+      className={`py-12 md:py-20 px-4 bg-transparent transition-all duration-700 ${
+        inView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+      }`}
     >
-      <div className="max-w-[1100px] mx-auto">
+      <div className="max-w-[1100px] mx-auto grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-14 items-center">
 
-        {/* Centered carousel only */}
-        <div className="flex justify-center">
-          <SocialCardCarousel
-            slides={SLIDES.map((s) => ({
-              imageSrc: s.imageSrc,
-              imageAlt: s.imageAlt,
-              location: s.caption,
-              caption: s.text,
-              likes: s.likes,
-            }))}
-            activeIndex={activeIndex}
-            onIndexChange={setActiveIndex}
-          />
+        {/* Text */}
+        <div>
+          <p className="text-xs font-black uppercase tracking-[0.4em] text-red-500 mb-3">Get To Know</p>
+          <h2 className="text-3xl md:text-5xl font-black text-white tracking-tighter mb-6 leading-tight">
+            Jonna Rincon
+          </h2>
+          <p className="text-white/70 text-base leading-relaxed mb-4">
+            Jonathan, aka Jonna Rincon, was born in Maastricht and is now based in Tilburg. He started making
+            music the moment he got his hands on FL Studio during a trip to visit family in the Dominican
+            Republic — his first track, made together with his oldest nephew, is where it all began.
+          </p>
+          <p className="text-white/50 text-sm leading-relaxed mb-7">
+            Known for a raw, authentic sound rooted in Moombahton, but just as comfortable across Hip Hop,
+            R&amp;B, EDM and Lo-Fi. Over 10+ years in, Jonna keeps pushing the sound forward — working with
+            artists worldwide while staying true to where it started.
+          </p>
+
+          <div className="flex flex-wrap gap-2 mb-8">
+            {SKILLS.map((skill) => (
+              <span
+                key={skill}
+                className="px-3.5 py-1.5 text-xs font-bold uppercase tracking-wider text-white/70 bg-white/[0.06] border border-white/[0.1] rounded-full"
+              >
+                {skill}
+              </span>
+            ))}
+          </div>
+
+          <Link
+            to="/about"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-white/10 border border-white/20 text-white font-black text-xs uppercase tracking-widest hover:bg-white/20 transition-all duration-300 rounded-full"
+          >
+            Full Story
+            <ArrowRight size={14} />
+          </Link>
         </div>
 
+        {/* Photo carousel */}
+        <PhotoCarousel photos={PHOTOS} />
       </div>
     </section>
   );
