@@ -1,16 +1,17 @@
 import React, { useState } from 'react';
 import {
-  ChevronLeft, ShoppingCart, ArrowRight, Headphones,
+  ChevronLeft, ShoppingCart, ArrowRight,
   Check, Plus, Minus, Upload, AlertCircle, Zap, Music,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
 import LoginModal from '../components/LoginModal';
 import { useAuth } from '../contexts/AuthContext';
 import { useServices } from '../hooks/useServices';
 import { useScrollToTop } from '../hooks/useScrollToTop';
 import { Service } from '../lib/firebase/types';
+import { db } from '../lib/firebase/config';
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 
 interface MixMasterEntry {
   trackTitle: string;
@@ -93,22 +94,42 @@ export default function MixMasterPage() {
     setPage('order');
   };
 
-  const handlePlaceOrder = () => {
-    console.log('Mix & Master order:', mixMasters);
-    setOrderPlaced(true);
+  const handlePlaceOrder = async () => {
+    if (!user) { setShowLoginModal(true); return; }
+    try {
+      const summary = mixMasters.map((m, i) => {
+        const opt = DELIVERY_OPTIONS.find(o => o.key === m.deliveryTime);
+        return [
+          `Mix ${i + 1}: ${m.trackTitle || 'Untitled'}`,
+          `Artist(s): ${[m.mainArtist, ...m.additionalArtists].filter(Boolean).join(', ') || '-'}`,
+          `Vocal stems: ${m.vocalStemsLink || '-'}`,
+          `Beat stems: ${m.beatStemsLink || '-'}`,
+          `References: ${m.references.filter(Boolean).join(', ') || '-'}`,
+          `Delivery: ${opt ? `${opt.label} (€${opt.price})` : '-'}`,
+        ].join('\n');
+      }).join('\n\n');
+
+      await addDoc(collection(db, 'supportMessages'), {
+        senderId: user.uid,
+        senderName: user.displayName || 'Customer',
+        senderEmail: user.email,
+        senderRole: 'customer',
+        recipientGroup: 'support',
+        category: 'Mix & Master',
+        message: `New Mix & Master order request.\n\n${summary}\n\nTotal: €${getTotalPrice()} (excl. BTW)`,
+        createdAt: serverTimestamp(),
+        status: 'sent',
+      });
+      setOrderPlaced(true);
+    } catch (err) {
+      console.error('Failed to submit mix & master order:', err);
+    }
   };
 
   const entry = mixMasters[activeTab];
 
   return (
     <div className="min-h-screen text-white">
-      <Navigation />
-
-      <div className="fixed inset-0 -z-10">
-        <img src="/JEIGHTENESIS.jpg" alt="" className="w-full h-full object-cover" />
-        <div className="absolute inset-0 bg-black/85" />
-      </div>
-
       <main className="pt-32 pb-24 px-4 max-w-3xl mx-auto">
         {/* Header */}
         <div className="mb-12 text-center">
@@ -464,15 +485,15 @@ export default function MixMasterPage() {
             <div className="w-16 h-16 bg-green-500/20 border border-green-500/40 flex items-center justify-center mb-4">
               <Check size={32} className="text-green-400" />
             </div>
-            <h3 className="text-2xl font-black text-white uppercase mb-2">Order Placed!</h3>
+            <h3 className="text-2xl font-black text-white uppercase mb-2">Request Sent!</h3>
             <p className="text-white/50 text-sm mb-6">
-              Your mix & master order has been received. Track it in My Products.
+              Your mix &amp; master request has been received. Jonna will get back to you to confirm details.
             </p>
             <button
-              onClick={() => navigate('/customer/my-products')}
+              onClick={() => navigate('/shop/services')}
               className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-bold uppercase tracking-wider transition-all"
             >
-              View My Products
+              Back to Services
             </button>
           </div>
         )}

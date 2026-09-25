@@ -3,12 +3,10 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { CartProvider } from './contexts/CartContext';
 import { TrackDetailProvider } from './contexts/TrackDetailContext';
-import { BeatDetailProvider } from './contexts/BeatDetailContext';
 import { BackgroundProvider } from './contexts/BackgroundContext';
 import { useScrollToTop } from './hooks/useScrollToTop';
 import ProtectedRoute from './components/ProtectedRoute';
 import GlobalAudioPlayer from './components/GlobalAudioPlayer';
-import GlobalBeatDetailModal from './components/GlobalBeatDetailModal';
 import BackgroundRenderer from './components/BackgroundRenderer';
 import BackgroundOverlay from './components/BackgroundOverlay';
 import ShoppingCart from './components/ShoppingCart';
@@ -25,6 +23,8 @@ import RegisterPage from './pages/RegisterPage';
 import ShopHub from './pages/shop/ShopPage';
 import BeatsShop from './pages/shop/BeatsPage';
 import ServicesShop from './pages/shop/ServicesPage';
+import ServiceDetailShop from './pages/shop/ServiceDetailPage';
+import BeatDetailShop from './pages/shop/BeatDetailPage';
 
 // Standalone pages (public)
 import TracksPage from './pages/TracksPage';
@@ -199,7 +199,6 @@ const MainApp: React.FC = () => {
       <AuthProvider>
         <CartProvider>
           <TrackDetailProvider>
-            <BeatDetailProvider>
               <BrowserRouter>
                 <Header />
                 <Navigation />
@@ -207,7 +206,6 @@ const MainApp: React.FC = () => {
                 <ScrollToTopWrapper>
                   <BackgroundOverlay />
                   <GlobalAudioPlayer />
-                  <GlobalBeatDetailModal />
                   <GlobalShoppingCart />
                   <PublicPaddingWrapper>
                 <Routes>
@@ -219,7 +217,9 @@ const MainApp: React.FC = () => {
                   {/* Shop Routes (public) */}
                   <Route path="/shop" element={<ShopHub />} />
                   <Route path="/shop/beats" element={<BeatsShop />} />
+                  <Route path="/shop/beats/:beatId" element={<BeatDetailShop />} />
                   <Route path="/shop/services" element={<ServicesShop />} />
+                  <Route path="/shop/services/:serviceId" element={<ServiceDetailShop />} />
 
                   {/* Standalone Pages (public) */}
                   <Route path="/catalogue" element={<ProtectedRoute><CataloguePage /></ProtectedRoute>} />
@@ -616,7 +616,6 @@ const MainApp: React.FC = () => {
                   </PublicPaddingWrapper>
                 </ScrollToTopWrapper>
               </BrowserRouter>
-            </BeatDetailProvider>
           </TrackDetailProvider>
         </CartProvider>
       </AuthProvider>

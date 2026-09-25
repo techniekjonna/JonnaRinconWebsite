@@ -1,28 +1,25 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Search, Filter, Grid3x3, List, Play, Pause, ShoppingCart, X, Sliders, ChevronLeft, ChevronRight, Package } from 'lucide-react';
 import { Beat, BeatPack } from '../../lib/firebase/types';
-import ShopFooter from '../../components/ShopFooter';
+import Footer from '../../components/Footer';
 import { useCyberDecodeInView } from '../../hooks/useCyberDecode';
-import { useCart } from '../../hooks/useCart';
 import { toDirectUrl } from '../../lib/utils/urlUtils';
 import { getPlayButtonContainerClass, getPlayButtonSymbolClass, getRowHighlightClass } from '../../lib/utils/buttonStyles';
 import { setCurrentTrack, getCurrentTrack, getIsPlaying } from '../../components/GlobalAudioPlayer';
 import { collection, query, where, onSnapshot, orderBy } from 'firebase/firestore';
 import { db } from '../../lib/firebase/config';
 import FilterModal from '../../components/FilterModal';
-import BeatDetailModal from '../../components/BeatDetailModal';
 import BeatPackDetailModal from '../../components/BeatPackDetailModal';
 import { beatService, beatPackService } from '../../lib/firebase/services';
 import { useScrollToTop } from '../../hooks/useScrollToTop';
 
 const BeatsShop: React.FC = () => {
+  const navigate = useNavigate();
   const [beats, setBeats] = useState<Beat[]>([]);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
-  const [selectedBeat, setSelectedBeat] = useState<Beat | null>(null);
-  const { cartItems, addToCart } = useCart();
   const [filter, setFilter] = useState<{
     genre?: string;
     search?: string;
@@ -176,25 +173,20 @@ const BeatsShop: React.FC = () => {
   const trendingBeats = filteredBeats.filter(b => b.trending);
 
   return (
-    <div className="min-h-screen text-white bg-[#0a0a0a]">
+    <div className="min-h-screen text-white">
 
-      {/* Hero Section — image extends behind header */}
-      <section className="relative overflow-hidden -mt-28 sm:-mt-32">
-        <div className="absolute inset-0">
-          <img src="/stu.png" alt="" className="w-full h-full object-cover" style={{ objectPosition: 'center 40%' }} />
-          <div className="absolute inset-0 bg-gradient-to-br from-black/75 via-black/55 to-black/75" />
-          <div className="absolute inset-0" style={{ backgroundImage: 'radial-gradient(circle at 80% 40%, rgba(220,38,38,0.07) 0%, transparent 60%)' }} />
-          <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-[#0a0a0a] to-transparent" />
-        </div>
-        <div className="relative z-10 pt-52 sm:pt-56 pb-12 px-6 md:px-12 max-w-7xl mx-auto w-full">
-          <p className="text-xs font-black uppercase tracking-[0.45em] text-red-500 mb-4">JONNA RINCON STORE</p>
-          <h1 ref={heroTitle.ref as React.RefObject<HTMLHeadingElement>} style={{fontSize: 'clamp(2.5rem, 9vw, 10.2rem)'}} className="font-black uppercase leading-[0.85] tracking-tighter mb-5 text-white">
-            {heroTitle.display}
-          </h1>
-          <p className="text-white/50 text-sm md:text-base max-w-xl">
-            High-quality instrumentals across every genre. Find your sound and elevate your music.
-          </p>
-        </div>
+      {/* Header */}
+      <section
+        className="relative w-full flex flex-col items-center justify-center text-center px-6 pt-20"
+        style={{ minHeight: '38vh' }}
+      >
+        <p className="text-xs font-black uppercase tracking-[0.45em] text-red-500 mb-4">JONNA RINCON STORE</p>
+        <h1 ref={heroTitle.ref as React.RefObject<HTMLHeadingElement>} style={{fontSize: 'clamp(2.5rem, 9vw, 7rem)'}} className="font-black uppercase leading-[0.9] tracking-tighter mb-4 text-white">
+          {heroTitle.display}
+        </h1>
+        <p className="text-white/70 text-base md:text-lg max-w-xl mx-auto">
+          High-quality instrumentals across every genre. Find your sound and elevate your music.
+        </p>
       </section>
 
       {/* Filter Modal */}
@@ -271,16 +263,6 @@ const BeatsShop: React.FC = () => {
         </div>
       </section>
 
-      {/* Beat Detail Modal */}
-      <BeatDetailModal
-        beat={selectedBeat}
-        isOpen={!!selectedBeat}
-        onClose={() => setSelectedBeat(null)}
-        onAddToCart={addToCart}
-        isPlaying={selectedBeat ? getCurrentTrack()?.id === selectedBeat.id : false}
-        onPlay={handlePlayBeat}
-        cartCount={cartItems.length}
-      />
 
       {/* Beat Pack Detail Modal */}
       <BeatPackDetailModal
@@ -375,7 +357,7 @@ const BeatsShop: React.FC = () => {
               {trendingBeats.slice(0, 5).map((beat, index) => (
                 <button
                   key={beat.id}
-                  onClick={() => setSelectedBeat(beat)}
+                  onClick={() => navigate('/shop/beats/' + beat.id)}
                   className="w-full flex items-center gap-3 md:gap-5 p-3 md:p-4 bg-white/[0.04] backdrop-blur-md border border-white/[0.06] rounded-2xl group hover:bg-white/[0.06] transition-all text-left"
                 >
                   <span className="text-2xl md:text-3xl font-black text-white/15 w-8 md:w-12 text-center flex-shrink-0">
@@ -456,7 +438,7 @@ const BeatsShop: React.FC = () => {
             {filteredBeats.map((beat) => (
               <button
                 key={beat.id}
-                onClick={() => setSelectedBeat(beat)}
+                onClick={() => navigate('/shop/beats/' + beat.id)}
                 className="group text-left bg-white/[0.04] backdrop-blur-md border border-white/[0.06] rounded-2xl overflow-hidden hover:border-white/[0.12] transition-all duration-500 hover:scale-[1.02]"
               >
                 <div className="relative aspect-square">
@@ -540,7 +522,7 @@ const BeatsShop: React.FC = () => {
             {filteredBeats.map((beat, index) => (
               <button
                 key={beat.id}
-                onClick={() => setSelectedBeat(beat)}
+                onClick={() => navigate('/shop/beats/' + beat.id)}
                 className={`w-full text-left flex items-center gap-3 md:gap-5 p-3 md:p-4 bg-white/[0.04] backdrop-blur-md border border-white/[0.06] rounded-2xl group hover:bg-white/[0.06] transition-all ${getRowHighlightClass(isCurrentBeatPlaying(beat.id))}`}
               >
                 <button
@@ -608,7 +590,7 @@ const BeatsShop: React.FC = () => {
         )}
       </div>
 
-      <ShopFooter />
+      <Footer />
     </div>
   );
 };

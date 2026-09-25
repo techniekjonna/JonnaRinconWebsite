@@ -1,13 +1,12 @@
-import React, { useMemo, useState } from 'react';
-import { Zap, Headphones, Music, Volume2, Users, Palette, ArrowRight } from 'lucide-react';
-import ShopFooter from '../../components/ShopFooter';
+import React, { useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Zap, Headphones, Music, Volume2, Users, Palette, ArrowRight, Radio } from 'lucide-react';
+import Footer from '../../components/Footer';
 import { useCyberDecodeInView } from '../../hooks/useCyberDecode';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { useServices } from '../../hooks/useServices';
 import { Service } from '../../lib/firebase/types';
 import { useScrollToTop } from '../../hooks/useScrollToTop';
-import MixMasterModal from '../../components/MixMasterModal';
-import StudioSessionModal from '../../components/StudioSessionModal';
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   Zap,
@@ -40,11 +39,9 @@ const isStudioSessionService = (service: Service): boolean => {
 
 const ServicesPage: React.FC = () => {
   useScrollToTop();
+  const navigate = useNavigate();
   const heroTitle = useCyberDecodeInView('Services');
   const { services, loading } = useServices({ status: 'published' });
-
-  const [selectedService, setSelectedService] = useState<Service | null>(null);
-  const [modalOpen, setModalOpen] = useState(false);
 
   const formattedServices = useMemo(() => {
     return services.map((service) => ({
@@ -54,43 +51,59 @@ const ServicesPage: React.FC = () => {
   }, [services]);
 
   const handleServiceClick = (service: Service) => {
-    setSelectedService(service);
-    setModalOpen(true);
-  };
-
-  const handleModalClose = () => {
-    setModalOpen(false);
-    setSelectedService(null);
+    if (isMixMasterService(service)) {
+      navigate('/mix-master');
+    } else if (isStudioSessionService(service)) {
+      navigate('/studio-session');
+    } else {
+      navigate(`/shop/services/${service.id}`);
+    }
   };
 
   return (
-    <div className="min-h-screen text-white bg-[#0a0a0a]">
+    <div className="min-h-screen text-white">
 
-      {/* Hero Section — image extends behind header */}
-      <section className="relative overflow-hidden -mt-28 sm:-mt-32">
-        <div className="absolute inset-0">
-          <img src="/DJI_20251017150728_0019_D.JPG" alt="" className="w-full h-full object-cover" style={{ objectPosition: 'center 35%' }} />
-          <div className="absolute inset-0 bg-gradient-to-br from-black/75 via-black/55 to-black/75" />
-          <div className="absolute inset-0" style={{ backgroundImage: 'radial-gradient(circle at 70% 50%, rgba(220,38,38,0.07) 0%, transparent 60%)' }} />
-          <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-[#0a0a0a] to-transparent" />
-        </div>
-        <div className="relative z-10 pt-52 sm:pt-56 pb-12 px-6 md:px-12 max-w-7xl mx-auto w-full">
-          <p className="text-xs font-black uppercase tracking-[0.45em] text-red-500 mb-4">JONNA RINCON STORE</p>
-          <h1
-            ref={heroTitle.ref as React.RefObject<HTMLHeadingElement>}
-            style={{ fontSize: 'clamp(2.5rem, 9vw, 10.2rem)' }}
-            className="font-black uppercase leading-[0.85] tracking-tighter mb-5 text-white"
+      {/* Header */}
+      <section
+        className="relative w-full flex flex-col items-center justify-center text-center px-6 pt-20"
+        style={{ minHeight: '38vh' }}
+      >
+        <p className="text-xs font-black uppercase tracking-[0.45em] text-red-500 mb-4">JONNA RINCON STORE</p>
+        <h1
+          ref={heroTitle.ref as React.RefObject<HTMLHeadingElement>}
+          style={{ fontSize: 'clamp(2.5rem, 9vw, 7rem)' }}
+          className="font-black uppercase leading-[0.9] tracking-tighter mb-4 text-white"
+        >
+          {heroTitle.display}
+        </h1>
+        <p className="text-white/70 text-base md:text-lg max-w-xl mx-auto">
+          Professional music production services to elevate your sound. Get expert guidance from an experienced electronic music artist.
+        </p>
+      </section>
+
+      {/* Studio Session callout */}
+      <section className="px-6 md:px-12 pb-2">
+        <div className="max-w-7xl mx-auto">
+          <button
+            onClick={() => navigate('/studio-session')}
+            className="w-full flex items-center justify-between gap-4 px-6 py-4 bg-white/[0.04] border border-white/[0.08] hover:border-red-600/30 hover:bg-white/[0.06] rounded-2xl transition-all duration-300 text-left"
           >
-            {heroTitle.display}
-          </h1>
-          <p className="text-white/50 text-sm md:text-base max-w-xl">
-            Professional music production services to elevate your sound. Get expert guidance from an experienced electronic music artist.
-          </p>
+            <div className="flex items-center gap-4">
+              <div className="w-11 h-11 rounded-xl bg-red-600/10 border border-red-600/20 flex items-center justify-center flex-shrink-0">
+                <Radio className="w-5 h-5 text-red-500" />
+              </div>
+              <div>
+                <p className="text-white font-bold text-sm">Also booking Studio Sessions</p>
+                <p className="text-white/40 text-xs mt-0.5">In-studio recording with Jonna, in Limburg — pick a date and get started.</p>
+              </div>
+            </div>
+            <ArrowRight className="w-4 h-4 text-white/40 flex-shrink-0" />
+          </button>
         </div>
       </section>
 
       {/* Services Grid */}
-      <section className="px-6 md:px-12 py-14 md:py-20">
+      <section className="px-6 md:px-12 py-10 md:py-14">
         <div className="max-w-7xl mx-auto">
           {loading ? (
             <div className="flex items-center justify-center py-16">
@@ -169,24 +182,7 @@ const ServicesPage: React.FC = () => {
         </div>
       </section>
 
-      <ShopFooter />
-
-      {/* Service Modals */}
-      {selectedService && isMixMasterService(selectedService) && (
-        <MixMasterModal
-          service={selectedService}
-          isOpen={modalOpen}
-          onClose={handleModalClose}
-        />
-      )}
-
-      {selectedService && isStudioSessionService(selectedService) && (
-        <StudioSessionModal
-          service={selectedService}
-          isOpen={modalOpen}
-          onClose={handleModalClose}
-        />
-      )}
+      <Footer />
     </div>
   );
 };

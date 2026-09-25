@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowUpRight, Music, Headphones, Radio } from 'lucide-react';
+import { ArrowUpRight, Music, Headphones } from 'lucide-react';
 import Footer from '../../components/Footer';
 import { useScrollToTop } from '../../hooks/useScrollToTop';
 import { useInView } from '../../hooks/useInView';
@@ -29,19 +29,10 @@ const categories: Category[] = [
     id: 'services',
     label: 'Services',
     tagline: 'Professional audio',
-    description: 'Mix & Master and production consulting — tailored to your project.',
+    description: 'Mix & Master, studio sessions, and production consulting — tailored to your project.',
     href: '/shop/services',
     image: '/DJI_20251017150728_0019_D.JPG',
     icon: Headphones,
-  },
-  {
-    id: 'studio-sessions',
-    label: 'Studio Sessions',
-    tagline: 'In the booth',
-    description: 'In-studio recording and production sessions. Collaborative, creative, hands-on.',
-    href: '/studio-session',
-    image: '/DJI_20251115114029_0004_D.JPG',
-    icon: Radio,
   },
 ];
 
@@ -138,7 +129,7 @@ const ShopPage: React.FC = () => {
         {/* ─── CATEGORIES ─── */}
         <section className="px-4 md:px-8 lg:px-12 py-12">
           <div className="max-w-7xl mx-auto">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5">
               {categories.map((cat, i) => (
                 <CategoryCard key={cat.id} category={cat} index={i} />
               ))}
