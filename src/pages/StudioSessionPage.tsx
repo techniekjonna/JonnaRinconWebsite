@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, ShoppingCart, ArrowRight, Radio } from 'lucide-react';
-import Navigation from '../components/Navigation';
+import { useNavigate } from 'react-router-dom';
+import { ChevronLeft, ChevronRight, Send, ArrowRight, Radio } from 'lucide-react';
 import Footer from '../components/Footer';
 import LoginModal from '../components/LoginModal';
 import { useAuth } from '../contexts/AuthContext';
-import { useCartContext } from '../contexts/CartContext';
 import { useScrollToTop } from '../hooks/useScrollToTop';
 import { useServices } from '../hooks/useServices';
 import { getAgendaDaysByMonth } from '../lib/firebase/services/agendaService';
 import { Service } from '../lib/firebase/types';
+import { db } from '../lib/firebase/config';
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 
 interface HourRate {
   hours: number;
@@ -23,8 +24,8 @@ const isStudioService = (s: Service) => {
 
 export default function StudioSessionPage() {
   useScrollToTop();
+  const navigate = useNavigate();
   const { user } = useAuth();
-  const { addItem } = useCartContext();
   const { services, loading } = useServices({ status: 'published' });
 
   const service = services.find(isStudioService) ?? null;
@@ -35,6 +36,8 @@ export default function StudioSessionPage() {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedRate, setSelectedRate] = useState<HourRate | null>(null);
   const [studioAvailableDays, setStudioAvailableDays] = useState<Set<string>>(new Set());
+  const [bookingSent, setBookingSent] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const hourRates: HourRate[] = [
     { hours: 2, price: 200 },
@@ -70,39 +73,32 @@ export default function StudioSessionPage() {
     if (studioAvailableDays.has(dateStr)) setSelectedDate(dateStr);
   };
 
-  const handleAddToCart = () => {
-    if (!selectedDate || !selectedRate || !service) {
-      alert('Please select a date and duration');
-      return;
-    }
+  const handleBookSession = async () => {
+    if (!selectedDate || !selectedRate || !service) return;
     if (!user) { setShowLoginModal(true); return; }
-    addItem({
-      id: service.id,
-      title: `${service.name} - ${selectedRate.hours}h - ${selectedDate}`,
-      price: selectedRate.price,
-      quantity: 1,
-      image: service.coverUrl || '',
-      metadata: {
-        serviceId: service.id,
-        serviceName: service.name,
-        bookingDate: selectedDate,
-        duration: `${selectedRate.hours}h`,
-        price: selectedRate.price,
-      },
-    });
-    alert('Studio session added to cart!');
+    setIsSubmitting(true);
+    try {
+      await addDoc(collection(db, 'supportMessages'), {
+        senderId: user.uid,
+        senderName: user.displayName || 'Customer',
+        senderEmail: user.email,
+        senderRole: 'customer',
+        recipientGroup: 'support',
+        category: 'Studio Session',
+        message: `New Studio Session booking request.\n\nDate: ${selectedDate}\nDuration: ${selectedRate.hours}h\nPrice: €${selectedRate.price}`,
+        createdAt: serverTimestamp(),
+        status: 'sent',
+      });
+      setBookingSent(true);
+    } catch (err) {
+      console.error('Failed to submit studio session booking:', err);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <div className="min-h-screen text-white">
-      <Navigation />
-
-      {/* Fixed background */}
-      <div className="fixed inset-0 -z-10">
-        <img src="/JEIGHTENESIS.jpg" alt="" className="w-full h-full object-cover" />
-        <div className="absolute inset-0 bg-black/80" />
-      </div>
-
       <main className="pt-32 pb-24 px-4 max-w-3xl mx-auto">
         {/* Page header */}
         <div className="mb-12 text-center">
@@ -129,7 +125,25 @@ export default function StudioSessionPage() {
           </div>
         )}
 
-        {!loading && service && (
+        {!loading && service && bookingSent && (
+          <div className="flex flex-col items-center justify-center py-20 text-center">
+            <div className="w-16 h-16 bg-green-500/20 border border-green-500/40 flex items-center justify-center mb-4">
+              <Send size={26} className="text-green-400" />
+            </div>
+            <h3 className="text-2xl font-black text-white uppercase mb-2">Request Sent!</h3>
+            <p className="text-white/50 text-sm mb-6 max-w-sm">
+              Your studio session request for {selectedDate} has been received. Jonna will get back to you to confirm.
+            </p>
+            <button
+              onClick={() => navigate('/shop/services')}
+              className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-bold uppercase tracking-wider transition-all"
+            >
+              Back to Services
+            </button>
+          </div>
+        )}
+
+        {!loading && service && !bookingSent && (
           <>
             {page === 'overview' ? (
               <div className="space-y-6">
@@ -316,16 +330,16 @@ export default function StudioSessionPage() {
                 )}
 
                 <button
-                  onClick={handleAddToCart}
-                  disabled={!selectedDate || !selectedRate}
+                  onClick={handleBookSession}
+                  disabled={!selectedDate || !selectedRate || isSubmitting}
                   className={`w-full py-4 font-bold uppercase tracking-widest text-sm flex items-center justify-center gap-2 transition-all ${
-                    selectedDate && selectedRate
+                    selectedDate && selectedRate && !isSubmitting
                       ? 'bg-red-600 hover:bg-red-700 text-white hover:scale-[1.01]'
                       : 'bg-white/[0.05] text-white/30 cursor-not-allowed'
                   }`}
                 >
-                  <ShoppingCart size={18} />
-                  Book Session{selectedRate ? ` — €${selectedRate.price}` : ''}
+                  <Send size={18} />
+                  {isSubmitting ? 'Sending...' : `Book Session${selectedRate ? ` — €${selectedRate.price}` : ''}`}
                 </button>
               </div>
             )}

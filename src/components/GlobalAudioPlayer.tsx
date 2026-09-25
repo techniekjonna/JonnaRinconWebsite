@@ -1,7 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { SkipBack, Play, Pause, SkipForward, Shuffle, Repeat, Volume2, VolumeX, X } from 'lucide-react';
 import { useTrackDetail } from '../contexts/TrackDetailContext';
-import { useBeatDetail } from '../contexts/BeatDetailContext';
 import PlayerModal from './PlayerModal';
 import { formatDuration } from '../lib/utils/audioMetadata';
 import { trackService } from '../lib/firebase/services';
@@ -175,7 +174,6 @@ export default function GlobalAudioPlayer({ onCoverClick }: { onCoverClick?: () 
   const playTrackedRef = useRef<Set<string>>(new Set()); // Track which songs have been tracked
   const [store, setStore] = useState<PlayerStore>(playerStore);
   const { setSelectedTrack, setIsModalOpen } = useTrackDetail();
-  const { setSelectedBeat, setIsModalOpen: setBeatModalOpen } = useBeatDetail();
   const [isVisible, setIsVisible] = useState(isPlayerVisible);
   const [volume, setVolume] = useState<number>(() => {
     if (typeof window !== 'undefined') {

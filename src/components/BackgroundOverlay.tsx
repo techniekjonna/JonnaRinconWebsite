@@ -16,15 +16,6 @@ const BackgroundOverlay: React.FC = () => {
     setReady(true);
   }, [pathname]);
 
-  if (pathname.startsWith('/shop')) {
-    return (
-      <div
-        className="fixed inset-0 w-full h-screen -z-10 bg-[#0a0a0a] pointer-events-none"
-        aria-hidden="true"
-      />
-    );
-  }
-
   return (
     <div
       className="fixed inset-0 w-full h-screen -z-10 pointer-events-none"

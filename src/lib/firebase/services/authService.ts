@@ -8,7 +8,7 @@ import {
   updateProfile,
   updatePassword,
 } from 'firebase/auth';
-import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, getDocs, collection, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '../config';
 import { User, UserRole } from '../types';
 
@@ -123,6 +123,16 @@ class AuthService {
     } catch (error: any) {
       console.error('Update profile error:', error);
       throw new Error(error.message || 'Failed to update profile');
+    }
+  }
+
+  async getAllUsers(): Promise<User[]> {
+    try {
+      const snapshot = await getDocs(collection(db, 'users'));
+      return snapshot.docs.map((d) => d.data() as User);
+    } catch (error) {
+      console.error('Get all users error:', error);
+      return [];
     }
   }
 
