@@ -30,8 +30,6 @@ interface Conversation {
   category: string;
 }
 
-type Tab = 'contact' | 'users';
-
 interface ChatInboxContentProps {
   role: 'admin' | 'manager';
 }
@@ -55,7 +53,6 @@ const Avatar: React.FC<{ name: string; role: string; size?: 'sm' | 'md' }> = ({ 
 export const ChatInboxContent: React.FC<ChatInboxContentProps> = ({ role }) => {
   const { user } = useAuth();
   const [allMessages, setAllMessages] = useState<ChatMessage[]>([]);
-  const [activeTab, setActiveTab] = useState<Tab>('contact');
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [newMessage, setNewMessage] = useState('');
@@ -127,10 +124,10 @@ export const ChatInboxContent: React.FC<ChatInboxContentProps> = ({ role }) => {
     return { contactConversations: contact.sort(byRecency), userConversations: users.sort(byRecency) };
   }, [allMessages]);
 
-  const conversations = activeTab === 'contact' ? contactConversations : userConversations;
-  const filteredConversations = search
-    ? conversations.filter((c) => c.name.toLowerCase().includes(search.toLowerCase()) || c.email.toLowerCase().includes(search.toLowerCase()))
-    : conversations;
+  const matchesSearch = (c: Conversation) =>
+    !search || c.name.toLowerCase().includes(search.toLowerCase()) || c.email.toLowerCase().includes(search.toLowerCase());
+  const filteredContactConversations = contactConversations.filter(matchesSearch);
+  const filteredUserConversations = userConversations.filter(matchesSearch);
 
   const selectedConversation = [...contactConversations, ...userConversations].find((c) => c.id === selectedId) || null;
 
@@ -227,7 +224,6 @@ export const ChatInboxContent: React.FC<ChatInboxContentProps> = ({ role }) => {
         });
       }
 
-      setActiveTab('users');
       setSelectedId(newMsgTarget.uid);
       closeNewMessageModal();
     } catch (err) {
@@ -253,44 +249,10 @@ export const ChatInboxContent: React.FC<ChatInboxContentProps> = ({ role }) => {
     <>
       <div className="grid grid-cols-1 md:grid-cols-12 gap-3 overflow-hidden" style={{ height: 'calc(100dvh - 180px)', maxHeight: 'calc(100dvh - 180px)' }}>
 
-        {/* Left: tabs + conversation list */}
+        {/* Left: Contact + Users sections */}
         {showListPane && (
           <div className="md:col-span-4 backdrop-blur-xl bg-gradient-to-b from-white/[0.08] to-white/[0.03] border border-white/[0.12] rounded-xl overflow-hidden flex flex-col">
-            <div className="flex items-center gap-2 p-3 border-b border-white/[0.08] flex-shrink-0">
-              <button
-                onClick={() => { setActiveTab('contact'); setSelectedId(null); }}
-                className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${
-                  activeTab === 'contact' ? 'bg-red-600 text-white' : 'bg-white/[0.05] text-white/50 hover:text-white'
-                }`}
-              >
-                <Mail size={14} /> Contact
-                {contactConversations.some((c) => c.unreadCount > 0) && (
-                  <span className="w-1.5 h-1.5 rounded-full bg-red-400" />
-                )}
-              </button>
-              <button
-                onClick={() => { setActiveTab('users'); setSelectedId(null); }}
-                className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${
-                  activeTab === 'users' ? 'bg-red-600 text-white' : 'bg-white/[0.05] text-white/50 hover:text-white'
-                }`}
-              >
-                <UsersIcon size={14} /> Users
-                {userConversations.some((c) => c.unreadCount > 0) && (
-                  <span className="w-1.5 h-1.5 rounded-full bg-red-400" />
-                )}
-              </button>
-              {activeTab === 'users' && (
-                <button
-                  onClick={openNewMessageModal}
-                  title="New message"
-                  className="p-2 bg-white/[0.06] hover:bg-white/[0.12] rounded-lg text-white/60 hover:text-white transition-colors flex-shrink-0"
-                >
-                  <Plus size={16} />
-                </button>
-              )}
-            </div>
-
-            <div className="px-3 py-2 border-b border-white/[0.06] flex-shrink-0">
+            <div className="px-3 py-3 border-b border-white/[0.08] flex-shrink-0">
               <div className="relative">
                 <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" />
                 <input
@@ -304,21 +266,69 @@ export const ChatInboxContent: React.FC<ChatInboxContentProps> = ({ role }) => {
             </div>
 
             <div className="flex-1 overflow-y-auto">
-              {filteredConversations.length === 0 ? (
-                <div className="py-10 text-center text-white/30">
-                  <MessageSquare size={24} className="mx-auto mb-2 opacity-40" />
-                  <p className="text-xs">{activeTab === 'contact' ? 'No contact messages' : 'No user messages'}</p>
-                </div>
+              {/* Contact section */}
+              <div className="px-3 pt-3 pb-1.5 flex items-center gap-2 sticky top-0 bg-black/70 backdrop-blur-md z-10">
+                <Mail size={13} className="text-red-400" />
+                <p className="text-[10px] font-bold uppercase tracking-widest text-white/50">Contact</p>
+                {contactConversations.some((c) => c.unreadCount > 0) && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-red-400" />
+                )}
+              </div>
+              {filteredContactConversations.length === 0 ? (
+                <p className="px-3 pb-4 text-xs text-white/25">No contact messages</p>
               ) : (
-                filteredConversations.map((c) => (
+                filteredContactConversations.map((c) => (
                   <button
                     key={c.id}
                     onClick={() => handleSelectConversation(c.id)}
-                    className={`w-full px-3 py-3 text-left transition-all border-b border-white/[0.04] flex items-center gap-3 ${
+                    className={`w-full px-3 py-2.5 text-left transition-all border-b border-white/[0.04] flex items-center gap-3 ${
                       selectedId === c.id ? 'bg-white/[0.08]' : 'hover:bg-white/[0.04]'
                     }`}
                   >
-                    <Avatar name={c.name} role={c.role} />
+                    <Avatar name={c.name} role={c.role} size="sm" />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-xs font-semibold text-white truncate">{c.name}</p>
+                        <span className="text-[9px] px-1.5 py-0.5 bg-white/[0.06] border border-white/[0.08] rounded-full text-white/40 uppercase tracking-wide flex-shrink-0">{c.category}</span>
+                      </div>
+                      <p className="text-[10px] text-white/40 truncate mt-0.5">{c.lastMessage || 'No messages yet'}</p>
+                    </div>
+                    {c.unreadCount > 0 && (
+                      <div className="w-5 h-5 rounded-full bg-red-600 flex items-center justify-center flex-shrink-0">
+                        <span className="text-[10px] text-white font-bold">{c.unreadCount}</span>
+                      </div>
+                    )}
+                  </button>
+                ))
+              )}
+
+              {/* Users section */}
+              <div className="px-3 pt-4 pb-1.5 flex items-center gap-2 sticky top-0 bg-black/70 backdrop-blur-md z-10">
+                <UsersIcon size={13} className="text-blue-400" />
+                <p className="text-[10px] font-bold uppercase tracking-widest text-white/50 flex-1">Users</p>
+                {userConversations.some((c) => c.unreadCount > 0) && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-red-400" />
+                )}
+                <button
+                  onClick={openNewMessageModal}
+                  title="New message"
+                  className="p-1 bg-white/[0.06] hover:bg-white/[0.12] rounded-md text-white/60 hover:text-white transition-colors flex-shrink-0"
+                >
+                  <Plus size={13} />
+                </button>
+              </div>
+              {filteredUserConversations.length === 0 ? (
+                <p className="px-3 pb-4 text-xs text-white/25">No user messages</p>
+              ) : (
+                filteredUserConversations.map((c) => (
+                  <button
+                    key={c.id}
+                    onClick={() => handleSelectConversation(c.id)}
+                    className={`w-full px-3 py-2.5 text-left transition-all border-b border-white/[0.04] flex items-center gap-3 ${
+                      selectedId === c.id ? 'bg-white/[0.08]' : 'hover:bg-white/[0.04]'
+                    }`}
+                  >
+                    <Avatar name={c.name} role={c.role} size="sm" />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-2">
                         <p className="text-xs font-semibold text-white truncate">{c.name}</p>

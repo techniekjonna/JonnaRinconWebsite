@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
 import { ChevronDown, Music } from 'lucide-react';
 import { useCyberDecodeInView } from '../hooks/useCyberDecode';
@@ -335,8 +334,6 @@ export default function CataloguePage() {
           <p className="text-white/30 text-xs tracking-widest uppercase">— Jonathan (Jonna Rincon)</p>
         </div>
       )}
-
-      <Navigation isDarkOverlay={true} />
 
       <LoginModal isOpen={isLoginModalOpen} onClose={() => setIsLoginModalOpen(false)} />
 

@@ -1,5 +1,4 @@
 import { useState, useEffect, useMemo } from 'react';
-import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
 import { Sliders, Music } from 'lucide-react';
 import { useCyberDecodeInView } from '../hooks/useCyberDecode';
@@ -212,8 +211,6 @@ export default function RemixesPage() {
 
   return (
     <div className="min-h-screen text-white">
-      <Navigation isDarkOverlay={true} isLightMode={false} />
-
       {/* Login Modal for playing remixes */}
       <LoginModal isOpen={isLoginModalOpen} onClose={() => setIsLoginModalOpen(false)} />
 

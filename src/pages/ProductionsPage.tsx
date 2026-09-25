@@ -1,5 +1,4 @@
 import React from 'react';
-import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
 import { useCyberDecodeInView } from '../hooks/useCyberDecode';
 import { Play } from 'lucide-react';
@@ -51,8 +50,6 @@ const ProductionsPage: React.FC = () => {
 
   return (
     <div className="min-h-screen text-white">
-      <Navigation isDarkOverlay={true} />
-
       {/* Hero Section */}
       <section className="relative pt-40 px-6 md:px-12 pb-16">
         <div className="relative z-10 max-w-7xl mx-auto w-full text-center">
