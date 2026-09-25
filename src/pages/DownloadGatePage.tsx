@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
 import { Check, Lock, Download, ExternalLink, Music, Instagram } from 'lucide-react';
 import { useCyberDecodeInView } from '../hooks/useCyberDecode';
@@ -84,8 +83,6 @@ export default function DownloadGatePage() {
 
   return (
     <div className="min-h-screen text-white">
-      <Navigation isDarkOverlay={true} isLightMode={false} />
-
       {/* Hero */}
       <section className="relative min-h-[40vh] flex items-end pb-12 md:pb-16 pt-40 px-6 md:px-12">
         <div className="relative z-10 max-w-3xl mx-auto w-full text-center">

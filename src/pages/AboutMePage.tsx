@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
 import { Lightbulb, Music2, Heart, Play, ChevronLeft, ChevronRight, Award } from 'lucide-react';
 import { useScrollToTop } from '../hooks/useScrollToTop';
@@ -131,8 +130,6 @@ export default function AboutMePage() {
 
   return (
     <div className="min-h-screen text-white bg-[#0a0a0a]">
-      <Navigation isDarkOverlay={true} />
-
       {/* Hero with biography */}
       <HeroSection />
 

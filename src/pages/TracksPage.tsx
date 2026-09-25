@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
 import { Play, ExternalLink, ChevronLeft, ChevronRight, Music, Headphones, Disc3, Radio, Award, Mic2, ChevronDown, Sliders } from 'lucide-react';
 import { useCyberDecodeInView } from '../hooks/useCyberDecode';
@@ -428,8 +427,6 @@ export default function TracksPage() {
   // Show login modal if not authenticated
   return (
     <div className="min-h-screen text-white">
-      <Navigation isDarkOverlay={true} isLightMode={false} />
-
       {/* Login Modal for playing tracks */}
       <LoginModal isOpen={isLoginModalOpen} onClose={() => setIsLoginModalOpen(false)} />
 

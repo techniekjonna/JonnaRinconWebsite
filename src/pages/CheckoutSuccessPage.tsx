@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Check, Download, ArrowRight, Mail, Package } from 'lucide-react';
-import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
 import { CartItem } from '../contexts/CartContext';
 
@@ -46,8 +45,6 @@ export default function CheckoutSuccessPage() {
 
   return (
     <div className="min-h-screen bg-black flex flex-col">
-      <Navigation isDarkOverlay={true} isLightMode={false} />
-
       <div className="flex-1 flex items-start justify-center px-4 py-20">
         <div className="w-full max-w-2xl space-y-6">
 

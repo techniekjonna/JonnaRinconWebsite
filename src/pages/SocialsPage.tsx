@@ -1,4 +1,3 @@
-import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
 import { Instagram, Youtube, Music2, ExternalLink, Mail, ArrowRight } from 'lucide-react';
 import { useScrollToTop } from '../hooks/useScrollToTop';
@@ -54,8 +53,6 @@ export default function SocialsPage() {
 
   return (
     <div className="min-h-screen text-white">
-      <Navigation isDarkOverlay={true} isLightMode={false} />
-
       {/* Hero spacer */}
       <section className="relative pt-28 px-6 md:px-12 pb-4" />
 

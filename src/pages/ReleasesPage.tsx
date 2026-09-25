@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
 import { Play, Lock, ExternalLink, Disc3, Music, Download } from 'lucide-react';
 import { useCyberDecodeInView } from '../hooks/useCyberDecode';
@@ -140,8 +139,6 @@ export default function ReleasesPage() {
 
   return (
     <div className="min-h-screen text-white">
-      <Navigation isDarkOverlay={true} isLightMode={false} />
-
       {/* Hero */}
       <section className="relative min-h-[60vh] flex items-end pb-16 md:pb-24 pt-40 px-6 md:px-12">
         <div className="relative z-10 max-w-7xl mx-auto w-full">

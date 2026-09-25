@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
 import { Mail, Phone, MapPin, ChevronLeft, ChevronRight, Send, Check } from 'lucide-react';
 import { useScrollToTop } from '../hooks/useScrollToTop';
@@ -68,8 +67,6 @@ export default function ContactPage() {
 
   return (
     <div className="min-h-screen text-white">
-      <Navigation isDarkOverlay={true} isLightMode={false} />
-
       <div className="relative pt-[120px] md:pt-[160px] pb-12 px-6 md:px-10">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-4xl md:text-6xl font-black uppercase mb-4 tracking-tight">

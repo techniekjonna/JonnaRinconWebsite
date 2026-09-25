@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Music, Headphones, Radio } from 'lucide-react';
-import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
 import { useCyberDecodeInView } from '../hooks/useCyberDecode';
 import { useScrollToTop } from '../hooks/useScrollToTop';
@@ -48,8 +47,6 @@ const DJSetsPage: React.FC = () => {
 
   return (
     <div className="min-h-screen text-white">
-<Navigation isDarkOverlay={true} />
-
       {/* Hero Section */}
       <section className="relative pt-40 px-6 md:px-12 pb-16">
         <div className="relative z-10 max-w-7xl mx-auto w-full text-center">

@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, AlertCircle, Tag, X, ChevronDown, ChevronUp, Info } from 'lucide-react';
-import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
 import { useCartContext } from '../contexts/CartContext';
 
@@ -38,7 +37,6 @@ export default function CheckoutPage() {
     return (
       <div className="min-h-screen text-white flex flex-col">
   
-        <Navigation isDarkOverlay={true} isLightMode={false} />
         <div className="flex-1 flex items-center justify-center px-4 py-20">
           <div className="text-center max-w-md">
             <div className="bg-white/[0.08] border border-white/[0.12] rounded-2xl p-12">
@@ -135,8 +133,6 @@ export default function CheckoutPage() {
 
   return (
     <div className="min-h-screen text-white flex flex-col">
-
-      <Navigation isDarkOverlay={true} isLightMode={false} />
 
       <div className="flex-1 px-6 md:px-12 py-12 md:py-16">
         <div className="max-w-6xl mx-auto">
