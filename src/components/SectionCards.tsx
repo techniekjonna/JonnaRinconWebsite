@@ -77,14 +77,15 @@ function SectionRow({ section, reverse }: { section: typeof SECTIONS[number]; re
         </Link>
       </div>
 
-      {/* Image — desaturated and darkened with a soft radial mask so it
-          blends into the page, matching the About section's photo */}
+      {/* Image — kept in color, darkened with a soft radial mask (tuned
+          for the 4:3 box so top/bottom fade as gradually as left/right)
+          so it blends into the page instead of sitting in a hard box */}
       <div className={`relative aspect-[4/3] ${reverse ? 'lg:order-1' : ''}`}>
         <div
           className="absolute inset-0"
           style={{
-            maskImage: 'radial-gradient(ellipse 62% 62% at 50% 45%, black 8%, transparent 92%)',
-            WebkitMaskImage: 'radial-gradient(ellipse 62% 62% at 50% 45%, black 8%, transparent 92%)',
+            maskImage: 'radial-gradient(ellipse 52% 70% at 50% 45%, black 8%, transparent 96%)',
+            WebkitMaskImage: 'radial-gradient(ellipse 52% 70% at 50% 45%, black 8%, transparent 96%)',
           }}
         >
           <img
@@ -93,9 +94,9 @@ function SectionRow({ section, reverse }: { section: typeof SECTIONS[number]; re
             className="w-full h-full object-cover"
             loading="lazy"
             decoding="async"
-            style={{ filter: 'grayscale(1) contrast(1.25) brightness(0.4)' }}
+            style={{ filter: 'contrast(1.1) brightness(0.7)' }}
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-red-950/25 via-transparent to-black/50" />
+          <div className="absolute inset-0 bg-gradient-to-b from-red-950/20 via-transparent to-black/50" />
         </div>
       </div>
     </div>

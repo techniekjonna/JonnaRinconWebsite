@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Zap, Headphones, Music, Volume2, Users, Palette, ArrowRight, Radio } from 'lucide-react';
+import { Zap, Headphones, Music, Volume2, Users, Palette, ArrowRight, Radio, Check } from 'lucide-react';
 import Footer from '../../components/Footer';
 import { useCyberDecodeInView } from '../../hooks/useCyberDecode';
 import LoadingSpinner from '../../components/LoadingSpinner';
@@ -35,6 +35,36 @@ const isStudioSessionService = (service: Service): boolean => {
   const name = service.name.toLowerCase();
   const slug = (service.slug || '').toLowerCase();
   return name.includes('studio') || slug.includes('studio');
+};
+
+// Sensible defaults so a service still looks and reads well even before an
+// admin sets a custom cover photo or writes a long description.
+const getFallbackImage = (service: Service): string | null => {
+  if (isStudioSessionService(service)) return '/stu.png';
+  if (isMixMasterService(service)) return '/DJI_20251018172151_0031_D.JPG';
+  return null;
+};
+
+const getFeatures = (service: Service): string[] => {
+  if (isStudioSessionService(service)) {
+    return [
+      'In-person recording, production and mixing in one session',
+      'Artistic, self-built studio environment in Limburg',
+      'Direct, hands-on collaboration with Jonna',
+    ];
+  }
+  if (isMixMasterService(service)) {
+    return [
+      'Radio-ready loudness and clarity, genre-matched',
+      "Unlimited revisions until you're happy with the result",
+      'Fast turnaround, usually within a few days',
+    ];
+  }
+  return [
+    'Professional quality, every time',
+    'Direct, personal communication with Jonna',
+    'Fast turnaround',
+  ];
 };
 
 const ServicesPage: React.FC = () => {
@@ -120,6 +150,8 @@ const ServicesPage: React.FC = () => {
               {formattedServices.map((service, i) => {
                 const Icon = getIcon(service.icon);
                 const reverse = i % 2 === 1;
+                const image = service.coverUrl || getFallbackImage(service);
+                const features = getFeatures(service);
                 return (
                   <div
                     key={service.id}
@@ -134,9 +166,17 @@ const ServicesPage: React.FC = () => {
                       <h2 className="text-3xl md:text-5xl font-black text-white tracking-tighter mb-5 leading-tight">
                         {service.name}
                       </h2>
-                      <p className="text-white/60 text-base leading-relaxed mb-8 max-w-md">
+                      <p className="text-white/60 text-base leading-relaxed mb-6 max-w-md">
                         {service.description}
                       </p>
+                      <ul className="space-y-2.5 mb-8">
+                        {features.map((feature) => (
+                          <li key={feature} className="flex items-start gap-3">
+                            <Check size={16} className="text-red-500 flex-shrink-0 mt-0.5" />
+                            <span className="text-white/70 text-sm leading-relaxed">{feature}</span>
+                          </li>
+                        ))}
+                      </ul>
                       <div className="flex items-center gap-5 flex-wrap">
                         <button
                           onClick={() => handleServiceClick(service)}
@@ -151,29 +191,30 @@ const ServicesPage: React.FC = () => {
                       </div>
                     </div>
 
-                    {/* Image — desaturated and darkened with a soft radial
-                        mask, matching the homepage sections */}
+                    {/* Image — kept in color, darkened with a soft radial
+                        mask tuned so top/bottom fade as gradually as
+                        left/right, matching the homepage sections */}
                     <div className={`relative aspect-[4/3] ${reverse ? 'lg:order-1' : ''}`}>
                       <div
                         className="absolute inset-0"
                         style={{
-                          maskImage: 'radial-gradient(ellipse 62% 62% at 50% 45%, black 8%, transparent 92%)',
-                          WebkitMaskImage: 'radial-gradient(ellipse 62% 62% at 50% 45%, black 8%, transparent 92%)',
+                          maskImage: 'radial-gradient(ellipse 52% 70% at 50% 45%, black 8%, transparent 96%)',
+                          WebkitMaskImage: 'radial-gradient(ellipse 52% 70% at 50% 45%, black 8%, transparent 96%)',
                         }}
                       >
-                        {service.coverUrl ? (
+                        {image ? (
                           <img
-                            src={service.coverUrl}
+                            src={image}
                             alt={service.name}
                             className="w-full h-full object-cover"
-                            style={{ filter: 'grayscale(1) contrast(1.25) brightness(0.4)' }}
+                            style={{ filter: 'contrast(1.1) brightness(0.7)' }}
                           />
                         ) : (
                           <div className={`w-full h-full bg-gradient-to-br ${service.gradient} flex items-center justify-center`}>
                             <Icon className="w-20 h-20 text-white/80" />
                           </div>
                         )}
-                        <div className="absolute inset-0 bg-gradient-to-b from-red-950/25 via-transparent to-black/50" />
+                        <div className="absolute inset-0 bg-gradient-to-b from-red-950/20 via-transparent to-black/50" />
                       </div>
                     </div>
                   </div>
