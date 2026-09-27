@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, ShoppingCart, Play, Pause, Zap, Download, Globe, Disc3,
-  TrendingUp, Users, Copy, Check, X as XIcon,
+  TrendingUp, Users, Copy, Check, X as XIcon, Mail,
 } from 'lucide-react';
 import Footer from '../../components/Footer';
 import LoadingSpinner from '../../components/LoadingSpinner';
@@ -70,6 +70,11 @@ const BeatDetailPage: React.FC = () => {
     navigator.clipboard.writeText(beat.slug || beat.id);
     setCopiedSlug(true);
     setTimeout(() => setCopiedSlug(false), 2000);
+  };
+
+  const handleContactAboutBeat = () => {
+    if (!beat) return;
+    navigate('/contact', { state: { beatTitle: beat.title, beatId: beat.id } });
   };
 
   if (loading) {
@@ -252,6 +257,14 @@ const BeatDetailPage: React.FC = () => {
                         <span>{t('Preview', 'Voorbeeld')}</span>
                       </>
                     )}
+                  </button>
+
+                  <button
+                    onClick={handleContactAboutBeat}
+                    className="flex-1 px-6 py-3 border border-white/[0.3] hover:border-white/[0.5] hover:bg-white/[0.1] text-white rounded-xl font-bold uppercase tracking-wider text-sm transition-all duration-200 flex items-center justify-center gap-2"
+                  >
+                    <Mail size={16} />
+                    <span>{t('Contact', 'Contact')}</span>
                   </button>
 
                   {beat.slug && (

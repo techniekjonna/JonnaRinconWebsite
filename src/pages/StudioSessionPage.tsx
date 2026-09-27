@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, Send, ArrowRight, Radio } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Send, ArrowRight, Radio, Headphones, Check } from 'lucide-react';
 import Footer from '../components/Footer';
 import LoginModal from '../components/LoginModal';
 import { useAuth } from '../contexts/AuthContext';
@@ -10,11 +10,16 @@ import { getAgendaDaysByMonth } from '../lib/firebase/services/agendaService';
 import { Service } from '../lib/firebase/types';
 import { db } from '../lib/firebase/config';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { useT } from '../contexts/LanguageContext';
 
 interface HourRate {
   hours: number;
   price: number;
 }
+
+// Same fallback cover used on the services list / detail pages so this
+// standalone page shows the same photo instead of no image at all.
+const FALLBACK_IMAGE = '/stu.png';
 
 const isStudioService = (s: Service) => {
   const n = s.name.toLowerCase();
@@ -25,10 +30,12 @@ const isStudioService = (s: Service) => {
 export default function StudioSessionPage() {
   useScrollToTop();
   const navigate = useNavigate();
+  const t = useT();
   const { user } = useAuth();
   const { services, loading } = useServices({ status: 'published' });
 
   const service = services.find(isStudioService) ?? null;
+  const image = service?.coverUrl || FALLBACK_IMAGE;
 
   const [page, setPage] = useState<'overview' | 'calendar'>('overview');
   const [showLoginModal, setShowLoginModal] = useState(false);
@@ -99,18 +106,7 @@ export default function StudioSessionPage() {
 
   return (
     <div className="min-h-screen text-white">
-      <main className="pt-32 pb-24 px-4 max-w-3xl mx-auto">
-        {/* Page header */}
-        <div className="mb-12 text-center">
-          <p className="text-white/30 text-xs uppercase tracking-widest mb-3">Services</p>
-          <h1 className="text-5xl md:text-7xl font-black uppercase tracking-tighter text-white">
-            Studio Session
-          </h1>
-          <p className="text-white/40 text-sm mt-4 max-w-md mx-auto">
-            Book a session at Jonna Rincon's studio in Limburg, The Netherlands.
-          </p>
-        </div>
-
+      <main className="pt-32 pb-24 px-4 max-w-6xl mx-auto">
         {loading && (
           <div className="flex justify-center py-20">
             <div className="w-8 h-8 border-2 border-white/20 border-t-red-600 rounded-full animate-spin" />
@@ -120,8 +116,8 @@ export default function StudioSessionPage() {
         {!loading && !service && (
           <div className="text-center py-20">
             <Radio className="w-12 h-12 text-white/20 mx-auto mb-4" />
-            <p className="text-white/40">No studio session service available at the moment.</p>
-            <p className="text-white/25 text-sm mt-2">Check back soon or contact directly.</p>
+            <p className="text-white/40">{t('No studio session service available at the moment.', 'Momenteel geen studio sessie beschikbaar.')}</p>
+            <p className="text-white/25 text-sm mt-2">{t('Check back soon or contact directly.', 'Kom later terug of neem direct contact op.')}</p>
           </div>
         )}
 
@@ -130,15 +126,15 @@ export default function StudioSessionPage() {
             <div className="w-16 h-16 bg-green-500/20 border border-green-500/40 flex items-center justify-center mb-4">
               <Send size={26} className="text-green-400" />
             </div>
-            <h3 className="text-2xl font-black text-white uppercase mb-2">Request Sent!</h3>
+            <h3 className="text-2xl font-black text-white uppercase mb-2">{t('Request Sent!', 'Aanvraag Verzonden!')}</h3>
             <p className="text-white/50 text-sm mb-6 max-w-sm">
-              Your studio session request for {selectedDate} has been received. Jonna will get back to you to confirm.
+              {t('Your studio session request for', 'Jouw studio sessie aanvraag voor')} {selectedDate} {t('has been received. Jonna will get back to you to confirm.', 'is ontvangen. Jonna neemt contact met je op om te bevestigen.')}
             </p>
             <button
               onClick={() => navigate('/shop/services')}
               className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-bold uppercase tracking-wider transition-all"
             >
-              Back to Services
+              {t('Back to Services', 'Terug naar Diensten')}
             </button>
           </div>
         )}
@@ -146,87 +142,109 @@ export default function StudioSessionPage() {
         {!loading && service && !bookingSent && (
           <>
             {page === 'overview' ? (
-              <div className="space-y-6">
-                {/* Stats */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-white/[0.05] border border-white/10 p-5">
-                    <p className="text-white/30 text-xs uppercase tracking-wider mb-1">Experience</p>
+              <div>
+                {/* Hero row — flowing text paired with the same photo used
+                    for this service on the services list, instead of
+                    stacked stat boxes */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-14 items-center mb-16">
+                  <div>
+                    <p className="text-xs font-black uppercase tracking-[0.4em] text-red-500 mb-3 flex items-center gap-2">
+                      <Headphones size={13} />
+                      {t('Service', 'Dienst')}
+                    </p>
+                    <h1 className="text-4xl md:text-6xl font-black uppercase tracking-tighter text-white leading-[0.95] mb-5">
+                      {t('Studio Session', 'Studio Sessie')}
+                    </h1>
+                    <p className="text-white/60 text-base leading-relaxed mb-6 max-w-md">
+                      {service.description || t(
+                        "Come to the studio and create something real. Jonna works with you directly — from recording to production to mixing.",
+                        'Kom naar de studio en creëer iets echts. Jonna werkt direct met je samen — van opname tot productie tot mixing.'
+                      )}
+                    </p>
+
+                    <ul className="space-y-2.5 mb-8">
+                      {[
+                        t('Artistic studio with art made by Jonna Rincon', 'Artistieke studio met kunst gemaakt door Jonna Rincon'),
+                        t('Self-made studio environment', 'Zelfgemaakte studio-omgeving'),
+                        t('Good vibes & creative atmosphere', 'Goede vibe & creatieve sfeer'),
+                        t('Mostly experienced in Dutch urban scene', 'Vooral ervaren in de Nederlandse urban scene'),
+                      ].map(feat => (
+                        <li key={feat} className="flex items-start gap-3">
+                          <Check size={16} className="text-red-500 flex-shrink-0 mt-0.5" />
+                          <span className="text-white/70 text-sm leading-relaxed">{feat}</span>
+                        </li>
+                      ))}
+                    </ul>
+
+                    <div className="flex items-center gap-5 flex-wrap">
+                      <button
+                        onClick={() => setPage('calendar')}
+                        className="inline-flex items-center gap-2 px-6 py-3 bg-red-600 hover:bg-red-500 text-white font-black text-xs uppercase tracking-widest transition-all duration-300 rounded-full"
+                      >
+                        {t('Continue to Booking', 'Ga naar Boeking')}
+                        <ArrowRight size={14} />
+                      </button>
+                      <span className="text-sm text-white/30 font-bold uppercase tracking-wider">
+                        {t('From', 'Vanaf')} €{service.rate}{t('/hour', '/uur')}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Image — same fallback photo used for this service on
+                      the services list, with the same soft radial mask */}
+                  <div className="relative aspect-[4/3]">
+                    <div
+                      className="absolute inset-0"
+                      style={{
+                        maskImage: 'radial-gradient(ellipse 52% 70% at 50% 45%, black 8%, transparent 96%)',
+                        WebkitMaskImage: 'radial-gradient(ellipse 52% 70% at 50% 45%, black 8%, transparent 96%)',
+                      }}
+                    >
+                      <img
+                        src={image}
+                        alt={t('Studio Session', 'Studio Sessie')}
+                        className="w-full h-full object-cover"
+                        style={{ filter: 'contrast(1.1) brightness(0.7)' }}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-b from-red-950/20 via-transparent to-black/50" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Quick facts & studio setup — plain stat columns, no boxes */}
+                <div className="flex flex-wrap items-start gap-x-10 gap-y-6 mb-14 pb-10 border-b border-white/10">
+                  <div>
+                    <p className="text-white/30 text-xs uppercase tracking-wider mb-1">{t('Experience', 'Ervaring')}</p>
                     <p className="text-3xl font-black text-white">50+</p>
-                    <p className="text-white/40 text-xs mt-1">Artists worked with</p>
+                    <p className="text-white/40 text-xs mt-1">{t('Artists worked with', 'Artiesten mee gewerkt')}</p>
                   </div>
-                  <div className="bg-white/[0.05] border border-white/10 p-5">
-                    <p className="text-white/30 text-xs uppercase tracking-wider mb-1">Studio Hours</p>
+                  <div className="w-px h-14 bg-white/10 hidden sm:block" />
+                  <div>
+                    <p className="text-white/30 text-xs uppercase tracking-wider mb-1">{t('Studio Hours', 'Studio-uren')}</p>
                     <p className="text-3xl font-black text-white">10K+</p>
-                    <p className="text-white/40 text-xs mt-1">Production hours</p>
+                    <p className="text-white/40 text-xs mt-1">{t('Production hours', 'Productie-uren')}</p>
                   </div>
+                  <div className="w-px h-14 bg-white/10 hidden sm:block" />
+                  {[
+                    [t('Recording DAW', 'Opname-DAW'), 'Logic Pro'],
+                    [t('Equipment', 'Apparatuur'), t('Professional Software & Hardware', 'Professionele Software & Hardware')],
+                    [t('Location', 'Locatie'), t('Limburg, The Netherlands', 'Limburg, Nederland')],
+                  ].map(([label, value]) => (
+                    <div key={label}>
+                      <p className="text-white/30 text-xs uppercase tracking-wider mb-1">{label}</p>
+                      <p className="text-white text-sm font-bold">{value}</p>
+                    </div>
+                  ))}
                 </div>
-
-                {/* About */}
-                <div className="bg-white/[0.04] border border-white/10 p-6">
-                  <p className="text-white/30 text-xs uppercase tracking-wider mb-3">About</p>
-                  <p className="text-white/70 text-sm leading-relaxed">
-                    {service.description || 'Come to the studio and create something real. Jonna works with you directly — from recording to production to mixing.'}
-                  </p>
-                </div>
-
-                {/* Setup */}
-                <div className="bg-white/[0.04] border border-white/10 p-6">
-                  <p className="text-white/30 text-xs uppercase tracking-wider mb-4">Studio Setup</p>
-                  <div className="space-y-3">
-                    {[
-                      ['Recording DAW', 'Logic Pro'],
-                      ['Equipment', 'Professional Software & Hardware'],
-                      ['Location', 'Limburg, The Netherlands'],
-                    ].map(([label, value]) => (
-                      <div key={label} className="flex justify-between items-baseline border-b border-white/[0.06] pb-3 last:border-0 last:pb-0">
-                        <span className="text-white/30 text-xs uppercase tracking-wider">{label}</span>
-                        <span className="text-white text-sm font-medium">{value}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Features */}
-                <div className="bg-white/[0.04] border border-white/10 p-6">
-                  <p className="text-white/30 text-xs uppercase tracking-wider mb-4">Studio Features</p>
-                  <div className="space-y-2.5">
-                    {[
-                      'Artistic studio with art made by Jonna Rincon',
-                      'Self-made studio environment',
-                      'Good vibes & creative atmosphere',
-                      'Mostly experienced in Dutch urban scene',
-                    ].map(feat => (
-                      <div key={feat} className="flex items-start gap-3">
-                        <div className="w-1.5 h-1.5 bg-red-600 rounded-full mt-1.5 flex-shrink-0" />
-                        <p className="text-white/60 text-sm">{feat}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Rate */}
-                <div className="bg-white/[0.05] border border-white/10 p-6 flex items-baseline justify-between">
-                  <p className="text-white/30 text-xs uppercase tracking-wider">Base Rate</p>
-                  <p className="text-white text-2xl font-black">
-                    €{service.rate}<span className="text-white/40 text-sm font-normal">/hour</span>
-                  </p>
-                </div>
-
-                <button
-                  onClick={() => setPage('calendar')}
-                  className="w-full py-4 bg-red-600 hover:bg-red-700 text-white font-bold uppercase tracking-widest text-sm flex items-center justify-center gap-2 transition-all hover:scale-[1.01]"
-                >
-                  Continue to Booking <ArrowRight size={18} />
-                </button>
               </div>
             ) : (
-              <div className="space-y-6">
+              <div className="max-w-2xl mx-auto space-y-6">
                 {/* Back */}
                 <button
                   onClick={() => setPage('overview')}
                   className="flex items-center gap-2 text-white/40 hover:text-white text-sm transition-colors"
                 >
-                  <ChevronLeft size={16} /> Back to overview
+                  <ChevronLeft size={16} /> {t('Back to overview', 'Terug naar overzicht')}
                 </button>
 
                 {/* Calendar */}
@@ -280,18 +298,18 @@ export default function StudioSessionPage() {
                   <div className="flex items-center gap-4 mt-4 pt-4 border-t border-white/10">
                     <div className="flex items-center gap-2">
                       <div className="w-3 h-3 bg-green-600/30 border border-green-600/40" />
-                      <span className="text-white/40 text-xs">Available</span>
+                      <span className="text-white/40 text-xs">{t('Available', 'Beschikbaar')}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <div className="w-3 h-3 bg-red-600" />
-                      <span className="text-white/40 text-xs">Selected</span>
+                      <span className="text-white/40 text-xs">{t('Selected', 'Geselecteerd')}</span>
                     </div>
                   </div>
                 </div>
 
                 {/* Duration */}
                 <div>
-                  <p className="text-white/30 text-xs uppercase tracking-wider mb-3">Select Duration</p>
+                  <p className="text-white/30 text-xs uppercase tracking-wider mb-3">{t('Select Duration', 'Selecteer Duur')}</p>
                   <div className="grid grid-cols-2 gap-3">
                     {hourRates.map(rate => (
                       <button
@@ -305,7 +323,7 @@ export default function StudioSessionPage() {
                       >
                         <p className="font-black text-lg">{rate.hours}h</p>
                         <p className="text-sm font-bold">€{rate.price}</p>
-                        <p className="text-xs text-white/40 mt-1">Studio session</p>
+                        <p className="text-xs text-white/40 mt-1">{t('Studio session', 'Studio sessie')}</p>
                       </button>
                     ))}
                   </div>
@@ -316,13 +334,13 @@ export default function StudioSessionPage() {
                   <div className="bg-white/[0.04] border border-white/10 p-4 space-y-2">
                     {selectedDate && (
                       <div className="flex justify-between text-sm">
-                        <span className="text-white/40">Date</span>
+                        <span className="text-white/40">{t('Date', 'Datum')}</span>
                         <span className="text-white font-medium">{selectedDate}</span>
                       </div>
                     )}
                     {selectedRate && (
                       <div className="flex justify-between text-sm">
-                        <span className="text-white/40">Duration</span>
+                        <span className="text-white/40">{t('Duration', 'Duur')}</span>
                         <span className="text-white font-medium">{selectedRate.hours}h — €{selectedRate.price}</span>
                       </div>
                     )}
@@ -339,7 +357,7 @@ export default function StudioSessionPage() {
                   }`}
                 >
                   <Send size={18} />
-                  {isSubmitting ? 'Sending...' : `Book Session${selectedRate ? ` — €${selectedRate.price}` : ''}`}
+                  {isSubmitting ? t('Sending...', 'Verzenden...') : `${t('Book Session', 'Boek Sessie')}${selectedRate ? ` — €${selectedRate.price}` : ''}`}
                 </button>
               </div>
             )}

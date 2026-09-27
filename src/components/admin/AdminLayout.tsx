@@ -96,7 +96,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     },
     {
       label: 'JONNA RINCON PANEL',
-      subtitle: 'Projects, Agenda, Analytics & More',
+      subtitle: 'Agenda, Analytics & More',
       action: () => setExpandedPanel(!expandedPanel),
       submenu: [
         { label: 'Panel', subtitle: 'Jonna Rincon overzicht', href: '/admin/jonna-rincon-panel' },

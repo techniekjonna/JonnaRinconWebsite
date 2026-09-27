@@ -4,16 +4,13 @@ import ManagerLayout from '../../components/manager/ManagerLayout';
 import { AgendaContent } from './AgendaPage';
 import { SocialPlannerContent } from './ContentPage';
 import ComingUpTab from '../../components/admin/ComingUpTab';
-import TaskBoard from '../../components/admin/TaskBoard';
-import WorkProjectsSection from '../../components/admin/WorkProjectsSection';
 import {
-  LayoutDashboard, Clock, Briefcase,
-  Calendar, Instagram, Star, FolderKanban, ClipboardList,
+  LayoutDashboard, Clock,
+  Calendar, Instagram, Star,
 } from 'lucide-react';
 
-type MainTab = 'overview' | 'agenda' | 'work';
+type MainTab = 'overview' | 'agenda';
 type AgendaSub = 'calendar' | 'social' | 'coming-up';
-type WorkSub = 'projects' | 'tasks';
 
 interface SubSectionDef {
   id: string;
@@ -26,11 +23,6 @@ const AGENDA_SECTIONS: SubSectionDef[] = [
   { id: 'calendar',  label: 'Agenda',              sublabel: 'Planning & beschikbaarheid', icon: <Calendar size={16} /> },
   { id: 'social',    label: 'Social Media Planner', sublabel: 'Content planning',           icon: <Instagram size={16} /> },
   { id: 'coming-up', label: 'Coming Up',            sublabel: 'Releases & events',          icon: <Star size={16} /> },
-];
-
-const WORK_SECTIONS: SubSectionDef[] = [
-  { id: 'projects', label: 'Projects', sublabel: 'Muziekproductieprojecten', icon: <FolderKanban size={16} /> },
-  { id: 'tasks',    label: 'Tasks',    sublabel: 'Takenbord',                icon: <ClipboardList size={16} /> },
 ];
 
 function SectionLanding({ sections, onNavigate, title, sublabel }: {
@@ -95,7 +87,6 @@ function SubNav({ sections, activeId, onSelect }: {
 function OverviewContent({ onNavigate }: { onNavigate: (s: MainTab) => void }) {
   const groups: { id: MainTab; label: string; sublabel: string; icon: React.ReactNode }[] = [
     { id: 'agenda', label: 'TIME', sublabel: 'Agenda, Social, Coming Up', icon: <Clock size={16} /> },
-    { id: 'work',   label: 'WORK', sublabel: 'Projects & taken',          icon: <Briefcase size={16} /> },
   ];
   return (
     <div className="space-y-8">
@@ -103,7 +94,7 @@ function OverviewContent({ onNavigate }: { onNavigate: (s: MainTab) => void }) {
         <h2 className="text-2xl font-bold text-white">Welkom, Jonna</h2>
         <p className="text-sm text-white/40 mt-1">Kies een onderdeel om mee te starten.</p>
       </div>
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
         {groups.map((g) => (
           <button
             key={g.id}
@@ -122,15 +113,13 @@ function OverviewContent({ onNavigate }: { onNavigate: (s: MainTab) => void }) {
   );
 }
 
-export function JonnaRinconPanelContent({ isAdmin = true }: { isAdmin?: boolean }) {
+export function JonnaRinconPanelContent() {
   const [activeMain, setActiveMain]     = useState<MainTab>('overview');
   const [activeAgendaSub, setAgendaSub] = useState<AgendaSub | null>(null);
-  const [activeWorkSub, setWorkSub]     = useState<WorkSub | null>(null);
 
   const handleMainTab = (tab: MainTab) => {
     setActiveMain(tab);
     if (tab === 'agenda') setAgendaSub(null);
-    if (tab === 'work')   setWorkSub(null);
   };
 
   function renderAgenda() {
@@ -154,30 +143,9 @@ export function JonnaRinconPanelContent({ isAdmin = true }: { isAdmin?: boolean 
     );
   }
 
-  function renderWork() {
-    if (!activeWorkSub) {
-      return (
-        <SectionLanding
-          sections={WORK_SECTIONS}
-          onNavigate={(id) => setWorkSub(id as WorkSub)}
-          title="WORK"
-          sublabel="Werkgericht — kies een onderdeel"
-        />
-      );
-    }
-    return (
-      <>
-        <SubNav sections={WORK_SECTIONS} activeId={activeWorkSub} onSelect={(id) => setWorkSub(id as WorkSub)} />
-        {activeWorkSub === 'projects' && <WorkProjectsSection isAdmin={isAdmin} />}
-        {activeWorkSub === 'tasks'    && <TaskBoard />}
-      </>
-    );
-  }
-
   const mainTabs: { id: MainTab; label: string; icon: React.ReactNode }[] = [
     { id: 'overview', label: 'Overzicht', icon: <LayoutDashboard size={15} /> },
     { id: 'agenda',   label: 'TIME',      icon: <Clock size={15} /> },
-    { id: 'work',     label: 'WORK',      icon: <Briefcase size={15} /> },
   ];
 
   return (
@@ -210,7 +178,6 @@ export function JonnaRinconPanelContent({ isAdmin = true }: { isAdmin?: boolean 
       <main className="flex-1 min-w-0">
         {activeMain === 'overview' && <OverviewContent onNavigate={handleMainTab} />}
         {activeMain === 'agenda'   && renderAgenda()}
-        {activeMain === 'work'     && renderWork()}
       </main>
     </div>
   );
@@ -219,7 +186,7 @@ export function JonnaRinconPanelContent({ isAdmin = true }: { isAdmin?: boolean 
 export default function JonnaRinconPanelPage() {
   return (
     <AdminLayout>
-      <JonnaRinconPanelContent isAdmin={true} />
+      <JonnaRinconPanelContent />
     </AdminLayout>
   );
 }
@@ -227,7 +194,7 @@ export default function JonnaRinconPanelPage() {
 export function ManagerJonnaRinconPanelPage() {
   return (
     <ManagerLayout>
-      <JonnaRinconPanelContent isAdmin={false} />
+      <JonnaRinconPanelContent />
     </ManagerLayout>
   );
 }

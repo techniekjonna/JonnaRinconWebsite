@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import Footer from '../components/Footer';
 import { Mail, Phone, MapPin, ChevronLeft, ChevronRight, Send, Check, Instagram, Youtube, Music2, ExternalLink } from 'lucide-react';
 import { useScrollToTop } from '../hooks/useScrollToTop';
@@ -60,6 +61,7 @@ export default function ContactPage() {
   useScrollToTop();
   const { categories } = useContactCategories();
   const t = useT();
+  const location = useLocation();
 
   const contactInfo = [
     {
@@ -89,6 +91,15 @@ export default function ContactPage() {
   const [email, setEmail] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(false);
+
+  // Arriving from a beat's "Contact" button — prefill the message with which
+  // beat this is about, leaving room for the customer's own text below it.
+  useEffect(() => {
+    const beatTitle = (location.state as { beatTitle?: string } | null)?.beatTitle;
+    if (beatTitle) {
+      setMessage(`${t('Regarding beat:', 'Over beat:')} "${beatTitle}"\n\n`);
+    }
+  }, [location.state, t]);
 
   const canSendMessage = selectedCategory && message.trim().length > 0;
 
