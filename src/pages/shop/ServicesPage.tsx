@@ -114,17 +114,16 @@ const ServicesPage: React.FC = () => {
               <div className="text-white/50">No services available at the moment.</div>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
+            <div className="flex flex-col gap-4">
               {formattedServices.map((service) => {
                 const Icon = getIcon(service.icon);
                 return (
-                  <button
+                  <div
                     key={service.id}
-                    onClick={() => handleServiceClick(service)}
-                    className="group relative bg-black border border-white/[0.07] rounded-2xl p-6 md:p-7 hover:border-red-600/30 hover:bg-[#111] transition-all duration-400 hover:-translate-y-0.5 hover:shadow-[0_16px_40px_rgba(0,0,0,0.4)] flex flex-col text-left cursor-pointer"
+                    className="group relative bg-black border border-white/[0.07] rounded-2xl p-6 hover:border-red-600/30 hover:bg-[#111] transition-all duration-400 flex flex-col sm:flex-row sm:items-center gap-5"
                   >
                     {service.coverUrl ? (
-                      <div className="w-14 h-14 rounded-2xl overflow-hidden mb-6 group-hover:scale-110 transition-transform duration-300 flex-shrink-0">
+                      <div className="w-16 h-16 rounded-2xl overflow-hidden flex-shrink-0">
                         <img
                           src={service.coverUrl}
                           alt={service.name}
@@ -133,29 +132,34 @@ const ServicesPage: React.FC = () => {
                       </div>
                     ) : (
                       <div
-                        className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${service.gradient} flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300`}
+                        className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${service.gradient} flex items-center justify-center flex-shrink-0`}
                       >
-                        <Icon className="w-7 h-7 text-white" />
+                        <Icon className="w-8 h-8 text-white" />
                       </div>
                     )}
 
-                    <h3 className="text-xl font-black text-white mb-3 uppercase tracking-tight">
-                      {service.name}
-                    </h3>
-                    <p className="text-white/50 text-sm leading-relaxed mb-6 flex-1">
-                      {service.description}
-                    </p>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-xl font-black text-white mb-1.5 uppercase tracking-tight">
+                        {service.name}
+                      </h3>
+                      <p className="text-white/50 text-sm leading-relaxed">
+                        {service.description}
+                      </p>
+                    </div>
 
-                    <div className="flex items-center justify-between pt-6 border-t border-white/[0.06]">
+                    <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-3 sm:gap-2.5 flex-shrink-0 pt-4 sm:pt-0 border-t sm:border-t-0 border-white/[0.06] sm:pl-6 sm:border-l">
                       <span className="text-sm text-white/30 font-bold uppercase tracking-wider">
                         {service.displayRate}
                       </span>
-                      <span className="flex items-center gap-2 text-xs text-white/40 group-hover:text-red-400 transition-colors font-bold uppercase tracking-wider group-hover:gap-3">
+                      <button
+                        onClick={() => handleServiceClick(service)}
+                        className="inline-flex items-center gap-2 px-5 py-2.5 bg-red-600 hover:bg-red-500 text-white rounded-xl font-bold text-xs uppercase tracking-widest transition-all hover:scale-[1.03] flex-shrink-0"
+                      >
                         {service.cta}
-                        <ArrowRight size={16} />
-                      </span>
+                        <ArrowRight size={14} />
+                      </button>
                     </div>
-                  </button>
+                  </div>
                 );
               })}
             </div>
