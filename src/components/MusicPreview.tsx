@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import { Play, Pause, SkipForward, Lock, Music, Radio, Disc3 } from 'lucide-react';
 import { useBeats } from '../hooks/useBeats';
 import { useTracks } from '../hooks/useTracks';
@@ -333,17 +334,17 @@ export default function MusicPreview() {
 
           <p className="text-white/25 text-xs text-center leading-relaxed">
             or listen to all the{' '}
-            <a href="/catalogue" className="text-white/60 font-bold hover:text-red-400 transition-colors">Tracks</a>
+            <Link to="/catalogue" className="text-white/60 font-bold hover:text-red-400 transition-colors">Tracks</Link>
             {', '}
-            <a href="/catalogue" className="text-white/60 font-bold hover:text-red-400 transition-colors">Remixes</a>
+            <Link to="/catalogue" className="text-white/60 font-bold hover:text-red-400 transition-colors">Remixes</Link>
             {' '}or{' '}
-            <a href="/shop/beats" className="text-white/60 font-bold hover:text-red-400 transition-colors">Beats</a>
+            <Link to="/shop/beats" className="text-white/60 font-bold hover:text-red-400 transition-colors">Beats</Link>
           </p>
         </div>
 
         {/* Mix master CTA */}
-        <a
-          href="/shop/services"
+        <Link
+          to="/shop/services"
           className="flex items-center justify-between px-4 py-4 border border-white/10 hover:border-red-600/40 bg-white/[0.03] hover:bg-white/[0.06] transition-all duration-300 group"
         >
           <span className="text-white/40 text-sm group-hover:text-white/70 transition-colors">
@@ -352,7 +353,7 @@ export default function MusicPreview() {
           <span className="text-red-500 text-sm font-bold uppercase tracking-widest group-hover:text-red-400 transition-colors">
             Click here →
           </span>
-        </a>
+        </Link>
       </div>
 
       {/* Gate modal */}
@@ -368,13 +369,13 @@ export default function MusicPreview() {
             <div className="flex flex-col gap-3">
               {isAuthenticated ? (
                 <>
-                  <a href="/catalogue" className="py-3 bg-red-600 hover:bg-red-700 text-white font-bold uppercase tracking-widest text-sm transition-all">Full Music</a>
-                  <a href="/shop/beats" className="py-3 bg-white/10 border border-white/20 text-white font-bold uppercase tracking-widest text-sm hover:bg-white/20 transition-all">Beat Shop</a>
+                  <Link to="/catalogue" className="py-3 bg-red-600 hover:bg-red-700 text-white font-bold uppercase tracking-widest text-sm transition-all">Full Music</Link>
+                  <Link to="/shop/beats" className="py-3 bg-white/10 border border-white/20 text-white font-bold uppercase tracking-widest text-sm hover:bg-white/20 transition-all">Beat Shop</Link>
                 </>
               ) : (
                 <>
-                  <a href="/login" className="py-3 bg-red-600 hover:bg-red-700 text-white font-bold uppercase tracking-widest text-sm transition-all">Log In</a>
-                  <a href="/register" className="py-3 bg-white/10 border border-white/20 text-white font-bold uppercase tracking-widest text-sm hover:bg-white/20 transition-all">Create Account</a>
+                  <Link to="/login" className="py-3 bg-red-600 hover:bg-red-700 text-white font-bold uppercase tracking-widest text-sm transition-all">Log In</Link>
+                  <Link to="/register" className="py-3 bg-white/10 border border-white/20 text-white font-bold uppercase tracking-widest text-sm hover:bg-white/20 transition-all">Create Account</Link>
                 </>
               )}
               <button onClick={() => setShowGate(false)} className="text-white/30 text-xs hover:text-white/60 transition-colors">Maybe later</button>

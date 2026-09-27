@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { X, Play, Pause, Download, ChevronDown, Plus, Dice5 } from 'lucide-react';
 import { getCurrentTrack } from './GlobalAudioPlayer';
 import { useAuth } from '../hooks/useAuth';
@@ -296,9 +296,9 @@ export default function TrackDetailModal({
               {/* Mixed & Mastered */}
               <p className="text-white/60 text-xs md:text-sm mb-6">
                 <span className="font-bold">Mixed & Mastered</span> by{' '}
-                <a href="/services" className="text-red-400 hover:text-red-300 underline font-semibold transition-colors">
+                <Link to="/shop/services" className="text-red-400 hover:text-red-300 underline font-semibold transition-colors">
                   Jonna Rincon
-                </a>
+                </Link>
               </p>
 
               {/* Duration */}

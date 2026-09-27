@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { ArrowRight, Play, Mail } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { ArrowRight, Briefcase, Mail } from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom';
 import { hasHomeIntroPlayed } from '../lib/homeIntroState';
 
 export default function Hero() {
@@ -35,24 +35,24 @@ export default function Hero() {
 
         {/* CTAs */}
         <div className="flex flex-col sm:flex-row gap-3">
-          {/* Shop button */}
+          {/* Shop Beats button */}
           <button
-            onClick={() => navigate('/shop')}
+            onClick={() => navigate('/shop/beats')}
             className="flex items-center justify-center py-3.5 bg-red-600 text-white font-bold text-sm uppercase tracking-widest hover:bg-red-700 transition-all duration-300 hover:scale-105 active:scale-95 rounded-xl"
             style={{ width: '220px', paddingLeft: '20px', paddingRight: '12px' }}
           >
-            <span className="flex-1 text-center whitespace-nowrap">Shop</span>
+            <span className="flex-1 text-center whitespace-nowrap">Shop Beats</span>
             <ArrowRight size={16} className="flex-shrink-0 ml-2" />
           </button>
 
-          {/* Listen Now — static, no cycling */}
+          {/* Services */}
           <button
-            onClick={() => navigate('/catalogue')}
+            onClick={() => navigate('/shop/services')}
             className="flex items-center justify-center gap-2 py-3.5 bg-white/10 border border-white/20 text-white font-bold text-sm uppercase tracking-widest hover:bg-white/20 transition-all duration-300 hover:scale-105 active:scale-95 backdrop-blur-sm rounded-xl"
             style={{ width: '220px' }}
           >
-            <Play size={16} className="flex-shrink-0" />
-            Listen Now
+            <Briefcase size={16} className="flex-shrink-0" />
+            Services
           </button>
         </div>
 
@@ -66,14 +66,14 @@ export default function Hero() {
             Contact
           </button>
 
-          <a href="/studio-session" className="group flex items-center gap-2">
+          <Link to="/studio-session" className="group flex items-center gap-2">
             <span className="text-white/35 text-xs uppercase tracking-widest group-hover:text-red-500 transition-colors duration-300">
               Studio session with Jonna?
             </span>
             <span className="text-white/70 text-xs font-bold uppercase tracking-widest group-hover:text-white group-hover:[text-shadow:0_0_12px_rgba(255,255,255,0.6)] transition-all duration-300">
               Book here →
             </span>
-          </a>
+          </Link>
         </div>
       </div>
     </section>
