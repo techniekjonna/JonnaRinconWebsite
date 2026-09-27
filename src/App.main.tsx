@@ -31,7 +31,6 @@ import TracksPage from './pages/TracksPage';
 import RemixesPage from './pages/RemixesPage';
 import ReleasesPage from './pages/ReleasesPage';
 import DownloadGatePage from './pages/DownloadGatePage';
-import SocialsPage from './pages/SocialsPage';
 import ContactPage from './pages/ContactPage';
 import CataloguePage from './pages/CataloguePage';
 import DJSetsPage from './pages/DJSetsPage';
@@ -233,7 +232,7 @@ const MainApp: React.FC = () => {
                   <Route path="/about" element={<AboutMePage />} />
                   <Route path="/releases" element={<ReleasesPage />} />
                   <Route path="/download/:trackId" element={<DownloadGatePage />} />
-                  <Route path="/socials" element={<SocialsPage />} />
+                  <Route path="/socials" element={<Navigate to="/contact" replace />} />
                   <Route path="/contact" element={<ContactPage />} />
                   <Route path="/studio-session" element={<StudioSessionPage />} />
                   <Route path="/mix-master" element={<MixMasterPage />} />

@@ -1,12 +1,57 @@
 import { useState } from 'react';
 import Footer from '../components/Footer';
-import { Mail, Phone, MapPin, ChevronLeft, ChevronRight, Send, Check } from 'lucide-react';
+import { Mail, Phone, MapPin, ChevronLeft, ChevronRight, Send, Check, Instagram, Youtube, Music2, ExternalLink } from 'lucide-react';
 import { useScrollToTop } from '../hooks/useScrollToTop';
 import { useContactCategories } from '../hooks/useContactCategories';
 import { db } from '../lib/firebase/config';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 
 const MAX_MESSAGE_LENGTH = 3000; // roughly one A4 page of text
+
+const platforms = [
+  {
+    name: 'Instagram',
+    handle: '@jonnarincon',
+    icon: Instagram,
+    url: 'https://www.instagram.com/jonnarincon/',
+    color: 'from-purple-600 via-pink-500 to-orange-400',
+  },
+  {
+    name: 'YouTube',
+    handle: 'Jonna Rincon',
+    icon: Youtube,
+    url: 'https://www.youtube.com/jonnarincon',
+    color: 'from-red-600 to-red-500',
+  },
+  {
+    name: 'Spotify',
+    handle: 'Jonna Rincon',
+    icon: Music2,
+    url: 'https://open.spotify.com/artist/6o3BlWTeK4EKUyByo35y6F',
+    color: 'from-green-600 to-green-500',
+  },
+  {
+    name: 'SoundCloud',
+    handle: 'jonnarincon',
+    icon: Music2,
+    url: 'https://soundcloud.com/jonnarincon',
+    color: 'from-orange-500 to-orange-400',
+  },
+  {
+    name: 'TikTok',
+    handle: '@jonnarincon',
+    icon: Music2,
+    url: '#',
+    color: 'from-cyan-500 to-pink-500',
+  },
+  {
+    name: 'Apple Music',
+    handle: 'Jonna Rincon',
+    icon: Music2,
+    url: '#',
+    color: 'from-pink-500 to-red-500',
+  },
+];
 
 type ContactStep = 'compose' | 'details' | 'sent';
 
@@ -70,7 +115,7 @@ export default function ContactPage() {
       <div className="relative pt-[120px] md:pt-[160px] pb-12 px-6 md:px-10">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-4xl md:text-6xl font-black uppercase mb-4 tracking-tight">
-            Get In Touch
+            Contact Me
           </h1>
           <p className="text-white/60 text-lg md:text-xl mb-12">
             Have a serious inquiry? Fill out the form below and we'll get back to you as soon as possible.
@@ -116,6 +161,35 @@ export default function ContactPage() {
                 </a>
               );
             })}
+          </div>
+
+          {/* Follow */}
+          <div className="text-center mb-4">
+            <p className="text-xs font-black uppercase tracking-[0.4em] text-white/30 mb-5">Follow</p>
+            <div className="flex flex-wrap gap-3 justify-center">
+              {platforms.map((platform) => {
+                const Icon = platform.icon;
+                return (
+                  <a
+                    key={platform.name}
+                    href={platform.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title={`${platform.name} — ${platform.handle}`}
+                    className="group flex items-center gap-2.5 px-4 py-2.5 bg-white/[0.05] border border-white/[0.08] rounded-2xl hover:bg-white/[0.10] hover:border-white/[0.15] transition-all duration-300"
+                  >
+                    <div className={`w-7 h-7 rounded-xl bg-gradient-to-br ${platform.color} flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-300`}>
+                      <Icon className="w-3.5 h-3.5 text-white" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold text-white truncate leading-none">{platform.name}</p>
+                      <p className="text-[10px] text-white/30 truncate leading-none mt-1.5">{platform.handle}</p>
+                    </div>
+                    <ExternalLink size={11} className="text-white/20 group-hover:text-white/50 transition-colors flex-shrink-0" />
+                  </a>
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>

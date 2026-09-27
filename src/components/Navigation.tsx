@@ -214,9 +214,10 @@ export default function Navigation({ cartItemCount = 0, onCartClick, isDarkOverl
   const useBlackNav = false;
 
   const menuItems: { label: string; subtitle: string; href?: string; action?: () => void; submenu?: Array<{ label: string; subtitle: string; href: string; action?: () => void }>; expanded?: boolean; mobileOnly?: boolean }[] = [
-    { label: 'SHOP', subtitle: 'Browse our catalog', action: () => { closeMenu(); navigate('/shop'); } },
+    { label: 'BEATS', subtitle: 'Premium beats, ready to license', action: () => { closeMenu(); navigate('/shop/beats'); } },
+    { label: 'SERVICES', subtitle: 'Studio session & mix/master', action: () => { closeMenu(); navigate('/shop/services'); } },
     { label: 'MUSIC', subtitle: 'Tracks, remixes & DJ sets', action: () => { closeMenu(); navigate('/catalogue'); } },
-    { label: 'GET IN TOUCH', subtitle: 'Connect with Jonna', action: () => { closeMenu(); navigate('/contact'); } },
+    { label: 'CONTACT ME', subtitle: 'Connect with Jonna', action: () => { closeMenu(); navigate('/contact'); } },
   ];
 
   const socialLinks = [
@@ -224,7 +225,6 @@ export default function Navigation({ cartItemCount = 0, onCartClick, isDarkOverl
     { label: 'YouTube', href: 'https://www.youtube.com/jonnarincon' },
     { label: 'Spotify', href: 'https://open.spotify.com/artist/6o3BlWTeK4EKUyByo35y6F' },
     { label: 'SoundCloud', href: 'https://soundcloud.com/jonnarincon' },
-    { label: 'Shops', href: '/shop', internal: true },
   ];
 
   const menuVisible = isMenuOpen || isMenuClosing;

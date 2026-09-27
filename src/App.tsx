@@ -26,10 +26,10 @@ function App() {
     <div className="min-h-screen text-white">
       <main className="pt-20">
         <div id="hero"><Hero /></div>
+        <About />
+        <MusicPreview />
         <SectionCards />
         <PromoSection />
-        <MusicPreview />
-        <About />
         <Footer />
       </main>
     </div>

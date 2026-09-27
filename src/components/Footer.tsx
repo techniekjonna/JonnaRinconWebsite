@@ -33,8 +33,7 @@ export default function Footer() {
               <a href="/studio-session" className="block text-white/30 hover:text-white transition-colors text-sm">Studio Session</a>
               <a href="/mix-master" className="block text-white/30 hover:text-white transition-colors text-sm">Mix &amp; Master</a>
               <a href="/about" className="block text-white/30 hover:text-white transition-colors text-sm">About</a>
-              <a href="/contact" className="block text-white/30 hover:text-white transition-colors text-sm">Contact</a>
-              <a href="/socials" className="block text-white/30 hover:text-white transition-colors text-sm">Socials</a>
+              <a href="/contact" className="block text-white/30 hover:text-white transition-colors text-sm">Contact Me</a>
             </div>
           </div>
 
