@@ -7,6 +7,15 @@ const BackgroundRenderer: React.FC = () => {
   const { activeBackground } = useBackground();
   const [imageUrl, setImageUrl] = useState<string>(FALLBACK_URL);
 
+  // Reveal the photo sharp for a beat before blurring it — this component
+  // is mounted once for the whole session, so this only ever plays on a
+  // real page load, never on SPA navigation between routes.
+  const [blurred, setBlurred] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setBlurred(true), 400);
+    return () => clearTimeout(t);
+  }, []);
+
   useEffect(() => {
     const url = activeBackground?.imageUrl || FALLBACK_URL;
     if (url === imageUrl) return;
@@ -49,8 +58,9 @@ const BackgroundRenderer: React.FC = () => {
           objectFit: 'cover',
           objectPosition: 'center',
           display: 'block',
-          filter: 'blur(14px)',
+          filter: blurred ? 'blur(14px)' : 'blur(0px)',
           transform: 'scale(1.1)',
+          transition: 'filter 1.4s ease',
         }}
       />
     </div>

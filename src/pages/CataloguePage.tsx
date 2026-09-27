@@ -187,62 +187,8 @@ export default function CataloguePage() {
   }, [isAuthenticated, handlePlayTrack]);
 
   const isLoading = tracksLoading || remixesLoading;
-  const [splashDone, setSplashDone] = useState(false);
-  const [splashFading, setSplashFading] = useState(false);
-  const splashStartRef = useState(() => Date.now())[0];
-
-  useEffect(() => {
-    if (!isLoading && !splashDone) {
-      const elapsed = Date.now() - splashStartRef;
-      const remaining = Math.max(0, 1500 - elapsed);
-      const t = setTimeout(() => {
-        setSplashFading(true);
-        setTimeout(() => setSplashDone(true), 600);
-      }, remaining);
-      return () => clearTimeout(t);
-    }
-  }, [isLoading, splashDone]);
-
   return (
     <div className="min-h-screen text-white">
-      {/* Welcome loading splash */}
-      {!splashDone && (
-        <div
-          className="fixed inset-0 z-50 flex flex-col items-center justify-center px-6"
-          style={{
-            backdropFilter: 'blur(32px) saturate(140%)',
-            WebkitBackdropFilter: 'blur(32px) saturate(140%)',
-            background: 'rgba(0,0,0,0.12)',
-            opacity: splashFading ? 0 : 1,
-            transition: 'opacity 0.6s ease',
-            pointerEvents: splashFading ? 'none' : 'auto',
-          }}
-        >
-          <div className="flex flex-col items-center max-w-md text-center px-8 py-10 rounded-3xl border border-white/10 bg-white/[0.06] shadow-2xl">
-            {/* Waveform loader */}
-            <div className="flex items-end gap-[3px] h-8 mb-7">
-              {[10, 18, 24, 14, 28, 16, 22, 12].map((h, i) => (
-                <div
-                  key={i}
-                  className="w-[3px] rounded-full bg-red-500 animate-waveform-bar"
-                  style={{
-                    height: `${h}px`,
-                    boxShadow: '0 0 6px rgba(239,68,68,0.6)',
-                    animationDuration: '0.9s',
-                    animationDelay: `${i * 0.08}s`,
-                  }}
-                />
-              ))}
-            </div>
-            <p className="text-white/70 text-xs md:text-sm font-light tracking-wider mb-3">
-              Welcome to my catalogue, this is not fast food music.<br />
-              Take your time and have a listen.
-            </p>
-            <p className="text-white/30 text-xs tracking-widest uppercase">— Jonathan (Jonna Rincon)</p>
-          </div>
-        </div>
-      )}
-
       <LoginModal isOpen={isLoginModalOpen} onClose={() => setIsLoginModalOpen(false)} />
 
       <TrackDetailModal

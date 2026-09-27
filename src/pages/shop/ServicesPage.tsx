@@ -8,7 +8,7 @@ import { useServices } from '../../hooks/useServices';
 import { Service } from '../../lib/firebase/types';
 import { useScrollToTop } from '../../hooks/useScrollToTop';
 
-const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
+const iconMap: Record<string, typeof Zap> = {
   Zap,
   Headphones,
   Music,
@@ -17,7 +17,7 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   Palette,
 };
 
-const getIcon = (iconName: string): React.ComponentType<{ className?: string }> => {
+const getIcon = (iconName: string): typeof Zap => {
   return iconMap[iconName] || Zap;
 };
 
@@ -102,7 +102,9 @@ const ServicesPage: React.FC = () => {
         </div>
       </section>
 
-      {/* Services Grid */}
+      {/* Services — big, spacious rows matching the homepage sections rather
+          than a compact scrollable list; there are only ever a couple of
+          these, so they should feel generous, not efficient */}
       <section className="px-6 md:px-12 py-10 md:py-14">
         <div className="max-w-7xl mx-auto">
           {loading ? (
@@ -114,50 +116,65 @@ const ServicesPage: React.FC = () => {
               <div className="text-white/50">No services available at the moment.</div>
             </div>
           ) : (
-            <div className="flex flex-col gap-4">
-              {formattedServices.map((service) => {
+            <div className="flex flex-col gap-16 md:gap-24">
+              {formattedServices.map((service, i) => {
                 const Icon = getIcon(service.icon);
+                const reverse = i % 2 === 1;
                 return (
                   <div
                     key={service.id}
-                    className="group relative bg-black border border-white/[0.07] rounded-2xl p-6 hover:border-red-600/30 hover:bg-[#111] transition-all duration-400 flex flex-col sm:flex-row sm:items-center gap-5"
+                    className="max-w-[1100px] mx-auto grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-14 items-center w-full"
                   >
-                    {service.coverUrl ? (
-                      <div className="w-16 h-16 rounded-2xl overflow-hidden flex-shrink-0">
-                        <img
-                          src={service.coverUrl}
-                          alt={service.name}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                    ) : (
-                      <div
-                        className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${service.gradient} flex items-center justify-center flex-shrink-0`}
-                      >
-                        <Icon className="w-8 h-8 text-white" />
-                      </div>
-                    )}
-
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-xl font-black text-white mb-1.5 uppercase tracking-tight">
+                    {/* Text */}
+                    <div className={reverse ? 'lg:order-2' : ''}>
+                      <p className="text-xs font-black uppercase tracking-[0.4em] text-red-500 mb-3 flex items-center gap-2">
+                        <Icon size={13} />
+                        Service
+                      </p>
+                      <h2 className="text-3xl md:text-5xl font-black text-white tracking-tighter mb-5 leading-tight">
                         {service.name}
-                      </h3>
-                      <p className="text-white/50 text-sm leading-relaxed">
+                      </h2>
+                      <p className="text-white/60 text-base leading-relaxed mb-8 max-w-md">
                         {service.description}
                       </p>
+                      <div className="flex items-center gap-5 flex-wrap">
+                        <button
+                          onClick={() => handleServiceClick(service)}
+                          className="inline-flex items-center gap-2 px-6 py-3 bg-white/10 border border-white/20 text-white font-black text-xs uppercase tracking-widest hover:bg-white/20 transition-all duration-300 rounded-full"
+                        >
+                          {service.cta}
+                          <ArrowRight size={14} />
+                        </button>
+                        <span className="text-sm text-white/30 font-bold uppercase tracking-wider">
+                          {service.displayRate}
+                        </span>
+                      </div>
                     </div>
 
-                    <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-3 sm:gap-2.5 flex-shrink-0 pt-4 sm:pt-0 border-t sm:border-t-0 border-white/[0.06] sm:pl-6 sm:border-l">
-                      <span className="text-sm text-white/30 font-bold uppercase tracking-wider">
-                        {service.displayRate}
-                      </span>
-                      <button
-                        onClick={() => handleServiceClick(service)}
-                        className="inline-flex items-center gap-2 px-5 py-2.5 bg-red-600 hover:bg-red-500 text-white rounded-xl font-bold text-xs uppercase tracking-widest transition-all hover:scale-[1.03] flex-shrink-0"
+                    {/* Image — desaturated and darkened with a soft radial
+                        mask, matching the homepage sections */}
+                    <div className={`relative aspect-[4/3] ${reverse ? 'lg:order-1' : ''}`}>
+                      <div
+                        className="absolute inset-0"
+                        style={{
+                          maskImage: 'radial-gradient(ellipse 62% 62% at 50% 45%, black 8%, transparent 92%)',
+                          WebkitMaskImage: 'radial-gradient(ellipse 62% 62% at 50% 45%, black 8%, transparent 92%)',
+                        }}
                       >
-                        {service.cta}
-                        <ArrowRight size={14} />
-                      </button>
+                        {service.coverUrl ? (
+                          <img
+                            src={service.coverUrl}
+                            alt={service.name}
+                            className="w-full h-full object-cover"
+                            style={{ filter: 'grayscale(1) contrast(1.25) brightness(0.4)' }}
+                          />
+                        ) : (
+                          <div className={`w-full h-full bg-gradient-to-br ${service.gradient} flex items-center justify-center`}>
+                            <Icon className="w-20 h-20 text-white/80" />
+                          </div>
+                        )}
+                        <div className="absolute inset-0 bg-gradient-to-b from-red-950/25 via-transparent to-black/50" />
+                      </div>
                     </div>
                   </div>
                 );

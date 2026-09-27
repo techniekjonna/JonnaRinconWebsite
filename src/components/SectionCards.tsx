@@ -39,7 +39,7 @@ const SECTIONS = [
     title: 'Contact Me',
     description: 'Got a project, collab or question? Reach out directly — bookings, business or just to say hi.',
     icon: Mail,
-    image: '/Maastricht Screenshot 15-12-25.png',
+    image: '/DJ Screenshot 3-2-26.png',
     cta: 'Contact Me',
     link: '/contact',
   },
@@ -77,16 +77,26 @@ function SectionRow({ section, reverse }: { section: typeof SECTIONS[number]; re
         </Link>
       </div>
 
-      {/* Image */}
-      <div className={`relative aspect-[4/3] overflow-hidden rounded-2xl border border-white/10 ${reverse ? 'lg:order-1' : ''}`}>
-        <img
-          src={section.image}
-          alt={section.title}
-          className="absolute inset-0 w-full h-full object-cover"
-          loading="lazy"
-          decoding="async"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+      {/* Image — desaturated and darkened with a soft radial mask so it
+          blends into the page, matching the About section's photo */}
+      <div className={`relative aspect-[4/3] ${reverse ? 'lg:order-1' : ''}`}>
+        <div
+          className="absolute inset-0"
+          style={{
+            maskImage: 'radial-gradient(ellipse 62% 62% at 50% 45%, black 8%, transparent 92%)',
+            WebkitMaskImage: 'radial-gradient(ellipse 62% 62% at 50% 45%, black 8%, transparent 92%)',
+          }}
+        >
+          <img
+            src={section.image}
+            alt={section.title}
+            className="w-full h-full object-cover"
+            loading="lazy"
+            decoding="async"
+            style={{ filter: 'grayscale(1) contrast(1.25) brightness(0.4)' }}
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-red-950/25 via-transparent to-black/50" />
+        </div>
       </div>
     </div>
   );
