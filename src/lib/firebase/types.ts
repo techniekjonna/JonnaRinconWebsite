@@ -113,6 +113,18 @@ export interface Beat {
   featured: boolean;
   trending: boolean;
 
+  // Visibility — controls whether the beat appears in public listings/search.
+  // 'public' (default): normal, listed everywhere.
+  // 'private-link': hidden from all public listings, but the detail page still
+  //   loads for anyone with the direct URL. Labeled "Super Exclusive" on site.
+  // 'private-user': hidden from listings AND the detail page only renders for
+  //   the specific allowedUserId (plus admin/manager). Labeled "VIP Exclusive".
+  // This is app-level (client-side route/query) gating, matching how the rest
+  // of this app enforces access — it is not a database-level security rule.
+  visibility?: 'public' | 'private-link' | 'private-user';
+  allowedUserId?: string;
+  allowedUserEmail?: string; // display convenience, set alongside allowedUserId
+
   // Stats
   plays: number;
   downloads: number;
@@ -1174,6 +1186,39 @@ export interface Project {
   updatedAt: Timestamp;
   createdBy: string;
   lastUpdatedBy: string;
+}
+
+// ============================================
+// CLIENT DELIVERABLES (per-client mix & master / studio session archive)
+// ============================================
+
+export type DeliverableType = 'mix-master' | 'studio-session';
+
+export interface DeliverableFile {
+  name: string;
+  url: string;
+  sizeBytes?: number;
+}
+
+export interface ClientDeliverable {
+  id: string;
+  type: DeliverableType;
+  title: string; // e.g. track/session name shown to the client
+
+  // Client identity — always stored, whether or not linked to a real account.
+  // clientUserId is set once an admin links this record to a registered user
+  // (or the client's own account email happens to match, if auto-matched).
+  clientName: string;
+  clientEmail: string;
+  clientUserId?: string;
+
+  files: DeliverableFile[];
+  notes?: string;
+
+  completedAt: Timestamp; // when the work was actually finished/delivered
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+  createdBy: string; // admin/manager uid who added this record
 }
 
 // ============================================
