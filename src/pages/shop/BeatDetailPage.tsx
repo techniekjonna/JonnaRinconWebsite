@@ -11,12 +11,14 @@ import { beatService } from '../../lib/firebase/services';
 import { useCart } from '../../hooks/useCart';
 import { setCurrentTrack, getCurrentTrack } from '../../components/GlobalAudioPlayer';
 import { useScrollToTop } from '../../hooks/useScrollToTop';
+import { useT } from '../../contexts/LanguageContext';
 
 const BeatDetailPage: React.FC = () => {
   useScrollToTop();
   const { beatId } = useParams<{ beatId: string }>();
   const navigate = useNavigate();
   const { cartItems, addToCart } = useCart();
+  const t = useT();
 
   const [beat, setBeat] = useState<Beat | null>(null);
   const [loading, setLoading] = useState(true);
@@ -73,7 +75,7 @@ const BeatDetailPage: React.FC = () => {
   if (loading) {
     return (
       <div className="min-h-screen text-white flex items-center justify-center">
-        <LoadingSpinner text="Loading beat..." />
+        <LoadingSpinner text={t('Loading beat...', 'Beat laden...')} />
       </div>
     );
   }
@@ -81,12 +83,12 @@ const BeatDetailPage: React.FC = () => {
   if (!beat) {
     return (
       <div className="min-h-screen text-white flex flex-col items-center justify-center px-6 text-center">
-        <p className="text-white/50 mb-6">This beat could not be found.</p>
+        <p className="text-white/50 mb-6">{t('This beat could not be found.', 'Deze beat kon niet worden gevonden.')}</p>
         <button
           onClick={() => navigate('/shop/beats')}
           className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-bold uppercase tracking-wider rounded-xl transition-all"
         >
-          Back to Beat Store
+          {t('Back to Beat Store', 'Terug naar Beat Store')}
         </button>
       </div>
     );
@@ -96,11 +98,11 @@ const BeatDetailPage: React.FC = () => {
   const hasStems = beat.stemsUrl && beat.stemsUrl.length > 0;
 
   const premiumFeatures = [
-    { icon: Globe, text: 'Commercial Use Rights' },
-    { icon: Download, text: 'Full Ownership, Unlimited Downloads' },
-    { icon: Disc3, text: 'Stems Available', available: hasStems },
-    { icon: TrendingUp, text: 'Distribution Rights' },
-    { icon: Users, text: 'No Attribution Required' },
+    { icon: Globe, text: t('Commercial Use Rights', 'Commerciële Gebruiksrechten') },
+    { icon: Download, text: t('Full Ownership, Unlimited Downloads', 'Volledig Eigendom, Onbeperkte Downloads') },
+    { icon: Disc3, text: t('Stems Available', 'Stems Beschikbaar'), available: hasStems },
+    { icon: TrendingUp, text: t('Distribution Rights', 'Distributierechten') },
+    { icon: Users, text: t('No Attribution Required', 'Geen Naamsvermelding Vereist') },
   ];
 
   return (
@@ -110,7 +112,7 @@ const BeatDetailPage: React.FC = () => {
           onClick={() => navigate('/shop/beats')}
           className="flex items-center gap-2 text-white/40 hover:text-white text-sm transition-colors mb-8"
         >
-          <ArrowLeft size={16} /> Back to Beat Store
+          <ArrowLeft size={16} /> {t('Back to Beat Store', 'Terug naar Beat Store')}
         </button>
 
         <div className="grid grid-cols-1 md:grid-cols-5 gap-8 md:gap-12">
@@ -138,7 +140,7 @@ const BeatDetailPage: React.FC = () => {
               {beat.featured && (
                 <div className="absolute top-4 left-4 flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-red-600/25 to-red-900/20 border border-red-600/30 rounded-full backdrop-blur-md">
                   <Zap size={14} className="text-red-300" />
-                  <span className="text-xs font-bold text-red-200 uppercase tracking-wider">Featured</span>
+                  <span className="text-xs font-bold text-red-200 uppercase tracking-wider">{t('Featured', 'Uitgelicht')}</span>
                 </div>
               )}
             </div>
@@ -146,21 +148,21 @@ const BeatDetailPage: React.FC = () => {
 
           {/* Right — everything else, flowing rather than boxed */}
           <div className="md:col-span-3 flex flex-col">
-            <p className="text-xs font-black uppercase tracking-[0.4em] text-red-500 mb-2">Beat Shop</p>
+            <p className="text-xs font-black uppercase tracking-[0.4em] text-red-500 mb-2">{t('Beat Shop', 'Beat Shop')}</p>
             <h1 className="text-2xl md:text-4xl font-black text-white mb-1 uppercase tracking-tight leading-tight">
               {beat.title}
             </h1>
-            <p className="text-sm md:text-base text-white/60 font-semibold mb-4">By {beat.artist}</p>
+            <p className="text-sm md:text-base text-white/60 font-semibold mb-4">{t('By', 'Door')} {beat.artist}</p>
 
             {/* Specs — one inline line instead of separate boxes */}
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-white/50 mb-5">
               {beat.bpm && <span><span className="text-white font-bold">{beat.bpm}</span> BPM</span>}
               {beat.key && <span className="text-white font-bold">{beat.key}</span>}
               {beat.genre && <span className="capitalize">{beat.genre}</span>}
-              <span className="uppercase text-xs tracking-wide">{beat.beatType || 'Free'}</span>
+              <span className="uppercase text-xs tracking-wide">{beat.beatType || t('Free', 'Gratis')}</span>
               {exclusiveLicense && (
                 <span className="inline-flex items-center gap-1.5 text-orange-300 font-bold uppercase text-xs tracking-wider">
-                  <Zap size={13} /> Exclusive License
+                  <Zap size={13} /> {t('Exclusive License', 'Exclusieve Licentie')}
                 </span>
               )}
             </div>
@@ -204,16 +206,16 @@ const BeatDetailPage: React.FC = () => {
 
             {/* Stats — one inline row */}
             <div className="flex items-center gap-5 text-xs text-white/40 mb-6 pb-6 border-b border-white/10">
-              <span><span className="text-white font-bold">{beat.plays?.toLocaleString() || '0'}</span> Plays</span>
-              <span><span className="text-white font-bold">{beat.downloads || '0'}</span> Downloads</span>
-              <span><span className="text-white font-bold">{beat.likes || '0'}</span> Likes</span>
+              <span><span className="text-white font-bold">{beat.plays?.toLocaleString() || '0'}</span> {t('Plays', 'Afspelen')}</span>
+              <span><span className="text-white font-bold">{beat.downloads || '0'}</span> {t('Downloads', 'Downloads')}</span>
+              <span><span className="text-white font-bold">{beat.likes || '0'}</span> {t('Likes', 'Likes')}</span>
             </div>
 
             {/* Price & actions — the one real action area on the page */}
             <div className="mt-auto">
               {exclusiveLicense && (
                 <div className="flex items-baseline justify-between mb-4">
-                  <p className="text-white/40 text-xs uppercase tracking-wider font-bold">Exclusive Price</p>
+                  <p className="text-white/40 text-xs uppercase tracking-wider font-bold">{t('Exclusive Price', 'Exclusieve Prijs')}</p>
                   <p className="text-4xl font-black bg-gradient-to-r from-red-500 to-orange-500 bg-clip-text text-transparent leading-none">
                     €{exclusiveLicense.price.toFixed(0)}
                   </p>
@@ -226,7 +228,7 @@ const BeatDetailPage: React.FC = () => {
                   className="w-full px-6 py-4 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white rounded-xl font-bold uppercase tracking-wider transition-all duration-200 hover:shadow-lg hover:shadow-red-500/50 flex items-center justify-center gap-2 group shadow-lg"
                 >
                   <ShoppingCart size={20} className="group-hover:scale-110 transition-transform" />
-                  <span>Add to Cart</span>
+                  <span>{t('Add to Cart', 'In Winkelwagen')}</span>
                   {cartItems.length > 0 && (
                     <span className="ml-2 px-2.5 py-0.5 bg-black/40 rounded-full text-xs font-bold">
                       {cartItems.length} item{cartItems.length > 1 ? 's' : ''}
@@ -242,12 +244,12 @@ const BeatDetailPage: React.FC = () => {
                     {isPlaying ? (
                       <>
                         <Pause size={16} className="fill-current text-red-400" />
-                        <span>Now Playing</span>
+                        <span>{t('Now Playing', 'Nu Speelt')}</span>
                       </>
                     ) : (
                       <>
                         <Play size={16} className="fill-current ml-0.5" />
-                        <span>Preview</span>
+                        <span>{t('Preview', 'Voorbeeld')}</span>
                       </>
                     )}
                   </button>

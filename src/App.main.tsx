@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { CartProvider } from './contexts/CartContext';
 import { TrackDetailProvider } from './contexts/TrackDetailContext';
 import { BackgroundProvider } from './contexts/BackgroundContext';
+import { LanguageProvider } from './contexts/LanguageContext';
 import { useScrollToTop } from './hooks/useScrollToTop';
 import ProtectedRoute from './components/ProtectedRoute';
 import GlobalAudioPlayer from './components/GlobalAudioPlayer';
@@ -193,6 +194,7 @@ const PublicPaddingWrapper = ({ children }: { children: React.ReactNode }) => {
 
 const MainApp: React.FC = () => {
   return (
+    <LanguageProvider>
     <BackgroundProvider>
       <BackgroundRenderer />
       <AuthProvider>
@@ -619,6 +621,7 @@ const MainApp: React.FC = () => {
         </CartProvider>
       </AuthProvider>
     </BackgroundProvider>
+    </LanguageProvider>
     );
   };
 

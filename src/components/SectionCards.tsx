@@ -1,51 +1,66 @@
 import { Link } from 'react-router-dom';
 import { ArrowRight, Music, Mail, Library, Briefcase } from 'lucide-react';
 import { useInView } from '../hooks/useInView';
+import { useT, type TFn } from '../contexts/LanguageContext';
 
-const SECTIONS = [
+const getSections = (t: TFn) => [
   {
     id: 'beats',
-    eyebrow: 'Beat Shop',
-    title: 'Beats',
-    description: 'Premium, ready-to-use beats built for artists. Browse the catalogue and license instantly.',
+    eyebrow: t('Beat Shop', 'Beat Shop'),
+    title: t('Beats', 'Beats'),
+    description: t(
+      'Premium, ready-to-use beats built for artists. Browse the catalogue and license instantly.',
+      'Premium, klaar-voor-gebruik beats gemaakt voor artiesten. Blader door de catalogus en licenseer direct.'
+    ),
     icon: Music,
     image: '/DJI_20251017150728_0019_D.JPG',
-    cta: 'Browse Beats',
+    cta: t('Browse Beats', 'Bekijk Beats'),
     link: '/shop/beats',
   },
   {
     id: 'services',
-    eyebrow: 'Studio Session · Mix & Master',
-    title: 'Services',
-    description: 'Professional production services tailored to your project — from studio sessions to mixing and mastering.',
+    eyebrow: t('Studio Session · Mix & Master', 'Studiosessie · Mix & Master'),
+    title: t('Services', 'Diensten'),
+    description: t(
+      'Professional production services tailored to your project — from studio sessions to mixing and mastering.',
+      'Professionele productiediensten afgestemd op jouw project — van studiosessies tot mixen en masteren.'
+    ),
     icon: Briefcase,
     image: '/DJI_20251115114029_0004_D.JPG',
-    cta: 'View Services',
+    cta: t('View Services', 'Bekijk Diensten'),
     link: '/shop/services',
   },
   {
     id: 'music',
-    eyebrow: 'Catalogue',
-    title: 'Music',
-    description: "Explore the full catalogue — tracks, remixes and DJ sets, all in one place.",
+    eyebrow: t('Catalogue', 'Catalogus'),
+    title: t('Music', 'Muziek'),
+    description: t(
+      'Explore the full catalogue — tracks, remixes and DJ sets, all in one place.',
+      'Verken de volledige catalogus — tracks, remixes en dj-sets, allemaal op één plek.'
+    ),
     icon: Library,
     image: '/DJ Screenshot 3-2-26.png',
-    cta: 'Explore Music',
+    cta: t('Explore Music', 'Verken Muziek'),
     link: '/catalogue',
   },
   {
     id: 'contact',
-    eyebrow: 'Get In Touch',
-    title: 'Contact Me',
-    description: 'Got a project, collab or question? Reach out directly — bookings, business or just to say hi.',
+    eyebrow: t('Get In Touch', 'Neem Contact Op'),
+    title: t('Contact Me', 'Contact'),
+    description: t(
+      'Got a project, collab or question? Reach out directly — bookings, business or just to say hi.',
+      'Heb je een project, samenwerking of vraag? Neem direct contact op — boekingen, zakelijk of gewoon om te zeggen hoi.'
+    ),
     icon: Mail,
     image: '/IMG_1027.jpg',
-    cta: 'Contact Me',
+    cta: t('Contact Me', 'Contact'),
     link: '/contact',
   },
 ];
 
-function SectionRow({ section, reverse }: { section: typeof SECTIONS[number]; reverse: boolean }) {
+type Section = ReturnType<typeof getSections>[number];
+
+function SectionRow({ section, reverse }: { section: Section; reverse: boolean }) {
   const [ref, inView] = useInView({ threshold: 0.1 });
   const Icon = section.icon;
 
@@ -104,16 +119,18 @@ function SectionRow({ section, reverse }: { section: typeof SECTIONS[number]; re
 }
 
 export default function SectionCards() {
+  const t = useT();
+  const sections = getSections(t);
   return (
     <section className="relative z-20 py-12 md:py-20 px-4">
       <div className="max-w-7xl mx-auto mb-12 md:mb-16 flex items-center gap-4">
         <div className="h-px flex-1 bg-white/10" />
-        <span className="text-white/30 text-xs uppercase tracking-widest">Explore</span>
+        <span className="text-white/30 text-xs uppercase tracking-widest">{t('Explore', 'Verkennen')}</span>
         <div className="h-px flex-1 bg-white/10" />
       </div>
 
       <div className="flex flex-col gap-16 md:gap-24">
-        {SECTIONS.map((section, i) => (
+        {sections.map((section, i) => (
           <SectionRow key={section.id} section={section} reverse={i % 2 === 1} />
         ))}
       </div>

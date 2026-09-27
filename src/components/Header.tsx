@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { Menu, ShoppingBag } from 'lucide-react';
 import { useCartContext } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
+import { useLanguage, useT } from '../contexts/LanguageContext';
 import { subscribeToPlayerState, openPlayerModal } from './GlobalAudioPlayer';
 
 const WAVEFORM_HEIGHTS = [5, 10, 14, 8, 16, 11, 14, 9, 16, 12, 8, 14, 10, 6, 12];
@@ -13,6 +14,8 @@ const Header: React.FC = () => {
   const location = useLocation();
   const { cartItems } = useCartContext();
   const { user } = useAuth();
+  const { language, toggleLanguage } = useLanguage();
+  const t = useT();
 
   // Player state for waveform banner
   const [isPlayingNow, setIsPlayingNow] = useState(false);
@@ -67,14 +70,25 @@ const Header: React.FC = () => {
   if (isProtectedRoute) return null;
 
   const navItems = [
-    { label: 'Beats', href: '/shop/beats', position: 'left' },
-    { label: 'Services', href: '/shop/services', position: 'left' },
-    { label: 'Music', href: '/catalogue', position: 'right' },
-    { label: 'Contact Me', href: '/contact', position: 'right' },
+    { label: t('Beats', 'Beats'), href: '/shop/beats', position: 'left' },
+    { label: t('Services', 'Diensten'), href: '/shop/services', position: 'left' },
+    { label: t('Music', 'Muziek'), href: '/catalogue', position: 'right' },
+    { label: t('Contact Me', 'Contact'), href: '/contact', position: 'right' },
   ];
 
   const isActive = (href: string) =>
     location.pathname === href || location.pathname.startsWith(href + '/');
+
+  // Shows the flag of the language you'd switch TO, not the current one
+  const LanguageToggleButton = () => (
+    <button
+      onClick={toggleLanguage}
+      title={language === 'en' ? 'Bekijk in het Nederlands' : 'View in English'}
+      className="flex items-center justify-center flex-shrink-0 w-10 h-10 rounded-lg hover:bg-white/[0.08] transition-colors text-lg"
+    >
+      <span aria-hidden="true">{language === 'en' ? '🇳🇱' : '🇬🇧'}</span>
+    </button>
+  );
 
   const HamburgerMenuButton = ({ className }: { className?: string }) => (
     <button
@@ -270,6 +284,7 @@ const Header: React.FC = () => {
                 </span>
               </button>
             )}
+            <LanguageToggleButton />
             <HamburgerMenuButton className="flex" />
           </div>
 
