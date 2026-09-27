@@ -67,16 +67,14 @@ const Header: React.FC = () => {
   if (isProtectedRoute) return null;
 
   const navItems = [
-    { label: 'Shop', href: '/shop', position: 'left' },
-    { label: 'Music', href: '/catalogue', position: 'left' },
-    { label: 'Socials', href: '/socials', position: 'right' },
-    { label: 'Contact', href: '/contact', position: 'right' },
+    { label: 'Beats', href: '/shop/beats', position: 'left' },
+    { label: 'Services', href: '/shop/services', position: 'left' },
+    { label: 'Music', href: '/catalogue', position: 'right' },
+    { label: 'Contact Me', href: '/contact', position: 'right' },
   ];
 
-  const isActive = (href: string) => {
-    if (href === '/shop') return location.pathname === '/shop';
-    return location.pathname === href || location.pathname.startsWith(href + '/');
-  };
+  const isActive = (href: string) =>
+    location.pathname === href || location.pathname.startsWith(href + '/');
 
   const HamburgerMenuButton = ({ className }: { className?: string }) => (
     <button

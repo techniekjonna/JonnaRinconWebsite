@@ -1,102 +1,111 @@
-import { Music, Mail, Library, Briefcase } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { ArrowRight, Music, Mail, Library, Briefcase } from 'lucide-react';
+import { useInView } from '../hooks/useInView';
 
-const CARDS = [
+const SECTIONS = [
   {
     id: 'beats',
-    title: 'Beat Shop',
-    description: 'Premium beats for artists',
+    eyebrow: 'Beat Shop',
+    title: 'Beats',
+    description: 'Premium, ready-to-use beats built for artists. Browse the catalogue and license instantly.',
     icon: Music,
     image: '/DJI_20251017150728_0019_D.JPG',
-    link: '/shop',
+    cta: 'Browse Beats',
+    link: '/shop/beats',
   },
   {
     id: 'services',
+    eyebrow: 'Studio Session · Mix & Master',
     title: 'Services',
-    description: 'Studio Session, Mix Masters',
+    description: 'Professional production services tailored to your project — from studio sessions to mixing and mastering.',
     icon: Briefcase,
     image: '/DJI_20251115114029_0004_D.JPG',
+    cta: 'View Services',
     link: '/shop/services',
   },
   {
-    id: 'catalogue',
+    id: 'music',
+    eyebrow: 'Catalogue',
     title: 'Music',
-    description: 'Tracks, remixes & DJ sets',
+    description: "Explore the full catalogue — tracks, remixes and DJ sets, all in one place.",
     icon: Library,
     image: '/DJ Screenshot 3-2-26.png',
+    cta: 'Explore Music',
     link: '/catalogue',
   },
   {
     id: 'contact',
-    title: 'Contact',
-    description: 'Get in touch with Jonna',
+    eyebrow: 'Get In Touch',
+    title: 'Contact Me',
+    description: 'Got a project, collab or question? Reach out directly — bookings, business or just to say hi.',
     icon: Mail,
     image: '/IMG_1027.jpg',
+    cta: 'Contact Me',
     link: '/contact',
   },
 ];
 
-export default function SectionCards() {
+function SectionRow({ section, reverse }: { section: typeof SECTIONS[number]; reverse: boolean }) {
+  const [ref, inView] = useInView({ threshold: 0.1 });
+  const Icon = section.icon;
+
   return (
-    <section className="relative z-20 py-12 px-4">
-      {/* Scroll indicator */}
-      <div className="max-w-7xl mx-auto mb-6 flex flex-col items-center gap-1 opacity-40">
-        <span className="text-white text-[10px] uppercase tracking-widest">Scroll</span>
-        <svg width="16" height="20" viewBox="0 0 16 20" fill="none" className="animate-bounce">
-          <path d="M8 0v16M1 9l7 9 7-9" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-        </svg>
+    <div
+      ref={ref as React.RefObject<HTMLDivElement>}
+      className={`max-w-[1100px] mx-auto grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-14 items-center transition-all duration-700 ${
+        inView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+      }`}
+    >
+      {/* Text */}
+      <div className={reverse ? 'lg:order-2' : ''}>
+        <p className="text-xs font-black uppercase tracking-[0.4em] text-red-500 mb-3 flex items-center gap-2">
+          <Icon size={13} />
+          {section.eyebrow}
+        </p>
+        <h2 className="text-3xl md:text-5xl font-black text-white tracking-tighter mb-5 leading-tight">
+          {section.title}
+        </h2>
+        <p className="text-white/60 text-base leading-relaxed mb-8 max-w-md">
+          {section.description}
+        </p>
+        <Link
+          to={section.link}
+          className="inline-flex items-center gap-2 px-6 py-3 bg-white/10 border border-white/20 text-white font-black text-xs uppercase tracking-widest hover:bg-white/20 transition-all duration-300 rounded-full"
+        >
+          {section.cta}
+          <ArrowRight size={14} />
+        </Link>
       </div>
 
-      {/* Section header */}
-      <div className="max-w-7xl mx-auto mb-8 flex items-center gap-4">
+      {/* Image */}
+      <div className={`relative aspect-[4/3] overflow-hidden rounded-2xl border border-white/10 ${reverse ? 'lg:order-1' : ''}`}>
+        <img
+          src={section.image}
+          alt={section.title}
+          className="absolute inset-0 w-full h-full object-cover"
+          loading="lazy"
+          decoding="async"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+      </div>
+    </div>
+  );
+}
+
+export default function SectionCards() {
+  return (
+    <section className="relative z-20 py-12 md:py-20 px-4">
+      <div className="max-w-7xl mx-auto mb-12 md:mb-16 flex items-center gap-4">
         <div className="h-px flex-1 bg-white/10" />
         <span className="text-white/30 text-xs uppercase tracking-widest">Explore</span>
         <div className="h-px flex-1 bg-white/10" />
       </div>
 
-      {/* Cards grid — 4 columns */}
-      <div className="max-w-7xl mx-auto grid grid-cols-2 gap-4">
-        {CARDS.map((card) => {
-          const Icon = card.icon;
-          return (
-            <a
-              key={card.id}
-              href={card.link}
-              className="group relative overflow-hidden rounded-2xl border border-white/10 hover:border-red-600/50 transition-all duration-500 hover:-translate-y-1 hover:shadow-[0_24px_48px_rgba(239,68,68,0.18)]"
-              style={{ textDecoration: 'none', aspectRatio: '16/7' }}
-            >
-              <img
-                src={card.image}
-                alt={card.title}
-                className="absolute inset-0 w-full h-full object-cover transition-all duration-700 group-hover:scale-110 opacity-80 group-hover:opacity-100"
-                style={{ filter: 'grayscale(0.2)' }}
-                loading="lazy"
-                decoding="async"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-black/10" />
-              <div className="absolute inset-0 rounded-2xl ring-1 ring-inset ring-white/[0.06] group-hover:ring-red-500/30 transition-all duration-500" />
-              <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-red-600 to-red-400 scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left rounded-t-2xl" />
-
-              {/* Icon top-left */}
-              <div className="absolute top-4 left-4">
-                <Icon className="w-6 h-6 text-red-500 transition-all duration-300 group-hover:scale-110 group-hover:text-red-400" />
-              </div>
-
-              {/* Subtitle top-right */}
-              <p className="absolute top-4 right-4 text-white/40 text-[10px] uppercase tracking-widest transition-all duration-300 group-hover:text-red-400 leading-relaxed text-right max-w-[45%]">
-                {card.description}
-              </p>
-
-              {/* Title bottom-left */}
-              <div className="absolute bottom-0 left-0 right-0 p-4">
-                <h3 className="text-white font-black uppercase tracking-wider text-lg transition-all duration-300 group-hover:text-red-400">
-                  {card.title}
-                </h3>
-              </div>
-            </a>
-          );
-        })}
+      <div className="flex flex-col gap-16 md:gap-24">
+        {SECTIONS.map((section, i) => (
+          <SectionRow key={section.id} section={section} reverse={i % 2 === 1} />
+        ))}
       </div>
-
     </section>
   );
 }
