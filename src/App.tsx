@@ -5,16 +5,20 @@ import SectionCards from './components/SectionCards';
 import MusicPreview from './components/MusicPreview';
 import PromoSection from './components/PromoSection';
 import About from './components/About';
+import { hasHomeIntroPlayed, markHomeIntroPlayed } from './lib/homeIntroState';
 
 // Duration the overlay takes to fade in + small buffer
 const INTRO_DURATION = 3000;
 
 function App() {
-  // Lock scrolling during the intro animation so the user sees it fully
+  // Lock scrolling during the intro animation so the user sees it fully —
+  // only on a real first load, not when navigating back to "/" mid-session
   useEffect(() => {
+    if (hasHomeIntroPlayed()) return;
     document.body.style.overflow = 'hidden';
     const t = setTimeout(() => {
       document.body.style.overflow = '';
+      markHomeIntroPlayed();
     }, INTRO_DURATION);
     return () => {
       clearTimeout(t);

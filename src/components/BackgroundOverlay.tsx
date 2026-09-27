@@ -1,15 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
+import { hasHomeIntroPlayed } from '../lib/homeIntroState';
 
 const BackgroundOverlay: React.FC = () => {
   const { pathname } = useLocation();
   const isHome = pathname === '/';
 
-  // On home page start transparent so the background shows at 100%, then fade in
-  const [ready, setReady] = useState(!isHome);
+  // On a real first load of the home page, start transparent so the
+  // background shows at 100% then fade in. On later SPA navigation back
+  // to "/" the intro has already played, so skip straight to ready.
+  const [ready, setReady] = useState(!isHome || hasHomeIntroPlayed());
 
   useEffect(() => {
-    if (isHome) {
+    if (isHome && !hasHomeIntroPlayed()) {
       const t = setTimeout(() => setReady(true), 500);
       return () => clearTimeout(t);
     }
