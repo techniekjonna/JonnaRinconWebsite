@@ -542,7 +542,7 @@ export const AgendaContent: React.FC = () => {
                 )}
               </div>
 
-              {/* Linked Tasks from TaskBoard */}
+              {/* Linked Tasks (from the panelTasks collection) */}
               {linkedTasks.length > 0 && (
                 <div className="bg-white/[0.03] border border-white/[0.05] rounded-lg overflow-hidden">
                   <div className="flex items-center gap-2 px-4 py-3">

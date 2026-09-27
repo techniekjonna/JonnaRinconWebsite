@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
   ChevronLeft, ShoppingCart, ArrowRight,
-  Check, Plus, Minus, Upload, AlertCircle, Zap, Music,
+  Check, Plus, Minus, Upload, AlertCircle, Zap, Music, Volume2,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Footer from '../components/Footer';
@@ -12,6 +12,11 @@ import { useScrollToTop } from '../hooks/useScrollToTop';
 import { Service } from '../lib/firebase/types';
 import { db } from '../lib/firebase/config';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { useT } from '../contexts/LanguageContext';
+
+// Same fallback cover used on the services list / detail pages so this
+// standalone page shows the same photo instead of no image at all.
+const FALLBACK_IMAGE = '/DJI_20251018172151_0031_D.JPG';
 
 interface MixMasterEntry {
   trackTitle: string;
@@ -53,10 +58,12 @@ const makeEntry = (artist = ''): MixMasterEntry => ({
 export default function MixMasterPage() {
   useScrollToTop();
   const navigate = useNavigate();
+  const t = useT();
   const { user, isAuthenticated } = useAuth();
   const { services, loading } = useServices({ status: 'published' });
 
   const service = services.find(isMixService) ?? null;
+  const image = service?.coverUrl || FALLBACK_IMAGE;
 
   const [page, setPage] = useState<'overview' | 'order'>('overview');
   const [showLoginModal, setShowLoginModal] = useState(false);
@@ -130,18 +137,7 @@ export default function MixMasterPage() {
 
   return (
     <div className="min-h-screen text-white">
-      <main className="pt-32 pb-24 px-4 max-w-3xl mx-auto">
-        {/* Header */}
-        <div className="mb-12 text-center">
-          <p className="text-white/30 text-xs uppercase tracking-widest mb-3">Services</p>
-          <h1 className="text-5xl md:text-7xl font-black uppercase tracking-tighter text-white">
-            Mix & Master
-          </h1>
-          <p className="text-white/40 text-sm mt-4 max-w-md mx-auto">
-            Professional mixing and mastering by Jonna Rincon. Fast delivery, unlimited revisions.
-          </p>
-        </div>
-
+      <main className="pt-32 pb-24 px-4 max-w-6xl mx-auto">
         {loading && (
           <div className="flex justify-center py-20">
             <div className="w-8 h-8 border-2 border-white/20 border-t-red-600 rounded-full animate-spin" />
@@ -149,111 +145,133 @@ export default function MixMasterPage() {
         )}
 
         {!loading && page === 'overview' && (
-          <div className="space-y-6">
-            {/* Stats */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-white/[0.05] border border-white/10 p-5">
-                <p className="text-white/30 text-xs uppercase tracking-wider mb-1">Delivery</p>
-                <p className="text-3xl font-black text-white">48H</p>
-                <p className="text-white/40 text-xs mt-1">Express turnaround</p>
-              </div>
-              <div className="bg-white/[0.05] border border-white/10 p-5">
-                <p className="text-white/30 text-xs uppercase tracking-wider mb-1">Revisions</p>
-                <p className="text-3xl font-black text-white">∞</p>
-                <p className="text-white/40 text-xs mt-1">Until you're satisfied</p>
-              </div>
-            </div>
-
-            {/* About */}
-            <div className="bg-white/[0.04] border border-white/10 p-6">
-              <p className="text-white/30 text-xs uppercase tracking-wider mb-3">About</p>
-              <p className="text-white/70 text-sm leading-relaxed">
-                {service?.description ||
-                  'Get your track mixed and mastered by Jonna Rincon — a producer with 200+ released tracks and experience across EDM, Urban, Moombahton and more. Send your stems, pick your deadline, and receive a polished, release-ready master.'}
-              </p>
-            </div>
-
-            {/* What's included */}
-            <div className="bg-white/[0.04] border border-white/10 p-6">
-              <p className="text-white/30 text-xs uppercase tracking-wider mb-4">What's Included</p>
-              <div className="space-y-3">
-                {[
-                  ['Fast Delivery', 'Turnaround from 48 hours'],
-                  ['Unlimited Revisions', 'Open for revisions if sensible'],
-                  ['Multi-Genre Experience', 'EDM, Urban, Moombahton & more'],
-                  ['Up to 3 Tracks', 'Order multiple mixes in one go'],
-                ].map(([title, desc]) => (
-                  <div key={title} className="flex items-start gap-3">
-                    <Check size={16} className="text-green-400 flex-shrink-0 mt-0.5" />
-                    <div>
-                      <p className="text-white text-sm font-bold">{title}</p>
-                      <p className="text-white/40 text-xs">{desc}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Delivery pricing */}
-            <div className="bg-white/[0.04] border border-white/10 p-6">
-              <p className="text-white/30 text-xs uppercase tracking-wider mb-4">Pricing</p>
-              <div className="grid grid-cols-3 gap-3">
-                {DELIVERY_OPTIONS.map(({ label, price, desc }) => (
-                  <div key={label} className="bg-white/[0.04] border border-white/10 p-4 text-center">
-                    <p className="text-white font-black text-lg uppercase">{label}</p>
-                    <p className="text-red-500 font-black text-xl mt-1">€{price}</p>
-                    <p className="text-white/30 text-[10px] mt-1">{desc}</p>
-                    <p className="text-white/20 text-[10px]">excl. BTW</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Listen CTA */}
-            <div className="p-5 bg-white/[0.04] border border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            {/* Hero row — flowing text paired with the same photo used on
+                the services list, instead of stacked stat boxes */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-14 items-center mb-16">
               <div>
-                <p className="text-white/60 text-sm font-semibold">Hear the quality</p>
-                <p className="text-white/30 text-xs">Check out produced & mixed tracks</p>
+                <p className="text-xs font-black uppercase tracking-[0.4em] text-red-500 mb-3 flex items-center gap-2">
+                  <Volume2 size={13} />
+                  {t('Service', 'Dienst')}
+                </p>
+                <h1 className="text-4xl md:text-6xl font-black uppercase tracking-tighter text-white leading-[0.95] mb-5">
+                  {t('Mix & Master', 'Mix & Master')}
+                </h1>
+                <p className="text-white/60 text-base leading-relaxed mb-6 max-w-md">
+                  {service?.description || t(
+                    'Get your track mixed and mastered by Jonna Rincon — a producer with 200+ released tracks and experience across EDM, Urban, Moombahton and more. Send your stems, pick your deadline, and receive a polished, release-ready master.',
+                    'Laat je track mixen en masteren door Jonna Rincon — een producer met 200+ uitgebrachte tracks en ervaring in EDM, Urban, Moombahton en meer. Stuur je stems, kies je deadline en ontvang een gepolijste, releaseklare master.'
+                  )}
+                </p>
+
+                <ul className="space-y-2.5 mb-8">
+                  {[
+                    [t('Fast Delivery', 'Snelle Levering'), t('Turnaround from 48 hours', 'Doorlooptijd vanaf 48 uur')],
+                    [t('Unlimited Revisions', 'Onbeperkte Revisies'), t('Open for revisions if sensible', 'Open voor revisies waar nodig')],
+                    [t('Multi-Genre Experience', 'Multi-Genre Ervaring'), t('EDM, Urban, Moombahton & more', 'EDM, Urban, Moombahton & meer')],
+                    [t('Up to 3 Tracks', 'Tot 3 Tracks'), t('Order multiple mixes in one go', 'Bestel meerdere mixes in één keer')],
+                  ].map(([title, desc]) => (
+                    <li key={title} className="flex items-start gap-3">
+                      <Check size={16} className="text-red-500 flex-shrink-0 mt-0.5" />
+                      <span className="text-white/70 text-sm leading-relaxed">
+                        <span className="text-white font-bold">{title}</span> — {desc}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+
+                <div className="flex items-center gap-5 flex-wrap">
+                  <button
+                    onClick={handleOrderNow}
+                    className="inline-flex items-center gap-2 px-6 py-3 bg-red-600 hover:bg-red-500 text-white font-black text-xs uppercase tracking-widest transition-all duration-300 rounded-full"
+                  >
+                    <ShoppingCart size={14} />
+                    {t('Order Now', 'Nu Bestellen')}
+                    <ArrowRight size={14} />
+                  </button>
+                  <span className="text-sm text-white/30 font-bold uppercase tracking-wider">
+                    {service ? `${t('From', 'Vanaf')} €${service.rate}` : t('From €100', 'Vanaf €100')}
+                  </span>
+                </div>
               </div>
-              <div className="flex gap-2">
+
+              {/* Image — same fallback photo used for this service on the
+                  services list, with the same soft radial mask */}
+              <div className="relative aspect-[4/3]">
+                <div
+                  className="absolute inset-0"
+                  style={{
+                    maskImage: 'radial-gradient(ellipse 52% 70% at 50% 45%, black 8%, transparent 96%)',
+                    WebkitMaskImage: 'radial-gradient(ellipse 52% 70% at 50% 45%, black 8%, transparent 96%)',
+                  }}
+                >
+                  <img
+                    src={image}
+                    alt={t('Mix & Master', 'Mix & Master')}
+                    className="w-full h-full object-cover"
+                    style={{ filter: 'contrast(1.1) brightness(0.7)' }}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-b from-red-950/20 via-transparent to-black/50" />
+                </div>
+              </div>
+            </div>
+
+            {/* Quick facts & delivery pricing — plain stat columns, no boxes */}
+            <div className="flex flex-wrap items-start gap-x-10 gap-y-6 mb-14 pb-10 border-b border-white/10">
+              <div>
+                <p className="text-white/30 text-xs uppercase tracking-wider mb-1">{t('Delivery', 'Levering')}</p>
+                <p className="text-3xl font-black text-white">48H</p>
+                <p className="text-white/40 text-xs mt-1">{t('Express turnaround', 'Snelle doorlooptijd')}</p>
+              </div>
+              <div className="w-px h-14 bg-white/10 hidden sm:block" />
+              <div>
+                <p className="text-white/30 text-xs uppercase tracking-wider mb-1">{t('Revisions', 'Revisies')}</p>
+                <p className="text-3xl font-black text-white">∞</p>
+                <p className="text-white/40 text-xs mt-1">{t("Until you're satisfied", 'Tot je tevreden bent')}</p>
+              </div>
+              <div className="w-px h-14 bg-white/10 hidden sm:block" />
+              {DELIVERY_OPTIONS.map(({ label, price, desc }) => (
+                <div key={label}>
+                  <p className="text-white/30 text-xs uppercase tracking-wider mb-1">{label}</p>
+                  <p className="text-2xl font-black text-red-500">€{price}</p>
+                  <p className="text-white/40 text-xs mt-1">{desc} · {t('excl. VAT', 'excl. BTW')}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Listen CTA — plain link-style buttons, not boxed */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div>
+                <p className="text-white/60 text-sm font-semibold">{t('Hear the quality', 'Beluister de kwaliteit')}</p>
+                <p className="text-white/30 text-xs">{t('Check out produced & mixed tracks', 'Bekijk geproduceerde & gemixte tracks')}</p>
+              </div>
+              <div className="flex gap-3">
                 <button
                   onClick={() => navigate('/tracks')}
-                  className="flex items-center gap-2 px-4 py-2 bg-white/[0.06] border border-white/10 hover:border-white/20 text-white/70 text-xs font-bold uppercase tracking-wider transition-all"
+                  className="flex items-center gap-2 text-white/60 hover:text-white text-xs font-bold uppercase tracking-wider transition-all border-b border-white/10 hover:border-white/30 pb-1"
                 >
-                  <Music size={14} /> Tracks
+                  <Music size={14} /> {t('Tracks', 'Tracks')}
                 </button>
                 <button
                   onClick={() => navigate('/productions')}
-                  className="flex items-center gap-2 px-4 py-2 bg-white/[0.06] border border-white/10 hover:border-white/20 text-white/70 text-xs font-bold uppercase tracking-wider transition-all"
+                  className="flex items-center gap-2 text-white/60 hover:text-white text-xs font-bold uppercase tracking-wider transition-all border-b border-white/10 hover:border-white/30 pb-1"
                 >
-                  <Zap size={14} /> Productions
+                  <Zap size={14} /> {t('Productions', 'Producties')}
                 </button>
               </div>
             </div>
-
-            {/* Rate */}
-            {service && (
-              <div className="bg-white/[0.05] border border-white/10 p-6 flex items-baseline justify-between">
-                <p className="text-white/30 text-xs uppercase tracking-wider">Starting at</p>
-                <p className="text-white text-2xl font-black">
-                  €{service.rate}<span className="text-white/40 text-sm font-normal"> excl. BTW</span>
-                </p>
-              </div>
-            )}
-
-            <button
-              onClick={handleOrderNow}
-              className="w-full py-4 bg-red-600 hover:bg-red-700 text-white font-bold uppercase tracking-widest text-sm flex items-center justify-center gap-2 transition-all hover:scale-[1.01]"
-            >
-              <ShoppingCart size={18} />
-              Order Now <ArrowRight size={18} />
-            </button>
           </div>
         )}
 
         {/* Order page */}
         {!loading && page === 'order' && !orderPlaced && (
-          <div className="space-y-6">
+          <div className="max-w-2xl mx-auto space-y-6">
+            <div className="mb-6 text-center">
+              <p className="text-white/30 text-xs uppercase tracking-widest mb-2">{t('Service', 'Dienst')}</p>
+              <h1 className="text-3xl md:text-4xl font-black uppercase tracking-tighter text-white">
+                {t('Mix & Master', 'Mix & Master')}
+              </h1>
+            </div>
             <button
               onClick={() => setPage('overview')}
               className="flex items-center gap-2 text-white/40 hover:text-white text-sm transition-colors"
@@ -485,15 +503,15 @@ export default function MixMasterPage() {
             <div className="w-16 h-16 bg-green-500/20 border border-green-500/40 flex items-center justify-center mb-4">
               <Check size={32} className="text-green-400" />
             </div>
-            <h3 className="text-2xl font-black text-white uppercase mb-2">Request Sent!</h3>
+            <h3 className="text-2xl font-black text-white uppercase mb-2">{t('Request Sent!', 'Aanvraag Verzonden!')}</h3>
             <p className="text-white/50 text-sm mb-6">
-              Your mix &amp; master request has been received. Jonna will get back to you to confirm details.
+              {t('Your mix & master request has been received. Jonna will get back to you to confirm details.', 'Jouw mix & master aanvraag is ontvangen. Jonna neemt contact met je op om de details te bevestigen.')}
             </p>
             <button
               onClick={() => navigate('/shop/services')}
               className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-bold uppercase tracking-wider transition-all"
             >
-              Back to Services
+              {t('Back to Services', 'Terug naar Diensten')}
             </button>
           </div>
         )}
@@ -504,8 +522,8 @@ export default function MixMasterPage() {
         <LoginModal
           isOpen={showLoginModal}
           onClose={() => setShowLoginModal(false)}
-          title="Sign In to Order"
-          description="You need an account to place a mix & master order."
+          title={t('Sign In to Order', 'Log In om te Bestellen')}
+          description={t('You need an account to place a mix & master order.', 'Je hebt een account nodig om een mix & master bestelling te plaatsen.')}
         />
       )}
     </div>

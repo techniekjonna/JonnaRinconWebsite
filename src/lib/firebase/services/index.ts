@@ -16,3 +16,4 @@ export { followGateService } from './followGateService';
 export { playlistService } from './playlistService';
 export { beatPackService } from './beatPackService';
 export { projectService } from './projectService';
+export { deliverableService } from './deliverableService';

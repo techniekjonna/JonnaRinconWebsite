@@ -1,10 +1,11 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { MessageSquare, Send, Check, CheckCheck, Mail, Users as UsersIcon, ArrowLeft, Search, Plus, X } from 'lucide-react';
+import { MessageSquare, Send, Check, CheckCheck, Mail, Users as UsersIcon, ArrowLeft, Search, Plus, X, ChevronDown, ChevronUp } from 'lucide-react';
 import { db } from '../../lib/firebase/config';
 import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, Timestamp, updateDoc, doc } from 'firebase/firestore';
 import { useAuth } from '../../contexts/AuthContext';
 import { authService } from '../../lib/firebase/services';
 import { User } from '../../lib/firebase/types';
+import { useT } from '../../contexts/LanguageContext';
 
 interface ChatMessage {
   id?: string;
@@ -51,12 +52,14 @@ const Avatar: React.FC<{ name: string; role: string; size?: 'sm' | 'md' }> = ({ 
 };
 
 export const ChatInboxContent: React.FC<ChatInboxContentProps> = ({ role }) => {
+  const t = useT();
   const { user } = useAuth();
   const [allMessages, setAllMessages] = useState<ChatMessage[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [newMessage, setNewMessage] = useState('');
   const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' && window.innerWidth < 900);
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   const [showNewMessageModal, setShowNewMessageModal] = useState(false);
   const [allUsers, setAllUsers] = useState<User[]>([]);
@@ -248,7 +251,24 @@ export const ChatInboxContent: React.FC<ChatInboxContentProps> = ({ role }) => {
 
   return (
     <>
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-3 overflow-hidden" style={{ height: 'calc(100dvh - 180px)', maxHeight: 'calc(100dvh - 180px)' }}>
+      {/* Panel top bar — always visible; the collapse toggle shrinks the
+          whole inbox down to just this slim bar and back */}
+      <div className="flex items-center justify-between px-4 py-2.5 mb-3 backdrop-blur-xl bg-gradient-to-b from-white/[0.08] to-white/[0.03] border border-white/[0.12] rounded-xl">
+        <div className="flex items-center gap-2">
+          <MessageSquare size={16} className="text-white/50" />
+          <p className="text-sm font-semibold text-white">{t('Chat Inbox', 'Chat Inbox')}</p>
+        </div>
+        <button
+          onClick={() => setIsCollapsed((v) => !v)}
+          title={isCollapsed ? t('Expand', 'Uitklappen') : t('Collapse', 'Inklappen')}
+          className="p-1.5 bg-white/[0.06] hover:bg-white/[0.12] rounded-md text-white/60 hover:text-white transition-colors flex-shrink-0"
+        >
+          {isCollapsed ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
+        </button>
+      </div>
+
+      {!isCollapsed && (
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-3 overflow-hidden" style={{ height: 'calc(100dvh - 232px)', maxHeight: 'calc(100dvh - 232px)' }}>
 
         {/* Left: Contact + Users sections — full width until a chat is
             opened, then halves to make room for the thread pane */}
@@ -269,9 +289,9 @@ export const ChatInboxContent: React.FC<ChatInboxContentProps> = ({ role }) => {
 
             <div className="flex-1 overflow-y-auto">
               {/* Contact section */}
-              <div className="px-3 pt-3 pb-1.5 flex items-center gap-2 sticky top-0 bg-black/70 backdrop-blur-md z-10">
-                <Mail size={13} className="text-red-400" />
-                <p className="text-[10px] font-bold uppercase tracking-widest text-white/50">Contact</p>
+              <div className="px-3 pt-4 pb-2.5 flex items-center gap-2.5 sticky top-0 bg-black/70 backdrop-blur-md z-10">
+                <Mail size={16} className="text-red-400" />
+                <p className="text-xs font-bold uppercase tracking-wider text-white/60">{t('Contact', 'Contact')}</p>
                 {contactConversations.some((c) => c.unreadCount > 0) && (
                   <span className="w-1.5 h-1.5 rounded-full bg-red-400" />
                 )}
@@ -305,9 +325,9 @@ export const ChatInboxContent: React.FC<ChatInboxContentProps> = ({ role }) => {
               )}
 
               {/* Users section */}
-              <div className="px-3 pt-4 pb-1.5 flex items-center gap-2 sticky top-0 bg-black/70 backdrop-blur-md z-10">
-                <UsersIcon size={13} className="text-blue-400" />
-                <p className="text-[10px] font-bold uppercase tracking-widest text-white/50 flex-1">Users</p>
+              <div className="px-3 pt-5 pb-2.5 flex items-center gap-2.5 sticky top-0 bg-black/70 backdrop-blur-md z-10">
+                <UsersIcon size={16} className="text-blue-400" />
+                <p className="text-xs font-bold uppercase tracking-wider text-white/60 flex-1">{t('Users', 'Gebruikers')}</p>
                 {userConversations.some((c) => c.unreadCount > 0) && (
                   <span className="w-1.5 h-1.5 rounded-full bg-red-400" />
                 )}
@@ -404,6 +424,7 @@ export const ChatInboxContent: React.FC<ChatInboxContentProps> = ({ role }) => {
           </div>
         )}
       </div>
+      )}
 
       {/* New Message Modal */}
       {showNewMessageModal && (
