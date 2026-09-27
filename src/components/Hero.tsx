@@ -1,13 +1,16 @@
 import { useEffect, useState } from 'react';
 import { ArrowRight, Play, Mail } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { hasHomeIntroPlayed } from '../lib/homeIntroState';
 
 export default function Hero() {
   const navigate = useNavigate();
-  // Delayed so background is fully visible before content appears (intro animation)
-  const [visible, setVisible] = useState(false);
+  // Delayed so background is fully visible before content appears (intro animation) —
+  // only on a real first load, not when navigating back to "/" mid-session
+  const [visible, setVisible] = useState(hasHomeIntroPlayed());
 
   useEffect(() => {
+    if (hasHomeIntroPlayed()) return;
     const t = setTimeout(() => setVisible(true), 1200);
     return () => clearTimeout(t);
   }, []);

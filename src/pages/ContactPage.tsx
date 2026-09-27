@@ -53,6 +53,27 @@ const platforms = [
   },
 ];
 
+const contactInfo = [
+  {
+    icon: Mail,
+    label: 'Email',
+    value: 'contact@jonnarincon.com',
+    href: 'mailto:contact@jonnarincon.com',
+  },
+  {
+    icon: Phone,
+    label: 'Phone',
+    value: '+31 (0) 6 123 456 78',
+    href: 'tel:+31612345678',
+  },
+  {
+    icon: MapPin,
+    label: 'Location',
+    value: 'Netherlands',
+    href: '#',
+  },
+];
+
 type ContactStep = 'compose' | 'details' | 'sent';
 
 export default function ContactPage() {
@@ -112,90 +133,39 @@ export default function ContactPage() {
 
   return (
     <div className="min-h-screen text-white">
-      <div className="relative pt-[120px] md:pt-[160px] pb-12 px-6 md:px-10">
-        <div className="max-w-4xl mx-auto">
+      <div className="relative pt-[120px] md:pt-[160px] pb-8 px-6 md:px-10">
+        <div className="max-w-4xl mx-auto text-center">
           <h1 className="text-4xl md:text-6xl font-black uppercase mb-4 tracking-tight">
             Contact Me
           </h1>
-          <p className="text-white/60 text-lg md:text-xl mb-12">
+          <p className="text-white/60 text-lg md:text-xl mb-10">
             Have a serious inquiry? Fill out the form below and we'll get back to you as soon as possible.
           </p>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
-            {[
-              {
-                icon: Mail,
-                label: 'Email',
-                value: 'contact@jonnarincon.com',
-                href: 'mailto:contact@jonnarincon.com',
-              },
-              {
-                icon: Phone,
-                label: 'Phone',
-                value: '+31 (0) 6 123 456 78',
-                href: 'tel:+31612345678',
-              },
-              {
-                icon: MapPin,
-                label: 'Location',
-                value: 'Netherlands',
-                href: '#',
-              },
-            ].map((item, idx) => {
-              const Icon = item.icon;
+          {/* Quick social row */}
+          <div className="flex flex-wrap gap-3 justify-center">
+            {platforms.map((platform) => {
+              const Icon = platform.icon;
               return (
                 <a
-                  key={idx}
-                  href={item.href}
-                  className="group p-6 bg-white/[0.02] border border-white/10 rounded-2xl hover:bg-white/[0.05] transition-all duration-300"
+                  key={platform.name}
+                  href={platform.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title={`${platform.name} — ${platform.handle}`}
+                  className={`w-11 h-11 rounded-full bg-gradient-to-br ${platform.color} flex items-center justify-center hover:scale-110 transition-transform duration-300`}
                 >
-                  <div className="flex items-center gap-4 mb-2">
-                    <div className="p-3 bg-red-600/20 rounded-lg group-hover:bg-red-600/30 transition-colors">
-                      <Icon className="w-5 h-5 text-red-500" />
-                    </div>
-                    <span className="text-white/60 text-sm uppercase tracking-wider">{item.label}</span>
-                  </div>
-                  <p className="text-white font-semibold group-hover:text-red-400 transition-colors">
-                    {item.value}
-                  </p>
+                  <Icon className="w-5 h-5 text-white" />
                 </a>
               );
             })}
           </div>
-
-          {/* Follow */}
-          <div className="text-center mb-4">
-            <p className="text-xs font-black uppercase tracking-[0.4em] text-white/30 mb-5">Follow</p>
-            <div className="flex flex-wrap gap-3 justify-center">
-              {platforms.map((platform) => {
-                const Icon = platform.icon;
-                return (
-                  <a
-                    key={platform.name}
-                    href={platform.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    title={`${platform.name} — ${platform.handle}`}
-                    className="group flex items-center gap-2.5 px-4 py-2.5 bg-white/[0.05] border border-white/[0.08] rounded-2xl hover:bg-white/[0.10] hover:border-white/[0.15] transition-all duration-300"
-                  >
-                    <div className={`w-7 h-7 rounded-xl bg-gradient-to-br ${platform.color} flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-300`}>
-                      <Icon className="w-3.5 h-3.5 text-white" />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-xs font-bold text-white truncate leading-none">{platform.name}</p>
-                      <p className="text-[10px] text-white/30 truncate leading-none mt-1.5">{platform.handle}</p>
-                    </div>
-                    <ExternalLink size={11} className="text-white/20 group-hover:text-white/50 transition-colors flex-shrink-0" />
-                  </a>
-                );
-              })}
-            </div>
-          </div>
         </div>
       </div>
 
-      <div className="relative px-6 md:px-10 pb-24">
-        <div className="max-w-2xl mx-auto">
+      {/* Contact form — wider, side-by-side fields on tablet/desktop */}
+      <div className="relative px-6 md:px-10 pb-20">
+        <div className="max-w-2xl md:max-w-3xl mx-auto">
           <div className="bg-gradient-to-br from-white/[0.08] to-white/[0.02] border border-white/10 rounded-3xl overflow-hidden">
 
             {/* Step indicator */}
@@ -221,48 +191,50 @@ export default function ContactPage() {
 
             {/* ── STEP 1: Compose ── */}
             {contactStep === 'compose' && (
-              <div className="p-6 md:p-8 space-y-6">
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-widest text-white/40 mb-3">Category</p>
-                  <div className="flex flex-wrap gap-2">
-                    {categories.map((cat) => (
-                      <button
-                        key={cat}
-                        onClick={() => setSelectedCategory(cat)}
-                        className={`px-4 py-2.5 rounded-2xl text-sm font-bold uppercase tracking-wide transition-all border ${
-                          selectedCategory === cat
-                            ? 'bg-red-600 border-red-500 text-white shadow-md shadow-red-600/30'
-                            : 'bg-white/[0.04] border-white/[0.08] text-white/50 hover:text-white hover:bg-white/[0.08]'
-                        }`}
-                      >
-                        {cat}
-                      </button>
-                    ))}
+              <div className="p-6 md:p-8">
+                <div className="md:grid md:grid-cols-2 md:gap-8">
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-widest text-white/40 mb-3">Category</p>
+                    <div className="flex flex-wrap gap-2">
+                      {categories.map((cat) => (
+                        <button
+                          key={cat}
+                          onClick={() => setSelectedCategory(cat)}
+                          className={`px-4 py-2.5 rounded-2xl text-sm font-bold uppercase tracking-wide transition-all border ${
+                            selectedCategory === cat
+                              ? 'bg-red-600 border-red-500 text-white shadow-md shadow-red-600/30'
+                              : 'bg-white/[0.04] border-white/[0.08] text-white/50 hover:text-white hover:bg-white/[0.08]'
+                          }`}
+                        >
+                          {cat}
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                </div>
 
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <p className="text-xs font-bold uppercase tracking-widest text-white/40">Message</p>
-                    <p className={`text-[10px] font-medium ${message.length >= MAX_MESSAGE_LENGTH ? 'text-red-400' : 'text-white/25'}`}>
-                      {message.length} / {MAX_MESSAGE_LENGTH}
-                    </p>
+                  <div className="mt-6 md:mt-0">
+                    <div className="flex items-center justify-between mb-3">
+                      <p className="text-xs font-bold uppercase tracking-widest text-white/40">Message</p>
+                      <p className={`text-[10px] font-medium ${message.length >= MAX_MESSAGE_LENGTH ? 'text-red-400' : 'text-white/25'}`}>
+                        {message.length} / {MAX_MESSAGE_LENGTH}
+                      </p>
+                    </div>
+                    <textarea
+                      rows={7}
+                      value={message}
+                      onChange={(e) => setMessage(e.target.value.slice(0, MAX_MESSAGE_LENGTH))}
+                      maxLength={MAX_MESSAGE_LENGTH}
+                      placeholder="Type your message here..."
+                      className="w-full px-4 py-3 bg-white/5 border border-white/10 text-white placeholder-white/30 rounded-xl focus:outline-none focus:border-white/30 focus:bg-white/10 transition-all text-sm resize-none"
+                    />
+                    <p className="text-[10px] text-white/25 mt-2">Max. one A4 page of text.</p>
                   </div>
-                  <textarea
-                    rows={7}
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value.slice(0, MAX_MESSAGE_LENGTH))}
-                    maxLength={MAX_MESSAGE_LENGTH}
-                    placeholder="Type your message here..."
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 text-white placeholder-white/30 rounded-xl focus:outline-none focus:border-white/30 focus:bg-white/10 transition-all text-sm resize-none"
-                  />
-                  <p className="text-[10px] text-white/25 mt-2">Max. one A4 page of text.</p>
                 </div>
 
                 <button
                   onClick={handleSend}
                   disabled={!canSendMessage}
-                  className="w-full py-4 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold rounded-xl transition-all duration-300 text-sm uppercase tracking-widest flex items-center justify-center gap-2"
+                  className="w-full mt-6 py-4 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold rounded-xl transition-all duration-300 text-sm uppercase tracking-widest flex items-center justify-center gap-2"
                 >
                   <Send size={16} />
                   Continue
@@ -279,33 +251,35 @@ export default function ContactPage() {
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
-                  <div>
-                    <label htmlFor="name" className="block text-xs font-bold uppercase tracking-widest text-white/40 mb-2">
-                      Full Name
-                    </label>
-                    <input
-                      type="text"
-                      id="name"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      placeholder="Your name"
-                      required
-                      className="w-full px-4 py-3 bg-white/5 border border-white/10 text-white placeholder-white/30 rounded-xl focus:outline-none focus:border-white/30 focus:bg-white/10 transition-all text-sm"
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="email" className="block text-xs font-bold uppercase tracking-widest text-white/40 mb-2">
-                      Email Address
-                    </label>
-                    <input
-                      type="email"
-                      id="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="your@email.com"
-                      required
-                      className="w-full px-4 py-3 bg-white/5 border border-white/10 text-white placeholder-white/30 rounded-xl focus:outline-none focus:border-white/30 focus:bg-white/10 transition-all text-sm"
-                    />
+                  <div className="md:grid md:grid-cols-2 md:gap-4 space-y-4 md:space-y-0">
+                    <div>
+                      <label htmlFor="name" className="block text-xs font-bold uppercase tracking-widest text-white/40 mb-2">
+                        Full Name
+                      </label>
+                      <input
+                        type="text"
+                        id="name"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        placeholder="Your name"
+                        required
+                        className="w-full px-4 py-3 bg-white/5 border border-white/10 text-white placeholder-white/30 rounded-xl focus:outline-none focus:border-white/30 focus:bg-white/10 transition-all text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="email" className="block text-xs font-bold uppercase tracking-widest text-white/40 mb-2">
+                        Email Address
+                      </label>
+                      <input
+                        type="email"
+                        id="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="your@email.com"
+                        required
+                        className="w-full px-4 py-3 bg-white/5 border border-white/10 text-white placeholder-white/30 rounded-xl focus:outline-none focus:border-white/30 focus:bg-white/10 transition-all text-sm"
+                      />
+                    </div>
                   </div>
 
                   {submitError && (
@@ -354,6 +328,62 @@ export default function ContactPage() {
               </div>
             )}
           </div>
+        </div>
+      </div>
+
+      {/* Follow — full sections, stacked */}
+      <div className="relative px-6 md:px-10 pb-16">
+        <div className="max-w-2xl md:max-w-3xl mx-auto">
+          <p className="text-xs font-black uppercase tracking-[0.4em] text-white/30 mb-5 text-center">Follow Everywhere</p>
+          <div className="space-y-3">
+            {platforms.map((platform) => {
+              const Icon = platform.icon;
+              return (
+                <a
+                  key={platform.name}
+                  href={platform.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group flex items-center gap-4 p-5 bg-white/[0.03] border border-white/[0.08] rounded-2xl hover:bg-white/[0.06] hover:border-white/[0.15] transition-all duration-300"
+                >
+                  <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${platform.color} flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform duration-300`}>
+                    <Icon className="w-7 h-7 text-white" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-base font-bold text-white">{platform.name}</p>
+                    <p className="text-sm text-white/40">{platform.handle}</p>
+                  </div>
+                  <ExternalLink size={18} className="text-white/20 group-hover:text-white/50 transition-colors flex-shrink-0" />
+                </a>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* Direct contact info — closing */}
+      <div className="relative px-6 md:px-10 pb-24">
+        <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
+          {contactInfo.map((item, idx) => {
+            const Icon = item.icon;
+            return (
+              <a
+                key={idx}
+                href={item.href}
+                className="group p-6 bg-white/[0.02] border border-white/10 rounded-2xl hover:bg-white/[0.05] transition-all duration-300"
+              >
+                <div className="flex items-center gap-4 mb-2">
+                  <div className="p-3 bg-red-600/20 rounded-lg group-hover:bg-red-600/30 transition-colors">
+                    <Icon className="w-5 h-5 text-red-500" />
+                  </div>
+                  <span className="text-white/60 text-sm uppercase tracking-wider">{item.label}</span>
+                </div>
+                <p className="text-white font-semibold group-hover:text-red-400 transition-colors">
+                  {item.value}
+                </p>
+              </a>
+            );
+          })}
         </div>
       </div>
 

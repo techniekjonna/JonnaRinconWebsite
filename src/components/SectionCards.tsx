@@ -39,7 +39,7 @@ const SECTIONS = [
     title: 'Contact Me',
     description: 'Got a project, collab or question? Reach out directly — bookings, business or just to say hi.',
     icon: Mail,
-    image: '/IMG_1027.jpg',
+    image: '/Maastricht Screenshot 15-12-25.png',
     cta: 'Contact Me',
     link: '/contact',
   },

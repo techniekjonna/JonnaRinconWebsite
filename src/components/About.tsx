@@ -1,18 +1,6 @@
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
-import PhotoCarousel from './PhotoCarousel';
 import { useInView } from '../hooks/useInView';
-
-// Soft hyphen in filename — matches actual file on disk
-const SCHERM_PREFIX = 'Scherm­afbeelding';
-
-const PHOTOS = [
-  { src: '/DJI_20251115114029_0004_D.JPG', alt: 'Jonna Rincon aerial' },
-  { src: '/DJI_20251017150728_0019_D.JPG', alt: 'Jonna Rincon in the studio' },
-  { src: `/${SCHERM_PREFIX} 2025-12-16 om 17.09.27.png`, alt: 'Jonna Rincon studio session' },
-  { src: '/IMG_1027.jpg', alt: 'Jonna Rincon' },
-  { src: '/Maastricht Screenshot 15-12-25.png', alt: 'Jonna Rincon in Maastricht' },
-];
 
 export default function About() {
   const [ref, inView] = useInView({ threshold: 0.1 });
@@ -53,8 +41,26 @@ export default function About() {
           </Link>
         </div>
 
-        {/* Photo carousel */}
-        <PhotoCarousel photos={PHOTOS} />
+        {/* Photo — desaturated and darkened so it reads as part of the dark
+            page rather than a pasted-in snapshot; edges fade out via mask
+            instead of sitting in a hard rectangle */}
+        <div className="relative aspect-[4/5] lg:aspect-square w-full">
+          <div
+            className="absolute inset-0"
+            style={{
+              maskImage: 'radial-gradient(ellipse 62% 62% at 55% 42%, black 8%, transparent 92%)',
+              WebkitMaskImage: 'radial-gradient(ellipse 62% 62% at 55% 42%, black 8%, transparent 92%)',
+            }}
+          >
+            <img
+              src="/Maastricht Screenshot 15-12-25.png"
+              alt="Jonna Rincon in Maastricht"
+              className="w-full h-full object-cover"
+              style={{ filter: 'grayscale(1) contrast(1.25) brightness(0.4)' }}
+            />
+            <div className="absolute inset-0 bg-gradient-to-b from-red-950/25 via-transparent to-black/50" />
+          </div>
+        </div>
       </div>
     </section>
   );
