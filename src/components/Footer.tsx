@@ -1,4 +1,5 @@
 import { Music, Instagram, Youtube, Cloud as CloudIcon } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 export default function Footer() {
   return (
@@ -24,16 +25,16 @@ export default function Footer() {
           <div>
             <h3 className="text-lg font-bold mb-4 text-white">Quick Links</h3>
             <div className="grid grid-cols-2 gap-x-4 gap-y-2">
-              <a href="/" className="block text-white/30 hover:text-white transition-colors text-sm">Home</a>
-              <a href="/catalogue" className="block text-white/30 hover:text-white transition-colors text-sm">Music</a>
-              <a href="/shop/beats" className="block text-white/30 hover:text-white transition-colors text-sm">Beats</a>
-              <a href="/shop/services" className="block text-white/30 hover:text-white transition-colors text-sm">Services</a>
-              <a href="/remixes" className="block text-white/30 hover:text-white transition-colors text-sm">Remixes</a>
-              <a href="/dj-sets" className="block text-white/30 hover:text-white transition-colors text-sm">DJ Sets</a>
-              <a href="/studio-session" className="block text-white/30 hover:text-white transition-colors text-sm">Studio Session</a>
-              <a href="/mix-master" className="block text-white/30 hover:text-white transition-colors text-sm">Mix &amp; Master</a>
-              <a href="/about" className="block text-white/30 hover:text-white transition-colors text-sm">About</a>
-              <a href="/contact" className="block text-white/30 hover:text-white transition-colors text-sm">Contact Me</a>
+              <Link to="/" className="block text-white/30 hover:text-white transition-colors text-sm">Home</Link>
+              <Link to="/catalogue" className="block text-white/30 hover:text-white transition-colors text-sm">Music</Link>
+              <Link to="/shop/beats" className="block text-white/30 hover:text-white transition-colors text-sm">Beats</Link>
+              <Link to="/shop/services" className="block text-white/30 hover:text-white transition-colors text-sm">Services</Link>
+              <Link to="/remixes" className="block text-white/30 hover:text-white transition-colors text-sm">Remixes</Link>
+              <Link to="/dj-sets" className="block text-white/30 hover:text-white transition-colors text-sm">DJ Sets</Link>
+              <Link to="/studio-session" className="block text-white/30 hover:text-white transition-colors text-sm">Studio Session</Link>
+              <Link to="/mix-master" className="block text-white/30 hover:text-white transition-colors text-sm">Mix &amp; Master</Link>
+              <Link to="/about" className="block text-white/30 hover:text-white transition-colors text-sm">About</Link>
+              <Link to="/contact" className="block text-white/30 hover:text-white transition-colors text-sm">Contact Me</Link>
             </div>
           </div>
 

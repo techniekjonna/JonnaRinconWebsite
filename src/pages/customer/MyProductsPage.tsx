@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { purchaseService } from '../../lib/firebase/services';
 import { followGateService } from '../../lib/firebase/services/followGateService';
@@ -36,9 +37,9 @@ export default function MyProductsPage() {
               <p className="text-white/40 text-sm mb-6">
                 Please sign in to view your purchased products and downloads.
               </p>
-              <a href="/login" className="inline-block px-8 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg transition-all">
+              <Link to="/login" className="inline-block px-8 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg transition-all">
                 Sign In
-              </a>
+              </Link>
             </div>
           </div>
         </div>

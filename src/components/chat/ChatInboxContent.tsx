@@ -237,8 +237,9 @@ export const ChatInboxContent: React.FC<ChatInboxContentProps> = ({ role }) => {
     return <Check size={12} className="text-white/60" />;
   };
 
-  const showListPane = !isMobile || !selectedId;
-  const showThreadPane = !isMobile || !!selectedId;
+  const hasSelection = !!selectedConversation;
+  const showListPane = !isMobile || !hasSelection;
+  const showThreadPane = hasSelection;
 
   const filteredNewMsgUsers = allUsers.filter((u) =>
     (u.displayName || '').toLowerCase().includes(newMsgSearch.toLowerCase()) ||
@@ -249,9 +250,10 @@ export const ChatInboxContent: React.FC<ChatInboxContentProps> = ({ role }) => {
     <>
       <div className="grid grid-cols-1 md:grid-cols-12 gap-3 overflow-hidden" style={{ height: 'calc(100dvh - 180px)', maxHeight: 'calc(100dvh - 180px)' }}>
 
-        {/* Left: Contact + Users sections */}
+        {/* Left: Contact + Users sections — full width until a chat is
+            opened, then halves to make room for the thread pane */}
         {showListPane && (
-          <div className="md:col-span-4 backdrop-blur-xl bg-gradient-to-b from-white/[0.08] to-white/[0.03] border border-white/[0.12] rounded-xl overflow-hidden flex flex-col">
+          <div className={`${hasSelection ? 'md:col-span-6' : 'md:col-span-12'} backdrop-blur-xl bg-gradient-to-b from-white/[0.08] to-white/[0.03] border border-white/[0.12] rounded-xl overflow-hidden flex flex-col`}>
             <div className="px-3 py-3 border-b border-white/[0.08] flex-shrink-0">
               <div className="relative">
                 <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" />
@@ -348,9 +350,10 @@ export const ChatInboxContent: React.FC<ChatInboxContentProps> = ({ role }) => {
           </div>
         )}
 
-        {/* Right: thread */}
-        {showThreadPane && selectedConversation ? (
-          <div className="md:col-span-8 backdrop-blur-xl bg-gradient-to-br from-white/[0.08] to-white/[0.03] border border-white/[0.12] rounded-xl overflow-hidden flex flex-col">
+        {/* Right: thread — only rendered once a conversation is picked, so
+            the list gets the full frame instead of an empty pane next to it */}
+        {showThreadPane && selectedConversation && (
+          <div className="md:col-span-6 backdrop-blur-xl bg-gradient-to-br from-white/[0.08] to-white/[0.03] border border-white/[0.12] rounded-xl overflow-hidden flex flex-col">
             <div className="px-4 py-3 border-b border-white/[0.08] flex items-center gap-3 flex-shrink-0 bg-white/[0.04]">
               {isMobile && (
                 <button onClick={() => setSelectedId(null)} className="text-white/40 hover:text-white transition-colors">
@@ -399,14 +402,7 @@ export const ChatInboxContent: React.FC<ChatInboxContentProps> = ({ role }) => {
               </div>
             </form>
           </div>
-        ) : showThreadPane ? (
-          <div className="md:col-span-8 backdrop-blur-xl bg-gradient-to-br from-white/[0.08] to-white/[0.03] border border-white/[0.12] rounded-xl flex items-center justify-center">
-            <div className="text-center">
-              <MessageSquare size={40} className="mx-auto mb-3 text-white/10" />
-              <p className="text-white/30 text-sm">Select a conversation</p>
-            </div>
-          </div>
-        ) : null}
+        )}
       </div>
 
       {/* New Message Modal */}

@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Zap, Headphones, Music, Volume2, Users, Palette, ArrowRight, Radio, Check } from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom';
+import { Zap, Headphones, Music, Volume2, Users, Palette, ArrowRight, Check } from 'lucide-react';
 import Footer from '../../components/Footer';
 import { useCyberDecodeInView } from '../../hooks/useCyberDecode';
 import LoadingSpinner from '../../components/LoadingSpinner';
@@ -111,27 +111,6 @@ const ServicesPage: React.FC = () => {
         </p>
       </section>
 
-      {/* Studio Session callout */}
-      <section className="px-6 md:px-12 pb-2">
-        <div className="max-w-7xl mx-auto">
-          <button
-            onClick={() => navigate('/studio-session')}
-            className="w-full flex items-center justify-between gap-4 px-6 py-4 bg-white/[0.04] border border-white/[0.08] hover:border-red-600/30 hover:bg-white/[0.06] rounded-2xl transition-all duration-300 text-left"
-          >
-            <div className="flex items-center gap-4">
-              <div className="w-11 h-11 rounded-xl bg-red-600/10 border border-red-600/20 flex items-center justify-center flex-shrink-0">
-                <Radio className="w-5 h-5 text-red-500" />
-              </div>
-              <div>
-                <p className="text-white font-bold text-sm">Also booking Studio Sessions</p>
-                <p className="text-white/40 text-xs mt-0.5">In-studio recording with Jonna, in Limburg — pick a date and get started.</p>
-              </div>
-            </div>
-            <ArrowRight className="w-4 h-4 text-white/40 flex-shrink-0" />
-          </button>
-        </div>
-      </section>
-
       {/* Services — big, spacious rows matching the homepage sections rather
           than a compact scrollable list; there are only ever a couple of
           these, so they should feel generous, not efficient */}
@@ -237,9 +216,9 @@ const ServicesPage: React.FC = () => {
             <p className="text-white/40 text-sm md:text-base mb-8 max-w-md mx-auto">
               Have a custom project or want to discuss something specific? Get in touch to get started.
             </p>
-            <a href="/contact" className="inline-flex items-center gap-2 px-8 md:px-10 py-3.5 bg-red-600 hover:bg-red-500 text-white rounded-xl font-bold transition-all hover:scale-[1.03] uppercase tracking-wider text-sm">
+            <Link to="/contact" className="inline-flex items-center gap-2 px-8 md:px-10 py-3.5 bg-red-600 hover:bg-red-500 text-white rounded-xl font-bold transition-all hover:scale-[1.03] uppercase tracking-wider text-sm">
               Contact Me <ArrowRight size={16} />
-            </a>
+            </Link>
           </div>
         </div>
       </section>

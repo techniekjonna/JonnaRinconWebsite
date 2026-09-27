@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import ManagerLayout from '../../components/manager/ManagerLayout';
 import { Music, MessageSquare, TrendingUp, Eye } from 'lucide-react';
 import { useBeats } from '../../hooks/useBeats';
@@ -50,7 +51,7 @@ const ManagerDashboard: React.FC = () => {
         <div className="bg-white/[0.08] backdrop-blur-sm border border-white/[0.06] rounded-3xl p-5 sm:p-6">
           <h2 className="text-lg font-bold text-white mb-4">Quick Actions</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <a href="/manager/beats" className="group flex items-center gap-4 p-4 bg-white/[0.06] hover:bg-white/[0.06] rounded-2xl transition-all">
+            <Link to="/manager/beats" className="group flex items-center gap-4 p-4 bg-white/[0.06] hover:bg-white/[0.06] rounded-2xl transition-all">
               <div className="w-11 h-11 rounded-2xl bg-blue-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
                 <Music size={18} className="text-blue-400" />
               </div>
@@ -58,8 +59,8 @@ const ManagerDashboard: React.FC = () => {
                 <h3 className="font-semibold text-white text-sm">Manage Beats</h3>
                 <p className="text-xs text-white/25">Edit and update beat information</p>
               </div>
-            </a>
-            <a href="/manager/chat" className="group flex items-center gap-4 p-4 bg-white/[0.06] hover:bg-white/[0.06] rounded-2xl transition-all">
+            </Link>
+            <Link to="/manager/chat" className="group flex items-center gap-4 p-4 bg-white/[0.06] hover:bg-white/[0.06] rounded-2xl transition-all">
               <div className="w-11 h-11 rounded-2xl bg-cyan-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
                 <MessageSquare size={18} className="text-cyan-400" />
               </div>
@@ -67,7 +68,7 @@ const ManagerDashboard: React.FC = () => {
                 <h3 className="font-semibold text-white text-sm">Chat</h3>
                 <p className="text-xs text-white/25">Communicate with team and artists</p>
               </div>
-            </a>
+            </Link>
           </div>
         </div>
 
