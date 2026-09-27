@@ -22,6 +22,16 @@ import { db } from '../config';
 import { Beat, PaginatedResponse } from '../types';
 import { authService } from './authService';
 
+// Whether a beat should appear in public listings/search (shop grids, carousels,
+// trending/featured rails, related-content widgets). Beats with no `visibility`
+// field, or `visibility: 'public'`, are shown — this is the pre-existing default
+// behavior and is unchanged. `'private-link'` and `'private-user'` beats are
+// excluded from every public listing (a `'private-link'` beat's own detail page
+// still renders for anyone with the direct URL; see BeatDetailPage).
+export function isBeatPubliclyVisible(beat: Pick<Beat, 'visibility'>): boolean {
+  return !beat.visibility || beat.visibility === 'public';
+}
+
 class BeatService {
   private collectionName = 'beats';
 
@@ -38,7 +48,7 @@ class BeatService {
       querySnapshot.forEach((doc) => {
         beats.push({ id: doc.id, ...doc.data() } as Beat);
       });
-      return beats;
+      return beats.filter(isBeatPubliclyVisible);
     } catch (error) {
       console.error('Get published beats error:', error);
       return [];
@@ -200,7 +210,7 @@ class BeatService {
         beats.push({ id: doc.id, ...doc.data() } as Beat);
       });
 
-      return beats;
+      return beats.filter(isBeatPubliclyVisible);
     } catch (error) {
       console.error('Get featured beats error:', error);
       return [];
@@ -223,7 +233,7 @@ class BeatService {
         beats.push({ id: doc.id, ...doc.data() } as Beat);
       });
 
-      return beats;
+      return beats.filter(isBeatPubliclyVisible);
     } catch (error) {
       console.error('Get trending beats error:', error);
       return [];
@@ -276,10 +286,18 @@ class BeatService {
     return onSnapshot(
       q,
       (querySnapshot) => {
-        const beats: Beat[] = [];
+        let beats: Beat[] = [];
         querySnapshot.forEach((doc) => {
           beats.push({ id: doc.id, ...doc.data() } as Beat);
         });
+        // A `status: 'published'` filter is this codebase's convention for a
+        // public-facing listing (shop pages, previews, related content), so
+        // beats with 'private-link'/'private-user' visibility are excluded
+        // here too. Admin/manager subscribe with no status filter and
+        // continue to see every beat, including private ones.
+        if (filters?.status === 'published') {
+          beats = beats.filter(isBeatPubliclyVisible);
+        }
         callback(beats);
       },
       (error) => {

@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import ManagerLayout from '../../components/manager/ManagerLayout';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { useBeats } from '../../hooks/useBeats';
-import { beatService } from '../../lib/firebase/services';
-import { Beat } from '../../lib/firebase/types';
-import { Edit, Play, TrendingUp, Star, Eye, Download, Heart } from 'lucide-react';
+import { beatService, authService } from '../../lib/firebase/services';
+import { Beat, User } from '../../lib/firebase/types';
+import { Edit, Play, TrendingUp, Star, Eye, Download, Heart, Search, X } from 'lucide-react';
 
 const ManagerBeats: React.FC = () => {
   const { beats, loading } = useBeats();
@@ -215,14 +215,47 @@ const EditBeatModal: React.FC<EditBeatModalProps> = ({ beat, onClose, onSave }) 
     featured: beat.featured,
     trending: beat.trending,
     status: beat.status,
+    visibility: beat.visibility || 'public',
+    allowedUserId: beat.allowedUserId || '',
+    allowedUserEmail: beat.allowedUserEmail || '',
   });
+
+  // User picker for "Private (specific user)" visibility
+  const [allUsers, setAllUsers] = useState<User[]>([]);
+  const [usersLoaded, setUsersLoaded] = useState(false);
+  const [userSearch, setUserSearch] = useState('');
+
+  useEffect(() => {
+    if (formData.visibility === 'private-user' && !usersLoaded) {
+      authService.getAllUsers()
+        .then(setAllUsers)
+        .finally(() => setUsersLoaded(true));
+    }
+  }, [formData.visibility, usersLoaded]);
+
+  const matchingUsers = userSearch.trim()
+    ? allUsers.filter((u) => {
+        const q = userSearch.toLowerCase();
+        return (
+          u.email?.toLowerCase().includes(q) ||
+          u.displayName?.toLowerCase().includes(q)
+        );
+      })
+    : allUsers;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSave(beat.id, {
+    if (formData.visibility === 'private-user' && !formData.allowedUserId) {
+      alert('Please pick the user this beat is exclusive to');
+      return;
+    }
+    const updates: any = {
       ...formData,
       tags: formData.tags.split(',').map((t) => t.trim()).filter(t => t),
-    });
+      allowedUserId: formData.visibility === 'private-user' ? formData.allowedUserId : null,
+      allowedUserEmail: formData.visibility === 'private-user' ? formData.allowedUserEmail : null,
+    };
+    onSave(beat.id, updates);
   };
 
   return (
@@ -295,6 +328,78 @@ const EditBeatModal: React.FC<EditBeatModalProps> = ({ beat, onClose, onSave }) 
               <option value="archived">Archived</option>
             </select>
           </div>
+
+          {/* Visibility — who this beat is shown/available to */}
+          <div>
+            <label className="block text-sm font-medium text-white/60 mb-2">Visibility</label>
+            <select
+              value={formData.visibility}
+              onChange={(e) => setFormData({ ...formData, visibility: e.target.value as any })}
+              className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white focus:outline-none focus:border-blue-500"
+            >
+              <option value="public">Public — listed everywhere</option>
+              <option value="private-link">Private (link only) — &quot;Super Exclusive&quot;</option>
+              <option value="private-user">Private (specific user) — &quot;VIP Exclusive&quot;</option>
+            </select>
+            <p className="text-xs text-white/40 mt-1">
+              This is app-level gating (like the rest of this dashboard) — it isn't a database security rule.
+            </p>
+          </div>
+
+          {formData.visibility === 'private-user' && (
+            <div className="p-4 rounded-lg bg-amber-500/10 border border-amber-500/20 space-y-3">
+              <label className="block text-sm font-medium text-white/60">
+                Beat is exclusive to <span className="text-red-400">*</span>
+              </label>
+              {formData.allowedUserId ? (
+                <div className="flex items-center justify-between gap-3 px-3 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg">
+                  <span className="text-sm text-white truncate">
+                    {formData.allowedUserEmail || formData.allowedUserId}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, allowedUserId: '', allowedUserEmail: '' })}
+                    className="text-white/40 hover:text-white flex-shrink-0"
+                    title="Change user"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+                    <input
+                      type="text"
+                      value={userSearch}
+                      onChange={(e) => setUserSearch(e.target.value)}
+                      placeholder="Search users by name or email..."
+                      className="w-full pl-9 pr-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500"
+                    />
+                  </div>
+                  <div className="max-h-40 overflow-y-auto space-y-1">
+                    {!usersLoaded ? (
+                      <p className="text-xs text-white/40 px-1 py-2">Loading users...</p>
+                    ) : matchingUsers.length === 0 ? (
+                      <p className="text-xs text-white/40 px-1 py-2">No users found</p>
+                    ) : (
+                      matchingUsers.slice(0, 20).map((u) => (
+                        <button
+                          key={u.uid}
+                          type="button"
+                          onClick={() => setFormData({ ...formData, allowedUserId: u.uid, allowedUserEmail: u.email })}
+                          className="w-full text-left px-3 py-2 rounded-lg bg-white/[0.04] hover:bg-white/[0.1] transition-colors"
+                        >
+                          <p className="text-sm text-white truncate">{u.displayName || u.email}</p>
+                          {u.displayName && <p className="text-xs text-white/40 truncate">{u.email}</p>}
+                        </button>
+                      ))
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
+          )}
 
           <div className="flex gap-4">
             <label className="flex items-center space-x-2">

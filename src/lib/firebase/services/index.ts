@@ -1,5 +1,5 @@
 export { authService } from './authService';
-export { beatService } from './beatService';
+export { beatService, isBeatPubliclyVisible } from './beatService';
 export { trackService } from './trackService';
 export { albumService } from './albumService';
 export { remixService } from './remixService';

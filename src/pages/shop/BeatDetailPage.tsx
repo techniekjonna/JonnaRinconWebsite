@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, ShoppingCart, Play, Pause, Zap, Download, Globe, Disc3,
-  TrendingUp, Users, Copy, Check, X as XIcon, Mail,
+  TrendingUp, Users, Copy, Check, X as XIcon, Mail, Lock, Crown,
 } from 'lucide-react';
 import Footer from '../../components/Footer';
 import LoadingSpinner from '../../components/LoadingSpinner';
@@ -12,6 +12,7 @@ import { useCart } from '../../hooks/useCart';
 import { setCurrentTrack, getCurrentTrack } from '../../components/GlobalAudioPlayer';
 import { useScrollToTop } from '../../hooks/useScrollToTop';
 import { useT } from '../../contexts/LanguageContext';
+import { useAuth } from '../../contexts/AuthContext';
 
 const BeatDetailPage: React.FC = () => {
   useScrollToTop();
@@ -19,6 +20,7 @@ const BeatDetailPage: React.FC = () => {
   const navigate = useNavigate();
   const { cartItems, addToCart } = useCart();
   const t = useT();
+  const { user, loading: authLoading } = useAuth();
 
   const [beat, setBeat] = useState<Beat | null>(null);
   const [loading, setLoading] = useState(true);
@@ -32,6 +34,17 @@ const BeatDetailPage: React.FC = () => {
       .then(setBeat)
       .finally(() => setLoading(false));
   }, [beatId]);
+
+  // VIP-exclusive ('private-user') beats only render for the specific allowed
+  // user (or an admin/manager) — this is client-side/route-level gating,
+  // consistent with the rest of this app's access checks, not a database rule.
+  // 'private-link' beats need no user check: anyone with the direct URL may view.
+  const isVipBeat = beat?.visibility === 'private-user';
+  const isAllowedToView =
+    !isVipBeat ||
+    user?.uid === beat?.allowedUserId ||
+    user?.role === 'admin' ||
+    user?.role === 'manager';
 
   useEffect(() => {
     setIsPlaying(beat ? getCurrentTrack()?.id === beat.id : false);
@@ -77,7 +90,10 @@ const BeatDetailPage: React.FC = () => {
     navigate('/contact', { state: { beatTitle: beat.title, beatId: beat.id } });
   };
 
-  if (loading) {
+  // While the beat is loading, or (for a VIP-exclusive beat) while we're still
+  // resolving who's signed in, show the spinner rather than briefly flashing
+  // "not found" for a visitor who will turn out to be allowed.
+  if (loading || (isVipBeat && authLoading)) {
     return (
       <div className="min-h-screen text-white flex items-center justify-center">
         <LoadingSpinner text={t('Loading beat...', 'Beat laden...')} />
@@ -85,7 +101,9 @@ const BeatDetailPage: React.FC = () => {
     );
   }
 
-  if (!beat) {
+  // A VIP-exclusive beat a visitor isn't allowed to see must look identical to
+  // a beat that doesn't exist — no separate "access denied" state.
+  if (!beat || !isAllowedToView) {
     return (
       <div className="min-h-screen text-white flex flex-col items-center justify-center px-6 text-center">
         <p className="text-white/50 mb-6">{t('This beat could not be found.', 'Deze beat kon niet worden gevonden.')}</p>
@@ -142,12 +160,26 @@ const BeatDetailPage: React.FC = () => {
                   )}
                 </div>
               </button>
-              {beat.featured && (
-                <div className="absolute top-4 left-4 flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-red-600/25 to-red-900/20 border border-red-600/30 rounded-full backdrop-blur-md">
-                  <Zap size={14} className="text-red-300" />
-                  <span className="text-xs font-bold text-red-200 uppercase tracking-wider">{t('Featured', 'Uitgelicht')}</span>
-                </div>
-              )}
+              <div className="absolute top-4 left-4 flex flex-col items-start gap-2">
+                {beat.featured && (
+                  <div className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-red-600/25 to-red-900/20 border border-red-600/30 rounded-full backdrop-blur-md">
+                    <Zap size={14} className="text-red-300" />
+                    <span className="text-xs font-bold text-red-200 uppercase tracking-wider">{t('Featured', 'Uitgelicht')}</span>
+                  </div>
+                )}
+                {beat.visibility === 'private-link' && (
+                  <div className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-amber-500/25 to-yellow-700/20 border border-amber-400/30 rounded-full backdrop-blur-md">
+                    <Lock size={14} className="text-amber-300" />
+                    <span className="text-xs font-bold text-amber-200 uppercase tracking-wider">{t('Super Exclusive', 'Super Exclusief')}</span>
+                  </div>
+                )}
+                {beat.visibility === 'private-user' && (
+                  <div className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-amber-400/30 to-yellow-500/25 border border-amber-300/40 rounded-full backdrop-blur-md">
+                    <Crown size={14} className="text-amber-200" />
+                    <span className="text-xs font-bold text-amber-100 uppercase tracking-wider">{t('VIP Exclusive', 'VIP Exclusief')}</span>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 

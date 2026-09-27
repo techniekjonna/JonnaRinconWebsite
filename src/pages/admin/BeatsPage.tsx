@@ -3,9 +3,9 @@ import AdminLayout from '../../components/admin/AdminLayout';
 import LinkInput from '../../components/admin/LinkInput';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { useBeats } from '../../hooks/useBeats';
-import { beatService, beatPackService } from '../../lib/firebase/services';
-import { Beat, BeatPack, BeatPackItem } from '../../lib/firebase/types';
-import { Plus, Edit, Trash2, Play, Pause, ArrowUp, ArrowDown, Package, ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { beatService, beatPackService, authService } from '../../lib/firebase/services';
+import { Beat, BeatPack, BeatPackItem, User } from '../../lib/firebase/types';
+import { Plus, Edit, Trash2, Play, Pause, ArrowUp, ArrowDown, Package, ChevronLeft, ChevronRight, X, Search } from 'lucide-react';
 
 const BeatsPage: React.FC = () => {
   const { beats, loading } = useBeats();
@@ -343,8 +343,34 @@ const BeatFormModal: React.FC<BeatFormModalProps> = ({ beat, onClose, onSave }) 
     beatType: beat?.beatType || 'free',
     featured: beat?.featured || false,
     exclusivePrice: beat?.licenses?.exclusive?.price || 199,
+    visibility: beat?.visibility || 'public',
+    allowedUserId: beat?.allowedUserId || '',
+    allowedUserEmail: beat?.allowedUserEmail || '',
   });
   const [saving, setSaving] = useState(false);
+
+  // User picker for "Private (specific user)" visibility
+  const [allUsers, setAllUsers] = useState<User[]>([]);
+  const [usersLoaded, setUsersLoaded] = useState(false);
+  const [userSearch, setUserSearch] = useState('');
+
+  useEffect(() => {
+    if (formData.visibility === 'private-user' && !usersLoaded) {
+      authService.getAllUsers()
+        .then(setAllUsers)
+        .finally(() => setUsersLoaded(true));
+    }
+  }, [formData.visibility, usersLoaded]);
+
+  const matchingUsers = userSearch.trim()
+    ? allUsers.filter((u) => {
+        const q = userSearch.toLowerCase();
+        return (
+          u.email?.toLowerCase().includes(q) ||
+          u.displayName?.toLowerCase().includes(q)
+        );
+      })
+    : allUsers;
 
   // Update form data when beat prop changes (for editing)
   React.useEffect(() => {
@@ -365,6 +391,9 @@ const BeatFormModal: React.FC<BeatFormModalProps> = ({ beat, onClose, onSave }) 
         beatType: beat.beatType || 'free',
         featured: beat.featured || false,
         exclusivePrice: beat.licenses?.exclusive?.price || 199,
+        visibility: beat.visibility || 'public',
+        allowedUserId: beat.allowedUserId || '',
+        allowedUserEmail: beat.allowedUserEmail || '',
       });
     }
   }, [beat]);
@@ -435,6 +464,12 @@ const BeatFormModal: React.FC<BeatFormModalProps> = ({ beat, onClose, onSave }) 
         return;
       }
 
+      if (formData.visibility === 'private-user' && !formData.allowedUserId) {
+        alert('Please pick the user this beat is exclusive to');
+        setSaving(false);
+        return;
+      }
+
       const beatData: any = {
         title: formData.title,
         artist: formData.artist,
@@ -451,6 +486,12 @@ const BeatFormModal: React.FC<BeatFormModalProps> = ({ beat, onClose, onSave }) 
         beatType: formData.beatType,
         featured: formData.featured,
         trending: false,
+        visibility: formData.visibility,
+        // Use null rather than omitting/undefined so a beat that's switched away
+        // from "private (specific user)" doesn't keep a stale allowedUserId in
+        // Firestore (Firestore's updateDoc/addDoc reject `undefined` values).
+        allowedUserId: formData.visibility === 'private-user' ? formData.allowedUserId : null,
+        allowedUserEmail: formData.visibility === 'private-user' ? formData.allowedUserEmail : null,
       };
 
       // Always include the complete licenses object with exclusive license
@@ -597,6 +638,80 @@ const BeatFormModal: React.FC<BeatFormModalProps> = ({ beat, onClose, onSave }) 
                 Classify this beat (free beats have no cost, exclusive beats require purchase)
               </p>
             </div>
+          </div>
+
+          {/* Visibility — who this beat is shown/available to */}
+          <div className="grid grid-cols-1 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-white/60 mb-2">Visibility</label>
+              <select
+                value={formData.visibility}
+                onChange={(e) => setFormData({ ...formData, visibility: e.target.value as any })}
+                className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white"
+              >
+                <option value="public">Public — listed everywhere</option>
+                <option value="private-link">Private (link only) — hidden from listings, viewable by anyone with the direct link (&quot;Super Exclusive&quot;)</option>
+                <option value="private-user">Private (specific user) — hidden from listings, viewable only by one chosen user (&quot;VIP Exclusive&quot;)</option>
+              </select>
+              <p className="text-xs text-white/40 mt-1">
+                This is app-level gating (like the rest of this dashboard) — it isn't a database security rule.
+              </p>
+            </div>
+
+            {formData.visibility === 'private-user' && (
+              <div className="p-4 rounded-lg bg-amber-500/10 border border-amber-500/20 space-y-3">
+                <label className="block text-sm font-medium text-white/60">
+                  Beat is exclusive to <span className="text-red-400">*</span>
+                </label>
+                {formData.allowedUserId ? (
+                  <div className="flex items-center justify-between gap-3 px-3 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg">
+                    <span className="text-sm text-white truncate">
+                      {formData.allowedUserEmail || formData.allowedUserId}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, allowedUserId: '', allowedUserEmail: '' })}
+                      className="text-white/40 hover:text-white flex-shrink-0"
+                      title="Change user"
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+                      <input
+                        type="text"
+                        value={userSearch}
+                        onChange={(e) => setUserSearch(e.target.value)}
+                        placeholder="Search users by name or email..."
+                        className="w-full pl-9 pr-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white text-sm"
+                      />
+                    </div>
+                    <div className="max-h-40 overflow-y-auto space-y-1">
+                      {!usersLoaded ? (
+                        <p className="text-xs text-white/40 px-1 py-2">Loading users...</p>
+                      ) : matchingUsers.length === 0 ? (
+                        <p className="text-xs text-white/40 px-1 py-2">No users found</p>
+                      ) : (
+                        matchingUsers.slice(0, 20).map((u) => (
+                          <button
+                            key={u.uid}
+                            type="button"
+                            onClick={() => setFormData({ ...formData, allowedUserId: u.uid, allowedUserEmail: u.email })}
+                            className="w-full text-left px-3 py-2 rounded-lg bg-white/[0.04] hover:bg-white/[0.1] transition-colors"
+                          >
+                            <p className="text-sm text-white truncate">{u.displayName || u.email}</p>
+                            {u.displayName && <p className="text-xs text-white/40 truncate">{u.email}</p>}
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
           </div>
 
           <div>
