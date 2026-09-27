@@ -2,9 +2,11 @@ import { useEffect, useState } from 'react';
 import { ArrowRight, Briefcase, Mail } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import { hasHomeIntroPlayed } from '../lib/homeIntroState';
+import { useT } from '../contexts/LanguageContext';
 
 export default function Hero() {
   const navigate = useNavigate();
+  const t = useT();
   // Delayed so background is fully visible before content appears (intro animation) —
   // only on a real first load, not when navigating back to "/" mid-session
   const [visible, setVisible] = useState(hasHomeIntroPlayed());
@@ -30,7 +32,7 @@ export default function Hero() {
       >
         {/* Subtitle */}
         <p className="text-white/50 text-base md:text-lg uppercase tracking-widest mb-10">
-          Music Producer <span className="text-white/25">|</span> Audio Engineer
+          {t('Music Producer', 'Muziekproducent')} <span className="text-white/25">|</span> {t('Audio Engineer', 'Audio-engineer')}
         </p>
 
         {/* CTAs */}
@@ -41,7 +43,7 @@ export default function Hero() {
             className="flex items-center justify-center py-3.5 bg-red-600 text-white font-bold text-sm uppercase tracking-widest hover:bg-red-700 transition-all duration-300 hover:scale-105 active:scale-95 rounded-xl"
             style={{ width: '220px', paddingLeft: '20px', paddingRight: '12px' }}
           >
-            <span className="flex-1 text-center whitespace-nowrap">Shop Beats</span>
+            <span className="flex-1 text-center whitespace-nowrap">{t('Shop Beats', 'Shop Beats')}</span>
             <ArrowRight size={16} className="flex-shrink-0 ml-2" />
           </button>
 
@@ -52,7 +54,7 @@ export default function Hero() {
             style={{ width: '220px' }}
           >
             <Briefcase size={16} className="flex-shrink-0" />
-            Services
+            {t('Services', 'Diensten')}
           </button>
         </div>
 
@@ -63,15 +65,15 @@ export default function Hero() {
             className="flex items-center gap-2 px-6 py-2.5 border border-white/20 text-white/70 font-bold text-xs uppercase tracking-widest hover:text-white hover:border-white/40 hover:bg-white/5 transition-all duration-300 rounded-full"
           >
             <Mail size={14} className="flex-shrink-0" />
-            Contact
+            {t('Contact', 'Contact')}
           </button>
 
           <Link to="/studio-session" className="group flex items-center gap-2">
             <span className="text-white/35 text-xs uppercase tracking-widest group-hover:text-red-500 transition-colors duration-300">
-              Studio session with Jonna?
+              {t('Studio session with Jonna?', 'Studiosessie met Jonna?')}
             </span>
             <span className="text-white/70 text-xs font-bold uppercase tracking-widest group-hover:text-white group-hover:[text-shadow:0_0_12px_rgba(255,255,255,0.6)] transition-all duration-300">
-              Book here →
+              {t('Book here', 'Boek hier')} →
             </span>
           </Link>
         </div>

@@ -13,9 +13,11 @@ import FilterModal from '../../components/FilterModal';
 import BeatPackDetailModal from '../../components/BeatPackDetailModal';
 import { beatService, beatPackService } from '../../lib/firebase/services';
 import { useScrollToTop } from '../../hooks/useScrollToTop';
+import { useT } from '../../contexts/LanguageContext';
 
 const BeatsShop: React.FC = () => {
   const navigate = useNavigate();
+  const t = useT();
   const [beats, setBeats] = useState<Beat[]>([]);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
@@ -185,7 +187,7 @@ const BeatsShop: React.FC = () => {
           {heroTitle.display}
         </h1>
         <p className="text-white/70 text-base md:text-lg max-w-xl mx-auto">
-          High-quality instrumentals across every genre. Find your sound and elevate your music.
+          {t('High-quality instrumentals across every genre. Find your sound and elevate your music.', 'Hoogwaardige instrumentals in elk genre. Vind jouw sound en til je muziek naar een hoger niveau.')}
         </p>
       </section>
 
@@ -200,21 +202,21 @@ const BeatsShop: React.FC = () => {
             }}
             filters={[
               {
-                label: 'Genre',
-                options: ['All', ...dynamicGenres],
-                value: filter.genre || 'All',
-                onChange: (value) => setFilter({ ...filter, genre: value === 'All' ? undefined : (value as string) }),
+                label: t('Genre', 'Genre'),
+                options: [t('All', 'Alle'), ...dynamicGenres],
+                value: filter.genre || t('All', 'Alle'),
+                onChange: (value) => setFilter({ ...filter, genre: value === t('All', 'Alle') ? undefined : (value as string) }),
               },
               {
-                label: 'Sort',
-                options: ['Newest', 'Popular', 'Price: Low', 'Price: High'],
-                value: filter.sortBy === 'newest' ? 'Newest' : filter.sortBy === 'popular' ? 'Popular' : filter.sortBy === 'price_low' ? 'Price: Low' : 'Price: High',
+                label: t('Sort', 'Sorteren'),
+                options: [t('Newest', 'Nieuwste'), t('Popular', 'Populair'), t('Price: Low', 'Prijs: Laag'), t('Price: High', 'Prijs: Hoog')],
+                value: filter.sortBy === 'newest' ? t('Newest', 'Nieuwste') : filter.sortBy === 'popular' ? t('Popular', 'Populair') : filter.sortBy === 'price_low' ? t('Price: Low', 'Prijs: Laag') : t('Price: High', 'Prijs: Hoog'),
                 onChange: (value) => {
                   const sortMap: Record<string, typeof filter.sortBy> = {
-                    'Newest': 'newest',
-                    'Popular': 'popular',
-                    'Price: Low': 'price_low',
-                    'Price: High': 'price_high',
+                    [t('Newest', 'Nieuwste')]: 'newest',
+                    [t('Popular', 'Populair')]: 'popular',
+                    [t('Price: Low', 'Prijs: Laag')]: 'price_low',
+                    [t('Price: High', 'Prijs: Hoog')]: 'price_high',
                   };
                   setFilter({ ...filter, sortBy: sortMap[value as string] || 'newest' });
                 },
@@ -232,7 +234,7 @@ const BeatsShop: React.FC = () => {
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
               <input
                 type="text"
-                placeholder="Search beats, artist, tags..."
+                placeholder={t('Search beats, artist, tags...', 'Zoek beats, artiest, tags...')}
                 value={filter.search || ''}
                 onChange={(e) => setFilter({ ...filter, search: e.target.value })}
                 className="w-full pl-11 pr-4 py-3 bg-white/[0.04] border border-white/[0.08] rounded-xl text-white placeholder-white/25 focus:outline-none focus:border-red-500/30 focus:bg-white/[0.06] transition-all text-sm"
@@ -243,7 +245,7 @@ const BeatsShop: React.FC = () => {
               className="flex items-center gap-2 px-4 py-3 bg-white/[0.04] border border-white/[0.08] rounded-xl text-xs font-bold uppercase tracking-wide text-white/50 hover:text-white hover:bg-white/[0.08] transition-all"
             >
               <Sliders size={14} />
-              <span className="hidden md:inline">Filters</span>
+              <span className="hidden md:inline">{t('Filters', 'Filters')}</span>
             </button>
             <button
               onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
@@ -279,14 +281,14 @@ const BeatsShop: React.FC = () => {
             <div className="flex items-center justify-between mb-8">
               <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tight flex items-center gap-3">
                 <Package className="w-7 h-7 md:w-9 md:h-9 text-red-500" />
-                Beat Packs
+                {t('Beat Packs', 'Beat Packs')}
               </h2>
               {beatPacks.length > 1 && (
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => setPackIndex((i) => (i - 1 + beatPacks.length) % beatPacks.length)}
                     className="p-3 rounded-full bg-white/[0.06] border border-white/[0.1] text-white/60 hover:text-white hover:bg-white/[0.12] transition-all"
-                    aria-label="Previous pack"
+                    aria-label={t('Previous pack', 'Vorige pack')}
                   >
                     <ChevronLeft className="w-5 h-5" />
                   </button>
@@ -294,7 +296,7 @@ const BeatsShop: React.FC = () => {
                   <button
                     onClick={() => setPackIndex((i) => (i + 1) % beatPacks.length)}
                     className="p-3 rounded-full bg-white/[0.06] border border-white/[0.1] text-white/60 hover:text-white hover:bg-white/[0.12] transition-all"
-                    aria-label="Next pack"
+                    aria-label={t('Next pack', 'Volgende pack')}
                   >
                     <ChevronRight className="w-5 h-5" />
                   </button>
@@ -316,12 +318,12 @@ const BeatsShop: React.FC = () => {
                     />
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent to-black/40 md:to-black/60" />
                     <div className="absolute top-4 left-4 px-3 py-1.5 bg-red-600 rounded-full text-xs font-bold uppercase shadow-lg flex items-center gap-1.5">
-                      <Package size={12} /> Pack
+                      <Package size={12} /> {t('Pack', 'Pack')}
                     </div>
                   </div>
                   <div className="md:col-span-3 p-6 md:p-10 flex flex-col justify-center">
                     <p className="text-xs uppercase tracking-widest text-red-400/80 font-bold mb-3">
-                      {beatPacks[packIndex].beats.length} Beat{beatPacks[packIndex].beats.length !== 1 ? 's' : ''} · Beat Pack
+                      {beatPacks[packIndex].beats.length} {t('Beat', 'Beat')}{beatPacks[packIndex].beats.length !== 1 ? 's' : ''} · {t('Beat Pack', 'Beat Pack')}
                     </p>
                     <h3 className="text-3xl md:text-5xl font-black text-white mb-4 leading-tight">
                       {beatPacks[packIndex].title}
@@ -333,13 +335,13 @@ const BeatsShop: React.FC = () => {
                     )}
                     <div className="flex items-center justify-between gap-4">
                       <div>
-                        <div className="text-[10px] uppercase tracking-widest text-white/30">From</div>
+                        <div className="text-[10px] uppercase tracking-widest text-white/30">{t('From', 'Vanaf')}</div>
                         <div className="text-3xl md:text-4xl font-black text-red-500">
                           &euro;{beatPacks[packIndex].price.toFixed(0)}
                         </div>
                       </div>
                       <span className="px-5 py-3 bg-red-600 hover:bg-red-700 rounded-lg text-sm font-bold uppercase tracking-wider transition-all group-hover:scale-105">
-                        View Pack
+                        {t('View Pack', 'Bekijk Pack')}
                       </span>
                     </div>
                   </div>
@@ -352,7 +354,7 @@ const BeatsShop: React.FC = () => {
         {/* Trending Section */}
         {!loading && trendingBeats.length > 0 && (
           <div className="mb-16">
-            <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tight mb-8">Trending</h2>
+            <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tight mb-8">{t('Trending', 'Trending')}</h2>
             <div className="space-y-2">
               {trendingBeats.slice(0, 5).map((beat, index) => (
                 <button
@@ -381,7 +383,7 @@ const BeatsShop: React.FC = () => {
                     <p className="text-xs text-white/40 truncate">{beat.artist}</p>
                   </div>
                   <div className="hidden md:flex items-center gap-4 text-xs text-white/30">
-                    <span>{beat.plays.toLocaleString()} plays</span>
+                    <span>{beat.plays.toLocaleString()} {t('plays', 'afspelen')}</span>
                     <span>{beat.genre}</span>
                     <span>{beat.bpm} BPM</span>
                   </div>
@@ -390,7 +392,7 @@ const BeatsShop: React.FC = () => {
                       &euro;{beat.licenses.exclusive?.price.toFixed(0) || '0'}
                     </span>
                     <span className="px-3 py-1.5 md:px-4 md:py-2 bg-red-600 hover:bg-red-700 rounded-lg text-xs md:text-sm font-semibold transition-all">
-                      View
+                      {t('View', 'Bekijk')}
                     </span>
                   </div>
                 </button>
@@ -406,28 +408,28 @@ const BeatsShop: React.FC = () => {
 
         {/* All Beats Section */}
         <div className="flex items-center justify-between mb-10">
-          <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tight">All Beats</h2>
+          <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tight">{t('All Beats', 'Alle Beats')}</h2>
         </div>
 
         {/* Loading State */}
         {loading ? (
           <div className="flex flex-col justify-center items-center h-64 gap-4">
             <div className="w-12 h-12 border-2 border-white/20 border-t-red-500 rounded-full animate-spin" />
-            <p className="text-sm text-white/30 uppercase tracking-widest">Loading beats...</p>
+            <p className="text-sm text-white/30 uppercase tracking-widest">{t('Loading beats...', 'Beats laden...')}</p>
           </div>
         ) : filteredBeats.length === 0 ? (
           <div className="text-center py-20">
             <div className="bg-white/[0.04] backdrop-blur-md border border-white/[0.06] rounded-2xl p-12 max-w-md mx-auto">
-              <p className="text-xl font-bold mb-2">No beats found</p>
+              <p className="text-xl font-bold mb-2">{t('No beats found', 'Geen beats gevonden')}</p>
               <p className="text-white/40 text-sm">
-                {hasActiveFilters ? 'Try adjusting your search filters' : 'Beats will appear here once published'}
+                {hasActiveFilters ? t('Try adjusting your search filters', 'Probeer je zoekfilters aan te passen') : t('Beats will appear here once published', 'Beats verschijnen hier zodra ze gepubliceerd zijn')}
               </p>
               {hasActiveFilters && (
                 <button
                   onClick={() => setFilter({ sortBy: 'newest', search: undefined, genre: undefined })}
                   className="mt-6 px-6 py-2 bg-red-600 hover:bg-red-700 rounded-lg text-sm font-semibold transition-all"
                 >
-                  Clear Filters
+                  {t('Clear Filters', 'Filters Wissen')}
                 </button>
               )}
             </div>
@@ -453,12 +455,12 @@ const BeatsShop: React.FC = () => {
                   <div className="absolute top-2 left-2 flex gap-1.5">
                     {beat.featured && (
                       <span className="px-2 py-0.5 bg-red-600 rounded-full text-[10px] font-bold uppercase shadow-lg">
-                        Featured
+                        {t('Featured', 'Uitgelicht')}
                       </span>
                     )}
                     {beat.trending && (
                       <span className="px-2 py-0.5 bg-white/20 backdrop-blur-sm rounded-full text-[10px] font-bold uppercase">
-                        Trending
+                        {t('Trending', 'Trending')}
                       </span>
                     )}
                   </div>
@@ -486,7 +488,7 @@ const BeatsShop: React.FC = () => {
                         <div className="w-0.5 bg-white rounded-full animate-pulse" style={{height: '50%', animationDelay: '300ms'}} />
                         <div className="w-0.5 bg-white rounded-full animate-pulse" style={{height: '80%', animationDelay: '100ms'}} />
                       </div>
-                      <span className="text-xs font-medium">Playing</span>
+                      <span className="text-xs font-medium">{t('Playing', 'Speelt')}</span>
                     </div>
                   )}
                 </div>
@@ -503,13 +505,13 @@ const BeatsShop: React.FC = () => {
 
                   <div className="flex items-center justify-between mt-3 pt-3 border-t border-white/[0.06]">
                     <div>
-                      <div className="text-[10px] text-white/25 uppercase tracking-wider">From</div>
+                      <div className="text-[10px] text-white/25 uppercase tracking-wider">{t('From', 'Vanaf')}</div>
                       <div className="text-base md:text-lg font-black text-red-500">
                         &euro;{beat.licenses.exclusive?.price.toFixed(0) || '0'}
                       </div>
                     </div>
                     <div className="px-3 py-1.5 bg-red-600 hover:bg-red-700 rounded-lg text-xs font-semibold transition-all group-hover:scale-105">
-                      View Beat
+                      {t('View Beat', 'Bekijk Beat')}
                     </div>
                   </div>
                 </div>

@@ -1,9 +1,11 @@
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import { useInView } from '../hooks/useInView';
+import { useT } from '../contexts/LanguageContext';
 
 export default function About() {
   const [ref, inView] = useInView({ threshold: 0.1 });
+  const t = useT();
 
   return (
     <section
@@ -17,26 +19,28 @@ export default function About() {
 
         {/* Text */}
         <div>
-          <p className="text-xs font-black uppercase tracking-[0.4em] text-red-500 mb-3">Get To Know</p>
+          <p className="text-xs font-black uppercase tracking-[0.4em] text-red-500 mb-3">{t('Get To Know', 'Leer Kennen')}</p>
           <h2 className="text-3xl md:text-5xl font-black text-white tracking-tighter mb-6 leading-tight">
             Jonna Rincon
           </h2>
           <p className="text-white/70 text-base leading-relaxed mb-4">
-            Jonathan, aka Jonna Rincon, was born in Maastricht and is now based in Tilburg. He started making
-            music the moment he got his hands on FL Studio during a trip to visit family in the Dominican
-            Republic — his first track, made together with his oldest nephew, is where it all began.
+            {t(
+              'Jonathan, aka Jonna Rincon, was born in Maastricht and is now based in Tilburg. He started making music the moment he got his hands on FL Studio during a trip to visit family in the Dominican Republic — his first track, made together with his oldest nephew, is where it all began.',
+              'Jonathan, aka Jonna Rincon, is geboren in Maastricht en woont nu in Tilburg. Hij begon met muziek maken zodra hij tijdens een reis naar familie in de Dominicaanse Republiek FL Studio in handen kreeg — zijn eerste track, gemaakt samen met zijn oudste neef, is waar het allemaal begon.'
+            )}
           </p>
           <p className="text-white/50 text-sm leading-relaxed mb-7">
-            Known for a raw, authentic sound rooted in Moombahton, but just as comfortable across Hip Hop,
-            R&amp;B, EDM and Lo-Fi. Over 10+ years in, Jonna keeps pushing the sound forward — working with
-            artists worldwide while staying true to where it started.
+            {t(
+              'Known for a raw, authentic sound rooted in Moombahton, but just as comfortable across Hip Hop, R&B, EDM and Lo-Fi. Over 10+ years in, Jonna keeps pushing the sound forward — working with artists worldwide while staying true to where it started.',
+              'Bekend voor een rauwe, authentieke sound geworteld in Moombahton, maar net zo thuis in Hip Hop, R&B, EDM en Lo-Fi. Na meer dan 10 jaar blijft Jonna de sound doorontwikkelen — werkend met artiesten wereldwijd, terwijl hij trouw blijft aan waar het begon.'
+            )}
           </p>
 
           <Link
             to="/about"
             className="inline-flex items-center gap-2 px-6 py-3 bg-white/10 border border-white/20 text-white font-black text-xs uppercase tracking-widest hover:bg-white/20 transition-all duration-300 rounded-full"
           >
-            Full Story
+            {t('Full Story', 'Volledig Verhaal')}
             <ArrowRight size={14} />
           </Link>
         </div>

@@ -7,6 +7,7 @@ import ShoppingCart from './ShoppingCart';
 import { getCurrentTrack, togglePlayerOpen, openPlayer, setPreviewTrack } from './GlobalAudioPlayer';
 import { useTracks } from '../hooks/useTracks';
 import { useContrastColor } from '../lib/utils/colorDetection';
+import { useT } from '../contexts/LanguageContext';
 
 interface NavigationProps {
   cartItemCount?: number;
@@ -33,6 +34,7 @@ export default function Navigation({ cartItemCount = 0, onCartClick, isDarkOverl
   const { user, signIn, signUp, signOut } = useAuth();
   const { cartItems, isOpen: isCartOpen, setIsOpen: setIsCartOpen, removeFromCart, clearCart } = useCartContext();
   const { tracks } = useTracks();
+  const t = useT();
   const navigate = useNavigate();
   const location = useLocation();
   const closeTimeout = useRef<NodeJS.Timeout | null>(null);
@@ -124,7 +126,7 @@ export default function Navigation({ cartItemCount = 0, onCartClick, isDarkOverl
         await signIn(authEmail, authPassword);
       } else {
         if (authPassword.length < 6) {
-          setAuthError('Password must be at least 6 characters');
+          setAuthError(t('Password must be at least 6 characters', 'Wachtwoord moet minstens 6 tekens bevatten'));
           setAuthLoading(false);
           return;
         }
@@ -136,7 +138,7 @@ export default function Navigation({ cartItemCount = 0, onCartClick, isDarkOverl
       setAuthName('');
       navigate('/customer/dashboard');
     } catch (err: any) {
-      setAuthError(err.message || 'Something went wrong');
+      setAuthError(err.message || t('Something went wrong', 'Er is iets misgegaan'));
     } finally {
       setAuthLoading(false);
     }
@@ -214,10 +216,10 @@ export default function Navigation({ cartItemCount = 0, onCartClick, isDarkOverl
   const useBlackNav = false;
 
   const menuItems: { label: string; subtitle: string; href?: string; action?: () => void; submenu?: Array<{ label: string; subtitle: string; href: string; action?: () => void }>; expanded?: boolean; mobileOnly?: boolean }[] = [
-    { label: 'BEATS', subtitle: 'Premium beats, ready to license', action: () => { closeMenu(); navigate('/shop/beats'); } },
-    { label: 'SERVICES', subtitle: 'Studio session & mix/master', action: () => { closeMenu(); navigate('/shop/services'); } },
-    { label: 'MUSIC', subtitle: 'Tracks, remixes & DJ sets', action: () => { closeMenu(); navigate('/catalogue'); } },
-    { label: 'CONTACT ME', subtitle: 'Connect with Jonna', action: () => { closeMenu(); navigate('/contact'); } },
+    { label: t('BEATS', 'BEATS'), subtitle: t('Premium beats, ready to license', 'Premium beats, klaar om te licenseren'), action: () => { closeMenu(); navigate('/shop/beats'); } },
+    { label: t('SERVICES', 'DIENSTEN'), subtitle: t('Studio session & mix/master', 'Studiosessie & mix/master'), action: () => { closeMenu(); navigate('/shop/services'); } },
+    { label: t('MUSIC', 'MUZIEK'), subtitle: t('Tracks, remixes & DJ sets', 'Tracks, remixes & dj-sets'), action: () => { closeMenu(); navigate('/catalogue'); } },
+    { label: t('CONTACT ME', 'CONTACT'), subtitle: t('Connect with Jonna', 'Neem contact op met Jonna'), action: () => { closeMenu(); navigate('/contact'); } },
   ];
 
   const socialLinks = [
@@ -251,20 +253,20 @@ export default function Navigation({ cartItemCount = 0, onCartClick, isDarkOverl
                     <div className="absolute inset-0 z-20 flex items-center justify-center p-6">
                       <div className="text-center">
                         <AlertTriangle className="w-10 h-10 text-red-400 mx-auto mb-3" />
-                        <h3 className="text-lg font-black text-white mb-1">Clear form?</h3>
-                        <p className="text-white/50 text-sm mb-5">All entered data will be removed.</p>
+                        <h3 className="text-lg font-black text-white mb-1">{t('Clear form?', 'Formulier wissen?')}</h3>
+                        <p className="text-white/50 text-sm mb-5">{t('All entered data will be removed.', 'Alle ingevoerde gegevens worden verwijderd.')}</p>
                         <div className="flex gap-3">
                           <button
                             onClick={() => setShowClearAuthConfirm(false)}
                             className="flex-1 py-2.5 border border-white/20 rounded-lg text-white/70 hover:text-white font-semibold text-sm transition-all"
                           >
-                            Cancel
+                            {t('Cancel', 'Annuleren')}
                           </button>
                           <button
                             onClick={clearAuthForm}
                             className="flex-1 py-2.5 bg-red-600 hover:bg-red-700 rounded-lg text-white font-bold text-sm transition-all"
                           >
-                            Clear
+                            {t('Clear', 'Wissen')}
                           </button>
                         </div>
                       </div>
@@ -275,15 +277,15 @@ export default function Navigation({ cartItemCount = 0, onCartClick, isDarkOverl
                 <div className="p-8">
                   <div className="flex items-start justify-between mb-8">
                     <h2 className="text-4xl font-black text-white uppercase tracking-wider">
-                      {authMode === 'login' ? 'Welcome Back' : 'Create Account'}
+                      {authMode === 'login' ? t('Welcome Back', 'Welkom Terug') : t('Create Account', 'Account Aanmaken')}
                     </h2>
                     <div className="flex items-center gap-2 flex-shrink-0">
                       <button
                         onClick={() => setShowClearAuthConfirm(true)}
                         className="text-xs text-white/20 hover:text-red-400 uppercase tracking-widest font-semibold transition-colors"
-                        title="Clear form"
+                        title={t('Clear form', 'Formulier wissen')}
                       >
-                        Clear
+                        {t('Clear', 'Wissen')}
                       </button>
                       <button
                         onClick={() => setIsAuthModalOpen(false)}
@@ -303,19 +305,19 @@ export default function Navigation({ cartItemCount = 0, onCartClick, isDarkOverl
 
                     {authMode === 'signup' && (
                       <div>
-                        <label className="block text-xs font-medium text-gray-400 mb-2 uppercase tracking-wider">Full Name</label>
+                        <label className="block text-xs font-medium text-gray-400 mb-2 uppercase tracking-wider">{t('Full Name', 'Volledige Naam')}</label>
                         <input
                           type="text"
                           value={authName}
                           onChange={(e) => setAuthName(e.target.value)}
                           className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:border-white/30 focus:outline-none transition-all"
-                          placeholder="Your name"
+                          placeholder={t('Your name', 'Jouw naam')}
                         />
                       </div>
                     )}
 
                     <div>
-                      <label className="block text-xs font-medium text-gray-400 mb-2 uppercase tracking-wider">Email</label>
+                      <label className="block text-xs font-medium text-gray-400 mb-2 uppercase tracking-wider">{t('Email', 'E-mail')}</label>
                       <input
                         type="email"
                         value={authEmail}
@@ -327,7 +329,7 @@ export default function Navigation({ cartItemCount = 0, onCartClick, isDarkOverl
                     </div>
 
                     <div>
-                      <label className="block text-xs font-medium text-gray-400 mb-2 uppercase tracking-wider">Password</label>
+                      <label className="block text-xs font-medium text-gray-400 mb-2 uppercase tracking-wider">{t('Password', 'Wachtwoord')}</label>
                       <input
                         type="password"
                         value={authPassword}
@@ -341,7 +343,7 @@ export default function Navigation({ cartItemCount = 0, onCartClick, isDarkOverl
                     {authMode === 'login' && (
                       <div className="flex justify-end">
                         <a href="#" className="text-sm text-gray-400 hover:text-white transition-colors">
-                          Forgot password?
+                          {t('Forgot password?', 'Wachtwoord vergeten?')}
                         </a>
                       </div>
                     )}
@@ -351,7 +353,7 @@ export default function Navigation({ cartItemCount = 0, onCartClick, isDarkOverl
                       disabled={authLoading}
                       className="w-full py-4 bg-white text-black hover:bg-gray-200 rounded-lg font-bold text-lg transition-all hover:scale-105 active:scale-95 disabled:opacity-50"
                     >
-                      {authLoading ? 'Loading...' : (authMode === 'login' ? 'Sign In' : 'Create Account')}
+                      {authLoading ? t('Loading...', 'Laden...') : (authMode === 'login' ? t('Sign In', 'Inloggen') : t('Create Account', 'Account Aanmaken'))}
                     </button>
                   </form>
 
@@ -359,16 +361,16 @@ export default function Navigation({ cartItemCount = 0, onCartClick, isDarkOverl
                     <p className="text-gray-400 text-sm">
                       {authMode === 'login' ? (
                         <>
-                          Don't have an account?{' '}
+                          {t("Don't have an account?", 'Nog geen account?')}{' '}
                           <button onClick={toggleAuthMode} className="text-white hover:text-gray-300 font-semibold transition-colors">
-                            Create one
+                            {t('Create one', 'Maak een aan')}
                           </button>
                         </>
                       ) : (
                         <>
-                          Already have an account?{' '}
+                          {t('Already have an account?', 'Heb je al een account?')}{' '}
                           <button onClick={toggleAuthMode} className="text-white hover:text-gray-300 font-semibold transition-colors">
-                            Sign in
+                            {t('Sign in', 'Inloggen')}
                           </button>
                         </>
                       )}
@@ -534,7 +536,7 @@ export default function Navigation({ cartItemCount = 0, onCartClick, isDarkOverl
                     <div className="flex items-center justify-between">
                       <div>
                         <span className="block text-3xl md:text-4xl font-semibold text-white/90 group-hover:text-white transition-colors duration-300 tracking-tight">
-                          {user ? 'DASHBOARD' : 'SIGN IN'}
+                          {user ? t('DASHBOARD', 'DASHBOARD') : t('SIGN IN', 'INLOGGEN')}
                         </span>
                         {user && (
                           <span className="block text-xs text-white/25 mt-1 uppercase tracking-widest font-medium">
@@ -552,7 +554,7 @@ export default function Navigation({ cartItemCount = 0, onCartClick, isDarkOverl
                       <div className="flex items-center gap-3">
                         <Music className="w-4 h-4 text-red-500 flex-shrink-0" />
                         <div className="min-w-0 flex-1">
-                          <p className="text-xs text-white/40 uppercase tracking-wider">Now Playing</p>
+                          <p className="text-xs text-white/40 uppercase tracking-wider">{t('Now Playing', 'Nu Speelt')}</p>
                           <p className="text-sm font-semibold text-white truncate">
                             {getCurrentTrack()?.title}
                           </p>
@@ -606,7 +608,7 @@ export default function Navigation({ cartItemCount = 0, onCartClick, isDarkOverl
                           }
                         }}
                         className="transition-all hover:scale-110 duration-300 cursor-pointer"
-                        title="Toggle player"
+                        title={t('Toggle player', 'Speler in-/uitschakelen')}
                       >
                         <Music className="w-5 h-5 text-white/30 hover:text-white transition-colors" strokeWidth={1.5} />
                       </button>
@@ -616,7 +618,7 @@ export default function Navigation({ cartItemCount = 0, onCartClick, isDarkOverl
                         <button
                           onClick={() => { closeMenu(); handleSignOut(); }}
                           className="transition-all hover:scale-110 duration-300 cursor-pointer"
-                          title="Logout"
+                          title={t('Logout', 'Uitloggen')}
                         >
                           <LogOut className="w-5 h-5 text-white/30 hover:text-white transition-colors" strokeWidth={1.5} />
                         </button>
@@ -624,7 +626,7 @@ export default function Navigation({ cartItemCount = 0, onCartClick, isDarkOverl
                         <button
                           onClick={() => { closeMenu(); setIsAuthModalOpen(true); setAuthMode('login'); }}
                           className="transition-all hover:scale-110 duration-300 cursor-pointer"
-                          title="Login"
+                          title={t('Login', 'Inloggen')}
                         >
                           <LogIn className="w-5 h-5 text-white/30 hover:text-white transition-colors" strokeWidth={1.5} />
                         </button>
@@ -639,7 +641,7 @@ export default function Navigation({ cartItemCount = 0, onCartClick, isDarkOverl
                         className="text-left cursor-pointer w-full"
                       >
                         <span className="text-sm uppercase tracking-widest text-white/20 hover:text-red-400 transition-colors duration-300 font-medium">
-                          Sign Out
+                          {t('Sign Out', 'Uitloggen')}
                         </span>
                       </button>
                     )}

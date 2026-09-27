@@ -4,6 +4,7 @@ import { ArrowUpRight, Music, Headphones } from 'lucide-react';
 import Footer from '../../components/Footer';
 import { useScrollToTop } from '../../hooks/useScrollToTop';
 import { useInView } from '../../hooks/useInView';
+import { useT, type TFn } from '../../contexts/LanguageContext';
 
 interface Category {
   id: string;
@@ -15,21 +16,21 @@ interface Category {
   icon: React.ComponentType<{ className?: string }>;
 }
 
-const categories: Category[] = [
+const getCategories = (t: TFn): Category[] => [
   {
     id: 'beats',
-    label: 'Beats',
-    tagline: 'Find your sound',
-    description: 'High-quality instrumentals across every genre. Exclusive licenses available.',
+    label: t('Beats', 'Beats'),
+    tagline: t('Find your sound', 'Vind jouw sound'),
+    description: t('High-quality instrumentals across every genre. Exclusive licenses available.', 'Hoogwaardige instrumentals in elk genre. Exclusieve licenties beschikbaar.'),
     href: '/shop/beats',
     image: '/stu.png',
     icon: Music,
   },
   {
     id: 'services',
-    label: 'Services',
-    tagline: 'Professional audio',
-    description: 'Mix & Master, studio sessions, and production consulting — tailored to your project.',
+    label: t('Services', 'Diensten'),
+    tagline: t('Professional audio', 'Professionele audio'),
+    description: t('Mix & Master, studio sessions, and production consulting — tailored to your project.', 'Mix & Master, studiosessies en productieadvies — afgestemd op jouw project.'),
     href: '/shop/services',
     image: '/DJI_20251017150728_0019_D.JPG',
     icon: Headphones,
@@ -43,6 +44,7 @@ interface CategoryCardProps {
 
 const CategoryCard: React.FC<CategoryCardProps> = ({ category, index }) => {
   const [ref, inView] = useInView({ threshold: 0.1 });
+  const t = useT();
   const Icon = category.icon;
 
   return (
@@ -88,7 +90,7 @@ const CategoryCard: React.FC<CategoryCardProps> = ({ category, index }) => {
           </p>
           <div className="flex items-center gap-2">
             <span className="text-xs font-black uppercase tracking-widest text-white group-hover:text-red-400 transition-colors duration-300">
-              Explore
+              {t('Explore', 'Verkennen')}
             </span>
             <ArrowUpRight className="w-3.5 h-3.5 text-white/50 group-hover:text-red-400 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all duration-300" />
           </div>
@@ -102,6 +104,8 @@ const ShopPage: React.FC = () => {
   useScrollToTop();
   const [aboutRef, aboutInView] = useInView({ threshold: 0.1 });
   const [ctaRef, ctaInView] = useInView({ threshold: 0.1 });
+  const t = useT();
+  const categories = getCategories(t);
 
   return (
     <div className="min-h-screen text-white">
@@ -122,7 +126,7 @@ const ShopPage: React.FC = () => {
             SHOP
           </h1>
           <p className="text-white/70 text-base md:text-lg max-w-xl mx-auto">
-            Beats, services, and studio sessions — all in one place.
+            {t('Beats, services, and studio sessions — all in one place.', 'Beats, diensten en studiosessies — allemaal op één plek.')}
           </p>
         </section>
 
@@ -148,18 +152,24 @@ const ShopPage: React.FC = () => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
               {/* Text */}
               <div>
-                <p className="text-xs uppercase tracking-[0.4em] text-red-500 mb-3 font-black">About the Store</p>
+                <p className="text-xs uppercase tracking-[0.4em] text-red-500 mb-3 font-black">{t('About the Store', 'Over de Store')}</p>
                 <h2 className="text-4xl md:text-5xl font-black text-white tracking-tighter mb-6 leading-tight">
-                  Beats, Sound &amp;<br />Sessions
+                  {t('Beats, Sound &', 'Beats, Sound &')}<br />{t('Sessions', 'Sessies')}
                 </h2>
                 <p className="text-white/65 text-base leading-relaxed mb-5">
-                  Jonna Rincon is a producer and audio engineer based in Tilburg. The store brings together high-quality beats, professional audio services, and in-studio sessions.
+                  {t(
+                    'Jonna Rincon is a producer and audio engineer based in Tilburg. The store brings together high-quality beats, professional audio services, and in-studio sessions.',
+                    'Jonna Rincon is een producer en audio-engineer gevestigd in Tilburg. De store brengt hoogwaardige beats, professionele audiodiensten en in-studiosessies samen.'
+                  )}
                 </p>
                 <p className="text-white/50 text-sm leading-relaxed mb-8">
-                  10+ years of production experience across Moombahton, Hip Hop, R&amp;B, EDM, and more. Every service and product in this store carries that same standard.
+                  {t(
+                    '10+ years of production experience across Moombahton, Hip Hop, R&B, EDM, and more. Every service and product in this store carries that same standard.',
+                    '10+ jaar productie-ervaring in Moombahton, Hip Hop, R&B, EDM en meer. Elke dienst en elk product in deze store draagt diezelfde standaard.'
+                  )}
                 </p>
                 <div className="flex flex-wrap gap-3">
-                  {['Beats', 'Mix & Master', 'Studio Sessions'].map((tag) => (
+                  {[t('Beats', 'Beats'), t('Mix & Master', 'Mix & Master'), t('Studio Sessions', 'Studiosessies')].map((tag) => (
                     <span
                       key={tag}
                       className="px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-white/70 bg-white/[0.06] border border-white/[0.1] rounded-full"
@@ -214,23 +224,23 @@ const ShopPage: React.FC = () => {
           <div className="max-w-3xl mx-auto">
             <p className="text-xs font-black uppercase tracking-[0.4em] text-red-500 mb-4">JONNA RINCON</p>
             <h2 className="text-4xl md:text-6xl font-black text-white tracking-tighter mb-5 leading-none">
-              Ready to create<br />something?
+              {t('Ready to create', 'Klaar om iets te')}<br />{t('something?', 'creëren?')}
             </h2>
             <p className="text-white/60 text-lg mb-10 leading-relaxed">
-              Browse beats, book a service, or reserve a studio session.
+              {t('Browse beats, book a service, or reserve a studio session.', 'Bekijk beats, boek een dienst, of reserveer een studiosessie.')}
             </p>
             <div className="flex flex-wrap gap-4 justify-center">
               <Link
                 to="/shop/beats"
                 className="px-8 py-3.5 bg-red-600 hover:bg-red-700 text-white font-black text-sm uppercase tracking-widest transition-all duration-300 hover:scale-105 rounded-full"
               >
-                Browse Beats
+                {t('Browse Beats', 'Bekijk Beats')}
               </Link>
               <Link
                 to="/shop/services"
                 className="px-8 py-3.5 bg-white/10 border border-white/25 backdrop-blur-sm text-white font-black text-sm uppercase tracking-widest hover:bg-white/20 transition-all duration-300 rounded-full"
               >
-                Book a Service
+                {t('Book a Service', 'Boek een Dienst')}
               </Link>
             </div>
           </div>
