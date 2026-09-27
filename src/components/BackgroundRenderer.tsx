@@ -49,6 +49,8 @@ const BackgroundRenderer: React.FC = () => {
           objectFit: 'cover',
           objectPosition: 'center',
           display: 'block',
+          filter: 'blur(14px)',
+          transform: 'scale(1.1)',
         }}
       />
     </div>

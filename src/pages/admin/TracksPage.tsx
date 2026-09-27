@@ -5,6 +5,7 @@ import LoadingSpinner from '../../components/LoadingSpinner';
 import { useTracks } from '../../hooks/useTracks';
 import { useRemixes } from '../../hooks/useRemixes';
 import { usePlaylists } from '../../hooks/usePlaylists';
+import { Timestamp } from 'firebase/firestore';
 import { trackService, remixService, playlistService } from '../../lib/firebase/services';
 import { Track, Remix, Playlist } from '../../lib/firebase/types';
 import {
@@ -837,6 +838,11 @@ interface TracklistItem {
   audioUrl: string;
 }
 
+const timestampToDateInput = (ts?: Timestamp): string => {
+  if (!ts) return '';
+  return ts.toDate().toISOString().slice(0, 10);
+};
+
 const TrackFormModal: React.FC<TrackFormModalProps> = ({ track, onClose, onSave, onDelete }) => {
   const currentYear = new Date().getFullYear();
   const isEditing = !!track;
@@ -848,6 +854,7 @@ const TrackFormModal: React.FC<TrackFormModalProps> = ({ track, onClose, onSave,
     genre: track?.genre || '',
     type: track?.type || 'Single',
     year: track?.year || currentYear,
+    releaseDate: timestampToDateInput(track?.releaseDate),
     collab: track?.collab || 'Solo',
     duration: track?.duration || '0:00',
     tags: track?.tags?.join(', ') || '',
@@ -919,6 +926,7 @@ const TrackFormModal: React.FC<TrackFormModalProps> = ({ track, onClose, onSave,
         genre: formData.genre,
         type: formData.type,
         year: formData.year,
+        releaseDate: formData.releaseDate ? Timestamp.fromDate(new Date(formData.releaseDate)) : undefined,
         collab: formData.collab,
         duration: formData.duration,
         tags: formData.tags.split(',').map((t) => t.trim()),
@@ -1086,6 +1094,11 @@ const TrackFormModal: React.FC<TrackFormModalProps> = ({ track, onClose, onSave,
             <div>
               <label className="block text-sm font-medium text-white/60 mb-2">Jaar <span className="text-red-400">*</span></label>
               <input type="number" value={formData.year} onChange={(e) => setFormData({ ...formData, year: parseInt(e.target.value) })} className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white" required />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-white/60 mb-2">Releasedatum</label>
+              <input type="date" value={formData.releaseDate} onChange={(e) => setFormData({ ...formData, releaseDate: e.target.value })} className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white" />
+              <p className="text-xs text-white/30 mt-1">Bepaalt de volgorde op de Music-pagina (nieuw → oud). Leeg = valt terug op jaar.</p>
             </div>
             <div>
               <label className="block text-sm font-medium text-white/60 mb-2">Collab <span className="text-red-400">*</span></label>

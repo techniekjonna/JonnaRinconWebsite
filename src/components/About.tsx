@@ -14,8 +14,6 @@ const PHOTOS = [
   { src: '/Maastricht Screenshot 15-12-25.png', alt: 'Jonna Rincon in Maastricht' },
 ];
 
-const SKILLS = ['Producer', 'Beatmaker', 'Artist', 'Audio Engineer', 'Mix & Master', 'Visual Designer', 'Web Developer'];
-
 export default function About() {
   const [ref, inView] = useInView({ threshold: 0.1 });
 
@@ -45,17 +43,6 @@ export default function About() {
             R&amp;B, EDM and Lo-Fi. Over 10+ years in, Jonna keeps pushing the sound forward — working with
             artists worldwide while staying true to where it started.
           </p>
-
-          <div className="flex flex-wrap gap-2 mb-8">
-            {SKILLS.map((skill) => (
-              <span
-                key={skill}
-                className="px-3.5 py-1.5 text-xs font-bold uppercase tracking-wider text-white/70 bg-white/[0.06] border border-white/[0.1] rounded-full"
-              >
-                {skill}
-              </span>
-            ))}
-          </div>
 
           <Link
             to="/about"

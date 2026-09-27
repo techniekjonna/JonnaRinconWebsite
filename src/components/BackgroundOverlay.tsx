@@ -21,7 +21,7 @@ const BackgroundOverlay: React.FC = () => {
       className="fixed inset-0 w-full h-screen -z-10 pointer-events-none"
       aria-hidden="true"
       style={{
-        backgroundColor: 'rgba(0,0,0,0.70)',
+        backgroundColor: 'rgba(0,0,0,0.85)',
         opacity: ready ? 1 : 0,
         transition: ready ? 'opacity 2s ease' : 'none',
       }}
