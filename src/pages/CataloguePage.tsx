@@ -16,6 +16,7 @@ import TrackDetailModal from '../components/TrackDetailModal';
 import AlbumModal from '../components/AlbumModal';
 import LoginModal from '../components/LoginModal';
 import { trackService, playlistService } from '../lib/firebase/services';
+import { useT } from '../contexts/LanguageContext';
 
 interface Track {
   id: string;
@@ -37,6 +38,7 @@ interface Track {
   sortOrder?: number;
   isFree?: boolean;
   licenses?: { exclusive?: { price: number } };
+  _isRemix?: boolean;
 }
 
 interface RemixTrack extends Track {
@@ -62,6 +64,8 @@ export default function CataloguePage() {
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [selectedAlbum, setSelectedAlbum] = useState<any>(null);
+  const [catalogueFilter, setCatalogueFilter] = useState<'all' | 'albums' | 'singles' | 'remixes'>('all');
+  const t = useT();
 
   const heroTitle = useCyberDecodeInView('MUSIC');
   const relatedTracks = useRelatedTracks(selectedTrack, []);
@@ -87,6 +91,7 @@ export default function CataloguePage() {
     createdAt: t.createdAt?.toMillis?.() || Date.now(),
     isFree: t.isFree,
     licenses: t.licenses,
+    _isRemix: false,
   }));
 
   const remixTracks: RemixTrack[] = firebaseRemixes.map(r => ({
@@ -104,6 +109,7 @@ export default function CataloguePage() {
     coverArt: r.artworkUrl,
     coverArtUrl: r.artworkUrl,
     createdAt: r.createdAt.toMillis?.() || Date.now(),
+    _isRemix: true,
   }));
 
   const handlePlayTrack = async (track: Track) => {
@@ -138,19 +144,25 @@ export default function CataloguePage() {
       const albumName = track.album || track.title;
       const albumKey = `${track.type}:${albumName}`;
       if (!acc[albumKey]) {
-        acc[albumKey] = { albumName, type: track.type, artwork: track.coverArt, tracks: [], displayTrack: track };
+        acc[albumKey] = { albumName, type: track.type, artwork: track.coverArt, tracks: [], displayTrack: track, isRemix: false };
       }
       acc[albumKey].tracks.push(track);
     } else {
       const singleKey = `single:${track.id}`;
-      acc[singleKey] = { albumName: null, type: track.type, artwork: track.coverArt, tracks: [track], displayTrack: track };
+      acc[singleKey] = { albumName: null, type: track.type, artwork: track.coverArt, tracks: [track], displayTrack: track, isRemix: !!track._isRemix };
     }
     return acc;
   }, {} as Record<string, any>);
 
-  const sortedGroups = Object.entries(groupedTracks).sort(
-    ([, a], [, b]) => getSortTime(b.displayTrack) - getSortTime(a.displayTrack)
-  );
+  const sortedGroups = Object.entries(groupedTracks)
+    .filter(([, group]) => {
+      const isAlbumGroup = group.albumName && (group.type === 'Album' || group.type === 'EP');
+      if (catalogueFilter === 'albums') return isAlbumGroup;
+      if (catalogueFilter === 'singles') return !isAlbumGroup && !group.isRemix;
+      if (catalogueFilter === 'remixes') return group.isRemix;
+      return true;
+    })
+    .sort(([, a], [, b]) => getSortTime(b.displayTrack) - getSortTime(a.displayTrack));
 
   const toggleAlbumExpand = (albumKey: string) => {
     const next = new Set(expandedAlbums);
@@ -215,6 +227,30 @@ export default function CataloguePage() {
         </h1>
       </section>
 
+      {/* Filter row */}
+      <section className="px-6 md:px-12 pt-2 pb-4">
+        <div className="max-w-7xl mx-auto flex items-center justify-center gap-2 flex-wrap">
+          {([
+            { key: 'all', label: t('All', 'Alles') },
+            { key: 'albums', label: t('Albums', 'Albums') },
+            { key: 'singles', label: t('Singles', 'Singles') },
+            { key: 'remixes', label: t('Remixes', 'Remixes') },
+          ] as const).map((opt) => (
+            <button
+              key={opt.key}
+              onClick={() => setCatalogueFilter(opt.key)}
+              className={`px-4 py-2 rounded-full text-xs font-bold uppercase tracking-widest transition-all border ${
+                catalogueFilter === opt.key
+                  ? 'bg-red-600 border-red-500 text-white'
+                  : 'bg-white/[0.04] border-white/[0.08] text-white/50 hover:text-white hover:bg-white/[0.08]'
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      </section>
+
       <section className="px-6 md:px-12 pt-2 pb-2">
         <div className="max-w-7xl mx-auto">
           {tracksError && (
@@ -240,8 +276,6 @@ export default function CataloguePage() {
                   <div key={albumKey}>
                     {/* Album row — same compact style as track rows */}
                     <div className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 group ${isExpanded ? 'bg-white/[0.06]' : 'hover:bg-white/[0.05]'}`}>
-                      {/* Spacer to align with TrackListItem rows that have a w-7 track number column */}
-                      <div className="w-7 flex-shrink-0" />
                       {/* Cover — click opens PlayerModal */}
                       <div
                         className="relative flex-shrink-0 w-10 h-10 rounded bg-white/[0.08] overflow-hidden cursor-pointer"
