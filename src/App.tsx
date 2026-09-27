@@ -27,8 +27,8 @@ function App() {
       <main className="pt-20">
         <div id="hero"><Hero /></div>
         <About />
-        <MusicPreview />
         <SectionCards />
+        <MusicPreview />
         <PromoSection />
         <Footer />
       </main>
