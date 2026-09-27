@@ -4,12 +4,14 @@ import ManagerLayout from '../../components/manager/ManagerLayout';
 import { AgendaContent } from './AgendaPage';
 import { SocialPlannerContent } from './ContentPage';
 import ComingUpTab from '../../components/admin/ComingUpTab';
+import { ClientsContent } from './ClientsTab';
+import { useT } from '../../contexts/LanguageContext';
 import {
-  LayoutDashboard, Clock,
+  LayoutDashboard, Clock, Users,
   Calendar, Instagram, Star,
 } from 'lucide-react';
 
-type MainTab = 'overview' | 'agenda';
+type MainTab = 'overview' | 'agenda' | 'clients';
 type AgendaSub = 'calendar' | 'social' | 'coming-up';
 
 interface SubSectionDef {
@@ -85,8 +87,10 @@ function SubNav({ sections, activeId, onSelect }: {
 }
 
 function OverviewContent({ onNavigate }: { onNavigate: (s: MainTab) => void }) {
+  const t = useT();
   const groups: { id: MainTab; label: string; sublabel: string; icon: React.ReactNode }[] = [
     { id: 'agenda', label: 'TIME', sublabel: 'Agenda, Social, Coming Up', icon: <Clock size={16} /> },
+    { id: 'clients', label: t('Users', 'Users'), sublabel: t('Client deliverable archive', 'Klanten leveringen archief'), icon: <Users size={16} /> },
   ];
   return (
     <div className="space-y-8">
@@ -143,9 +147,11 @@ export function JonnaRinconPanelContent() {
     );
   }
 
+  const t = useT();
   const mainTabs: { id: MainTab; label: string; icon: React.ReactNode }[] = [
     { id: 'overview', label: 'Overzicht', icon: <LayoutDashboard size={15} /> },
     { id: 'agenda',   label: 'TIME',      icon: <Clock size={15} /> },
+    { id: 'clients',  label: t('Users', 'Users'), icon: <Users size={15} /> },
   ];
 
   return (
@@ -156,20 +162,20 @@ export function JonnaRinconPanelContent() {
       </div>
 
       <nav className="flex items-center gap-1 border-b border-white/[0.08] mb-6 pb-0 overflow-x-auto">
-        {mainTabs.map((t) => {
-          const isActive = activeMain === t.id;
+        {mainTabs.map((tab) => {
+          const isActive = activeMain === tab.id;
           return (
             <button
-              key={t.id}
-              onClick={() => handleMainTab(t.id)}
+              key={tab.id}
+              onClick={() => handleMainTab(tab.id)}
               className={`flex items-center gap-2 px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-all duration-200 -mb-px ${
                 isActive
                   ? 'border-red-500 text-white'
                   : 'border-transparent text-white/40 hover:text-white/70 hover:border-white/20'
               }`}
             >
-              <span className={isActive ? 'text-red-400' : 'text-white/30'}>{t.icon}</span>
-              {t.label}
+              <span className={isActive ? 'text-red-400' : 'text-white/30'}>{tab.icon}</span>
+              {tab.label}
             </button>
           );
         })}
@@ -178,6 +184,7 @@ export function JonnaRinconPanelContent() {
       <main className="flex-1 min-w-0">
         {activeMain === 'overview' && <OverviewContent onNavigate={handleMainTab} />}
         {activeMain === 'agenda'   && renderAgenda()}
+        {activeMain === 'clients'  && <ClientsContent />}
       </main>
     </div>
   );
