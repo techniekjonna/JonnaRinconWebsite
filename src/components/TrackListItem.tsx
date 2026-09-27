@@ -95,8 +95,8 @@ export default function TrackListItem({
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
-      {/* Track number / play toggle — desktop hover shows play, mobile hidden */}
-      {!isAlbumTrack && (
+      {/* Track number / play toggle — only reserved when there's a number to show (album tracks) */}
+      {!isAlbumTrack && trackNumber != null && (
         <div className="w-7 flex-shrink-0 flex items-center justify-center">
           {/* Desktop: show number normally, play on hover */}
           <span className="hidden md:flex items-center justify-center w-full h-full">

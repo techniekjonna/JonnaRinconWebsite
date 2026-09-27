@@ -7,6 +7,8 @@ import { playlistService } from '../lib/firebase/services';
 import { Playlist } from '../lib/firebase/types';
 import { useWikipediaGenre } from '../hooks/useWikipediaGenre';
 
+const EMPTY_TRACKS: never[] = [];
+
 interface Track {
   id: string;
   title: string;
@@ -48,7 +50,7 @@ export default function TrackDetailModal({
   onClose,
   isPlaying = false,
   onPlay,
-  relatedTracks = [],
+  relatedTracks = EMPTY_TRACKS,
   onAddToPlaylist,
 }: TrackDetailModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
@@ -61,6 +63,30 @@ export default function TrackDetailModal({
   const [isAddingToPlaylist, setIsAddingToPlaylist] = useState(false);
   const [currentRelatedTracks, setCurrentRelatedTracks] = useState(relatedTracks);
   const { content: genreInfo, loading: genreLoading } = useWikipediaGenre(track?.genre);
+
+  // Swipe-down-to-close, dragged from the handle bar at the top
+  const [dragY, setDragY] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStartY = useRef(0);
+
+  const handleDragStart = (e: React.TouchEvent) => {
+    dragStartY.current = e.touches[0].clientY;
+    setIsDragging(true);
+  };
+
+  const handleDragMove = (e: React.TouchEvent) => {
+    if (!isDragging) return;
+    const delta = e.touches[0].clientY - dragStartY.current;
+    if (delta > 0) setDragY(delta);
+  };
+
+  const handleDragEnd = () => {
+    setIsDragging(false);
+    if (dragY > 120) {
+      onClose();
+    }
+    setDragY(0);
+  };
 
   // Handle play button click on cover
   const handleCoverClick = () => {
@@ -85,20 +111,6 @@ export default function TrackDetailModal({
       document.body.style.overflow = 'auto';
     };
   }, [isOpen]);
-
-  // Handle click outside
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const handleClickOutside = (e: MouseEvent) => {
-      if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
-        onClose();
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [isOpen, onClose]);
 
   // Handle Escape key
   useEffect(() => {
@@ -152,31 +164,38 @@ export default function TrackDetailModal({
   const isCurrentTrackPlaying = getCurrentTrack()?.id === track.id;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
-        onClick={onClose}
-      />
-
-      {/* Modal */}
+    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm">
       <div
         ref={modalRef}
-        className="relative w-full max-w-2xl bg-white/[0.08] backdrop-blur-xl border border-white/[0.15] rounded-3xl overflow-hidden shadow-2xl max-h-[82vh] flex flex-col"
+        className="relative w-full h-full bg-[#0a0a0a] flex flex-col overflow-hidden"
+        style={{
+          transform: `translateY(${dragY}px)`,
+          transition: isDragging ? 'none' : 'transform 0.3s ease',
+        }}
       >
-        {/* Header with Close Button */}
-        <div className="sticky top-0 z-10 bg-white/[0.04] backdrop-blur-sm border-b border-white/[0.1] px-6 md:px-8 py-3 flex items-center justify-end flex-shrink-0">
-          <button
-            onClick={onClose}
-            className="p-2.5 bg-black/50 hover:bg-white/[0.15] border border-white/[0.15] rounded-full text-white/80 hover:text-white transition-all shadow-md"
-          >
-            <X size={16} />
-          </button>
+        {/* Drag handle + Close Button */}
+        <div
+          className="sticky top-0 z-10 bg-[#0a0a0a]/95 backdrop-blur-sm border-b border-white/[0.08] pt-2.5 pb-3 px-6 md:px-8 flex-shrink-0"
+          onTouchStart={handleDragStart}
+          onTouchMove={handleDragMove}
+          onTouchEnd={handleDragEnd}
+        >
+          <div className="flex justify-center mb-2">
+            <div className="w-10 h-1 rounded-full bg-white/20" />
+          </div>
+          <div className="flex items-center justify-end">
+            <button
+              onClick={onClose}
+              className="p-2.5 bg-white/[0.08] hover:bg-white/[0.15] border border-white/[0.15] rounded-full text-white/80 hover:text-white transition-all"
+            >
+              <X size={16} />
+            </button>
+          </div>
         </div>
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto">
-          <div className="flex flex-col md:flex-row gap-6 p-6 md:p-8">
+          <div className="flex flex-col md:flex-row gap-6 p-6 md:p-8 max-w-4xl mx-auto">
           {/* Artwork */}
           <div className="w-full md:w-1/3 flex-shrink-0">
             <div
@@ -464,15 +483,6 @@ export default function TrackDetailModal({
                 <span>Download Track</span>
               </button>
             )}
-
-
-            {/* Close Button for Mobile */}
-            <button
-              onClick={onClose}
-              className="px-6 py-3 bg-white/[0.1] hover:bg-white/[0.15] text-white rounded-xl font-bold uppercase tracking-wider transition-all"
-            >
-              Close
-            </button>
           </div>
           </div>
         </div>
