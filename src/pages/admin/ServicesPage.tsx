@@ -20,7 +20,7 @@ const iconOptions = [
   'Wand2',
 ];
 
-const ServicesPage: React.FC = () => {
+export const ServicesContent: React.FC = () => {
   const { services, loading } = useServices();
   const [showModal, setShowModal] = useState(false);
   const [editingService, setEditingService] = useState<Service | null>(null);
@@ -47,7 +47,7 @@ const ServicesPage: React.FC = () => {
   };
 
   return (
-    <AdminLayout>
+    <>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -175,9 +175,17 @@ const ServicesPage: React.FC = () => {
           }}
         />
       )}
-    </AdminLayout>
+    </>
   );
 };
+
+export default function ServicesPage() {
+  return (
+    <AdminLayout>
+      <ServicesContent />
+    </AdminLayout>
+  );
+}
 
 interface ServiceFormModalProps {
   service: Service | null;
@@ -526,5 +534,3 @@ const ServiceFormModal: React.FC<ServiceFormModalProps> = ({ service, onClose, o
     </div>
   );
 };
-
-export default ServicesPage;

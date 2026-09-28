@@ -311,7 +311,9 @@ export const ChatInboxContent: React.FC<ChatInboxContentProps> = ({ role }) => {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-2">
                         <p className="text-xs font-semibold text-white truncate">{c.name}</p>
-                        <span className="text-[9px] px-1.5 py-0.5 bg-white/[0.06] border border-white/[0.08] rounded-full text-white/40 uppercase tracking-wide flex-shrink-0">{c.category}</span>
+                        {c.category && (
+                          <span className="text-[9px] px-1.5 py-0.5 bg-white/[0.06] border border-white/[0.08] rounded-full text-white/40 uppercase tracking-wide flex-shrink-0">{c.category}</span>
+                        )}
                       </div>
                       <p className="text-[10px] text-white/40 truncate mt-0.5">{c.lastMessage || 'No messages yet'}</p>
                     </div>
@@ -324,7 +326,9 @@ export const ChatInboxContent: React.FC<ChatInboxContentProps> = ({ role }) => {
                 ))
               )}
 
-              {/* Users section */}
+              {/* Users section — plain chat with staff, no topics, so no
+                  category badge here (unlike the Contact section, which
+                  still carries the picker's real topics). */}
               <div className="px-3 pt-5 pb-2.5 flex items-center gap-2.5 sticky top-0 bg-black/70 backdrop-blur-md z-10">
                 <UsersIcon size={16} className="text-blue-400" />
                 <p className="text-xs font-bold uppercase tracking-wider text-white/60 flex-1">{t('Users', 'Gebruikers')}</p>
@@ -352,10 +356,7 @@ export const ChatInboxContent: React.FC<ChatInboxContentProps> = ({ role }) => {
                   >
                     <Avatar name={c.name} role={c.role} size="sm" />
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-2">
-                        <p className="text-xs font-semibold text-white truncate">{c.name}</p>
-                        <span className="text-[9px] px-1.5 py-0.5 bg-white/[0.06] border border-white/[0.08] rounded-full text-white/40 uppercase tracking-wide flex-shrink-0">{c.category}</span>
-                      </div>
+                      <p className="text-xs font-semibold text-white truncate">{c.name}</p>
                       <p className="text-[10px] text-white/40 truncate mt-0.5">{c.lastMessage || 'No messages yet'}</p>
                     </div>
                     {c.unreadCount > 0 && (

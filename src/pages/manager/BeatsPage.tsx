@@ -205,7 +205,16 @@ interface EditBeatModalProps {
   onSave: (beatId: string, updates: Partial<Beat>) => void;
 }
 
+type BeatEditTab = 'basics' | 'tags' | 'visibility';
+
+const BEAT_EDIT_TABS: { id: BeatEditTab; label: string }[] = [
+  { id: 'basics', label: 'Basics' },
+  { id: 'tags', label: 'Tags & Flags' },
+  { id: 'visibility', label: 'Visibility' },
+];
+
 const EditBeatModal: React.FC<EditBeatModalProps> = ({ beat, onClose, onSave }) => {
+  const [activeTab, setActiveTab] = useState<BeatEditTab>('basics');
   const [formData, setFormData] = useState({
     title: beat.title,
     genre: beat.genre,
@@ -247,6 +256,7 @@ const EditBeatModal: React.FC<EditBeatModalProps> = ({ beat, onClose, onSave }) 
     e.preventDefault();
     if (formData.visibility === 'private-user' && !formData.allowedUserId) {
       alert('Please pick the user this beat is exclusive to');
+      setActiveTab('visibility');
       return;
     }
     const updates: any = {
@@ -261,166 +271,194 @@ const EditBeatModal: React.FC<EditBeatModalProps> = ({ beat, onClose, onSave }) 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-xl z-50 flex items-center justify-center p-4">
       <div className="bg-white/[0.10] backdrop-blur-2xl border border-white/[0.10] rounded-2xl max-w-2xl w-full p-6">
-        <h2 className="text-2xl font-bold text-white mb-6">Edit Beat</h2>
+        <h2 className="text-2xl font-bold text-white mb-4">Edit Beat</h2>
+
+        {/* Tab bar */}
+        <div className="flex items-center gap-2 flex-wrap border-b border-white/[0.08] pb-3 mb-4">
+          {BEAT_EDIT_TABS.map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setActiveTab(tab.id)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
+                activeTab === tab.id
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-white/[0.06] text-white/60 hover:bg-white/[0.12]'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Title</label>
-              <input
-                type="text"
-                value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white focus:outline-none focus:border-blue-500"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Genre</label>
-              <input
-                type="text"
-                value={formData.genre}
-                onChange={(e) => setFormData({ ...formData, genre: e.target.value })}
-                className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white focus:outline-none focus:border-blue-500"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">BPM</label>
-              <input
-                type="number"
-                value={formData.bpm}
-                onChange={(e) => setFormData({ ...formData, bpm: parseInt(e.target.value) })}
-                className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white focus:outline-none focus:border-blue-500"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Key</label>
-              <input
-                type="text"
-                value={formData.key}
-                onChange={(e) => setFormData({ ...formData, key: e.target.value })}
-                className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white focus:outline-none focus:border-blue-500"
-                required
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-white/60 mb-2">Tags (comma separated)</label>
-            <input
-              type="text"
-              value={formData.tags}
-              onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
-              className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white focus:outline-none focus:border-blue-500"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-white/60 mb-2">Status</label>
-            <select
-              value={formData.status}
-              onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
-              className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white focus:outline-none focus:border-blue-500"
-            >
-              <option value="draft">Draft</option>
-              <option value="published">Published</option>
-              <option value="archived">Archived</option>
-            </select>
-          </div>
-
-          {/* Visibility — who this beat is shown/available to */}
-          <div>
-            <label className="block text-sm font-medium text-white/60 mb-2">Visibility</label>
-            <select
-              value={formData.visibility}
-              onChange={(e) => setFormData({ ...formData, visibility: e.target.value as any })}
-              className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white focus:outline-none focus:border-blue-500"
-            >
-              <option value="public">Public — listed everywhere</option>
-              <option value="private-link">Private (link only) — &quot;Super Exclusive&quot;</option>
-              <option value="private-user">Private (specific user) — &quot;VIP Exclusive&quot;</option>
-            </select>
-            <p className="text-xs text-white/40 mt-1">
-              This is app-level gating (like the rest of this dashboard) — it isn't a database security rule.
-            </p>
-          </div>
-
-          {formData.visibility === 'private-user' && (
-            <div className="p-4 rounded-lg bg-amber-500/10 border border-amber-500/20 space-y-3">
-              <label className="block text-sm font-medium text-white/60">
-                Beat is exclusive to <span className="text-red-400">*</span>
-              </label>
-              {formData.allowedUserId ? (
-                <div className="flex items-center justify-between gap-3 px-3 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg">
-                  <span className="text-sm text-white truncate">
-                    {formData.allowedUserEmail || formData.allowedUserId}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setFormData({ ...formData, allowedUserId: '', allowedUserEmail: '' })}
-                    className="text-white/40 hover:text-white flex-shrink-0"
-                    title="Change user"
-                  >
-                    <X size={16} />
-                  </button>
-                </div>
-              ) : (
-                <>
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
-                    <input
-                      type="text"
-                      value={userSearch}
-                      onChange={(e) => setUserSearch(e.target.value)}
-                      placeholder="Search users by name or email..."
-                      className="w-full pl-9 pr-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500"
-                    />
-                  </div>
-                  <div className="max-h-40 overflow-y-auto space-y-1">
-                    {!usersLoaded ? (
-                      <p className="text-xs text-white/40 px-1 py-2">Loading users...</p>
-                    ) : matchingUsers.length === 0 ? (
-                      <p className="text-xs text-white/40 px-1 py-2">No users found</p>
-                    ) : (
-                      matchingUsers.slice(0, 20).map((u) => (
-                        <button
-                          key={u.uid}
-                          type="button"
-                          onClick={() => setFormData({ ...formData, allowedUserId: u.uid, allowedUserEmail: u.email })}
-                          className="w-full text-left px-3 py-2 rounded-lg bg-white/[0.04] hover:bg-white/[0.1] transition-colors"
-                        >
-                          <p className="text-sm text-white truncate">{u.displayName || u.email}</p>
-                          {u.displayName && <p className="text-xs text-white/40 truncate">{u.email}</p>}
-                        </button>
-                      ))
-                    )}
-                  </div>
-                </>
-              )}
+          {activeTab === 'basics' && (
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-white/60 mb-2">Title</label>
+                <input
+                  type="text"
+                  value={formData.title}
+                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white focus:outline-none focus:border-blue-500"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-white/60 mb-2">Genre</label>
+                <input
+                  type="text"
+                  value={formData.genre}
+                  onChange={(e) => setFormData({ ...formData, genre: e.target.value })}
+                  className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white focus:outline-none focus:border-blue-500"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-white/60 mb-2">BPM</label>
+                <input
+                  type="number"
+                  value={formData.bpm}
+                  onChange={(e) => setFormData({ ...formData, bpm: parseInt(e.target.value) })}
+                  className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white focus:outline-none focus:border-blue-500"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-white/60 mb-2">Key</label>
+                <input
+                  type="text"
+                  value={formData.key}
+                  onChange={(e) => setFormData({ ...formData, key: e.target.value })}
+                  className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white focus:outline-none focus:border-blue-500"
+                  required
+                />
+              </div>
+              <div className="col-span-2">
+                <label className="block text-sm font-medium text-white/60 mb-2">Status</label>
+                <select
+                  value={formData.status}
+                  onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
+                  className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white focus:outline-none focus:border-blue-500"
+                >
+                  <option value="draft">Draft</option>
+                  <option value="published">Published</option>
+                  <option value="archived">Archived</option>
+                </select>
+              </div>
             </div>
           )}
 
-          <div className="flex gap-4">
-            <label className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                checked={formData.featured}
-                onChange={(e) => setFormData({ ...formData, featured: e.target.checked })}
-                className="w-4 h-4 rounded"
-              />
-              <span className="text-sm text-white/60">Featured</span>
-            </label>
-            <label className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                checked={formData.trending}
-                onChange={(e) => setFormData({ ...formData, trending: e.target.checked })}
-                className="w-4 h-4 rounded"
-              />
-              <span className="text-sm text-white/60">Trending</span>
-            </label>
-          </div>
+          {activeTab === 'tags' && (
+            <>
+              <div>
+                <label className="block text-sm font-medium text-white/60 mb-2">Tags (comma separated)</label>
+                <input
+                  type="text"
+                  value={formData.tags}
+                  onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
+                  className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white focus:outline-none focus:border-blue-500"
+                />
+              </div>
+
+              <div className="flex gap-4">
+                <label className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    checked={formData.featured}
+                    onChange={(e) => setFormData({ ...formData, featured: e.target.checked })}
+                    className="w-4 h-4 rounded"
+                  />
+                  <span className="text-sm text-white/60">Featured</span>
+                </label>
+                <label className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    checked={formData.trending}
+                    onChange={(e) => setFormData({ ...formData, trending: e.target.checked })}
+                    className="w-4 h-4 rounded"
+                  />
+                  <span className="text-sm text-white/60">Trending</span>
+                </label>
+              </div>
+            </>
+          )}
+
+          {activeTab === 'visibility' && (
+            <>
+              {/* Visibility — who this beat is shown/available to */}
+              <div>
+                <label className="block text-sm font-medium text-white/60 mb-2">Visibility</label>
+                <select
+                  value={formData.visibility}
+                  onChange={(e) => setFormData({ ...formData, visibility: e.target.value as any })}
+                  className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white focus:outline-none focus:border-blue-500"
+                >
+                  <option value="public">Public — listed everywhere</option>
+                  <option value="private-link">Private (link only) — &quot;Super Exclusive&quot;</option>
+                  <option value="private-user">Private (specific user) — &quot;VIP Exclusive&quot;</option>
+                </select>
+                <p className="text-xs text-white/40 mt-1">
+                  This is app-level gating (like the rest of this dashboard) — it isn't a database security rule.
+                </p>
+              </div>
+
+              {formData.visibility === 'private-user' && (
+                <div className="p-4 rounded-lg bg-amber-500/10 border border-amber-500/20 space-y-3">
+                  <label className="block text-sm font-medium text-white/60">
+                    Beat is exclusive to <span className="text-red-400">*</span>
+                  </label>
+                  {formData.allowedUserId ? (
+                    <div className="flex items-center justify-between gap-3 px-3 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg">
+                      <span className="text-sm text-white truncate">
+                        {formData.allowedUserEmail || formData.allowedUserId}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setFormData({ ...formData, allowedUserId: '', allowedUserEmail: '' })}
+                        className="text-white/40 hover:text-white flex-shrink-0"
+                        title="Change user"
+                      >
+                        <X size={16} />
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+                        <input
+                          type="text"
+                          value={userSearch}
+                          onChange={(e) => setUserSearch(e.target.value)}
+                          placeholder="Search users by name or email..."
+                          className="w-full pl-9 pr-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500"
+                        />
+                      </div>
+                      <div className="max-h-40 overflow-y-auto space-y-1">
+                        {!usersLoaded ? (
+                          <p className="text-xs text-white/40 px-1 py-2">Loading users...</p>
+                        ) : matchingUsers.length === 0 ? (
+                          <p className="text-xs text-white/40 px-1 py-2">No users found</p>
+                        ) : (
+                          matchingUsers.slice(0, 20).map((u) => (
+                            <button
+                              key={u.uid}
+                              type="button"
+                              onClick={() => setFormData({ ...formData, allowedUserId: u.uid, allowedUserEmail: u.email })}
+                              className="w-full text-left px-3 py-2 rounded-lg bg-white/[0.04] hover:bg-white/[0.1] transition-colors"
+                            >
+                              <p className="text-sm text-white truncate">{u.displayName || u.email}</p>
+                              {u.displayName && <p className="text-xs text-white/40 truncate">{u.email}</p>}
+                            </button>
+                          ))
+                        )}
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+            </>
+          )}
 
           <div className="flex items-center justify-end space-x-4 pt-4 border-t border-white/[0.06]">
             <button
