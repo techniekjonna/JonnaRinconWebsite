@@ -11,7 +11,7 @@ import { collection, query, where, onSnapshot, orderBy } from 'firebase/firestor
 import { db } from '../../lib/firebase/config';
 import FilterModal from '../../components/FilterModal';
 import BeatPackDetailModal from '../../components/BeatPackDetailModal';
-import { beatService, beatPackService } from '../../lib/firebase/services';
+import { beatService, beatPackService, isBeatPubliclyVisible } from '../../lib/firebase/services';
 import { useScrollToTop } from '../../hooks/useScrollToTop';
 import { useT } from '../../contexts/LanguageContext';
 
@@ -65,7 +65,7 @@ const BeatsShop: React.FC = () => {
             audioUrl: toDirectUrl(data.audioUrl || ''),
             artworkUrl: toDirectUrl(data.artworkUrl || ''),
           } as Beat;
-        });
+        }).filter(isBeatPubliclyVisible); // hide private-link / private-user beats from the public shop
         setBeats(beatsData);
 
         // Extract unique genres dynamically and split comma-separated genres

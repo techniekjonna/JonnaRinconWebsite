@@ -39,6 +39,7 @@ interface Beat {
   license_premium: boolean;
   license_exclusive: boolean;
   featured: boolean;
+  visibility?: 'public' | 'private-link' | 'private-user';
   created_at: string;
   updated_at: string;
 }
@@ -98,8 +99,11 @@ export default function BeatStore({ onAddToCart }: BeatStoreProps) {
           };
         }) as Beat[];
 
-        setBeats(beatsData);
-        setFilteredBeats(beatsData);
+        // Hide private-link / private-user beats from this public carousel.
+        const publicBeatsData = beatsData.filter((b) => !b.visibility || b.visibility === 'public');
+
+        setBeats(publicBeatsData);
+        setFilteredBeats(publicBeatsData);
         setLoading(false);
       },
       (err) => {

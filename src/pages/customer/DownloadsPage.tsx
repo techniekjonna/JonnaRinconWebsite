@@ -1,11 +1,25 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { useT } from '../../contexts/LanguageContext';
 import { orderService } from '../../lib/firebase/services/orderService';
-import { Order, OrderItem } from '../../lib/firebase/types';
+import { deliverableService } from '../../lib/firebase/services/deliverableService';
+import { Order, OrderItem, ClientDeliverable } from '../../lib/firebase/types';
 import CustomerLayout from '../../components/customer/CustomerLayout';
 import LoadingSpinner from '../../components/LoadingSpinner';
-import { Download, FileText, Mail } from 'lucide-react';
+import { Download, FileText, Mail, Music2 } from 'lucide-react';
+
+function formatFileSize(bytes?: number): string {
+  if (!bytes || bytes <= 0) return '';
+  const units = ['B', 'KB', 'MB', 'GB'];
+  let size = bytes;
+  let unitIndex = 0;
+  while (size >= 1024 && unitIndex < units.length - 1) {
+    size /= 1024;
+    unitIndex += 1;
+  }
+  return `${size.toFixed(size >= 10 || unitIndex === 0 ? 0 : 1)} ${units[unitIndex]}`;
+}
 
 interface DownloadableItem extends OrderItem {
   orderId: string;
@@ -17,10 +31,13 @@ interface DownloadableItem extends OrderItem {
 
 const CustomerDownloads: React.FC = () => {
   const { user } = useAuth();
+  const t = useT();
   const [downloads, setDownloads] = useState<DownloadableItem[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'all' | 'orders' | 'completed'>('all');
+  const [deliverables, setDeliverables] = useState<ClientDeliverable[]>([]);
+  const [deliverablesLoading, setDeliverablesLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<'all' | 'orders' | 'completed' | 'history'>('all');
 
   useEffect(() => {
     if (!user) return;
@@ -67,6 +84,23 @@ const CustomerDownloads: React.FC = () => {
     };
 
     loadDownloads();
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const loadDeliverables = async () => {
+      try {
+        const data = await deliverableService.getByUserId(user.uid);
+        setDeliverables(data);
+      } catch (error) {
+        console.error('Failed to load delivered mix & master / studio session history:', error);
+      } finally {
+        setDeliverablesLoading(false);
+      }
+    };
+
+    loadDeliverables();
   }, [user]);
 
   if (loading) {
@@ -119,6 +153,16 @@ const CustomerDownloads: React.FC = () => {
             }`}
           >
             Completed
+          </button>
+          <button
+            onClick={() => setActiveTab('history')}
+            className={`px-4 py-2 font-medium transition-all ${
+              activeTab === 'history'
+                ? 'text-blue-400 border-b-2 border-blue-400'
+                : 'text-white/40 hover:text-white/60'
+            }`}
+          >
+            {t('Mix & Master / Studio History', 'Mix & Master / Studio Geschiedenis')}
           </button>
         </div>
 
@@ -190,6 +234,80 @@ const CustomerDownloads: React.FC = () => {
                       <span className="text-white/40">Total</span>
                       <span className="text-xl font-bold text-white">€{order.totalAmount.toFixed(2)}</span>
                     </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )
+        ) : activeTab === 'history' ? (
+          /* Mix & Master / Studio Session History */
+          deliverablesLoading ? (
+            <div className="flex justify-center items-center py-12">
+              <LoadingSpinner text={t('Loading history...', 'Geschiedenis laden...')} />
+            </div>
+          ) : deliverables.length === 0 ? (
+            <div className="text-center py-12 bg-white/[0.08] rounded-lg">
+              <p className="text-white/40">
+                {t(
+                  'No delivered mix & master or studio session files yet.',
+                  'Nog geen geleverde mix & master of studiosessie bestanden.'
+                )}
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {deliverables.map((deliverable) => (
+                <div
+                  key={deliverable.id}
+                  className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-6"
+                >
+                  <div className="flex items-start justify-between mb-4 gap-4">
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span
+                          className={`px-3 py-1 rounded text-xs font-medium ${
+                            deliverable.type === 'mix-master'
+                              ? 'bg-purple-600/20 text-purple-400'
+                              : 'bg-blue-600/20 text-blue-400'
+                          }`}
+                        >
+                          {deliverable.type === 'mix-master'
+                            ? t('Mix & Master', 'Mix & Master')
+                            : t('Studio Session', 'Studiosessie')}
+                        </span>
+                      </div>
+                      <h3 className="text-lg font-bold text-white">{deliverable.title}</h3>
+                      <p className="text-sm text-white/40">
+                        {t('Completed', 'Voltooid')}:{' '}
+                        {deliverable.completedAt?.toDate?.()?.toLocaleDateString() || 'N/A'}
+                      </p>
+                    </div>
+                  </div>
+
+                  {deliverable.notes && (
+                    <p className="text-sm text-white/60 mb-4">{deliverable.notes}</p>
+                  )}
+
+                  <div className="space-y-2">
+                    {deliverable.files.map((file, index) => (
+                      <a
+                        key={index}
+                        href={file.url}
+                        download
+                        className="flex items-center justify-between gap-3 bg-white/[0.06] hover:bg-white/[0.1] px-4 py-2 rounded transition text-sm"
+                      >
+                        <span className="flex items-center gap-2 truncate">
+                          <Music2 className="w-4 h-4 text-white/40 flex-shrink-0" />
+                          <span className="truncate">{file.name}</span>
+                        </span>
+                        <span className="flex items-center gap-2 text-white/40 flex-shrink-0">
+                          {formatFileSize(file.sizeBytes) && (
+                            <span className="text-xs">{formatFileSize(file.sizeBytes)}</span>
+                          )}
+                          <Download className="w-4 h-4" />
+                        </span>
+                      </a>
+                    ))}
                   </div>
                 </div>
               ))}
