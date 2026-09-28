@@ -55,37 +55,30 @@ const CategoryCard: React.FC<CategoryCardProps> = ({ category, index }) => {
       }`}
       style={{ transitionDelay: `${index * 100}ms` }}
     >
-      <Link
-        to={category.href}
-        className="group relative min-h-[320px] md:min-h-[420px] overflow-hidden rounded-2xl block border border-white/10 hover:border-red-600/50 transition-all duration-500"
-      >
-        {/* Background image */}
-        <img
-          src={category.image}
-          alt={category.label}
-          className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-        />
-
-        {/* Gradient overlay — bottom up */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent" />
-
-        {/* Hover tint */}
-        <div className="absolute inset-0 bg-red-600/0 group-hover:bg-red-600/10 transition-all duration-500" />
-
-        {/* Top-left icon badge */}
-        <div className="absolute top-5 left-5 w-10 h-10 rounded-full bg-black/40 backdrop-blur-md border border-white/20 flex items-center justify-center">
-          <Icon className="w-5 h-5 text-white/90" />
+      <Link to={category.href} className="group block">
+        {/* Photo — its own block, text lives below it rather than overlaid on top */}
+        <div className="relative aspect-[4/3] overflow-hidden rounded-2xl border border-white/10 group-hover:border-red-600/50 transition-all duration-500">
+          <img
+            src={category.image}
+            alt={category.label}
+            className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+          <div className="absolute inset-0 bg-red-600/0 group-hover:bg-red-600/10 transition-all duration-500" />
+          <div className="absolute top-4 left-4 w-10 h-10 rounded-full bg-black/40 backdrop-blur-md border border-white/20 flex items-center justify-center">
+            <Icon className="w-5 h-5 text-white/90" />
+          </div>
         </div>
 
-        {/* Content anchored to bottom */}
-        <div className="absolute inset-0 flex flex-col justify-end p-6 md:p-7">
-          <span className="text-xs font-black uppercase tracking-[0.35em] text-red-400 mb-1.5">
+        {/* Text — plain, below the photo */}
+        <div className="pt-4">
+          <span className="text-xs font-black uppercase tracking-[0.35em] text-red-400 mb-1.5 block">
             {category.tagline}
           </span>
           <h2 className="text-2xl md:text-3xl font-black text-white mb-2 leading-none tracking-tighter">
             {category.label}
           </h2>
-          <p className="text-white/65 text-xs leading-relaxed max-w-xs mb-4">
+          <p className="text-white/60 text-sm leading-relaxed mb-4 max-w-sm">
             {category.description}
           </p>
           <div className="flex items-center gap-2">
