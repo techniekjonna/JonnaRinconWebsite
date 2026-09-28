@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, ShoppingBag } from 'lucide-react';
+import { Menu, Play, ShoppingBag } from 'lucide-react';
 import { useCartContext } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage, useT } from '../contexts/LanguageContext';
@@ -11,6 +11,7 @@ const CYCLE_MS = 2500;
 
 const Header: React.FC = () => {
   const [hamburgerHovered, setHamburgerHovered] = useState(false);
+  const [playerButtonHovered, setPlayerButtonHovered] = useState(false);
   const location = useLocation();
   const { cartItems } = useCartContext();
   const { user } = useAuth();
@@ -90,6 +91,27 @@ const Header: React.FC = () => {
     </button>
   );
 
+  const PlayerButton = ({ className }: { className?: string }) => (
+    <button
+      onClick={() => openPlayerModal()}
+      onMouseEnter={() => setPlayerButtonHovered(true)}
+      onMouseLeave={() => setPlayerButtonHovered(false)}
+      className={`items-center justify-center w-14 h-9 rounded-lg hover:bg-white/[0.08] transition-colors text-white/60 hover:text-white flex-shrink-0 overflow-hidden relative ${className}`}
+      title={t('Player', 'Speler')}
+    >
+      <span
+        className="absolute inset-0 flex items-center justify-center transition-all duration-300"
+      >
+        <Play size={18} className={`transition-all duration-300 ${playerButtonHovered ? 'opacity-0 scale-75' : 'opacity-100 scale-100'}`} />
+      </span>
+      <span
+        className="absolute inset-0 flex items-center justify-center transition-all duration-300"
+      >
+        <span className={`text-[9px] font-black uppercase tracking-widest transition-all duration-300 ${playerButtonHovered ? 'opacity-100' : 'opacity-0'}`}>{t('Player', 'Speler')}</span>
+      </span>
+    </button>
+  );
+
   const HamburgerMenuButton = ({ className }: { className?: string }) => (
     <button
       onClick={openNavPanel}
@@ -116,14 +138,17 @@ const Header: React.FC = () => {
       <div className="backdrop-blur-xl bg-black/30 border border-white/[0.08] rounded-2xl overflow-hidden">
         <div className="flex items-center justify-between px-4 sm:px-6 h-16 md:h-20">
 
-          {/* Logo left */}
-          <Link to="/" className="flex items-center justify-center flex-shrink-0 w-14 h-14 md:w-24 md:h-24">
-            <img
-              src="/Jonna Rincon Logo WH.png"
-              alt="JR"
-              className="w-full h-full object-contain"
-            />
-          </Link>
+          {/* Left: Player button + Logo (button sits left of logo, logo nudged right to make room) */}
+          <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+            <PlayerButton className="flex" />
+            <Link to="/" className="flex items-center justify-center flex-shrink-0 w-14 h-14 md:w-24 md:h-24">
+              <img
+                src="/Jonna Rincon Logo WH.png"
+                alt="JR"
+                className="w-full h-full object-contain"
+              />
+            </Link>
+          </div>
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center justify-center flex-1">
