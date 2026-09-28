@@ -12,7 +12,7 @@ interface ChatMessage {
   senderEmail: string;
   senderRole: string;
   category: string;
-  recipientGroup: 'jonna' | 'manager' | 'support';
+  recipientGroup: 'jonna' | 'manager' | 'support' | 'private';
   message: string;
   createdAt: Timestamp;
   status: 'sent' | 'delivered' | 'read';
@@ -47,14 +47,6 @@ const recipientGroups: Record<RecipientGroup, { name: string; description: strin
   },
 };
 
-const categoryOptions: Record<string, string[]> = {
-  CATALOGUE: ['Tracks', 'Remixes', 'Support'],
-  SHOP: ['Beats', 'Services'],
-  'SOCIAL MEDIA': ['Content', 'Collaboration'],
-  DASHBOARD: ['Orders', 'Downloads'],
-  SUPPORT: ['Support', 'Overig'],
-};
-
 const ContactAvatar = ({ group, size = 'md' }: { group: RecipientGroup; size?: 'sm' | 'md' }) => {
   const cls = size === 'sm' ? 'w-9 h-9' : 'w-12 h-12';
   if (group === 'jonna') {
@@ -86,14 +78,12 @@ const CustomerChat: React.FC = () => {
   const [threads, setThreads] = useState<ChatThread[]>([]);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
-  const [showCategoryPicker, setShowCategoryPicker] = useState(false);
   const [allMessages, setAllMessages] = useState<ChatMessage[]>([]);
   const [tooltipOpen, setTooltipOpen] = useState<RecipientGroup | null>(null);
   const [showPrivateChatModal, setShowPrivateChatModal] = useState(false);
   const [editingThreadTitle, setEditingThreadTitle] = useState<string | null>(null);
   const [editingThreadValue, setEditingThreadValue] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const pickerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -113,7 +103,10 @@ const CustomerChat: React.FC = () => {
   }, [user]);
 
   useEffect(() => {
-    const groupMsgs = allMessages.filter((m) => m.recipientGroup === selectedGroup);
+    // Only the private group has sub-conversations (one per admin), so
+    // that's the only one that needs a thread list built from category.
+    if (selectedGroup !== 'private') { setThreads([]); return; }
+    const groupMsgs = allMessages.filter((m) => m.recipientGroup === 'private');
     const map = new Map<string, ChatThread>();
     groupMsgs.forEach((m) => {
       const existing = map.get(m.category);
@@ -125,28 +118,36 @@ const CustomerChat: React.FC = () => {
   }, [allMessages, selectedGroup]);
 
   useEffect(() => {
-    if (!selectedThread) { setMessages([]); return; }
-    setMessages(allMessages.filter((m) => m.category === selectedThread && m.recipientGroup === selectedGroup));
+    if (selectedGroup === 'private') {
+      if (!selectedThread) { setMessages([]); return; }
+      setMessages(allMessages.filter((m) => m.recipientGroup === 'private' && m.category === selectedThread));
+    } else {
+      // Plain chat with staff: one continuous thread per group, no topics.
+      setMessages(allMessages.filter((m) => m.recipientGroup === selectedGroup));
+    }
   }, [selectedThread, selectedGroup, allMessages]);
 
   useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
 
-  useEffect(() => {
-    const h = (e: MouseEvent) => { if (pickerRef.current && !pickerRef.current.contains(e.target as Node)) setShowCategoryPicker(false); };
-    document.addEventListener('mousedown', h);
-    return () => document.removeEventListener('mousedown', h);
-  }, []);
-
   const handleContactClick = (group: RecipientGroup) => {
     setSelectedGroup(group);
-    setSelectedThread(null);
     setTooltipOpen(null);
-    setLeftView('threads');
+    if (group === 'private') {
+      // Private chats still need a "who" step (which admin), so route
+      // through the threads view to pick or start one.
+      setSelectedThread(null);
+      setLeftView('threads');
+    } else {
+      // Plain chat with staff — no topic to pick, jump straight in.
+      setSelectedThread('general');
+      setLeftView('contacts');
+    }
   };
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMessage.trim() || !user || !selectedThread) return;
+    if (!newMessage.trim() || !user || !selectedGroup) return;
+    if (selectedGroup === 'private' && !selectedThread) return;
     try {
       await addDoc(collection(db, 'supportMessages'), {
         senderId: user.uid,
@@ -154,7 +155,9 @@ const CustomerChat: React.FC = () => {
         senderEmail: user.email,
         senderRole: 'customer',
         recipientGroup: selectedGroup,
-        category: selectedThread,
+        // Private threads are keyed by admin (WHO), not a topic — everything
+        // else is a single plain chat, so it gets a fixed, non-user-facing category.
+        category: selectedGroup === 'private' ? (selectedThread as string) : 'General',
         message: newMessage.trim(),
         createdAt: serverTimestamp(),
         status: 'sent',
@@ -259,35 +262,14 @@ const CustomerChat: React.FC = () => {
                 </button>
                 <ContactAvatar group={selectedGroup} size="sm" />
                 <p className="text-sm font-semibold text-white flex-1 truncate">{recipientGroups[selectedGroup].name}</p>
-                <div className="relative" ref={pickerRef}>
+                {selectedGroup === 'private' && (
                   <button
-                    onClick={() => {
-                      if (selectedGroup === 'private') {
-                        setShowPrivateChatModal(true);
-                      } else {
-                        setShowCategoryPicker(!showCategoryPicker);
-                      }
-                    }}
+                    onClick={() => setShowPrivateChatModal(true)}
                     className="w-7 h-7 rounded-full bg-red-600/20 hover:bg-red-600/40 border border-red-600/30 flex items-center justify-center transition-colors"
                   >
                     <Plus size={14} className="text-red-400" />
                   </button>
-                  {showCategoryPicker && selectedGroup !== 'private' && (
-                    <div className="absolute top-full right-0 mt-2 bg-black/95 backdrop-blur-xl border border-white/[0.15] rounded-xl p-2 z-50 w-44 shadow-2xl">
-                      {Object.entries(categoryOptions).map(([grp, items]) => (
-                        <div key={grp}>
-                          <p className="text-[10px] text-white/30 px-2 py-1.5 font-semibold uppercase tracking-widest">{grp}</p>
-                          {items.map((item) => (
-                            <button key={item} onClick={() => { setSelectedThread(item); setShowCategoryPicker(false); }}
-                              className="block w-full text-left px-2 py-1.5 text-xs text-white/80 hover:text-white hover:bg-white/[0.08] rounded-lg transition">
-                              {item}
-                            </button>
-                          ))}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                )}
               </div>
 
               <div className="flex-1 overflow-y-auto">
@@ -322,31 +304,30 @@ const CustomerChat: React.FC = () => {
               <ContactAvatar group={selectedGroup} size="sm" />
               <div className="flex-1 min-w-0">
                 <p className="font-semibold text-white text-sm">{recipientGroups[selectedGroup].name}</p>
-                {editingThreadTitle === selectedThread ? (
-                  <div className="flex gap-1 mt-1">
-                    <input
-                      type="text"
-                      value={editingThreadValue}
-                      onChange={(e) => setEditingThreadValue(e.target.value)}
-                      className="flex-1 px-2 py-1 rounded text-xs bg-white/[0.08] border border-white/[0.12] text-white focus:outline-none focus:border-red-500/40"
-                      autoFocus
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') updateThreadTitle(selectedThread, editingThreadValue);
-                        if (e.key === 'Escape') setEditingThreadTitle(null);
-                      }}
-                    />
-                    <button
-                      onClick={() => setEditingThreadTitle(null)}
-                      className="p-1 text-white/40 hover:text-white"
-                    >
-                      <X size={14} />
-                    </button>
-                  </div>
-                ) : (
-                  <p className="text-[11px] text-white/40 flex items-center gap-1 group">
-                    {selectedThread}
-                    {/* Title edit button - only for private chats for now */}
-                    {selectedGroup === 'private' && (
+                {selectedGroup === 'private' && (
+                  editingThreadTitle === selectedThread ? (
+                    <div className="flex gap-1 mt-1">
+                      <input
+                        type="text"
+                        value={editingThreadValue}
+                        onChange={(e) => setEditingThreadValue(e.target.value)}
+                        className="flex-1 px-2 py-1 rounded text-xs bg-white/[0.08] border border-white/[0.12] text-white focus:outline-none focus:border-red-500/40"
+                        autoFocus
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') updateThreadTitle(selectedThread, editingThreadValue);
+                          if (e.key === 'Escape') setEditingThreadTitle(null);
+                        }}
+                      />
+                      <button
+                        onClick={() => setEditingThreadTitle(null)}
+                        className="p-1 text-white/40 hover:text-white"
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  ) : (
+                    <p className="text-[11px] text-white/40 flex items-center gap-1 group">
+                      {selectedThread}
                       <button
                         onClick={() => {
                           setEditingThreadTitle(selectedThread);
@@ -357,8 +338,8 @@ const CustomerChat: React.FC = () => {
                       >
                         <Edit2 size={11} className="text-white/30 hover:text-white/60" />
                       </button>
-                    )}
-                  </p>
+                    </p>
+                  )
                 )}
               </div>
             </div>
