@@ -79,14 +79,14 @@ const Header: React.FC = () => {
   const isActive = (href: string) =>
     location.pathname === href || location.pathname.startsWith(href + '/');
 
-  // Shows the flag of the language you'd switch TO, not the current one
+  // Shows the flag of the currently active language
   const LanguageToggleButton = () => (
     <button
       onClick={toggleLanguage}
-      title={language === 'en' ? 'Bekijk in het Nederlands' : 'View in English'}
+      title={language === 'en' ? 'View in English' : 'Bekijk in het Nederlands'}
       className="flex items-center justify-center flex-shrink-0 w-10 h-10 rounded-lg hover:bg-white/[0.08] transition-colors text-lg"
     >
-      <span aria-hidden="true">{language === 'en' ? '🇳🇱' : '🇬🇧'}</span>
+      <span aria-hidden="true">{language === 'en' ? '🇬🇧' : '🇳🇱'}</span>
     </button>
   );
 

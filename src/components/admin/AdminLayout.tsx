@@ -55,6 +55,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     {
       label: 'MANAGEMENT',
       subtitle: 'Beats, Services & Tracks',
+      href: '/admin/management',
       action: () => setExpandedShop(!expandedShop),
       submenu: [
         { label: 'Beats', subtitle: 'Beat instrumentals', href: '/admin/management?tab=beats' },
@@ -227,9 +228,8 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                   onClick={() => {
                     if ('href' in item && item.href) {
                       navigate(item.href);
-                    } else {
-                      item.action?.();
                     }
+                    item.action?.();
                   }}
                   className="group w-full text-left px-5 py-3.5 border-b border-white/[0.04] hover:bg-white/[0.04] transition-colors flex items-center justify-between"
                 >
@@ -243,7 +243,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                       </span>
                     )}
                   </div>
-                  {!('href' in item && item.href) && (
+                  {item.submenu.length > 0 && (
                     <ChevronRight
                       size={13}
                       className={`text-white/20 flex-shrink-0 ml-2 transition-transform duration-200 ${item.expanded ? 'rotate-90' : ''}`}

@@ -8,6 +8,17 @@ import { db } from '../lib/firebase/config';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { useT } from '../contexts/LanguageContext';
 
+// Translations for the built-in default contact categories only — a category
+// an admin has renamed or added themselves has no stored Dutch counterpart,
+// so it's shown exactly as entered regardless of the active language.
+const DEFAULT_CATEGORY_TRANSLATIONS: Record<string, string> = {
+  'General Inquiry': 'Algemene Vraag',
+  'Booking Request': 'Boekingsaanvraag',
+  'Collaboration': 'Samenwerking',
+  'Business Proposal': 'Zakelijk Voorstel',
+  'Other': 'Overig',
+};
+
 const MAX_MESSAGE_LENGTH = 3000; // roughly one A4 page of text
 
 const platforms = [
@@ -102,6 +113,9 @@ export default function ContactPage() {
   }, [location.state, t]);
 
   const canSendMessage = selectedCategory && message.trim().length > 0;
+
+  const displayCategory = (cat: string) =>
+    DEFAULT_CATEGORY_TRANSLATIONS[cat] ? t(cat, DEFAULT_CATEGORY_TRANSLATIONS[cat]) : cat;
 
   const handleSend = () => {
     if (!canSendMessage) return;
@@ -219,7 +233,7 @@ export default function ContactPage() {
                               : 'bg-white/[0.04] border-white/[0.08] text-white/50 hover:text-white hover:bg-white/[0.08]'
                           }`}
                         >
-                          {cat}
+                          {displayCategory(cat)}
                         </button>
                       ))}
                     </div>
@@ -259,7 +273,7 @@ export default function ContactPage() {
             {contactStep === 'details' && (
               <div className="p-6 md:p-8 space-y-6">
                 <div className="p-4 bg-white/[0.04] rounded-xl border border-white/[0.08] text-sm">
-                  <p className="text-white/40 text-xs mb-1">{selectedCategory}</p>
+                  <p className="text-white/40 text-xs mb-1">{selectedCategory && displayCategory(selectedCategory)}</p>
                   <p className="text-white/80 leading-relaxed line-clamp-3">{message}</p>
                 </div>
 
