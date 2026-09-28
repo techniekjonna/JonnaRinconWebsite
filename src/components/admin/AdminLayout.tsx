@@ -24,7 +24,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isMenuClosing, setIsMenuClosing] = useState(false);
   const [expandedShop, setExpandedShop] = useState(false);
-  const [expandedCatalogue, setExpandedCatalogue] = useState(false);
   const [expandedArtist, setExpandedArtist] = useState(false);
   const [expandedAnalytics, setExpandedAnalytics] = React.useState(false);
   const [expandedPanel, setExpandedPanel] = React.useState(false);
@@ -54,26 +53,15 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
 
   const menuItems = [
     {
-      label: 'SHOP',
-      subtitle: 'Beats, Services',
+      label: 'MANAGEMENT',
+      subtitle: 'Beats, Services & Tracks',
       action: () => setExpandedShop(!expandedShop),
       submenu: [
-        { label: 'Beats', subtitle: 'Beat instrumentals', href: '/admin/beats' },
-        { label: 'Services', subtitle: 'Audio services', href: '/admin/services' },
+        { label: 'Beats', subtitle: 'Beat instrumentals', href: '/admin/management?tab=beats' },
+        { label: 'Services', subtitle: 'Audio services', href: '/admin/management?tab=services' },
+        { label: 'Tracks', subtitle: 'Discography, remixes & custom', href: '/admin/management?tab=tracks' },
       ],
       expanded: expandedShop,
-    },
-    {
-      label: 'CATALOGUE',
-      subtitle: 'Tracks, Remixes, Playlists & Custom',
-      href: '/admin/tracks',
-      submenu: [
-        { label: 'Tracks', subtitle: 'Discography', href: '/admin/tracks' },
-        { label: 'Remixes', subtitle: 'Remixes & edits', href: '/admin/tracks' },
-        { label: 'Playlists', subtitle: 'Playlist management', href: '/admin/tracks' },
-        { label: 'Custom', subtitle: 'Custom tabs', href: '/admin/tracks' },
-      ],
-      expanded: expandedCatalogue,
     },
     {
       label: 'ARTIST SUPPORT',
