@@ -7,7 +7,7 @@ import { beatService, beatPackService, authService } from '../../lib/firebase/se
 import { Beat, BeatPack, BeatPackItem, User } from '../../lib/firebase/types';
 import { Plus, Edit, Trash2, Play, Pause, ArrowUp, ArrowDown, Package, ChevronLeft, ChevronRight, X, Search } from 'lucide-react';
 
-const BeatsPage: React.FC = () => {
+export const BeatsContent: React.FC = () => {
   const { beats, loading } = useBeats();
   const [showModal, setShowModal] = useState(false);
   const [editingBeat, setEditingBeat] = useState<Beat | null>(null);
@@ -96,7 +96,7 @@ const BeatsPage: React.FC = () => {
   };
 
   return (
-    <AdminLayout>
+    <>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -316,9 +316,17 @@ const BeatsPage: React.FC = () => {
           }}
         />
       )}
-    </AdminLayout>
+    </>
   );
 };
+
+export default function BeatsPage() {
+  return (
+    <AdminLayout>
+      <BeatsContent />
+    </AdminLayout>
+  );
+}
 
 interface BeatFormModalProps {
   beat: Beat | null;
@@ -326,7 +334,17 @@ interface BeatFormModalProps {
   onSave: () => void;
 }
 
+type BeatFormTab = 'basics' | 'media' | 'pricing' | 'visibility';
+
+const BEAT_FORM_TABS: { id: BeatFormTab; label: string }[] = [
+  { id: 'basics', label: 'Basics' },
+  { id: 'media', label: 'Media' },
+  { id: 'pricing', label: 'Pricing & Tags' },
+  { id: 'visibility', label: 'Visibility' },
+];
+
 const BeatFormModal: React.FC<BeatFormModalProps> = ({ beat, onClose, onSave }) => {
+  const [activeTab, setActiveTab] = useState<BeatFormTab>('basics');
   const [formData, setFormData] = useState({
     title: beat?.title || '',
     artist: beat?.artist || 'Jonna Rincon',
@@ -466,6 +484,21 @@ const BeatFormModal: React.FC<BeatFormModalProps> = ({ beat, onClose, onSave }) 
 
       if (formData.visibility === 'private-user' && !formData.allowedUserId) {
         alert('Please pick the user this beat is exclusive to');
+        setActiveTab('visibility');
+        setSaving(false);
+        return;
+      }
+
+      if (!formData.title.trim() || !formData.artist.trim() || !formData.key.trim() || !formData.genre.trim() || !formData.bpm) {
+        alert('Please fill in all required fields in the Basics tab (title, artist, BPM, key, genre)');
+        setActiveTab('basics');
+        setSaving(false);
+        return;
+      }
+
+      if (!formData.audioUrl.trim() || !formData.artworkUrl.trim()) {
+        alert('Please provide the audio and artwork URLs in the Media tab');
+        setActiveTab('media');
         setSaving(false);
         return;
       }
@@ -541,265 +574,294 @@ const BeatFormModal: React.FC<BeatFormModalProps> = ({ beat, onClose, onSave }) 
           </h2>
         </div>
 
+        {/* Tab bar */}
+        <div className="px-6 py-3 border-b border-white/[0.06] bg-white/[0.03] flex-shrink-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            {BEAT_FORM_TABS.map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTab(tab.id)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
+                  activeTab === tab.id
+                    ? 'bg-purple-600 text-white'
+                    : 'bg-white/[0.06] text-white/60 hover:bg-white/[0.12]'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
         <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto flex-1">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Title <span className="text-red-400">*</span></label>
-              <input
-                type="text"
-                value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Artist <span className="text-red-400">*</span></label>
-              <input
-                type="text"
-                value={formData.artist}
-                onChange={(e) => setFormData({ ...formData, artist: e.target.value })}
-                className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">BPM <span className="text-red-400">*</span></label>
-              <input
-                type="number"
-                value={formData.bpm}
-                onChange={(e) => setFormData({ ...formData, bpm: parseInt(e.target.value) })}
-                className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Key <span className="text-red-400">*</span></label>
-              <input
-                type="text"
-                value={formData.key}
-                onChange={(e) => setFormData({ ...formData, key: e.target.value })}
-                className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Duration</label>
-              <input
-                type="text"
-                value={formData.duration}
-                onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
-                className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white"
-                placeholder="e.g. 3:45"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Genre <span className="text-red-400">*</span></label>
-              <input
-                type="text"
-                value={formData.genre}
-                onChange={(e) => setFormData({ ...formData, genre: e.target.value })}
-                className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Status</label>
-              <select
-                value={formData.status}
-                onChange={(e) => setFormData({ ...formData, status: e.target.value as Beat['status'] })}
-                className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white"
-              >
-                <option value="draft">Draft</option>
-                <option value="published">Published</option>
-                <option value="archived">Archived</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Beat Type</label>
-              <select
-                value={formData.beatType}
-                onChange={(e) => setFormData({ ...formData, beatType: e.target.value as any })}
-                className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white"
-              >
-                <option value="free">Free</option>
-                <option value="exclusive">Exclusive</option>
-              </select>
-              <p className="text-xs text-white/40 mt-1">
-                Classify this beat (free beats have no cost, exclusive beats require purchase)
-              </p>
-            </div>
-          </div>
-
-          {/* Visibility — who this beat is shown/available to */}
-          <div className="grid grid-cols-1 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Visibility</label>
-              <select
-                value={formData.visibility}
-                onChange={(e) => setFormData({ ...formData, visibility: e.target.value as any })}
-                className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white"
-              >
-                <option value="public">Public — listed everywhere</option>
-                <option value="private-link">Private (link only) — hidden from listings, viewable by anyone with the direct link (&quot;Super Exclusive&quot;)</option>
-                <option value="private-user">Private (specific user) — hidden from listings, viewable only by one chosen user (&quot;VIP Exclusive&quot;)</option>
-              </select>
-              <p className="text-xs text-white/40 mt-1">
-                This is app-level gating (like the rest of this dashboard) — it isn't a database security rule.
-              </p>
-            </div>
-
-            {formData.visibility === 'private-user' && (
-              <div className="p-4 rounded-lg bg-amber-500/10 border border-amber-500/20 space-y-3">
-                <label className="block text-sm font-medium text-white/60">
-                  Beat is exclusive to <span className="text-red-400">*</span>
-                </label>
-                {formData.allowedUserId ? (
-                  <div className="flex items-center justify-between gap-3 px-3 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg">
-                    <span className="text-sm text-white truncate">
-                      {formData.allowedUserEmail || formData.allowedUserId}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => setFormData({ ...formData, allowedUserId: '', allowedUserEmail: '' })}
-                      className="text-white/40 hover:text-white flex-shrink-0"
-                      title="Change user"
-                    >
-                      <X size={16} />
-                    </button>
-                  </div>
-                ) : (
-                  <>
-                    <div className="relative">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
-                      <input
-                        type="text"
-                        value={userSearch}
-                        onChange={(e) => setUserSearch(e.target.value)}
-                        placeholder="Search users by name or email..."
-                        className="w-full pl-9 pr-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white text-sm"
-                      />
-                    </div>
-                    <div className="max-h-40 overflow-y-auto space-y-1">
-                      {!usersLoaded ? (
-                        <p className="text-xs text-white/40 px-1 py-2">Loading users...</p>
-                      ) : matchingUsers.length === 0 ? (
-                        <p className="text-xs text-white/40 px-1 py-2">No users found</p>
-                      ) : (
-                        matchingUsers.slice(0, 20).map((u) => (
-                          <button
-                            key={u.uid}
-                            type="button"
-                            onClick={() => setFormData({ ...formData, allowedUserId: u.uid, allowedUserEmail: u.email })}
-                            className="w-full text-left px-3 py-2 rounded-lg bg-white/[0.04] hover:bg-white/[0.1] transition-colors"
-                          >
-                            <p className="text-sm text-white truncate">{u.displayName || u.email}</p>
-                            {u.displayName && <p className="text-xs text-white/40 truncate">{u.email}</p>}
-                          </button>
-                        ))
-                      )}
-                    </div>
-                  </>
-                )}
+          {activeTab === 'basics' && (
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-white/60 mb-2">Title <span className="text-red-400">*</span></label>
+                <input
+                  type="text"
+                  value={formData.title}
+                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white"
+                  required
+                />
               </div>
-            )}
-          </div>
 
-          <div>
-            <label className="block text-sm font-medium text-white/60 mb-2">
-              Tags (comma separated)
-            </label>
-            <input
-              type="text"
-              value={formData.tags}
-              onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
-              className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white"
-              placeholder="trap, dark, atmospheric"
-            />
-          </div>
+              <div>
+                <label className="block text-sm font-medium text-white/60 mb-2">Artist <span className="text-red-400">*</span></label>
+                <input
+                  type="text"
+                  value={formData.artist}
+                  onChange={(e) => setFormData({ ...formData, artist: e.target.value })}
+                  className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white"
+                  required
+                />
+              </div>
 
-          <div>
-            <label className="block text-sm font-medium text-white/60 mb-2">Slug</label>
-            <input
-              type="text"
-              value={formData.slug}
-              onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-              className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white"
-              placeholder="auto-generated from title"
-            />
-          </div>
+              <div>
+                <label className="block text-sm font-medium text-white/60 mb-2">BPM <span className="text-red-400">*</span></label>
+                <input
+                  type="number"
+                  value={formData.bpm}
+                  onChange={(e) => setFormData({ ...formData, bpm: parseInt(e.target.value) })}
+                  className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white"
+                  required
+                />
+              </div>
 
-          {/* Audio and Artwork URLs */}
-          <div className="grid grid-cols-2 gap-4">
-            <LinkInput
-              label="Audio URL"
-              name="audioUrl"
-              type="audio"
-              onChange={handleAudioUrlChange}
-              defaultValue={formData.audioUrl}
-              placeholder="https://nextcloud.example.com/index.php/s/abc123"
-              required
-            />
-            <LinkInput
-              label="Artwork URL"
-              name="artworkUrl"
-              type="image"
-              onChange={(url) => setFormData({ ...formData, artworkUrl: url })}
-              defaultValue={formData.artworkUrl}
-              placeholder="https://example.com/image.jpg"
-              required
-            />
-          </div>
+              <div>
+                <label className="block text-sm font-medium text-white/60 mb-2">Key <span className="text-red-400">*</span></label>
+                <input
+                  type="text"
+                  value={formData.key}
+                  onChange={(e) => setFormData({ ...formData, key: e.target.value })}
+                  className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white"
+                  required
+                />
+              </div>
 
-          <div>
-            <LinkInput
-              label="Stems URL (Zip File)"
-              name="stemsUrl"
-              type="audio"
-              onChange={(url) => setFormData({ ...formData, stemsUrl: url })}
-              defaultValue={formData.stemsUrl}
-              placeholder="https://nextcloud.example.com/index.php/s/xyz789"
-            />
-            <p className="text-xs text-white/30 mt-1">Link to a zip file containing the beat stems (optional)</p>
-          </div>
+              <div>
+                <label className="block text-sm font-medium text-white/60 mb-2">Duration</label>
+                <input
+                  type="text"
+                  value={formData.duration}
+                  onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
+                  className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white"
+                  placeholder="e.g. 3:45"
+                />
+              </div>
 
-          <div className="grid grid-cols-1 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Exclusive License Price (€) <span className="text-red-400">*</span></label>
-              <input
-                type="number"
-                step="0.01"
-                min="0"
-                value={formData.exclusivePrice}
-                onChange={(e) => setFormData({ ...formData, exclusivePrice: parseFloat(e.target.value) || 0 })}
-                className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white"
-                placeholder="199"
-                required
-              />
-              <p className="text-xs text-white/40 mt-1">Price for exclusive license (full ownership, unlimited rights)</p>
+              <div>
+                <label className="block text-sm font-medium text-white/60 mb-2">Genre <span className="text-red-400">*</span></label>
+                <input
+                  type="text"
+                  value={formData.genre}
+                  onChange={(e) => setFormData({ ...formData, genre: e.target.value })}
+                  className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-white/60 mb-2">Status</label>
+                <select
+                  value={formData.status}
+                  onChange={(e) => setFormData({ ...formData, status: e.target.value as Beat['status'] })}
+                  className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white"
+                >
+                  <option value="draft">Draft</option>
+                  <option value="published">Published</option>
+                  <option value="archived">Archived</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-white/60 mb-2">Beat Type</label>
+                <select
+                  value={formData.beatType}
+                  onChange={(e) => setFormData({ ...formData, beatType: e.target.value as any })}
+                  className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white"
+                >
+                  <option value="free">Free</option>
+                  <option value="exclusive">Exclusive</option>
+                </select>
+                <p className="text-xs text-white/40 mt-1">
+                  Free beats have no cost, exclusive beats require purchase
+                </p>
+              </div>
             </div>
-          </div>
+          )}
 
-          <div>
-            <label className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                checked={formData.featured}
-                onChange={(e) => setFormData({ ...formData, featured: e.target.checked })}
-                className="w-4 h-4"
-              />
-              <span className="text-sm text-white/60">Featured Beat</span>
-            </label>
-          </div>
+          {activeTab === 'media' && (
+            <>
+              {/* Audio and Artwork URLs */}
+              <div className="grid grid-cols-2 gap-4">
+                <LinkInput
+                  label="Audio URL"
+                  name="audioUrl"
+                  type="audio"
+                  onChange={handleAudioUrlChange}
+                  defaultValue={formData.audioUrl}
+                  placeholder="https://nextcloud.example.com/index.php/s/abc123"
+                  required
+                />
+                <LinkInput
+                  label="Artwork URL"
+                  name="artworkUrl"
+                  type="image"
+                  onChange={(url) => setFormData({ ...formData, artworkUrl: url })}
+                  defaultValue={formData.artworkUrl}
+                  placeholder="https://example.com/image.jpg"
+                  required
+                />
+              </div>
+
+              <div>
+                <LinkInput
+                  label="Stems URL (Zip File)"
+                  name="stemsUrl"
+                  type="audio"
+                  onChange={(url) => setFormData({ ...formData, stemsUrl: url })}
+                  defaultValue={formData.stemsUrl}
+                  placeholder="https://nextcloud.example.com/index.php/s/xyz789"
+                />
+                <p className="text-xs text-white/30 mt-1">Link to a zip file containing the beat stems (optional)</p>
+              </div>
+            </>
+          )}
+
+          {activeTab === 'pricing' && (
+            <>
+              <div className="grid grid-cols-1 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-white/60 mb-2">Exclusive License Price (€) <span className="text-red-400">*</span></label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={formData.exclusivePrice}
+                    onChange={(e) => setFormData({ ...formData, exclusivePrice: parseFloat(e.target.value) || 0 })}
+                    className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white"
+                    placeholder="199"
+                    required
+                  />
+                  <p className="text-xs text-white/40 mt-1">Price for exclusive license (full ownership, unlimited rights)</p>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-white/60 mb-2">
+                  Tags (comma separated)
+                </label>
+                <input
+                  type="text"
+                  value={formData.tags}
+                  onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
+                  className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white"
+                  placeholder="trap, dark, atmospheric"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-white/60 mb-2">Slug</label>
+                <input
+                  type="text"
+                  value={formData.slug}
+                  onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
+                  className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white"
+                  placeholder="auto-generated from title"
+                />
+              </div>
+
+              <div>
+                <label className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    checked={formData.featured}
+                    onChange={(e) => setFormData({ ...formData, featured: e.target.checked })}
+                    className="w-4 h-4"
+                  />
+                  <span className="text-sm text-white/60">Featured Beat</span>
+                </label>
+              </div>
+            </>
+          )}
+
+          {activeTab === 'visibility' && (
+            <div className="grid grid-cols-1 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-white/60 mb-2">Visibility</label>
+                <select
+                  value={formData.visibility}
+                  onChange={(e) => setFormData({ ...formData, visibility: e.target.value as any })}
+                  className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white"
+                >
+                  <option value="public">Public — listed everywhere</option>
+                  <option value="private-link">Private (link only) — hidden from listings, viewable by anyone with the direct link (&quot;Super Exclusive&quot;)</option>
+                  <option value="private-user">Private (specific user) — hidden from listings, viewable only by one chosen user (&quot;VIP Exclusive&quot;)</option>
+                </select>
+                <p className="text-xs text-white/40 mt-1">
+                  This is app-level gating (like the rest of this dashboard) — it isn't a database security rule.
+                </p>
+              </div>
+
+              {formData.visibility === 'private-user' && (
+                <div className="p-4 rounded-lg bg-amber-500/10 border border-amber-500/20 space-y-3">
+                  <label className="block text-sm font-medium text-white/60">
+                    Beat is exclusive to <span className="text-red-400">*</span>
+                  </label>
+                  {formData.allowedUserId ? (
+                    <div className="flex items-center justify-between gap-3 px-3 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg">
+                      <span className="text-sm text-white truncate">
+                        {formData.allowedUserEmail || formData.allowedUserId}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setFormData({ ...formData, allowedUserId: '', allowedUserEmail: '' })}
+                        className="text-white/40 hover:text-white flex-shrink-0"
+                        title="Change user"
+                      >
+                        <X size={16} />
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+                        <input
+                          type="text"
+                          value={userSearch}
+                          onChange={(e) => setUserSearch(e.target.value)}
+                          placeholder="Search users by name or email..."
+                          className="w-full pl-9 pr-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white text-sm"
+                        />
+                      </div>
+                      <div className="max-h-40 overflow-y-auto space-y-1">
+                        {!usersLoaded ? (
+                          <p className="text-xs text-white/40 px-1 py-2">Loading users...</p>
+                        ) : matchingUsers.length === 0 ? (
+                          <p className="text-xs text-white/40 px-1 py-2">No users found</p>
+                        ) : (
+                          matchingUsers.slice(0, 20).map((u) => (
+                            <button
+                              key={u.uid}
+                              type="button"
+                              onClick={() => setFormData({ ...formData, allowedUserId: u.uid, allowedUserEmail: u.email })}
+                              className="w-full text-left px-3 py-2 rounded-lg bg-white/[0.04] hover:bg-white/[0.1] transition-colors"
+                            >
+                              <p className="text-sm text-white truncate">{u.displayName || u.email}</p>
+                              {u.displayName && <p className="text-xs text-white/40 truncate">{u.email}</p>}
+                            </button>
+                          ))
+                        )}
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
 
           <div className="flex items-center justify-end space-x-4 pt-4 border-t border-white/[0.06] bg-white/[0.10] -mx-6 px-6 py-4 flex-shrink-0">
             <button
@@ -1169,5 +1231,3 @@ const BeatPackFormModal: React.FC<BeatPackFormModalProps> = ({ pack, onClose, on
     </div>
   );
 };
-
-export default BeatsPage;

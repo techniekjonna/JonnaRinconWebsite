@@ -67,8 +67,6 @@ import ArtistSettings from './pages/artist/SettingsPage';
 
 // Admin pages (protected - admin role)
 import AdminDashboard from './pages/admin/DashboardPage';
-import AdminBeats from './pages/admin/BeatsPage';
-import AdminTracks from './pages/admin/TracksPage';
 import AdminRemixes from './pages/admin/RemixesPage';
 import AdminOrders from './pages/admin/OrdersPage';
 import AdminProductManagement from './pages/admin/ProductManagementPage';
@@ -81,8 +79,7 @@ import AdminBoard from './pages/admin/AdminBoardPage';
 import AdminSettings from './pages/admin/SettingsPage';
 import AdminChat from './pages/admin/ChatPage';
 import AdminDiscountCodes from './pages/admin/DiscountCodesPage';
-import AdminServices from './pages/admin/ServicesPage';
-import AdminPlaylists from './pages/admin/PlaylistsPage';
+import AdminManagement from './pages/admin/ManagementPage';
 import AdminAgenda from './pages/admin/AgendaPage';
 import AdminProjects from './pages/admin/ProjectsAdminPage';
 import AdminJonnaRinconPanel, { ManagerJonnaRinconPanelPage as ManagerJonnaRinconPanel } from './pages/admin/JonnaRinconPanelPage';
@@ -395,34 +392,22 @@ const MainApp: React.FC = () => {
             }
           />
           <Route
-            path="/admin/beats"
+            path="/admin/management"
             element={
               <ProtectedRoute allowedRoles={['admin']}>
-                <AdminBeats />
+                <AdminManagement />
               </ProtectedRoute>
             }
           />
-          <Route
-            path="/admin/tracks"
-            element={
-              <ProtectedRoute allowedRoles={['admin']}>
-                <AdminTracks />
-              </ProtectedRoute>
-            }
-          />
+          {/* Old Beats/Services/Tracks routes now redirect into the unified Management page */}
+          <Route path="/admin/beats" element={<Navigate to="/admin/management?tab=beats" replace />} />
+          <Route path="/admin/services" element={<Navigate to="/admin/management?tab=services" replace />} />
+          <Route path="/admin/tracks" element={<Navigate to="/admin/management?tab=tracks" replace />} />
           <Route
             path="/admin/remixes"
             element={
               <ProtectedRoute allowedRoles={['admin']}>
                 <AdminRemixes />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/playlists"
-            element={
-              <ProtectedRoute allowedRoles={['admin']}>
-                <AdminPlaylists />
               </ProtectedRoute>
             }
           />
@@ -447,14 +432,6 @@ const MainApp: React.FC = () => {
             element={
               <ProtectedRoute allowedRoles={['admin']}>
                 <AdminJonnaRinconPanel />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/services"
-            element={
-              <ProtectedRoute allowedRoles={['admin']}>
-                <AdminServices />
               </ProtectedRoute>
             }
           />

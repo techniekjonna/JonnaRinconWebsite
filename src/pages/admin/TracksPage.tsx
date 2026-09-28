@@ -4,24 +4,22 @@ import LinkInput from '../../components/admin/LinkInput';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { useTracks } from '../../hooks/useTracks';
 import { useRemixes } from '../../hooks/useRemixes';
-import { usePlaylists } from '../../hooks/usePlaylists';
 import { Timestamp } from 'firebase/firestore';
-import { trackService, remixService, playlistService } from '../../lib/firebase/services';
-import { Track, Remix, Playlist } from '../../lib/firebase/types';
+import { trackService, remixService } from '../../lib/firebase/services';
+import { Track, Remix } from '../../lib/firebase/types';
 import {
   Plus, Trash2, Play, Pause, ChevronDown, Music, Save,
-  Globe, Lock, Star, Filter as FilterIcon, X, GripVertical,
+  Filter as FilterIcon, X, GripVertical,
   ArrowUp, ArrowDown, AlertCircle, Check
 } from 'lucide-react';
 import { toDirectUrl, detectUrlType, isValidUrl } from '../../lib/utils/urlUtils';
 
-type CatalogueTab = 'tracks' | 'albums' | 'remixes' | 'playlists';
+type CatalogueTab = 'tracks' | 'albums' | 'remixes';
 type EditingContext = 'track' | 'remix' | null;
 
-const TracksPage: React.FC = () => {
+export const TracksContent: React.FC = () => {
   const { tracks, loading: tracksLoading, error } = useTracks();
   const { remixes, loading: remixesLoading } = useRemixes();
-  const { playlists, loading: playlistsLoading } = usePlaylists();
 
   const [activeTab, setActiveTab] = useState<CatalogueTab>('tracks');
   const [showModal, setShowModal] = useState(false);
@@ -30,9 +28,6 @@ const TracksPage: React.FC = () => {
   const [editingRemix, setEditingRemix] = useState<Remix | null>(null);
   const [currentlyPlaying, setCurrentlyPlaying] = useState<string | null>(null);
   const [expandedAlbums, setExpandedAlbums] = useState<Set<string>>(new Set());
-  const [editingPlaylist, setEditingPlaylist] = useState<Playlist | null>(null);
-  const [showPlaylistEditModal, setShowPlaylistEditModal] = useState(false);
-  const [playlistEditForm, setPlaylistEditForm] = useState({ name: '', description: '', isPublic: false, isFeatured: false });
 
   // Filter state
   const [selectedTypes, setSelectedTypes] = useState<Set<string>>(new Set());
@@ -119,44 +114,6 @@ const TracksPage: React.FC = () => {
       newExpanded.add(albumKey);
     }
     setExpandedAlbums(newExpanded);
-  };
-
-  const handleEditPlaylist = (playlist: Playlist) => {
-    setEditingPlaylist(playlist);
-    setPlaylistEditForm({
-      name: playlist.name,
-      description: playlist.description || '',
-      isPublic: playlist.isPublic || false,
-      isFeatured: playlist.isFeatured || false,
-    });
-    setShowPlaylistEditModal(true);
-  };
-
-  const handleSavePlaylist = async () => {
-    if (!playlistEditForm.name.trim()) {
-      alert('Playlist naam is verplicht');
-      return;
-    }
-    try {
-      if (editingPlaylist) {
-        await playlistService.updatePlaylist(editingPlaylist.id, {
-          name: playlistEditForm.name.trim(),
-          description: playlistEditForm.description,
-          isPublic: playlistEditForm.isPublic,
-          isFeatured: playlistEditForm.isFeatured,
-        });
-        alert('Playlist bijgewerkt');
-      } else {
-        const { user } = require('../../contexts/AuthContext');
-        await playlistService.createPlaylist(playlistEditForm.name.trim(), user.uid, [], playlistEditForm.description);
-        alert('Playlist aangemaakt');
-      }
-      setShowPlaylistEditModal(false);
-      setEditingPlaylist(null);
-      setPlaylistEditForm({ name: '', description: '', isPublic: false, isFeatured: false });
-    } catch (error: any) {
-      alert(error.message || 'Fout bij opslaan playlist');
-    }
   };
 
   const toggleTypeFilter = (type: string) => {
@@ -292,20 +249,19 @@ const TracksPage: React.FC = () => {
     tracks: 'TRACKS',
     albums: 'ALBUMS & EP',
     remixes: 'REMIXES',
-    playlists: 'PLAYLISTS',
   };
 
   return (
-    <AdminLayout>
+    <>
       <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-bold text-white">Catalogus Management</h1>
-          <p className="text-white/40 mt-1 text-sm">Beheer je tracks, albums, remixes, playlists en custom instellingen</p>
+          <p className="text-white/40 mt-1 text-sm">Beheer je tracks, albums en remixes</p>
         </div>
 
         {/* Tab Navigation */}
         <div className="flex gap-1 border-b border-white/[0.1] overflow-x-auto">
-          {(['tracks', 'albums', 'remixes', 'playlists'] as CatalogueTab[]).map((tab) => {
+          {(['tracks', 'albums', 'remixes'] as CatalogueTab[]).map((tab) => {
             const isActive = activeTab === tab;
             return (
               <button
@@ -353,19 +309,6 @@ const TracksPage: React.FC = () => {
               >
                 <Plus size={20} />
                 <span>Add Remix</span>
-              </button>
-            )}
-            {activeTab === 'playlists' && (
-              <button
-                onClick={() => {
-                  setEditingPlaylist(null);
-                  setPlaylistEditForm({ name: '', description: '', isPublic: false, isFeatured: false });
-                  setShowPlaylistEditModal(true);
-                }}
-                className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-indigo-700 hover:to-purple-700 transition-all flex items-center space-x-2"
-              >
-                <Plus size={20} />
-                <span>Add Playlist</span>
               </button>
             )}
             {(activeTab === 'tracks' || activeTab === 'remixes') && (
@@ -680,77 +623,6 @@ const TracksPage: React.FC = () => {
           </div>
         )}
 
-        {/* ── PLAYLISTS TAB ── */}
-        {activeTab === 'playlists' && (
-          <div className="space-y-4">
-            <div>
-              <h2 className="text-xl font-bold text-white">Playlists</h2>
-              <p className="text-white/40 text-sm mt-1">{playlists.length} playlist(s)</p>
-            </div>
-            {playlistsLoading ? (
-              <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-8">
-                <LoadingSpinner text="Playlists laden..." />
-              </div>
-            ) : playlists.length === 0 ? (
-              <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-8 text-center text-white/40">
-                Geen playlists gevonden
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                {playlists.map((playlist) => (
-                  <div key={playlist.id} className="bg-white/[0.05] border border-white/[0.06] rounded-lg p-4 hover:bg-white/[0.08] transition-all flex flex-col">
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="flex-1">
-                        <p className="font-medium text-white text-sm line-clamp-2">{playlist.name}</p>
-                        <p className="text-xs text-white/40 mt-1">{playlist.trackIds?.length || 0} tracks</p>
-                      </div>
-                    </div>
-                    <p className="text-xs text-white/40 line-clamp-2 mb-3">{playlist.description || 'Geen beschrijving'}</p>
-                    <div className="flex items-center gap-1 mb-3 flex-wrap">
-                      {playlist.isPublic ? (
-                        <span className="text-xs px-2 py-1 bg-green-500/20 text-green-400 rounded flex items-center gap-1">
-                          <Globe size={12} /> Publiek
-                        </span>
-                      ) : (
-                        <span className="text-xs px-2 py-1 bg-white/[0.06] text-white/60 rounded flex items-center gap-1">
-                          <Lock size={12} /> Privé
-                        </span>
-                      )}
-                      {playlist.isFeatured && (
-                        <span className="text-xs px-2 py-1 bg-yellow-500/20 text-yellow-400 rounded flex items-center gap-1">
-                          <Star size={12} /> Featured
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2 mt-auto">
-                      <button
-                        onClick={() => handleEditPlaylist(playlist)}
-                        className="flex-1 px-2 py-1.5 bg-white/[0.06] text-white/60 hover:text-white text-xs rounded transition-colors"
-                      >
-                        Bewerken
-                      </button>
-                      <button
-                        onClick={async () => {
-                          if (!confirm('Weet je zeker dat je deze playlist wilt verwijderen?')) return;
-                          try {
-                            await playlistService.deletePlaylist(playlist.id);
-                            alert('Playlist verwijderd');
-                          } catch (error: any) {
-                            alert(error.message);
-                          }
-                        }}
-                        className="px-2 py-1.5 text-white/40 hover:text-red-400 transition-colors"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
       </div>
 
       {/* ── Track/Album Form Modal ── */}
@@ -780,49 +652,17 @@ const TracksPage: React.FC = () => {
           onDelete={editingRemix ? () => handleDeleteRemix(editingRemix.id) : undefined}
         />
       )}
-
-      {/* ── Playlist Edit Modal ── */}
-      {showPlaylistEditModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowPlaylistEditModal(false)} />
-          <div className="relative bg-black border border-white/[0.06] rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-black/80 backdrop-blur-sm border-b border-white/[0.06] px-5 py-4 flex items-center justify-between z-10">
-              <h2 className="text-lg font-bold text-white">{editingPlaylist ? 'Playlist bewerken' : 'Playlist aanmaken'}</h2>
-              <button onClick={() => setShowPlaylistEditModal(false)} className="text-white/40 hover:text-white">
-                <X size={20} />
-              </button>
-            </div>
-            <div className="px-5 py-4 space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-white/60 uppercase mb-2">Naam</label>
-                <input value={playlistEditForm.name} onChange={(e) => setPlaylistEditForm({ ...playlistEditForm, name: e.target.value })} className="w-full px-3 py-2 rounded-lg bg-white/[0.08] border border-white/[0.06] text-white text-sm focus:outline-none focus:border-purple-500" />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-white/60 uppercase mb-2">Beschrijving</label>
-                <textarea value={playlistEditForm.description} onChange={(e) => setPlaylistEditForm({ ...playlistEditForm, description: e.target.value })} className="w-full px-3 py-2 rounded-lg bg-white/[0.08] border border-white/[0.06] text-white text-sm focus:outline-none focus:border-purple-500 resize-none" rows={3} />
-              </div>
-              <div className="space-y-2">
-                <label className="flex items-center gap-2">
-                  <input type="checkbox" checked={playlistEditForm.isPublic} onChange={(e) => setPlaylistEditForm({ ...playlistEditForm, isPublic: e.target.checked })} className="rounded" />
-                  <span className="text-xs font-semibold text-white/60">Publiek maken</span>
-                </label>
-                <label className="flex items-center gap-2">
-                  <input type="checkbox" checked={playlistEditForm.isFeatured} onChange={(e) => setPlaylistEditForm({ ...playlistEditForm, isFeatured: e.target.checked })} className="rounded" />
-                  <span className="text-xs font-semibold text-white/60">Featured</span>
-                </label>
-              </div>
-              <div className="flex gap-2 pt-4">
-                <button onClick={() => setShowPlaylistEditModal(false)} className="flex-1 py-2 rounded-lg bg-white/[0.06] text-white hover:bg-white/[0.12] text-sm font-medium">Annuleren</button>
-                <button onClick={handleSavePlaylist} className="flex-1 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 text-sm font-medium">Opslaan</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-    </AdminLayout>
+    </>
   );
 };
+
+export default function TracksPage() {
+  return (
+    <AdminLayout>
+      <TracksContent />
+    </AdminLayout>
+  );
+}
 
 
 interface TrackFormModalProps {
@@ -1515,5 +1355,3 @@ const RemixFormModal: React.FC<RemixFormModalProps> = ({ remix, onClose, onSave,
     </div>
   );
 };
-
-export default TracksPage;
