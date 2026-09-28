@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { ChevronDown, ChevronLeft, ChevronRight, Play, Pause, SkipBack, SkipForward, Shuffle, Repeat, Volume2, VolumeX } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Play, Pause, SkipBack, SkipForward, Shuffle, Repeat, Volume2, VolumeX, X } from 'lucide-react';
 import { formatDuration } from '../lib/utils/audioMetadata';
 import {
   toggleShuffle,
@@ -8,6 +8,7 @@ import {
   getQueue
 } from './GlobalAudioPlayer';
 import ModalPortal from './ModalPortal';
+import { useT } from '../contexts/LanguageContext';
 
 interface PlayerModalProps {
   isOpen: boolean;
@@ -53,6 +54,37 @@ export default function PlayerModal({
   const modalRef = useRef<HTMLDivElement>(null);
   const isShuffle = getIsShuffle();
   const [page, setPage] = useState<'player' | 'info'>('player');
+  const t = useT();
+
+  // Panel open/close mechanics — mirrors Navigation.tsx's side panel:
+  // keep rendering (with the slide-out animation) for a beat after isOpen
+  // goes false, instead of unmounting immediately.
+  const [isClosing, setIsClosing] = useState(false);
+  const wasOpenRef = useRef(false);
+  const closeTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      if (closeTimeout.current) {
+        clearTimeout(closeTimeout.current);
+        closeTimeout.current = null;
+      }
+      setIsClosing(false);
+      wasOpenRef.current = true;
+    } else if (wasOpenRef.current) {
+      wasOpenRef.current = false;
+      setIsClosing(true);
+      closeTimeout.current = setTimeout(() => {
+        setIsClosing(false);
+      }, 500);
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    return () => {
+      if (closeTimeout.current) clearTimeout(closeTimeout.current);
+    };
+  }, []);
 
   // Reset to player view when modal closes or track changes
   useEffect(() => {
@@ -72,12 +104,14 @@ export default function PlayerModal({
     return () => document.removeEventListener('keydown', handleEscape);
   }, [isOpen, onClose]);
 
-  useEffect(() => {
-    document.body.style.overflow = isOpen ? 'hidden' : 'auto';
-    return () => { document.body.style.overflow = 'auto'; };
-  }, [isOpen]);
+  const panelVisible = isOpen || isClosing;
 
-  if (!isOpen || !track) return null;
+  useEffect(() => {
+    document.body.style.overflow = panelVisible ? 'hidden' : 'auto';
+    return () => { document.body.style.overflow = 'auto'; };
+  }, [panelVisible]);
+
+  if (!panelVisible || !track) return null;
 
   const progressPct = duration ? (currentTime / duration) * 100 : 0;
   const volumePct = (isMuted ? 0 : volume) * 100;
@@ -89,38 +123,45 @@ export default function PlayerModal({
 
   return (
     <ModalPortal>
+      {/* Backdrop — subtle dark overlay, same mechanics as the nav side panel */}
       <div
-        className="fixed inset-0 z-[300] flex items-end sm:items-center justify-center sm:p-6 bg-black/70 backdrop-blur-md"
+        className={`fixed inset-0 z-[300] transition-opacity duration-500 ${
+          isClosing ? 'opacity-0' : 'opacity-100'
+        }`}
+        style={{ backgroundColor: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' }}
         onClick={onClose}
+      />
+
+      {/* Side Panel — slides in from right, same sizing/timing as Navigation.tsx */}
+      <div
+        ref={modalRef}
+        className={`fixed top-0 right-0 bottom-0 z-[301] w-full md:w-[480px] lg:w-[520px] md:border-l md:border-white/[0.06] ${
+          isClosing ? 'animate-panel-slide-out' : 'animate-panel-slide-in'
+        }`}
       >
-        <div
-          ref={modalRef}
-          className="relative w-full sm:max-w-sm bg-[#111] border border-white/[0.08] rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden"
-          style={{ maxHeight: '95dvh' }}
-          onClick={(e) => e.stopPropagation()}
-        >
-          {/* Drag handle (mobile) */}
-          <div className="sm:hidden flex justify-center pt-3 pb-1 flex-shrink-0">
-            <div className="w-10 h-1 rounded-full bg-white/20" />
-          </div>
+        {/* Panel background — glassmorphism, matches nav panel */}
+        <div className="absolute inset-0 bg-black/70 backdrop-blur-2xl" style={{ WebkitBackdropFilter: 'blur(40px)' }} />
+
+        {/* Panel content */}
+        <div className="relative z-10 h-full flex flex-col px-6 md:px-10" onClick={(e) => e.stopPropagation()}>
 
           {/* Top bar */}
-          <div className="flex items-center justify-between px-5 pt-3 pb-1 flex-shrink-0">
+          <div className="flex items-center justify-between py-5 md:py-6 flex-shrink-0">
             <button
               onClick={page === 'info' ? () => setPage('player') : onClose}
               className="p-2 rounded-full text-white/40 hover:text-white hover:bg-white/[0.08] transition-all"
-              title={page === 'info' ? 'Back' : 'Close'}
+              title={page === 'info' ? t('Back', 'Terug') : t('Close', 'Sluiten')}
             >
-              {page === 'info' ? <ChevronLeft size={22} /> : <ChevronDown size={22} />}
+              {page === 'info' ? <ChevronLeft size={22} /> : <X size={22} />}
             </button>
             <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/30">
-              {page === 'info' ? 'Track Info' : (queueLen > 0 ? `${queueIdx + 1} / ${queueLen}` : 'Now Playing')}
+              {page === 'info' ? t('Track Info', 'Track Info') : (queueLen > 0 ? `${queueIdx + 1} / ${queueLen}` : t('Now Playing', 'Nu Speelt'))}
             </p>
             {page === 'player' && hasDetail ? (
               <button
                 onClick={() => setPage('info')}
                 className="p-2 rounded-full text-white/40 hover:text-white hover:bg-white/[0.08] transition-all text-[10px] font-bold uppercase tracking-wider"
-                title="Track details"
+                title={t('Track details', 'Track details')}
               >
                 <ChevronRight size={18} />
               </button>
@@ -129,14 +170,17 @@ export default function PlayerModal({
             )}
           </div>
 
+          {/* Divider */}
+          <div className="w-full h-px bg-white/[0.06] mb-4 flex-shrink-0" />
+
           {/* Scrollable content */}
-          <div className="overflow-y-auto flex-1">
+          <div className="overflow-y-auto flex-1 pb-10">
 
             {/* ── PLAYER PAGE ── */}
             {page === 'player' && (
               <>
                 {/* Cover Art */}
-                <div className="px-6 pt-3 pb-5">
+                <div className="pt-1 pb-5 max-w-sm mx-auto">
                   {track.coverArt ? (
                     <div className="relative aspect-square rounded-2xl overflow-hidden shadow-2xl shadow-black/60">
                       <img src={track.coverArt} alt={track.title} className="w-full h-full object-cover" />
@@ -151,13 +195,13 @@ export default function PlayerModal({
                 </div>
 
                 {/* Track info */}
-                <div className="px-6 pb-5">
+                <div className="pb-5 max-w-sm mx-auto">
                   <h2 className="text-2xl font-black text-white truncate leading-tight">{track.title}</h2>
                   <p className="text-base text-white/50 mt-0.5 truncate">{track.artist}</p>
                 </div>
 
                 {/* Progress bar */}
-                <div className="px-6 pb-2">
+                <div className="pb-2 max-w-sm mx-auto">
                   <input
                     type="range"
                     min="0"
@@ -180,7 +224,7 @@ export default function PlayerModal({
                 </div>
 
                 {/* Main controls */}
-                <div className="px-6 py-4 flex items-center justify-between">
+                <div className="py-4 flex items-center justify-between max-w-sm mx-auto">
                   <button
                     onClick={toggleShuffle}
                     className={`p-2 rounded-full transition-all relative ${isShuffle ? 'text-red-400' : 'text-white/30 hover:text-white'}`}
@@ -238,7 +282,7 @@ export default function PlayerModal({
                 </div>
 
                 {/* Volume control */}
-                <div className="px-6 pb-7 flex items-center gap-3">
+                <div className="pb-7 flex items-center gap-3 max-w-sm mx-auto">
                   <button onClick={onMuteToggle} className="text-white/30 hover:text-white transition-colors flex-shrink-0">
                     {isMuted || volume === 0 ? <VolumeX size={18} /> : <Volume2 size={18} />}
                   </button>
@@ -263,10 +307,10 @@ export default function PlayerModal({
                   <Volume2 size={18} className="text-white/30 flex-shrink-0" />
                 </div>
 
-                {/* Swipe hint to details */}
+                {/* Hint to details */}
                 {hasDetail && (
                   <div className="flex items-center justify-center pb-4 gap-2 text-white/20">
-                    <span className="text-[10px] uppercase tracking-wider">Track info</span>
+                    <span className="text-[10px] uppercase tracking-wider">{t('Track info', 'Track info')}</span>
                     <ChevronRight size={12} />
                   </div>
                 )}
@@ -275,7 +319,7 @@ export default function PlayerModal({
 
             {/* ── INFO PAGE ── */}
             {page === 'info' && (
-              <div className="px-6 pt-4 pb-8">
+              <div className="pt-4 pb-8 max-w-sm mx-auto">
                 {/* Cover + Title */}
                 <div className="flex items-center gap-4 mb-6">
                   {track.coverArt ? (
@@ -385,6 +429,42 @@ export default function PlayerModal({
           </div>
         </div>
       </div>
+
+      <style>{`
+        @keyframes panel-slide-in {
+          from {
+            transform: translateX(100%);
+          }
+          to {
+            transform: translateX(0);
+          }
+        }
+        .animate-panel-slide-in {
+          animation: panel-slide-in 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        @media (max-width: 768px) {
+          .animate-panel-slide-in {
+            animation: panel-slide-in 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+          }
+        }
+
+        @keyframes panel-slide-out {
+          from {
+            transform: translateX(0);
+          }
+          to {
+            transform: translateX(100%);
+          }
+        }
+        .animate-panel-slide-out {
+          animation: panel-slide-out 0.5s cubic-bezier(0.7, 0, 0.84, 0) forwards;
+        }
+        @media (max-width: 768px) {
+          .animate-panel-slide-out {
+            animation: panel-slide-out 0.2s cubic-bezier(0.7, 0, 0.84, 0) forwards;
+          }
+        }
+      `}</style>
     </ModalPortal>
   );
 }
