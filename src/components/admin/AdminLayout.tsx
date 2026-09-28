@@ -1,44 +1,49 @@
-import React, { useState, useRef } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import React, { useEffect, useRef, useState } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useOrderNotifications } from '../../hooks/useOrderNotifications';
 import {
   LayoutDashboard,
   Settings,
   LogOut,
-  Menu,
-  X,
-  ArrowUpRight,
-  ChevronLeft,
-  ChevronRight,
   ArrowLeft,
+  ChevronDown,
+  LayoutGrid,
+  Users,
+  Receipt,
+  Sparkles,
+  type LucideIcon,
 } from 'lucide-react';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
 }
 
-type SidebarPosition = 'floating' | 'left' | 'right';
+interface SubmenuItem {
+  label: string;
+  subtitle: string;
+  href: string;
+  badge?: number;
+}
+
+interface MenuItem {
+  label: string;
+  subtitle: string;
+  href?: string;
+  submenu: SubmenuItem[];
+  badge: number;
+  icon: LucideIcon;
+  mobileLabel: string;
+}
 
 const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isMenuClosing, setIsMenuClosing] = useState(false);
-  const [expandedShop, setExpandedShop] = useState(false);
-  const [expandedArtist, setExpandedArtist] = useState(false);
-  const [expandedAnalytics, setExpandedAnalytics] = React.useState(false);
-  const [expandedPanel, setExpandedPanel] = React.useState(false);
-  const [sidebarPosition, setSidebarPositionState] = useState<SidebarPosition>(() => {
-    const saved = localStorage.getItem('admin-sidebar-position') as SidebarPosition;
-    return saved || 'floating';
-  });
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const { user, signOut } = useAuth();
   const { pendingCount, newSinceLastSeen } = useOrderNotifications();
   const navigate = useNavigate();
   const location = useLocation();
-  const closeTimeout = useRef<NodeJS.Timeout | null>(null);
-  const scrollPositionRef = useRef(0);
+  const navRef = useRef<HTMLDivElement | null>(null);
 
-  const isDocked = sidebarPosition !== 'floating';
   const isOnDashboard = location.pathname === '/admin/dashboard' || location.pathname === '/admin';
 
   const handleSignOut = async () => {
@@ -46,522 +51,248 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     navigate('/admin/login');
   };
 
-  const setSidebarPosition = (pos: SidebarPosition) => {
-    localStorage.setItem('admin-sidebar-position', pos);
-    setSidebarPositionState(pos);
-  };
+  const goBack = () => { try { navigate(-1); } catch { navigate('/admin/dashboard'); } };
 
-  const menuItems = [
+  const menuItems: MenuItem[] = [
     {
       label: 'MANAGEMENT',
-      subtitle: 'Beats, Services & Tracks',
-      action: () => setExpandedShop(!expandedShop),
+      subtitle: 'Beats, Services, Tracks & Mix Masters',
+      href: '/admin/management',
       submenu: [
         { label: 'Beats', subtitle: 'Beat instrumentals', href: '/admin/management?tab=beats' },
         { label: 'Services', subtitle: 'Audio services', href: '/admin/management?tab=services' },
         { label: 'Tracks', subtitle: 'Discography, remixes & custom', href: '/admin/management?tab=tracks' },
+        { label: 'Mix Masters', subtitle: 'Client mix & master archive', href: '/admin/management?tab=mixmasters' },
       ],
-      expanded: expandedShop,
+      badge: 0,
+      icon: LayoutGrid,
+      mobileLabel: 'Manage',
     },
     {
       label: 'ARTIST SUPPORT',
       subtitle: 'Artist Requests, Collab Requests, Chat',
       href: '/admin/board',
       submenu: [],
-      expanded: false,
+      badge: 0,
+      icon: Users,
+      mobileLabel: 'Support',
     },
     {
       label: 'ORDERS AND STATS',
       subtitle: 'Bestellingen, Producten, Kortingscodes',
-      action: () => setExpandedAnalytics(!expandedAnalytics),
-      badge: newSinceLastSeen > 0 ? newSinceLastSeen : (pendingCount > 0 ? pendingCount : 0),
       submenu: [
         { label: 'Bestellingen', subtitle: 'Beheer bestellingen', href: '/admin/orders', badge: pendingCount },
         { label: 'Product Management', subtitle: 'Klantaankopen', href: '/admin/product-management' },
         { label: 'Discount Codes', subtitle: 'Promo codes', href: '/admin/discount-codes' },
       ],
-      expanded: expandedAnalytics,
+      badge: newSinceLastSeen > 0 ? newSinceLastSeen : (pendingCount > 0 ? pendingCount : 0),
+      icon: Receipt,
+      mobileLabel: 'Orders',
     },
     {
       label: 'JONNA RINCON PANEL',
       subtitle: 'Agenda, Analytics & More',
-      action: () => setExpandedPanel(!expandedPanel),
       submenu: [
         { label: 'Panel', subtitle: 'Jonna Rincon overzicht', href: '/admin/jonna-rincon-panel' },
         { label: 'Analytics', subtitle: 'Dashboard analytics', href: '/admin/analytics' },
       ],
-      expanded: expandedPanel,
+      badge: 0,
+      icon: Sparkles,
+      mobileLabel: 'Panel',
     },
   ];
 
-  const cycleSidebarPosition = () => {
-    const next: SidebarPosition =
-      sidebarPosition === 'floating' ? 'left'
-      : sidebarPosition === 'left' ? 'right'
-      : 'floating';
-
-    // Switching from floating to docked: immediately close floating menu
-    if (sidebarPosition === 'floating' && next !== 'floating' && (isMenuOpen || isMenuClosing)) {
-      if (closeTimeout.current) clearTimeout(closeTimeout.current);
-      setIsMenuOpen(false);
-      setIsMenuClosing(false);
-      document.body.style.overflow = '';
-      document.body.style.position = '';
-      document.body.style.width = '';
-      document.body.style.top = '';
-      if (scrollPositionRef.current > 0) {
-        window.scrollTo(0, scrollPositionRef.current);
-        scrollPositionRef.current = 0;
-      }
-    }
-    setSidebarPosition(next);
-  };
-
-  // Body scroll lock — only in floating mode
-  React.useEffect(() => {
-    if (isDocked) return;
-    if (isMenuOpen && !isMenuClosing) {
-      scrollPositionRef.current = window.scrollY;
-      document.body.style.overflow = 'hidden';
-      document.body.style.position = 'fixed';
-      document.body.style.width = '100%';
-      document.body.style.top = `-${scrollPositionRef.current}px`;
-    } else {
-      document.body.style.overflow = '';
-      document.body.style.position = '';
-      document.body.style.width = '';
-      document.body.style.top = '';
-      if (scrollPositionRef.current > 0) {
-        window.scrollTo(0, scrollPositionRef.current);
-      }
-    }
-    return () => {
-      document.body.style.overflow = '';
-      document.body.style.position = '';
-      document.body.style.width = '';
-      document.body.style.top = '';
-    };
-  }, [isMenuOpen, isMenuClosing, isDocked]);
-
-  React.useEffect(() => {
-    return () => { if (closeTimeout.current) clearTimeout(closeTimeout.current); };
-  }, []);
-
-  // Close menu immediately whenever the route changes
-  React.useEffect(() => {
-    if (isMenuOpen || isMenuClosing) {
-      if (closeTimeout.current) clearTimeout(closeTimeout.current);
-      setIsMenuOpen(false);
-      setIsMenuClosing(false);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+  // Close whatever's open when the route changes
+  useEffect(() => {
+    setOpenDropdown(null);
   }, [location.pathname]);
 
-  const closeMenu = () => {
-    setIsMenuClosing(true);
-    closeTimeout.current = setTimeout(() => {
-      setIsMenuOpen(false);
-      setIsMenuClosing(false);
-    }, 500);
+  // Close an open dropdown on outside click
+  useEffect(() => {
+    if (!openDropdown) return;
+    const handleClick = (e: MouseEvent) => {
+      if (navRef.current && !navRef.current.contains(e.target as Node)) {
+        setOpenDropdown(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [openDropdown]);
+
+  const isItemActive = (item: MenuItem) => {
+    if (item.href && (location.pathname === item.href || location.pathname.startsWith(item.href + '/'))) return true;
+    return item.submenu.some(sub => location.pathname === sub.href.split('?')[0]);
   };
 
-  const openMenu = () => {
-    if (closeTimeout.current) clearTimeout(closeTimeout.current);
-    setIsMenuClosing(false);
-    setIsMenuOpen(true);
-  };
+  const getPrimaryHref = (item: MenuItem) => item.href ?? item.submenu[0]?.href ?? '/admin/dashboard';
 
-  const menuVisible = isMenuOpen || isMenuClosing;
+  return (
+    <div className="min-h-screen bg-black">
+      {/* Top bar — same glass-card language as the public site header */}
+      <header className="fixed top-0 left-0 right-0 z-40 pt-3 px-4 sm:px-6 lg:px-8">
+        <div className="backdrop-blur-xl bg-black/30 border border-white/[0.08] rounded-2xl overflow-hidden">
+          <div className="flex items-center justify-between px-4 sm:px-6 h-16 md:h-20">
 
-  const positionIcon =
-    sidebarPosition === 'left' ? <ChevronRight size={18} /> :
-    sidebarPosition === 'right' ? <ChevronLeft size={18} /> :
-    <Menu size={18} />;
-
-  const positionTitle = `Sidebar: ${
-    sidebarPosition === 'floating' ? 'Floating' :
-    sidebarPosition === 'left' ? 'Left' : 'Right'
-  }`;
-
-  const goBack = () => { try { navigate(-1); } catch { navigate('/admin/dashboard'); } };
-
-  // ── DOCKED SIDEBAR LAYOUT ────────────────────────────────────────────────
-  if (isDocked) {
-    return (
-      <div className={`min-h-screen bg-black flex ${sidebarPosition === 'right' ? 'flex-row-reverse' : 'flex-row'}`}>
-
-        {/* Persistent docked sidebar — no overlay/blur on page */}
-        <aside
-          className={`w-[270px] flex-shrink-0 h-screen sticky top-0 flex flex-col overflow-hidden
-            ${sidebarPosition === 'left' ? 'border-r' : 'border-l'} border-white/[0.06]`}
-          style={{ background: 'rgba(5,5,5,0.98)' }}
-        >
-          {/* Header */}
-          <div className="flex items-center justify-between px-5 py-3 flex-shrink-0">
-            <button
-              onClick={() => navigate('/')}
-              className="hover:opacity-80 transition-opacity"
-              title="Back to Home"
-            >
-              <img
-                src="/Jonna Rincon Logo WH.png"
-                alt="Jonna Rincon"
-                className="h-28 w-auto opacity-40 hover:opacity-90 transition-opacity duration-300"
-              />
-            </button>
-            <button
-              onClick={() => setSidebarPosition('floating')}
-              className="p-2 rounded-full border border-white/10 hover:border-white/20 hover:bg-white/5 transition-all group"
-              title="Sidebar verbergen"
-            >
-              <X className="w-4 h-4 text-white/40 group-hover:text-white/70 transition-colors" />
-            </button>
-          </div>
-          <div className="w-full h-px bg-white/[0.06] flex-shrink-0" />
-
-          {/* Navigation */}
-          <div className="flex-1 overflow-y-auto">
-            {menuItems.map((item) => (
-              <div key={item.label}>
+            {/* Left: logo + back button */}
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <Link to="/" className="flex items-center justify-center w-10 h-10 md:w-14 md:h-14" title="Back to Home">
+                <img src="/Jonna Rincon Logo WH.png" alt="JR" className="w-full h-full object-contain opacity-80 hover:opacity-100 transition-opacity" />
+              </Link>
+              {!isOnDashboard && (
                 <button
-                  onClick={() => {
-                    if ('href' in item && item.href) {
-                      navigate(item.href);
-                    } else {
-                      item.action?.();
-                    }
-                  }}
-                  className="group w-full text-left px-5 py-3.5 border-b border-white/[0.04] hover:bg-white/[0.04] transition-colors flex items-center justify-between"
+                  onClick={goBack}
+                  className="w-9 h-9 rounded-full border border-white/10 hover:border-white/20 hover:bg-white/5 transition-all flex items-center justify-center flex-shrink-0"
+                  title="Terug"
                 >
-                  <div className="min-w-0 flex items-center gap-2">
-                    <span className="block text-[11px] font-bold text-white/60 group-hover:text-white uppercase tracking-widest transition-colors">
-                      {item.label}
-                    </span>
-                    {'badge' in item && item.badge > 0 && (
-                      <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-amber-500 text-[10px] font-bold text-black leading-none">
-                        {item.badge > 99 ? '99+' : item.badge}
-                      </span>
-                    )}
-                  </div>
-                  {!('href' in item && item.href) && (
-                    <ChevronRight
-                      size={13}
-                      className={`text-white/20 flex-shrink-0 ml-2 transition-transform duration-200 ${item.expanded ? 'rotate-90' : ''}`}
-                    />
-                  )}
+                  <ArrowLeft size={16} className="text-white/60" />
                 </button>
-                <div className={`overflow-hidden transition-all duration-200 ease-out ${item.expanded ? 'max-h-96' : 'max-h-0'}`}>
-                  {item.submenu.map((sub) => (
-                    <button
-                      key={sub.href}
-                      onClick={() => navigate(sub.href)}
-                      className="group w-full text-left px-8 py-2.5 border-b border-white/[0.03] hover:bg-white/[0.04] transition-colors flex items-center justify-between"
-                    >
-                      <span className="block text-xs text-white/50 group-hover:text-white transition-colors">{sub.label}</span>
-                      {'badge' in sub && sub.badge > 0 && (
-                        <span className="inline-flex items-center justify-center min-w-[16px] h-[16px] px-1 rounded-full bg-amber-500/20 text-[10px] font-bold text-amber-400 leading-none">
-                          {sub.badge > 99 ? '99+' : sub.badge}
-                        </span>
+              )}
+              <span className="hidden md:inline text-xs font-black uppercase tracking-widest text-white/30 ml-2">Admin</span>
+            </div>
+
+            {/* Desktop nav — horizontal, dropdowns for grouped sections */}
+            <nav ref={navRef} className="hidden md:flex items-center justify-center flex-1 px-6">
+              <div className="flex items-center gap-6 lg:gap-8">
+                {menuItems.map((item) => {
+                  const active = isItemActive(item);
+                  const isOpen = openDropdown === item.label;
+                  const linkClasses = `text-xs font-black uppercase tracking-widest transition-all duration-200 relative group whitespace-nowrap ${
+                    active ? 'text-white' : 'text-white/50 hover:text-white/80'
+                  }`;
+                  return (
+                    <div key={item.label} className="relative">
+                      {item.submenu.length > 0 ? (
+                        <button
+                          type="button"
+                          onClick={() => setOpenDropdown(isOpen ? null : item.label)}
+                          className={`${linkClasses} flex items-center gap-1`}
+                        >
+                          {item.label}
+                          {item.badge > 0 && (
+                            <span className="inline-flex items-center justify-center min-w-[16px] h-[16px] px-1 rounded-full bg-amber-500 text-[9px] font-bold text-black leading-none">
+                              {item.badge > 99 ? '99+' : item.badge}
+                            </span>
+                          )}
+                          <ChevronDown size={12} className={`transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+                          <span className={`absolute -bottom-1.5 left-0 w-full h-0.5 bg-red-500 transition-all duration-200 ${
+                            active || isOpen ? 'opacity-100' : 'opacity-0 group-hover:opacity-50'
+                          }`} />
+                        </button>
+                      ) : (
+                        <Link to={item.href ?? '/admin/dashboard'} className={linkClasses}>
+                          {item.label}
+                          {item.badge > 0 && (
+                            <span className="ml-1.5 inline-flex items-center justify-center min-w-[16px] h-[16px] px-1 rounded-full bg-amber-500 text-[9px] font-bold text-black leading-none align-middle">
+                              {item.badge > 99 ? '99+' : item.badge}
+                            </span>
+                          )}
+                          <span className={`absolute -bottom-1.5 left-0 w-full h-0.5 bg-red-500 transition-all duration-200 ${
+                            active ? 'opacity-100' : 'opacity-0 group-hover:opacity-50'
+                          }`} />
+                        </Link>
                       )}
-                    </button>
-                  ))}
-                </div>
+
+                      {item.submenu.length > 0 && isOpen && (
+                        <div className="absolute top-full left-1/2 -translate-x-1/2 mt-4 w-64 backdrop-blur-xl bg-black/80 border border-white/[0.08] rounded-2xl overflow-hidden py-2 shadow-2xl">
+                          {item.submenu.map((sub) => (
+                            <Link
+                              key={sub.href}
+                              to={sub.href}
+                              onClick={() => setOpenDropdown(null)}
+                              className="group/sub flex items-center justify-between px-4 py-2.5 hover:bg-white/[0.06] transition-colors"
+                            >
+                              <span>
+                                <span className="block text-xs font-bold text-white/80 group-hover/sub:text-white uppercase tracking-wide transition-colors">{sub.label}</span>
+                                <span className="block text-[10px] text-white/30 mt-0.5">{sub.subtitle}</span>
+                              </span>
+                              {!!sub.badge && sub.badge > 0 && (
+                                <span className="inline-flex items-center justify-center min-w-[16px] h-[16px] px-1 rounded-full bg-amber-500/20 text-[10px] font-bold text-amber-400 leading-none flex-shrink-0 ml-2">
+                                  {sub.badge > 99 ? '99+' : sub.badge}
+                                </span>
+                              )}
+                            </Link>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
-            ))}
-          </div>
+            </nav>
 
-          <div className="w-full h-px bg-white/[0.06] flex-shrink-0" />
-
-          {/* Bottom actions */}
-          <div className="px-5 py-4 flex-shrink-0">
-            <div className="flex items-center gap-1.5 mb-4">
+            {/* Right: utility icons */}
+            <div className="flex items-center gap-1.5 flex-shrink-0">
               <button
                 onClick={() => navigate('/admin/dashboard')}
-                className="p-2 rounded-lg text-white/40 hover:bg-white/[0.04] hover:text-white/80 transition"
+                className="flex items-center justify-center w-9 h-9 rounded-lg hover:bg-white/[0.08] transition-colors text-white/50 hover:text-white"
                 title="Dashboard"
               >
-                <LayoutDashboard size={16} />
+                <LayoutDashboard size={17} />
               </button>
               <button
                 onClick={() => navigate('/admin/settings')}
-                className="p-2 rounded-lg text-white/40 hover:bg-white/[0.04] hover:text-white/80 transition"
+                className="flex items-center justify-center w-9 h-9 rounded-lg hover:bg-white/[0.08] transition-colors text-white/50 hover:text-white"
                 title="Settings"
               >
-                <Settings size={16} />
-              </button>
-              <button
-                onClick={cycleSidebarPosition}
-                className="p-2 rounded-lg bg-red-600/20 border border-red-600/30 text-red-400 hover:bg-red-600/30 transition"
-                title={positionTitle}
-              >
-                {positionIcon}
+                <Settings size={17} />
               </button>
               <button
                 onClick={handleSignOut}
-                className="p-2 rounded-lg text-white/40 hover:bg-white/[0.04] hover:text-white/80 transition"
+                className="flex items-center justify-center w-9 h-9 rounded-lg hover:bg-white/[0.08] transition-colors text-white/50 hover:text-white"
                 title="Sign Out"
               >
-                <LogOut size={16} />
+                <LogOut size={17} />
               </button>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-2xl bg-gradient-to-br from-red-600 to-orange-600 flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
-                {user?.displayName?.[0] || user?.email?.[0] || 'A'}
-              </div>
-              <div className="min-w-0">
-                <p className="text-xs font-medium text-white truncate">{user?.displayName || 'Admin'}</p>
-                <p className="text-[10px] text-white/25 truncate">{user?.email}</p>
+              <div className="hidden sm:flex items-center gap-2 ml-1 pl-2 border-l border-white/[0.08]">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-red-600 to-orange-600 flex items-center justify-center text-white font-semibold text-xs flex-shrink-0">
+                  {user?.displayName?.[0] || user?.email?.[0] || 'A'}
+                </div>
               </div>
             </div>
+
           </div>
-        </aside>
-
-        {/* Main content — takes remaining width */}
-        <div className="flex-1 min-w-0 flex flex-col">
-          {/* Minimal top bar (back button only) */}
-          <div className="sticky top-0 z-20 flex items-center px-6 py-4 flex-shrink-0">
-            {!isOnDashboard && (
-              <button
-                onClick={goBack}
-                className="w-10 h-10 rounded-full border border-white/20 hover:border-white/40 hover:bg-white/5 transition-all flex items-center justify-center"
-                title="Terug"
-              >
-                <ArrowLeft size={18} className="text-white/60" />
-              </button>
-            )}
-          </div>
-          <main className="flex-1 px-4 py-5 sm:px-6 lg:px-8 lg:py-6">{children}</main>
         </div>
-      </div>
-    );
-  }
+      </header>
 
-  // ── FLOATING MODE ─────────────────────────────────────────────────────────
-  return (
-    <div className="min-h-screen bg-black">
-      {/* Top Bar */}
-      <div className="fixed top-0 left-0 right-0 z-30 flex items-center justify-between px-6 md:px-10 py-4 md:py-5">
-        <div className="flex-shrink-0">
-          {!isOnDashboard && (
-            <button
-              onClick={goBack}
-              className="w-10 h-10 rounded-full border border-white/20 hover:border-white/40 hover:bg-white/5 transition-all duration-300 flex items-center justify-center cursor-pointer"
-              title="Terug"
-            >
-              <ArrowLeft size={18} className="text-white/60" />
-            </button>
-          )}
-          {isOnDashboard && (
-            <h1 className="text-lg font-bold text-white">Admin Dashboard</h1>
-          )}
-        </div>
-        <button
-          onClick={openMenu}
-          className="text-lg md:text-xl font-black uppercase tracking-[0.3em] text-white transition-all duration-500 hover:opacity-60 cursor-pointer"
-        >
-          Menu
-        </button>
-      </div>
-
-      {/* Floating side panel with blur overlay */}
-      {menuVisible && (
-        <>
-          {/* Blur overlay — only in floating mode */}
-          <div
-            className={`fixed inset-0 z-[100] transition-opacity duration-500 ${isMenuClosing ? 'opacity-0' : 'opacity-100'}`}
-            style={{ backgroundColor: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' }}
-            onClick={closeMenu}
-          />
-
-          {/* Side panel */}
-          <div
-            className={`fixed top-0 right-0 bottom-0 z-[101] w-full md:w-[480px] lg:w-[520px] md:border-l md:border-white/[0.06] ${
-              isMenuClosing ? 'animate-panel-slide-out' : 'animate-panel-slide-in'
-            }`}
-          >
-            <div className="absolute inset-0 bg-black/70 backdrop-blur-2xl" style={{ WebkitBackdropFilter: 'blur(40px)' }} />
-            <div className="relative z-10 h-full flex flex-col px-8 md:px-12">
-              {/* Header */}
-              <div className="flex items-center justify-between py-3 md:py-4 flex-shrink-0">
-                <button
-                  onClick={() => { closeMenu(); setTimeout(() => navigate('/'), 100); }}
-                  className="block flex-shrink-0 cursor-pointer hover:opacity-80 transition-opacity"
-                  title="Back to Home"
+      {/* Mobile bottom tab bar — the four main sections, always visible */}
+      <nav
+        className="md:hidden fixed bottom-0 left-0 right-0 z-40 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))]"
+        aria-label="Primary"
+      >
+        <div className="backdrop-blur-xl bg-black/30 border border-white/[0.08] rounded-2xl overflow-hidden">
+          <div className="flex items-stretch justify-around">
+            {menuItems.map((item) => {
+              const Icon = item.icon;
+              const active = isItemActive(item);
+              return (
+                <Link
+                  key={item.label}
+                  to={getPrimaryHref(item)}
+                  className={`relative flex-1 flex flex-col items-center justify-center gap-1 py-2.5 transition-colors ${
+                    active ? 'text-white' : 'text-white/40 hover:text-white/70'
+                  }`}
                 >
-                  <img
-                    src="/Jonna Rincon Logo WH.png"
-                    alt="Jonna Rincon"
-                    className="h-[110px] md:h-[150px] w-auto opacity-50 hover:opacity-100 transition-opacity duration-300"
-                  />
-                </button>
-                <button
-                  onClick={closeMenu}
-                  className="p-2 rounded-full border border-white/10 hover:border-white/20 hover:bg-white/5 transition-all duration-300 cursor-pointer group"
-                >
-                  <X className="w-5 h-5 text-white/60 group-hover:text-white group-hover:rotate-90 transition-all duration-300" />
-                </button>
-              </div>
-
-              <div className="w-full h-px bg-white/[0.06]" />
-
-              {/* Menu items */}
-              <div className="flex-1 flex flex-col overflow-y-auto pr-2 pb-12">
-                {menuItems.map((item, i) => (
-                  <div key={item.label}>
-                    <button
-                      onClick={() => {
-                        if ('href' in item && item.href) {
-                          navigate(item.href);
-                          closeMenu();
-                        } else {
-                          item.action?.();
-                        }
-                      }}
-                      className="group w-full text-left py-4 md:py-5 cursor-pointer border-b border-white/[0.04]"
-                      style={{
-                        animation: isMenuClosing ? 'none' : `menu-item-reveal 0.6s cubic-bezier(0.16, 1, 0.3, 1) ${0.15 + i * 0.06}s both`,
-                      }}
-                    >
-                      <div className={`flex items-center justify-between transition-transform duration-300 ${!item.expanded && !('href' in item && item.href) ? 'group-hover:translate-x-2' : ''}`}>
-                        <div>
-                          <div className="flex items-center gap-3">
-                            <span className="block text-3xl md:text-4xl font-semibold text-white/90 group-hover:text-white transition-colors duration-300 tracking-tight">
-                              {item.label}
-                            </span>
-                            {'badge' in item && item.badge > 0 && (
-                              <span className="inline-flex items-center justify-center min-w-[22px] h-[22px] px-1.5 rounded-full bg-amber-500 text-[11px] font-bold text-black leading-none">
-                                {item.badge > 99 ? '99+' : item.badge}
-                              </span>
-                            )}
-                          </div>
-                          <span className="block text-xs text-white/25 mt-1 uppercase tracking-widest font-medium group-hover:text-red-400/60 transition-colors duration-300">
-                            {item.subtitle}
-                          </span>
-                        </div>
-                        {!('href' in item && item.href) && (
-                          <ArrowUpRight className={`w-5 h-5 text-white/10 group-hover:text-red-400/50 transition-all duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 ${item.expanded ? 'rotate-90' : ''}`} />
-                        )}
-                      </div>
-                    </button>
-
-                    {item.submenu && (
-                      <div className={`overflow-hidden transition-all duration-300 ease-out ${item.expanded ? 'max-h-[800px]' : 'max-h-0'}`}>
-                        {item.submenu.map((sub, si) => (
-                          <button
-                            key={sub.href}
-                            onClick={() => { navigate(sub.href); closeMenu(); }}
-                            className="group w-full text-left py-3 md:py-4 cursor-pointer border-b border-white/[0.04] hover:translate-x-1.5 transition-transform duration-300 flex items-center justify-between"
-                            style={{
-                              animation: item.expanded && !isMenuClosing ? `menu-item-reveal 0.4s cubic-bezier(0.16, 1, 0.3, 1) ${0.05 + si * 0.04}s both` : 'none',
-                              paddingLeft: '2rem',
-                            }}
-                          >
-                            <div>
-                              <span className="block text-lg font-semibold text-white/60 group-hover:text-white transition-colors duration-300 tracking-tight">
-                                {sub.label}
-                              </span>
-                              <span className="block text-xs text-white/20 mt-0.5 uppercase tracking-widest font-medium group-hover:text-white/40 transition-colors duration-300">
-                                {sub.subtitle}
-                              </span>
-                            </div>
-                            {'badge' in sub && sub.badge > 0 && (
-                              <span className="inline-flex items-center justify-center min-w-[20px] h-[20px] px-1 rounded-full bg-amber-500/20 text-[11px] font-bold text-amber-400 leading-none mr-4">
-                                {sub.badge > 99 ? '99+' : sub.badge}
-                              </span>
-                            )}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                ))}
-
-                {/* Bottom icons */}
-                <div className="flex flex-col gap-4 pt-6">
-                  <div className="flex items-center justify-center gap-3">
-                    <button
-                      onClick={() => { navigate('/admin/dashboard'); closeMenu(); }}
-                      className="p-2.5 rounded-xl transition-all duration-200 text-white/40 hover:bg-white/[0.04] hover:text-white/80"
-                      title="Dashboard"
-                    >
-                      <LayoutDashboard size={18} />
-                    </button>
-                    <button
-                      onClick={() => { navigate('/admin/settings'); closeMenu(); }}
-                      className="p-2.5 rounded-xl transition-all duration-200 text-white/40 hover:bg-white/[0.04] hover:text-white/80"
-                      title="Settings"
-                    >
-                      <Settings size={18} />
-                    </button>
-                    <button
-                      onClick={cycleSidebarPosition}
-                      className={`p-2.5 rounded-xl border transition-all duration-200 ${
-                        sidebarPosition !== 'floating'
-                          ? 'bg-red-600/20 border-red-600/40 text-red-400 hover:bg-red-600/30'
-                          : 'border-transparent text-white/40 hover:bg-white/[0.04] hover:text-white/80'
-                      }`}
-                      title={positionTitle}
-                    >
-                      {positionIcon}
-                    </button>
-                    <button
-                      onClick={() => { closeMenu(); handleSignOut(); }}
-                      className="p-2.5 rounded-xl transition-all duration-200 text-white/40 hover:bg-white/[0.04] hover:text-white/80"
-                      title="Sign Out"
-                    >
-                      <LogOut size={18} />
-                    </button>
-                  </div>
-                  <button
-                    onClick={() => { closeMenu(); handleSignOut(); }}
-                    className="text-left cursor-pointer w-full"
-                  >
-                    <span className="text-sm uppercase tracking-widest text-white/20 hover:text-red-400 transition-colors duration-300 font-medium">
-                      Sign Out
+                  {item.badge > 0 && (
+                    <span className="absolute top-1.5 right-[22%] flex items-center justify-center min-w-[15px] h-[15px] px-1 rounded-full bg-amber-500 text-[8px] font-bold text-black leading-none">
+                      {item.badge > 99 ? '99+' : item.badge}
                     </span>
-                  </button>
-                </div>
-              </div>
-
-              <div className="w-full h-px bg-white/[0.06]" />
-
-              {/* User info */}
-              <div className="flex-shrink-0 py-6 md:py-8">
-                <div className="flex items-center space-x-3 mb-4">
-                  <div className="w-9 h-9 rounded-2xl bg-gradient-to-br from-red-600 to-orange-600 flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
-                    {user?.displayName?.[0] || user?.email?.[0] || 'A'}
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium text-white truncate">
-                      {user?.displayName || 'Admin'}
-                    </p>
-                    <p className="text-xs text-white/25 truncate">{user?.email}</p>
-                  </div>
-                </div>
-                <p className="text-[10px] text-white/15 uppercase tracking-[0.15em] font-medium">
-                  &copy; 2025 Jonna Rincon
-                </p>
-              </div>
-            </div>
+                  )}
+                  <Icon size={19} />
+                  <span className="text-[9px] font-black uppercase tracking-wider">{item.mobileLabel}</span>
+                  <span className={`absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-red-500 transition-opacity duration-200 ${
+                    active ? 'opacity-100' : 'opacity-0'
+                  }`} />
+                </Link>
+              );
+            })}
           </div>
-        </>
-      )}
+        </div>
+      </nav>
 
       {/* Main content */}
-      <div className="flex flex-col min-h-screen pt-20">
+      <div className="flex flex-col min-h-screen pt-24 sm:pt-28 pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] md:pb-6">
         <main className="flex-1 px-4 py-5 sm:px-6 lg:px-8 lg:py-6">{children}</main>
       </div>
-
-      <style>{`
-        @keyframes panel-slide-in { from { transform: translateX(100%); } to { transform: translateX(0); } }
-        .animate-panel-slide-in { animation: panel-slide-in 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-        @media (max-width: 768px) { .animate-panel-slide-in { animation: panel-slide-in 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards; } }
-        @keyframes panel-slide-out { from { transform: translateX(0); } to { transform: translateX(100%); } }
-        .animate-panel-slide-out { animation: panel-slide-out 0.5s cubic-bezier(0.7, 0, 0.84, 0) forwards; }
-        @media (max-width: 768px) { .animate-panel-slide-out { animation: panel-slide-out 0.2s cubic-bezier(0.7, 0, 0.84, 0) forwards; } }
-        @keyframes menu-item-reveal { from { opacity: 0; transform: translateX(30px); } to { opacity: 1; transform: translateX(0); } }
-        @media (max-width: 768px) { [style*="animation-delay"] { animation-duration: 0.3s !important; } }
-      `}</style>
     </div>
   );
 };

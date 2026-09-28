@@ -14,23 +14,32 @@ import { useT } from '../../contexts/LanguageContext';
 // ============================================
 
 interface ClientGroup {
+  // Grouping key: the client's lowercased/trimmed email, or — when a record has
+  // no email (email is optional on add) — a synthetic `noemail:<name>` key, so
+  // an email-less client still gets their own row instead of being dropped.
+  key: string;
   email: string;
   name: string;
   deliverables: ClientDeliverable[];
   linked: boolean;
 }
 
+function clientGroupKey(email: string | undefined, name: string): string {
+  const e = (email || '').toLowerCase().trim();
+  if (e) return e;
+  return `noemail:${(name || '').toLowerCase().trim()}`;
+}
+
 function groupByClient(deliverables: ClientDeliverable[]): ClientGroup[] {
   const map = new Map<string, ClientGroup>();
   for (const d of deliverables) {
-    const key = (d.clientEmail || '').toLowerCase().trim();
-    if (!key) continue;
+    const key = clientGroupKey(d.clientEmail, d.clientName);
     let g = map.get(key);
     if (!g) {
       // `deliverables` is already ordered by completedAt desc (from getAll()),
       // so the first record we see per client is their most recent one —
       // use its name as the display name for the group.
-      g = { email: key, name: d.clientName, deliverables: [], linked: false };
+      g = { key, email: (d.clientEmail || '').toLowerCase().trim(), name: d.clientName, deliverables: [], linked: false };
       map.set(key, g);
     }
     g.deliverables.push(d);
@@ -64,7 +73,7 @@ function formatBytes(bytes?: number): string {
 // Main content
 // ============================================
 
-export function ClientsContent() {
+export function ClientsContent({ filterType }: { filterType?: DeliverableType } = {}) {
   const t = useT();
   const [deliverables, setDeliverables] = useState<ClientDeliverable[]>([]);
   const [loading, setLoading] = useState(true);
@@ -90,7 +99,12 @@ export function ClientsContent() {
     load();
   }, []);
 
-  const groups = useMemo(() => groupByClient(deliverables), [deliverables]);
+  const scopedDeliverables = useMemo(
+    () => (filterType ? deliverables.filter((d) => d.type === filterType) : deliverables),
+    [deliverables, filterType]
+  );
+
+  const groups = useMemo(() => groupByClient(scopedDeliverables), [scopedDeliverables]);
 
   const filteredGroups = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -126,7 +140,7 @@ export function ClientsContent() {
       await Promise.all(g.deliverables.map((d) => deliverableService.unlinkFromUser(d.id)));
       setDeliverables((prev) =>
         prev.map((d) =>
-          (d.clientEmail || '').toLowerCase().trim() === g.email
+          clientGroupKey(d.clientEmail, d.clientName) === g.key
             ? { ...d, clientUserId: undefined }
             : d
         )
@@ -139,7 +153,7 @@ export function ClientsContent() {
   const handleLinked = (g: ClientGroup, uid: string, email: string) => {
     setDeliverables((prev) =>
       prev.map((d) =>
-        (d.clientEmail || '').toLowerCase().trim() === g.email
+        clientGroupKey(d.clientEmail, d.clientName) === g.key
           ? { ...d, clientUserId: uid, clientEmail: email.toLowerCase().trim() }
           : d
       )
@@ -204,14 +218,14 @@ export function ClientsContent() {
       ) : (
         <div className="space-y-2">
           {filteredGroups.map((g) => {
-            const isOpen = expanded.has(g.email);
+            const isOpen = expanded.has(g.key);
             return (
               <div
-                key={g.email}
+                key={g.key}
                 className="rounded-xl bg-white/[0.05] border border-white/[0.08] overflow-hidden"
               >
                 <button
-                  onClick={() => toggleExpanded(g.email)}
+                  onClick={() => toggleExpanded(g.key)}
                   className="w-full flex items-center gap-3 px-4 py-3.5 text-left hover:bg-white/[0.03] transition-colors"
                 >
                   <span
@@ -222,7 +236,7 @@ export function ClientsContent() {
                   />
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-semibold text-white truncate">{g.name}</p>
-                    <p className="text-xs text-white/40 truncate">{g.email}</p>
+                    <p className="text-xs text-white/40 truncate">{g.email || t('No email on file', 'Geen e-mail bekend')}</p>
                   </div>
                   <span className="text-xs text-white/40 flex-shrink-0">
                     {g.deliverables.length} {g.deliverables.length === 1 ? t('item', 'item') : t('items', 'items')}
@@ -324,6 +338,7 @@ export function ClientsContent() {
       {showAddModal && (
         <AddDeliverableModal
           prefill={prefillClient}
+          lockedType={filterType}
           onClose={() => {
             setShowAddModal(false);
             setPrefillClient(null);
@@ -356,10 +371,15 @@ interface PendingFile {
 
 function AddDeliverableModal({
   prefill,
+  lockedType,
   onClose,
   onSaved,
 }: {
   prefill: { name: string; email: string } | null;
+  // When set, this view is scoped to a single deliverable type (e.g. the
+  // Management → Mix Masters tab), so the type field is locked instead of
+  // left as a free choice, to keep the scoping honest.
+  lockedType?: DeliverableType;
   onClose: () => void;
   onSaved: (d: ClientDeliverable) => void;
 }) {
@@ -367,13 +387,43 @@ function AddDeliverableModal({
   const { user } = useAuth();
   const [clientName, setClientName] = useState(prefill?.name || '');
   const [clientEmail, setClientEmail] = useState(prefill?.email || '');
-  const [type, setType] = useState<DeliverableType>('mix-master');
+  const [type, setType] = useState<DeliverableType>(lockedType || 'mix-master');
   const [title, setTitle] = useState('');
   const [completedAt, setCompletedAt] = useState(() => new Date().toISOString().slice(0, 10));
   const [notes, setNotes] = useState('');
   const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Optional "link to an existing account" picker, reusing the same
+  // search/select pattern as LinkAccountModal. Picking a user sets
+  // clientUserId directly, so the record starts already linked.
+  const [users, setUsers] = useState<User[]>([]);
+  const [loadingUsers, setLoadingUsers] = useState(true);
+  const [userSearch, setUserSearch] = useState('');
+  const [linkedUser, setLinkedUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    authService
+      .getAllUsers()
+      .then(setUsers)
+      .catch(() => {})
+      .finally(() => setLoadingUsers(false));
+  }, []);
+
+  const filteredUsers = useMemo(() => {
+    const q = userSearch.trim().toLowerCase();
+    if (!q) return users;
+    return users.filter(
+      (u) => (u.displayName || '').toLowerCase().includes(q) || u.email.toLowerCase().includes(q)
+    );
+  }, [users, userSearch]);
+
+  const handlePickUser = (u: User) => {
+    setLinkedUser(u);
+    setClientName(u.displayName || u.email);
+    setClientEmail(u.email);
+  };
 
   const handleFilesSelected = async (fileList: FileList | null) => {
     if (!fileList || fileList.length === 0) return;
@@ -427,8 +477,8 @@ function AddDeliverableModal({
     e.preventDefault();
     setError(null);
 
-    if (!clientName.trim() || !clientEmail.trim() || !title.trim()) {
-      setError(t('Please fill in client name, email and title.', 'Vul klantnaam, e-mail en titel in.'));
+    if (!clientName.trim() || !title.trim()) {
+      setError(t('Please fill in client name and title.', 'Vul klantnaam en titel in.'));
       return;
     }
     if (isUploading) {
@@ -443,6 +493,7 @@ function AddDeliverableModal({
         title: title.trim(),
         clientName: clientName.trim(),
         clientEmail: clientEmail.trim(),
+        clientUserId: linkedUser?.uid,
         files: readyFiles,
         notes: notes.trim() || undefined,
         completedAt: Timestamp.fromDate(new Date(completedAt)),
@@ -470,6 +521,76 @@ function AddDeliverableModal({
         <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto flex-1">
           {error && <p className="text-red-400 text-sm">{error}</p>}
 
+          <div className="rounded-lg border border-white/[0.08] bg-white/[0.03] p-4 space-y-3">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-sm font-medium text-white/70">
+                  {t('Link to an existing account', 'Koppelen aan bestaand account')}
+                </p>
+                <p className="text-xs text-white/30 mt-0.5">
+                  {t(
+                    'Optional — link now, or leave unlinked and link it later from the client list.',
+                    'Optioneel — nu koppelen, of ongekoppeld laten en later koppelen via de klantenlijst.'
+                  )}
+                </p>
+              </div>
+              {linkedUser && (
+                <button
+                  type="button"
+                  onClick={() => setLinkedUser(null)}
+                  className="text-xs text-white/40 hover:text-white transition-colors flex-shrink-0"
+                >
+                  {t('Clear', 'Wissen')}
+                </button>
+              )}
+            </div>
+
+            {linkedUser ? (
+              <div className="flex items-center justify-between gap-2 p-3 rounded-lg bg-white/[0.05] border border-white/[0.08]">
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-white truncate">{linkedUser.displayName || linkedUser.email}</p>
+                  <p className="text-xs text-white/40 truncate">{linkedUser.email}</p>
+                </div>
+                <span className="text-[10px] font-semibold uppercase tracking-wide text-green-400 flex items-center gap-1 flex-shrink-0">
+                  <Link2 size={12} />
+                  {t('Linked', 'Gekoppeld')}
+                </span>
+              </div>
+            ) : (
+              <>
+                <div className="relative">
+                  <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" />
+                  <input
+                    type="text"
+                    value={userSearch}
+                    onChange={(e) => setUserSearch(e.target.value)}
+                    placeholder={t('Search users by name or email...', 'Zoek gebruikers op naam of e-mail...')}
+                    className="w-full pl-9 pr-3 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-sm text-white placeholder-white/30 focus:outline-none focus:border-white/[0.2]"
+                  />
+                </div>
+                <div className="max-h-36 overflow-y-auto space-y-1.5">
+                  {loadingUsers ? (
+                    <p className="text-xs text-white/30 py-2 text-center">{t('Loading users...', 'Gebruikers laden...')}</p>
+                  ) : filteredUsers.length === 0 ? (
+                    <p className="text-xs text-white/30 py-2 text-center">{t('No users found', 'Geen gebruikers gevonden')}</p>
+                  ) : (
+                    filteredUsers.map((u) => (
+                      <button
+                        key={u.uid}
+                        type="button"
+                        onClick={() => handlePickUser(u)}
+                        className="w-full p-2.5 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.06] text-left transition-colors"
+                      >
+                        <p className="text-sm text-white truncate">{u.displayName || u.email}</p>
+                        <p className="text-xs text-white/40 truncate">{u.email}</p>
+                      </button>
+                    ))
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-white/60 mb-2">
@@ -485,14 +606,14 @@ function AddDeliverableModal({
             </div>
             <div>
               <label className="block text-sm font-medium text-white/60 mb-2">
-                {t('Client email', 'Klant e-mail')} <span className="text-red-400">*</span>
+                {t('Client email', 'Klant e-mail')}{' '}
+                <span className="text-white/30 font-normal">({t('optional', 'optioneel')})</span>
               </label>
               <input
                 type="email"
                 value={clientEmail}
                 onChange={(e) => setClientEmail(e.target.value)}
                 className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white"
-                required
               />
             </div>
           </div>
@@ -500,14 +621,20 @@ function AddDeliverableModal({
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-white/60 mb-2">{t('Type', 'Type')}</label>
-              <select
-                value={type}
-                onChange={(e) => setType(e.target.value as DeliverableType)}
-                className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white"
-              >
-                <option value="mix-master" className="bg-neutral-900">{t('Mix & Master', 'Mix & Master')}</option>
-                <option value="studio-session" className="bg-neutral-900">{t('Studio Session', 'Studio Sessie')}</option>
-              </select>
+              {lockedType ? (
+                <div className="w-full px-4 py-2 bg-white/[0.03] border border-white/[0.08] rounded-lg text-white/70 text-sm flex items-center h-[42px]">
+                  {lockedType === 'mix-master' ? t('Mix & Master', 'Mix & Master') : t('Studio Session', 'Studio Sessie')}
+                </div>
+              ) : (
+                <select
+                  value={type}
+                  onChange={(e) => setType(e.target.value as DeliverableType)}
+                  className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white"
+                >
+                  <option value="mix-master" className="bg-neutral-900">{t('Mix & Master', 'Mix & Master')}</option>
+                  <option value="studio-session" className="bg-neutral-900">{t('Studio Session', 'Studio Sessie')}</option>
+                </select>
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium text-white/60 mb-2">{t('Completed on', 'Afgerond op')}</label>
@@ -536,7 +663,9 @@ function AddDeliverableModal({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-white/60 mb-2">{t('Notes', 'Notities')}</label>
+            <label className="block text-sm font-medium text-white/60 mb-2">
+              {t('Notes', 'Notities')} <span className="text-white/30 font-normal">({t('optional', 'optioneel')})</span>
+            </label>
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
@@ -660,8 +789,12 @@ function LinkAccountModal({
         </div>
         <p className="text-xs text-white/40 mb-4 flex-shrink-0">
           {t(
-            `Linking will match every deliverable for ${client.name} (${client.email}) to the selected account.`,
-            `Koppelen matcht alle leveringen voor ${client.name} (${client.email}) aan het gekozen account.`
+            client.email
+              ? `Linking will match every deliverable for ${client.name} (${client.email}) to the selected account.`
+              : `Linking will match every deliverable for ${client.name} to the selected account.`,
+            client.email
+              ? `Koppelen matcht alle leveringen voor ${client.name} (${client.email}) aan het gekozen account.`
+              : `Koppelen matcht alle leveringen voor ${client.name} aan het gekozen account.`
           )}
         </p>
 

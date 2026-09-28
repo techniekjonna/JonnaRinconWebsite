@@ -4,19 +4,22 @@ import AdminLayout from '../../components/admin/AdminLayout';
 import { BeatsContent } from './BeatsPage';
 import { ServicesContent } from './ServicesPage';
 import { TracksContent } from './TracksPage';
+import { ClientsContent } from './ClientsTab';
 
-type ManagementTab = 'beats' | 'services' | 'tracks';
+type ManagementTab = 'beats' | 'services' | 'tracks' | 'mixmasters';
 
 const TABS: { id: ManagementTab; label: string }[] = [
   { id: 'beats', label: 'Beats' },
   { id: 'services', label: 'Services' },
   { id: 'tracks', label: 'Tracks' },
+  { id: 'mixmasters', label: 'Mix Masters' },
 ];
 
 const ManagementPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const tabParam = searchParams.get('tab');
-  const activeTab: ManagementTab = tabParam === 'services' || tabParam === 'tracks' ? tabParam : 'beats';
+  const activeTab: ManagementTab =
+    tabParam === 'services' || tabParam === 'tracks' || tabParam === 'mixmasters' ? tabParam : 'beats';
 
   const setActiveTab = (tab: ManagementTab) => {
     setSearchParams((prev) => {
@@ -31,7 +34,7 @@ const ManagementPage: React.FC = () => {
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold text-white">Management</h1>
-          <p className="text-white/40 mt-2">Beats, services & tracks in one place</p>
+          <p className="text-white/40 mt-2">Beats, services, tracks & mix masters in one place</p>
         </div>
 
         {/* Top-level tab navigation */}
@@ -58,6 +61,7 @@ const ManagementPage: React.FC = () => {
         {activeTab === 'beats' && <BeatsContent />}
         {activeTab === 'services' && <ServicesContent />}
         {activeTab === 'tracks' && <TracksContent />}
+        {activeTab === 'mixmasters' && <ClientsContent filterType="mix-master" />}
       </div>
     </AdminLayout>
   );

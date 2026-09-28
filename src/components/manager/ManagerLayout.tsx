@@ -1,42 +1,34 @@
-import React, { useState, useRef } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import React from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import {
-  LayoutDashboard,
-  Music,
-  MessageSquare,
   LogOut,
-  Menu,
-  X,
-  Handshake,
   ArrowLeft,
-  ChevronRight,
-  ChevronLeft,
-  ArrowUpRight,
-  CalendarDays,
-  FolderKanban,
+  Home,
+  Sparkles,
+  Disc3,
+  Handshake,
+  MessageSquare,
+  type LucideIcon,
 } from 'lucide-react';
 
 interface ManagerLayoutProps {
   children: React.ReactNode;
 }
 
-type SidebarPosition = 'floating' | 'left' | 'right';
+interface MenuItem {
+  label: string;
+  subtitle: string;
+  href: string;
+  icon: LucideIcon;
+  mobileLabel: string;
+}
 
 const ManagerLayout: React.FC<ManagerLayoutProps> = ({ children }) => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isMenuClosing, setIsMenuClosing] = useState(false);
-  const [sidebarPosition, setSidebarPositionState] = useState<SidebarPosition>(() => {
-    const saved = localStorage.getItem('manager-sidebar-position') as SidebarPosition;
-    return saved || 'left';
-  });
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const closeTimeout = useRef<NodeJS.Timeout | null>(null);
-  const scrollPositionRef = useRef(0);
 
-  const isDocked = sidebarPosition !== 'floating';
   const isOnDashboard = location.pathname === '/manager/dashboard' || location.pathname === '/manager';
 
   const handleSignOut = async () => {
@@ -44,246 +36,120 @@ const ManagerLayout: React.FC<ManagerLayoutProps> = ({ children }) => {
     navigate('/');
   };
 
-  const setSidebarPosition = (pos: SidebarPosition) => {
-    localStorage.setItem('manager-sidebar-position', pos);
-    setSidebarPositionState(pos);
-  };
-
-  const menuItems = [
-    { label: 'DASHBOARD', subtitle: 'Overview & stats', href: '/manager/dashboard' },
-    { label: 'JONNA RINCON PANEL', subtitle: 'Agenda, Social & More', href: '/manager/jonna-rincon-panel' },
-    { label: 'BEATS', subtitle: 'Beat management', href: '/manager/beats' },
-    { label: 'COLLABORATIONS', subtitle: 'Active collabs', href: '/manager/collaborations' },
-    { label: 'CHAT', subtitle: 'Messages', href: '/manager/chat' },
-  ];
-
-  React.useEffect(() => {
-    return () => { if (closeTimeout.current) clearTimeout(closeTimeout.current); };
-  }, []);
-
-  React.useEffect(() => {
-    if (isMenuOpen || isMenuClosing) {
-      if (closeTimeout.current) clearTimeout(closeTimeout.current);
-      setIsMenuOpen(false);
-      setIsMenuClosing(false);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.pathname]);
-
-  React.useEffect(() => {
-    if (isDocked) return;
-    if (isMenuOpen && !isMenuClosing) {
-      scrollPositionRef.current = window.scrollY;
-      document.body.style.overflow = 'hidden';
-      document.body.style.position = 'fixed';
-      document.body.style.width = '100%';
-      document.body.style.top = `-${scrollPositionRef.current}px`;
-    } else {
-      document.body.style.overflow = '';
-      document.body.style.position = '';
-      document.body.style.width = '';
-      document.body.style.top = '';
-      if (scrollPositionRef.current > 0) window.scrollTo(0, scrollPositionRef.current);
-    }
-    return () => {
-      document.body.style.overflow = '';
-      document.body.style.position = '';
-      document.body.style.width = '';
-      document.body.style.top = '';
-    };
-  }, [isMenuOpen, isMenuClosing, isDocked]);
-
-  const closeMenu = () => {
-    setIsMenuClosing(true);
-    closeTimeout.current = setTimeout(() => {
-      setIsMenuOpen(false);
-      setIsMenuClosing(false);
-    }, 500);
-  };
-
-  const openMenu = () => {
-    if (closeTimeout.current) clearTimeout(closeTimeout.current);
-    setIsMenuClosing(false);
-    setIsMenuOpen(true);
-  };
-
-  const menuVisible = isMenuOpen || isMenuClosing;
-
-  const cycleSidebarPosition = () => {
-    const next: SidebarPosition =
-      sidebarPosition === 'floating' ? 'left'
-      : sidebarPosition === 'left' ? 'right'
-      : 'floating';
-    if (sidebarPosition === 'floating' && next !== 'floating' && (isMenuOpen || isMenuClosing)) {
-      if (closeTimeout.current) clearTimeout(closeTimeout.current);
-      setIsMenuOpen(false);
-      setIsMenuClosing(false);
-      document.body.style.overflow = '';
-      document.body.style.position = '';
-      document.body.style.width = '';
-      document.body.style.top = '';
-    }
-    setSidebarPosition(next);
-  };
-
-  const positionIcon =
-    sidebarPosition === 'left' ? <ChevronRight size={18} /> :
-    sidebarPosition === 'right' ? <ChevronLeft size={18} /> :
-    <Menu size={18} />;
-
   const goBack = () => { try { navigate(-1); } catch { navigate('/manager/dashboard'); } };
 
-  if (isDocked) {
-    return (
-      <div className={`min-h-screen bg-black flex ${sidebarPosition === 'right' ? 'flex-row-reverse' : 'flex-row'}`}>
-        <aside
-          className={`w-[270px] flex-shrink-0 h-screen sticky top-0 flex flex-col overflow-hidden
-            ${sidebarPosition === 'left' ? 'border-r' : 'border-l'} border-white/[0.06]`}
-          style={{ background: 'rgba(5,5,5,0.98)' }}
-        >
-          <div className="flex items-center justify-between px-5 py-3 flex-shrink-0">
-            <button onClick={() => navigate('/')} className="hover:opacity-80 transition-opacity" title="Back to Home">
-              <img src="/Jonna Rincon Logo WH.png" alt="Jonna Rincon" className="h-28 w-auto opacity-40 hover:opacity-90 transition-opacity duration-300" />
-            </button>
-            <button onClick={() => setSidebarPosition('floating')} className="p-2 rounded-full border border-white/10 hover:border-white/20 hover:bg-white/5 transition-all group" title="Sidebar verbergen">
-              <X className="w-4 h-4 text-white/40 group-hover:text-white/70 transition-colors" />
-            </button>
-          </div>
-          <div className="w-full h-px bg-white/[0.06] flex-shrink-0" />
-          <div className="flex-1 overflow-y-auto">
-            {menuItems.map((item) => (
-              <button key={item.href} onClick={() => navigate(item.href)}
-                className="group w-full text-left px-5 py-3.5 border-b border-white/[0.04] hover:bg-white/[0.04] transition-colors flex items-center justify-between">
-                <span className="block text-[11px] font-bold text-white/60 group-hover:text-white uppercase tracking-widest transition-colors">{item.label}</span>
-              </button>
-            ))}
-          </div>
-          <div className="w-full h-px bg-white/[0.06] flex-shrink-0" />
-          <div className="px-5 py-4 flex-shrink-0">
-            <div className="flex items-center gap-1.5 mb-4">
-              <button onClick={() => navigate('/manager/dashboard')} className="p-2 rounded-lg text-white/40 hover:bg-white/[0.04] hover:text-white/80 transition" title="Dashboard"><LayoutDashboard size={16} /></button>
-              <button onClick={cycleSidebarPosition} className="p-2 rounded-lg bg-blue-600/20 border border-blue-600/30 text-blue-400 hover:bg-blue-600/30 transition" title="Sidebar positie">{positionIcon}</button>
-              <button onClick={handleSignOut} className="p-2 rounded-lg text-white/40 hover:bg-white/[0.04] hover:text-white/80 transition" title="Sign Out"><LogOut size={16} /></button>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
-                {user?.displayName?.[0] || user?.email?.[0] || 'M'}
-              </div>
-              <div className="min-w-0">
-                <p className="text-xs font-medium text-white truncate">{user?.displayName || 'Manager'}</p>
-                <p className="text-[10px] text-white/25 truncate">{user?.email}</p>
-              </div>
-            </div>
-          </div>
-        </aside>
-        <div className="flex-1 min-w-0 flex flex-col">
-          <div className="sticky top-0 z-20 flex items-center px-6 py-4 flex-shrink-0">
-            {!isOnDashboard && (
-              <button onClick={goBack} className="w-10 h-10 rounded-full border border-white/20 hover:border-white/40 hover:bg-white/5 transition-all flex items-center justify-center" title="Terug">
-                <ArrowLeft size={18} className="text-white/60" />
-              </button>
-            )}
-          </div>
-          <main className="flex-1 px-4 py-5 sm:px-6 lg:px-8 lg:py-6">{children}</main>
-        </div>
-      </div>
-    );
-  }
+  const menuItems: MenuItem[] = [
+    { label: 'DASHBOARD', subtitle: 'Overview & stats', href: '/manager/dashboard', icon: Home, mobileLabel: 'Home' },
+    { label: 'JONNA RINCON PANEL', subtitle: 'Agenda, Social & More', href: '/manager/jonna-rincon-panel', icon: Sparkles, mobileLabel: 'Panel' },
+    { label: 'BEATS', subtitle: 'Beat management', href: '/manager/beats', icon: Disc3, mobileLabel: 'Beats' },
+    { label: 'COLLABORATIONS', subtitle: 'Active collabs', href: '/manager/collaborations', icon: Handshake, mobileLabel: 'Collabs' },
+    { label: 'CHAT', subtitle: 'Messages', href: '/manager/chat', icon: MessageSquare, mobileLabel: 'Chat' },
+  ];
+
+  const isActive = (href: string) =>
+    location.pathname === href || location.pathname.startsWith(href + '/');
 
   return (
     <div className="min-h-screen bg-black">
-      <div className="fixed top-0 left-0 right-0 z-30 flex items-center justify-between px-6 md:px-10 py-4 md:py-5">
-        <div className="flex-shrink-0">
-          {!isOnDashboard && (
-            <button onClick={goBack} className="w-10 h-10 rounded-full border border-white/20 hover:border-white/40 hover:bg-white/5 transition-all duration-300 flex items-center justify-center cursor-pointer" title="Terug">
-              <ArrowLeft size={18} className="text-white/60" />
-            </button>
-          )}
-          {isOnDashboard && <h1 className="text-lg font-bold text-white">Manager Dashboard</h1>}
-        </div>
-        <button onClick={openMenu} className="text-lg md:text-xl font-black uppercase tracking-[0.3em] text-white transition-all duration-500 hover:opacity-60 cursor-pointer">
-          Menu
-        </button>
-      </div>
+      {/* Top bar — same glass-card language as the public site header */}
+      <header className="fixed top-0 left-0 right-0 z-40 pt-3 px-4 sm:px-6 lg:px-8">
+        <div className="backdrop-blur-xl bg-black/30 border border-white/[0.08] rounded-2xl overflow-hidden">
+          <div className="flex items-center justify-between px-4 sm:px-6 h-16 md:h-20">
 
-      {menuVisible && (
-        <>
-          <div
-            className={`fixed inset-0 z-[100] transition-opacity duration-500 ${isMenuClosing ? 'opacity-0' : 'opacity-100'}`}
-            style={{ backgroundColor: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' }}
-            onClick={closeMenu}
-          />
-          <div className={`fixed top-0 right-0 bottom-0 z-[101] w-full md:w-[480px] lg:w-[520px] md:border-l md:border-white/[0.06] ${isMenuClosing ? 'animate-panel-slide-out' : 'animate-panel-slide-in'}`}>
-            <div className="absolute inset-0 bg-black/70 backdrop-blur-2xl" style={{ WebkitBackdropFilter: 'blur(40px)' }} />
-            <div className="relative z-10 h-full flex flex-col px-8 md:px-12">
-              <div className="flex items-center justify-between py-3 md:py-4 flex-shrink-0">
-                <button onClick={() => { closeMenu(); setTimeout(() => navigate('/'), 100); }} className="block flex-shrink-0 cursor-pointer hover:opacity-80 transition-opacity" title="Back to Home">
-                  <img src="/Jonna Rincon Logo WH.png" alt="Jonna Rincon" className="h-[110px] md:h-[150px] w-auto opacity-50 hover:opacity-100 transition-opacity duration-300" />
+            {/* Left: logo + back button */}
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <Link to="/" className="flex items-center justify-center w-10 h-10 md:w-14 md:h-14" title="Back to Home">
+                <img src="/Jonna Rincon Logo WH.png" alt="JR" className="w-full h-full object-contain opacity-80 hover:opacity-100 transition-opacity" />
+              </Link>
+              {!isOnDashboard && (
+                <button
+                  onClick={goBack}
+                  className="w-9 h-9 rounded-full border border-white/10 hover:border-white/20 hover:bg-white/5 transition-all flex items-center justify-center flex-shrink-0"
+                  title="Terug"
+                >
+                  <ArrowLeft size={16} className="text-white/60" />
                 </button>
-                <button onClick={closeMenu} className="p-2 rounded-full border border-white/10 hover:border-white/20 hover:bg-white/5 transition-all duration-300 cursor-pointer group">
-                  <X className="w-5 h-5 text-white/60 group-hover:text-white group-hover:rotate-90 transition-all duration-300" />
-                </button>
+              )}
+              <span className="hidden md:inline text-xs font-black uppercase tracking-widest text-white/30 ml-2">Manager</span>
+            </div>
+
+            {/* Desktop nav */}
+            <nav className="hidden md:flex items-center justify-center flex-1 px-6">
+              <div className="flex items-center gap-6 lg:gap-8">
+                {menuItems.map((item) => {
+                  const active = isActive(item.href);
+                  return (
+                    <Link
+                      key={item.label}
+                      to={item.href}
+                      className={`text-xs font-black uppercase tracking-widest transition-all duration-200 relative group whitespace-nowrap ${
+                        active ? 'text-white' : 'text-white/50 hover:text-white/80'
+                      }`}
+                    >
+                      {item.label}
+                      <span className={`absolute -bottom-1.5 left-0 w-full h-0.5 bg-red-500 transition-all duration-200 ${
+                        active ? 'opacity-100' : 'opacity-0 group-hover:opacity-50'
+                      }`} />
+                    </Link>
+                  );
+                })}
               </div>
-              <div className="w-full h-px bg-white/[0.06]" />
-              <div className="flex-1 flex flex-col overflow-y-auto pr-2 pb-12">
-                {menuItems.map((item, i) => (
-                  <button
-                    key={item.href}
-                    onClick={() => { navigate(item.href); closeMenu(); }}
-                    className="group w-full text-left py-4 md:py-5 cursor-pointer border-b border-white/[0.04]"
-                    style={{ animation: isMenuClosing ? 'none' : `menu-item-reveal 0.6s cubic-bezier(0.16, 1, 0.3, 1) ${0.15 + i * 0.06}s both` }}
-                  >
-                    <div className="flex items-center justify-between transition-transform duration-300 group-hover:translate-x-2">
-                      <div>
-                        <span className="block text-3xl md:text-4xl font-semibold text-white/90 group-hover:text-white transition-colors duration-300 tracking-tight">{item.label}</span>
-                        <span className="block text-xs text-white/25 mt-1 uppercase tracking-widest font-medium group-hover:text-blue-400/60 transition-colors duration-300">{item.subtitle}</span>
-                      </div>
-                      <ArrowUpRight className="w-5 h-5 text-white/10 group-hover:text-blue-400/50 transition-all duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-                    </div>
-                  </button>
-                ))}
-                <div className="flex flex-col gap-4 pt-6">
-                  <div className="flex items-center justify-center gap-3">
-                    <button onClick={() => { navigate('/manager/dashboard'); closeMenu(); }} className="p-2.5 rounded-xl transition-all duration-200 text-white/40 hover:bg-white/[0.04] hover:text-white/80" title="Dashboard"><LayoutDashboard size={18} /></button>
-                    <button onClick={cycleSidebarPosition} className={`p-2.5 rounded-xl border transition-all duration-200 ${sidebarPosition !== 'floating' ? 'bg-blue-600/20 border-blue-600/40 text-blue-400 hover:bg-blue-600/30' : 'border-transparent text-white/40 hover:bg-white/[0.04] hover:text-white/80'}`} title="Sidebar positie">{positionIcon}</button>
-                    <button onClick={() => { closeMenu(); handleSignOut(); }} className="p-2.5 rounded-xl transition-all duration-200 text-white/40 hover:bg-white/[0.04] hover:text-white/80" title="Sign Out"><LogOut size={18} /></button>
-                  </div>
-                  <button onClick={() => { closeMenu(); handleSignOut(); }} className="text-left cursor-pointer w-full">
-                    <span className="text-sm uppercase tracking-widest text-white/20 hover:text-blue-400 transition-colors duration-300 font-medium">Sign Out</span>
-                  </button>
+            </nav>
+
+            {/* Right: utility icons */}
+            <div className="flex items-center gap-1.5 flex-shrink-0">
+              <button
+                onClick={handleSignOut}
+                className="flex items-center justify-center w-9 h-9 rounded-lg hover:bg-white/[0.08] transition-colors text-white/50 hover:text-white"
+                title="Sign Out"
+              >
+                <LogOut size={17} />
+              </button>
+              <div className="hidden sm:flex items-center gap-2 ml-1 pl-2 border-l border-white/[0.08]">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-white font-semibold text-xs flex-shrink-0">
+                  {user?.displayName?.[0] || user?.email?.[0] || 'M'}
                 </div>
-              </div>
-              <div className="w-full h-px bg-white/[0.06]" />
-              <div className="flex-shrink-0 py-6 md:py-8">
-                <div className="flex items-center space-x-3 mb-4">
-                  <div className="w-9 h-9 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
-                    {user?.displayName?.[0] || user?.email?.[0] || 'M'}
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium text-white truncate">{user?.displayName || 'Manager'}</p>
-                    <p className="text-xs text-white/25 truncate">{user?.email}</p>
-                  </div>
-                </div>
-                <p className="text-[10px] text-white/15 uppercase tracking-[0.15em] font-medium">&copy; 2025 Jonna Rincon</p>
               </div>
             </div>
-          </div>
-        </>
-      )}
 
-      <div className="flex flex-col min-h-screen pt-20">
+          </div>
+        </div>
+      </header>
+
+      {/* Mobile bottom tab bar — main sections, always visible */}
+      <nav
+        className="md:hidden fixed bottom-0 left-0 right-0 z-40 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))]"
+        aria-label="Primary"
+      >
+        <div className="backdrop-blur-xl bg-black/30 border border-white/[0.08] rounded-2xl overflow-hidden">
+          <div className="flex items-stretch justify-around">
+            {menuItems.map((item) => {
+              const Icon = item.icon;
+              const active = isActive(item.href);
+              return (
+                <Link
+                  key={item.label}
+                  to={item.href}
+                  className={`relative flex-1 flex flex-col items-center justify-center gap-1 py-2.5 transition-colors ${
+                    active ? 'text-white' : 'text-white/40 hover:text-white/70'
+                  }`}
+                >
+                  <Icon size={19} />
+                  <span className="text-[9px] font-black uppercase tracking-wider">{item.mobileLabel}</span>
+                  <span className={`absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-red-500 transition-opacity duration-200 ${
+                    active ? 'opacity-100' : 'opacity-0'
+                  }`} />
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      </nav>
+
+      {/* Main content */}
+      <div className="flex flex-col min-h-screen pt-24 sm:pt-28 pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] md:pb-6">
         <main className="flex-1 px-4 py-5 sm:px-6 lg:px-8 lg:py-6">{children}</main>
       </div>
-
-      <style>{`
-        @keyframes panel-slide-in { from { transform: translateX(100%); } to { transform: translateX(0); } }
-        .animate-panel-slide-in { animation: panel-slide-in 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-        @media (max-width: 768px) { .animate-panel-slide-in { animation: panel-slide-in 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards; } }
-        @keyframes panel-slide-out { from { transform: translateX(0); } to { transform: translateX(100%); } }
-        .animate-panel-slide-out { animation: panel-slide-out 0.5s cubic-bezier(0.7, 0, 0.84, 0) forwards; }
-        @media (max-width: 768px) { .animate-panel-slide-out { animation: panel-slide-out 0.2s cubic-bezier(0.7, 0, 0.84, 0) forwards; } }
-        @keyframes menu-item-reveal { from { opacity: 0; transform: translateX(30px); } to { opacity: 1; transform: translateX(0); } }
-      `}</style>
     </div>
   );
 };

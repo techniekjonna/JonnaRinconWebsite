@@ -50,12 +50,19 @@ class DeliverableService {
   }
 
   async create(data: Omit<ClientDeliverable, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
-    const ref = await addDoc(collection(db, this.collectionName), {
+    const payload: Record<string, unknown> = {
       ...data,
-      clientEmail: data.clientEmail.toLowerCase().trim(),
+      // clientEmail is optional in the add-deliverable form (can be linked later),
+      // so guard against an empty/undefined value instead of assuming it's set.
+      clientEmail: (data.clientEmail || '').toLowerCase().trim(),
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
+    };
+    // Firestore rejects `undefined` field values (e.g. omitted `notes`/`clientUserId`).
+    Object.keys(payload).forEach((key) => {
+      if (payload[key] === undefined) delete payload[key];
     });
+    const ref = await addDoc(collection(db, this.collectionName), payload);
     return ref.id;
   }
 
