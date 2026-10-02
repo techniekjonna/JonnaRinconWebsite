@@ -10,7 +10,7 @@ const useProductPurchases = () => {
   return { purchases, loading };
 };
 
-const ProductManagementPage: React.FC = () => {
+export const ProductManagementContent: React.FC = () => {
   const { purchases, loading } = useProductPurchases();
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCategory, setFilterCategory] = useState<ProductCategory | 'all'>('all');
@@ -61,7 +61,6 @@ const ProductManagementPage: React.FC = () => {
   };
 
   return (
-    <AdminLayout>
       <div className="space-y-6">
         {/* Header */}
         <div>
@@ -215,8 +214,13 @@ const ProductManagementPage: React.FC = () => {
           </div>
         </div>
       </div>
-    </AdminLayout>
   );
 };
+
+const ProductManagementPage: React.FC = () => (
+  <AdminLayout>
+    <ProductManagementContent />
+  </AdminLayout>
+);
 
 export default ProductManagementPage;

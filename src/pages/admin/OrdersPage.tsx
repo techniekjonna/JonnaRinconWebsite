@@ -273,7 +273,7 @@ const ExpandedOrder: React.FC<ExpandedOrderProps> = ({ order, onStatusChange, on
 
 // ─── main page ───────────────────────────────────────────────────────────────
 
-const OrdersPage: React.FC = () => {
+export const OrdersContent: React.FC = () => {
   const { orders, loading } = useOrders();
   const { markOrdersSeen } = useOrderNotifications();
 
@@ -719,7 +719,6 @@ const OrdersPage: React.FC = () => {
   ];
 
   return (
-    <AdminLayout>
       <div className="space-y-6">
         {/* Header */}
         <div>
@@ -758,8 +757,13 @@ const OrdersPage: React.FC = () => {
         {activeTab === 'all' && renderAllOrders()}
         {activeTab === 'action' && renderActionTab()}
       </div>
-    </AdminLayout>
   );
 };
+
+const OrdersPage: React.FC = () => (
+  <AdminLayout>
+    <OrdersContent />
+  </AdminLayout>
+);
 
 export default OrdersPage;

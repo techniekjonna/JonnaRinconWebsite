@@ -18,7 +18,7 @@ const isExpired = (code: DiscountCode): boolean => {
   return (Timestamp.now()?.toMillis?.() || 0) > (code.endDate?.toMillis?.() || 0);
 };
 
-const DiscountCodesPage: React.FC = () => {
+export const DiscountCodesContent: React.FC = () => {
   const { discountCodes, loading } = useDiscountCodes();
   const [showModal, setShowModal] = useState(false);
   const [editingCode, setEditingCode] = useState<DiscountCode | null>(null);
@@ -109,7 +109,7 @@ const DiscountCodesPage: React.FC = () => {
   };
 
   return (
-    <AdminLayout>
+    <>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -230,9 +230,15 @@ const DiscountCodesPage: React.FC = () => {
           }}
         />
       )}
-    </AdminLayout>
+    </>
   );
 };
+
+const DiscountCodesPage: React.FC = () => (
+  <AdminLayout>
+    <DiscountCodesContent />
+  </AdminLayout>
+);
 
 // ============================================
 // FORM MODAL
