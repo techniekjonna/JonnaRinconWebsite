@@ -7,7 +7,9 @@ import {
   Settings,
   LogOut,
   ArrowLeft,
-  ChevronDown,
+  ArrowUpRight,
+  Menu,
+  X,
   LayoutGrid,
   Users,
   Receipt,
@@ -37,12 +39,15 @@ interface MenuItem {
 }
 
 const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
-  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isMenuClosing, setIsMenuClosing] = useState(false);
+  const [menuButtonHovered, setMenuButtonHovered] = useState(false);
+  const recentlyClosedRef = useRef(false);
+  const closeTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { user, signOut } = useAuth();
   const { pendingCount, newSinceLastSeen } = useOrderNotifications();
   const navigate = useNavigate();
   const location = useLocation();
-  const navRef = useRef<HTMLDivElement | null>(null);
 
   const isOnDashboard = location.pathname === '/admin/dashboard' || location.pathname === '/admin';
 
@@ -55,7 +60,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
 
   const menuItems: MenuItem[] = [
     {
-      label: 'MANAGEMENT',
+      label: 'Management',
       subtitle: 'Beats, Services, Tracks & Mix Masters',
       href: '/admin/management',
       submenu: [
@@ -69,7 +74,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       mobileLabel: 'Manage',
     },
     {
-      label: 'ARTIST SUPPORT',
+      label: 'Artist Support',
       subtitle: 'Artist Requests, Collab Requests, Chat',
       href: '/admin/board',
       submenu: [],
@@ -78,7 +83,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       mobileLabel: 'Support',
     },
     {
-      label: 'ORDERS AND STATS',
+      label: 'Orders and Stats',
       subtitle: 'Bestellingen, Producten, Kortingscodes',
       submenu: [
         { label: 'Bestellingen', subtitle: 'Beheer bestellingen', href: '/admin/orders', badge: pendingCount },
@@ -90,7 +95,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       mobileLabel: 'Orders',
     },
     {
-      label: 'JONNA RINCON PANEL',
+      label: 'Jonna Rincon Panel',
       subtitle: 'Agenda, Analytics & More',
       submenu: [
         { label: 'Panel', subtitle: 'Jonna Rincon overzicht', href: '/admin/jonna-rincon-panel' },
@@ -102,40 +107,61 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     },
   ];
 
-  // Close whatever's open when the route changes
-  useEffect(() => {
-    setOpenDropdown(null);
-  }, [location.pathname]);
+  const closeMenu = () => {
+    if (isMenuClosing || !isMenuOpen) return;
+    setIsMenuClosing(true);
+    closeTimeout.current = setTimeout(() => {
+      setIsMenuOpen(false);
+      setIsMenuClosing(false);
+      recentlyClosedRef.current = true;
+      setTimeout(() => { recentlyClosedRef.current = false; }, 350);
+    }, 500);
+  };
 
-  // Close an open dropdown on outside click
+  const openMenu = () => {
+    if (isMenuOpen && !isMenuClosing) return;
+    if (recentlyClosedRef.current) return;
+    if (closeTimeout.current) clearTimeout(closeTimeout.current);
+    setIsMenuClosing(false);
+    setIsMenuOpen(true);
+  };
+
+  // Close the menu whenever the route changes
   useEffect(() => {
-    if (!openDropdown) return;
-    const handleClick = (e: MouseEvent) => {
-      if (navRef.current && !navRef.current.contains(e.target as Node)) {
-        setOpenDropdown(null);
-      }
-    };
-    document.addEventListener('mousedown', handleClick);
-    return () => document.removeEventListener('mousedown', handleClick);
-  }, [openDropdown]);
+    if (isMenuOpen || isMenuClosing) closeMenu();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname, location.search]);
+
+  useEffect(() => {
+    return () => { if (closeTimeout.current) clearTimeout(closeTimeout.current); };
+  }, []);
 
   const isItemActive = (item: MenuItem) => {
     if (item.href && (location.pathname === item.href || location.pathname.startsWith(item.href + '/'))) return true;
     return item.submenu.some(sub => location.pathname === sub.href.split('?')[0]);
   };
 
+  const isSubActive = (href: string) => {
+    const [path, query] = href.split('?');
+    if (location.pathname !== path) return false;
+    if (!query) return true;
+    return new URLSearchParams(location.search).get('tab') === new URLSearchParams(query).get('tab');
+  };
+
   const getPrimaryHref = (item: MenuItem) => item.href ?? item.submenu[0]?.href ?? '/admin/dashboard';
+
+  const menuVisible = isMenuOpen || isMenuClosing;
 
   return (
     <div className="min-h-screen bg-black">
-      {/* Top bar — same glass-card language as the public site header */}
+      {/* Top bar — logo + menu button only, same glass-card language as the public site header */}
       <header className="fixed top-0 left-0 right-0 z-40 pt-3 px-4 sm:px-6 lg:px-8">
         <div className="backdrop-blur-xl bg-black/30 border border-white/[0.08] rounded-2xl overflow-hidden">
           <div className="flex items-center justify-between px-4 sm:px-6 h-16 md:h-20">
 
-            {/* Left: logo + back button */}
+            {/* Left: logo, same size as the public site's header */}
             <div className="flex items-center gap-2 flex-shrink-0">
-              <Link to="/" className="flex items-center justify-center w-10 h-10 md:w-14 md:h-14" title="Back to Home">
+              <Link to="/admin/dashboard" className="flex items-center justify-center w-14 h-14 md:w-24 md:h-24">
                 <img src="/Jonna Rincon Logo WH.png" alt="JR" className="w-full h-full object-contain opacity-80 hover:opacity-100 transition-opacity" />
               </Link>
               {!isOnDashboard && (
@@ -147,66 +173,100 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                   <ArrowLeft size={16} className="text-white/60" />
                 </button>
               )}
-              <span className="hidden md:inline text-xs font-black uppercase tracking-widest text-white/30 ml-2">Admin</span>
             </div>
 
-            {/* Desktop nav — horizontal, dropdowns for grouped sections */}
-            <nav ref={navRef} className="hidden md:flex items-center justify-center flex-1 px-6">
-              <div className="flex items-center gap-6 lg:gap-8">
+            {/* Right: menu button — same hover icon-to-label swap as the public header's hamburger */}
+            <button
+              onClick={openMenu}
+              onMouseEnter={() => setMenuButtonHovered(true)}
+              onMouseLeave={() => setMenuButtonHovered(false)}
+              className="flex items-center justify-center w-14 h-9 rounded-lg hover:bg-white/[0.08] transition-colors text-white/60 hover:text-white flex-shrink-0 overflow-hidden relative"
+              title="Menu"
+            >
+              <span className="absolute inset-0 flex items-center justify-center transition-all duration-300">
+                <Menu size={20} className={`transition-all duration-300 ${menuButtonHovered ? 'opacity-0 scale-75' : 'opacity-100 scale-100'}`} />
+              </span>
+              <span className="absolute inset-0 flex items-center justify-center transition-all duration-300">
+                <span className={`text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${menuButtonHovered ? 'opacity-100' : 'opacity-0'}`}>Menu</span>
+              </span>
+            </button>
+
+          </div>
+        </div>
+      </header>
+
+      {/* Slide-in menu panel — same mechanics as the public site's Navigation.tsx panel */}
+      {menuVisible && (
+        <>
+          <div
+            className={`fixed inset-0 z-[100] transition-opacity duration-500 ${isMenuClosing ? 'opacity-0' : 'opacity-100'}`}
+            style={{ backgroundColor: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' }}
+            onClick={closeMenu}
+          />
+          <div
+            className={`fixed top-0 right-0 bottom-0 z-[101] w-full md:w-[480px] lg:w-[520px] md:border-l md:border-white/[0.06] ${
+              isMenuClosing ? 'animate-admin-panel-slide-out' : 'animate-admin-panel-slide-in'
+            }`}
+          >
+            <div className="absolute inset-0 bg-black/80 backdrop-blur-2xl" style={{ WebkitBackdropFilter: 'blur(40px)' }} />
+            <div className="relative z-10 h-full flex flex-col px-6 md:px-10" onClick={(e) => e.stopPropagation()}>
+
+              {/* Top bar */}
+              <div className="flex items-center justify-between py-5 md:py-6 flex-shrink-0">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-red-600 to-orange-600 flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
+                    {user?.displayName?.[0] || user?.email?.[0] || 'A'}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-white truncate">{user?.displayName || 'Admin'}</p>
+                    <p className="text-[11px] text-white/30 truncate">{user?.email}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={closeMenu}
+                  className="p-2 rounded-full border border-white/10 hover:border-white/20 hover:bg-white/5 transition-all flex-shrink-0"
+                >
+                  <X className="w-5 h-5 text-white/60 hover:text-white transition-colors" />
+                </button>
+              </div>
+
+              <div className="w-full h-px bg-white/[0.06] mb-2 flex-shrink-0" />
+
+              {/* Nav groups — every page listed flat, no further click-to-expand */}
+              <div className="flex-1 overflow-y-auto pr-1 pb-6">
                 {menuItems.map((item) => {
+                  const Icon = item.icon;
                   const active = isItemActive(item);
-                  const isOpen = openDropdown === item.label;
-                  const linkClasses = `text-xs font-black uppercase tracking-widest transition-all duration-200 relative group whitespace-nowrap ${
-                    active ? 'text-white' : 'text-white/50 hover:text-white/80'
-                  }`;
                   return (
-                    <div key={item.label} className="relative">
-                      {item.submenu.length > 0 ? (
-                        <button
-                          type="button"
-                          onClick={() => setOpenDropdown(isOpen ? null : item.label)}
-                          className={`${linkClasses} flex items-center gap-1`}
-                        >
-                          {item.label}
+                    <div key={item.label} className="py-4 border-b border-white/[0.04]">
+                      <Link
+                        to={getPrimaryHref(item)}
+                        onClick={closeMenu}
+                        className={`group flex items-center justify-between gap-3 ${active ? 'text-white' : 'text-white/80 hover:text-white'}`}
+                      >
+                        <span className="flex items-center gap-2.5">
+                          <Icon size={16} className={active ? 'text-red-400' : 'text-white/30 group-hover:text-white/60'} />
+                          <span className="text-sm font-bold uppercase tracking-wider">{item.label}</span>
                           {item.badge > 0 && (
                             <span className="inline-flex items-center justify-center min-w-[16px] h-[16px] px-1 rounded-full bg-amber-500 text-[9px] font-bold text-black leading-none">
                               {item.badge > 99 ? '99+' : item.badge}
                             </span>
                           )}
-                          <ChevronDown size={12} className={`transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
-                          <span className={`absolute -bottom-1.5 left-0 w-full h-0.5 bg-red-500 transition-all duration-200 ${
-                            active || isOpen ? 'opacity-100' : 'opacity-0 group-hover:opacity-50'
-                          }`} />
-                        </button>
-                      ) : (
-                        <Link to={item.href ?? '/admin/dashboard'} className={linkClasses}>
-                          {item.label}
-                          {item.badge > 0 && (
-                            <span className="ml-1.5 inline-flex items-center justify-center min-w-[16px] h-[16px] px-1 rounded-full bg-amber-500 text-[9px] font-bold text-black leading-none align-middle">
-                              {item.badge > 99 ? '99+' : item.badge}
-                            </span>
-                          )}
-                          <span className={`absolute -bottom-1.5 left-0 w-full h-0.5 bg-red-500 transition-all duration-200 ${
-                            active ? 'opacity-100' : 'opacity-0 group-hover:opacity-50'
-                          }`} />
-                        </Link>
-                      )}
-
-                      {item.submenu.length > 0 && isOpen && (
-                        <div className="absolute top-full left-1/2 -translate-x-1/2 mt-4 w-64 backdrop-blur-xl bg-black/80 border border-white/[0.08] rounded-2xl overflow-hidden py-2 shadow-2xl">
+                        </span>
+                        <ArrowUpRight size={15} className="text-white/15 group-hover:text-red-400/60 transition-colors flex-shrink-0" />
+                      </Link>
+                      {item.submenu.length > 1 && (
+                        <div className="mt-2.5 ml-[26px] space-y-2">
                           {item.submenu.map((sub) => (
                             <Link
                               key={sub.href}
                               to={sub.href}
-                              onClick={() => setOpenDropdown(null)}
-                              className="group/sub flex items-center justify-between px-4 py-2.5 hover:bg-white/[0.06] transition-colors"
+                              onClick={closeMenu}
+                              className={`group/sub flex items-center justify-between gap-2 ${isSubActive(sub.href) ? 'text-white' : 'text-white/40 hover:text-white/70'}`}
                             >
-                              <span>
-                                <span className="block text-xs font-bold text-white/80 group-hover/sub:text-white uppercase tracking-wide transition-colors">{sub.label}</span>
-                                <span className="block text-[10px] text-white/30 mt-0.5">{sub.subtitle}</span>
-                              </span>
+                              <span className="text-xs font-semibold">{sub.label}</span>
                               {!!sub.badge && sub.badge > 0 && (
-                                <span className="inline-flex items-center justify-center min-w-[16px] h-[16px] px-1 rounded-full bg-amber-500/20 text-[10px] font-bold text-amber-400 leading-none flex-shrink-0 ml-2">
+                                <span className="inline-flex items-center justify-center min-w-[15px] h-[15px] px-1 rounded-full bg-amber-500/20 text-[9px] font-bold text-amber-400 leading-none flex-shrink-0">
                                   {sub.badge > 99 ? '99+' : sub.badge}
                                 </span>
                               )}
@@ -217,42 +277,36 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                     </div>
                   );
                 })}
-              </div>
-            </nav>
 
-            {/* Right: utility icons */}
-            <div className="flex items-center gap-1.5 flex-shrink-0">
-              <button
-                onClick={() => navigate('/admin/dashboard')}
-                className="flex items-center justify-center w-9 h-9 rounded-lg hover:bg-white/[0.08] transition-colors text-white/50 hover:text-white"
-                title="Dashboard"
-              >
-                <LayoutDashboard size={17} />
-              </button>
-              <button
-                onClick={() => navigate('/admin/settings')}
-                className="flex items-center justify-center w-9 h-9 rounded-lg hover:bg-white/[0.08] transition-colors text-white/50 hover:text-white"
-                title="Settings"
-              >
-                <Settings size={17} />
-              </button>
-              <button
-                onClick={handleSignOut}
-                className="flex items-center justify-center w-9 h-9 rounded-lg hover:bg-white/[0.08] transition-colors text-white/50 hover:text-white"
-                title="Sign Out"
-              >
-                <LogOut size={17} />
-              </button>
-              <div className="hidden sm:flex items-center gap-2 ml-1 pl-2 border-l border-white/[0.08]">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-red-600 to-orange-600 flex items-center justify-center text-white font-semibold text-xs flex-shrink-0">
-                  {user?.displayName?.[0] || user?.email?.[0] || 'A'}
+                {/* Quick actions — moved in from the old top-bar icon cluster */}
+                <div className="pt-4 flex flex-col gap-1">
+                  <button
+                    onClick={() => { closeMenu(); navigate('/admin/dashboard'); }}
+                    className="flex items-center gap-2.5 py-2.5 text-white/60 hover:text-white transition-colors"
+                  >
+                    <LayoutDashboard size={16} className="text-white/30" />
+                    <span className="text-xs font-semibold uppercase tracking-wider">Dashboard</span>
+                  </button>
+                  <button
+                    onClick={() => { closeMenu(); navigate('/admin/settings'); }}
+                    className="flex items-center gap-2.5 py-2.5 text-white/60 hover:text-white transition-colors"
+                  >
+                    <Settings size={16} className="text-white/30" />
+                    <span className="text-xs font-semibold uppercase tracking-wider">Settings</span>
+                  </button>
+                  <button
+                    onClick={handleSignOut}
+                    className="flex items-center gap-2.5 py-2.5 text-white/60 hover:text-red-400 transition-colors"
+                  >
+                    <LogOut size={16} className="text-white/30" />
+                    <span className="text-xs font-semibold uppercase tracking-wider">Sign Out</span>
+                  </button>
                 </div>
               </div>
             </div>
-
           </div>
-        </div>
-      </header>
+        </>
+      )}
 
       {/* Mobile bottom tab bar — the four main sections, always visible */}
       <nav
@@ -293,6 +347,33 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       <div className="flex flex-col min-h-screen pt-24 sm:pt-28 pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] md:pb-6">
         <main className="flex-1 px-4 py-5 sm:px-6 lg:px-8 lg:py-6">{children}</main>
       </div>
+
+      <style>{`
+        @keyframes admin-panel-slide-in {
+          from { transform: translateX(100%); }
+          to { transform: translateX(0); }
+        }
+        .animate-admin-panel-slide-in {
+          animation: admin-panel-slide-in 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        @media (max-width: 768px) {
+          .animate-admin-panel-slide-in {
+            animation: admin-panel-slide-in 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+          }
+        }
+        @keyframes admin-panel-slide-out {
+          from { transform: translateX(0); }
+          to { transform: translateX(100%); }
+        }
+        .animate-admin-panel-slide-out {
+          animation: admin-panel-slide-out 0.5s cubic-bezier(0.7, 0, 0.84, 0) forwards;
+        }
+        @media (max-width: 768px) {
+          .animate-admin-panel-slide-out {
+            animation: admin-panel-slide-out 0.2s cubic-bezier(0.7, 0, 0.84, 0) forwards;
+          }
+        }
+      `}</style>
     </div>
   );
 };

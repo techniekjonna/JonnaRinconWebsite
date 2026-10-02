@@ -135,7 +135,15 @@ const GlobalShoppingCart = () => {
   );
 };
 
-// Scroll to top on route change
+// Scroll to top on route change. Also disables the browser's own
+// back/forward scroll-restoration — left on its default ('auto'), it can
+// silently re-apply the previous page's scroll position after our own
+// window.scrollTo(0, 0) runs, which is why navigation sometimes "kept" the
+// old scroll position instead of landing at the top of the new page.
+if (typeof window !== 'undefined' && 'scrollRestoration' in window.history) {
+  window.history.scrollRestoration = 'manual';
+}
+
 const ScrollToTopWrapper = ({ children }: { children: React.ReactNode }) => {
   useScrollToTop();
   return <>{children}</>;
