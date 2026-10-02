@@ -132,10 +132,12 @@ export default function PlayerModal({
         onClick={onClose}
       />
 
-      {/* Side Panel — slides in from right, same sizing/timing as Navigation.tsx */}
+      {/* Side Panel — slides in from the left (the player button lives on the
+          left of the header, unlike the hamburger menu's panel on the right),
+          same sizing/timing as Navigation.tsx otherwise */}
       <div
         ref={modalRef}
-        className={`fixed top-0 right-0 bottom-0 z-[301] w-full md:w-[480px] lg:w-[520px] md:border-l md:border-white/[0.06] ${
+        className={`fixed top-0 left-0 bottom-0 z-[301] w-full md:w-[480px] lg:w-[520px] md:border-r md:border-white/[0.06] ${
           isClosing ? 'animate-panel-slide-out' : 'animate-panel-slide-in'
         }`}
       >
@@ -433,7 +435,7 @@ export default function PlayerModal({
       <style>{`
         @keyframes panel-slide-in {
           from {
-            transform: translateX(100%);
+            transform: translateX(-100%);
           }
           to {
             transform: translateX(0);
@@ -453,7 +455,7 @@ export default function PlayerModal({
             transform: translateX(0);
           }
           to {
-            transform: translateX(100%);
+            transform: translateX(-100%);
           }
         }
         .animate-panel-slide-out {
