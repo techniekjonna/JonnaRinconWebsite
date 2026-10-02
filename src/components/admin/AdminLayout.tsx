@@ -2,13 +2,12 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useOrderNotifications } from '../../hooks/useOrderNotifications';
+import { openPlayerModal } from '../GlobalAudioPlayer';
 import {
-  LayoutDashboard,
-  Settings,
-  LogOut,
   ArrowLeft,
   ArrowUpRight,
   Menu,
+  Play,
   X,
   LayoutGrid,
   Users,
@@ -21,18 +20,10 @@ interface AdminLayoutProps {
   children: React.ReactNode;
 }
 
-interface SubmenuItem {
-  label: string;
-  subtitle: string;
-  href: string;
-  badge?: number;
-}
-
 interface MenuItem {
   label: string;
   subtitle: string;
-  href?: string;
-  submenu: SubmenuItem[];
+  href: string;
   badge: number;
   icon: LucideIcon;
   mobileLabel: string;
@@ -42,6 +33,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isMenuClosing, setIsMenuClosing] = useState(false);
   const [menuButtonHovered, setMenuButtonHovered] = useState(false);
+  const [playerButtonHovered, setPlayerButtonHovered] = useState(false);
   const recentlyClosedRef = useRef(false);
   const closeTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { user, signOut } = useAuth();
@@ -63,12 +55,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       label: 'Management',
       subtitle: 'Beats, Services, Tracks & Mix Masters',
       href: '/admin/management',
-      submenu: [
-        { label: 'Beats', subtitle: 'Beat instrumentals', href: '/admin/management?tab=beats' },
-        { label: 'Services', subtitle: 'Audio services', href: '/admin/management?tab=services' },
-        { label: 'Tracks', subtitle: 'Discography, remixes & custom', href: '/admin/management?tab=tracks' },
-        { label: 'Mix Masters', subtitle: 'Client mix & master archive', href: '/admin/management?tab=mixmasters' },
-      ],
       badge: 0,
       icon: LayoutGrid,
       mobileLabel: 'Manage',
@@ -77,7 +63,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       label: 'Artist Support',
       subtitle: 'Artist Requests, Collab Requests, Chat',
       href: '/admin/board',
-      submenu: [],
       badge: 0,
       icon: Users,
       mobileLabel: 'Support',
@@ -85,11 +70,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     {
       label: 'Orders and Stats',
       subtitle: 'Bestellingen, Producten, Kortingscodes',
-      submenu: [
-        { label: 'Bestellingen', subtitle: 'Beheer bestellingen', href: '/admin/orders', badge: pendingCount },
-        { label: 'Product Management', subtitle: 'Klantaankopen', href: '/admin/product-management' },
-        { label: 'Discount Codes', subtitle: 'Promo codes', href: '/admin/discount-codes' },
-      ],
+      href: '/admin/orders-stats',
       badge: newSinceLastSeen > 0 ? newSinceLastSeen : (pendingCount > 0 ? pendingCount : 0),
       icon: Receipt,
       mobileLabel: 'Orders',
@@ -97,10 +78,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     {
       label: 'Jonna Rincon Panel',
       subtitle: 'Agenda, Analytics & More',
-      submenu: [
-        { label: 'Panel', subtitle: 'Jonna Rincon overzicht', href: '/admin/jonna-rincon-panel' },
-        { label: 'Analytics', subtitle: 'Dashboard analytics', href: '/admin/analytics' },
-      ],
+      href: '/admin/jonna-rincon-panel',
       badge: 0,
       icon: Sparkles,
       mobileLabel: 'Panel',
@@ -126,44 +104,48 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     setIsMenuOpen(true);
   };
 
-  // Close the menu whenever the route changes
   useEffect(() => {
     if (isMenuOpen || isMenuClosing) closeMenu();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.pathname, location.search]);
+  }, [location.pathname]);
 
   useEffect(() => {
     return () => { if (closeTimeout.current) clearTimeout(closeTimeout.current); };
   }, []);
 
-  const isItemActive = (item: MenuItem) => {
-    if (item.href && (location.pathname === item.href || location.pathname.startsWith(item.href + '/'))) return true;
-    return item.submenu.some(sub => location.pathname === sub.href.split('?')[0]);
-  };
-
-  const isSubActive = (href: string) => {
-    const [path, query] = href.split('?');
-    if (location.pathname !== path) return false;
-    if (!query) return true;
-    return new URLSearchParams(location.search).get('tab') === new URLSearchParams(query).get('tab');
-  };
-
-  const getPrimaryHref = (item: MenuItem) => item.href ?? item.submenu[0]?.href ?? '/admin/dashboard';
+  const isActive = (href: string) =>
+    location.pathname === href || location.pathname.startsWith(href + '/');
 
   const menuVisible = isMenuOpen || isMenuClosing;
 
   return (
     <div className="min-h-screen bg-black">
-      {/* Top bar — logo + menu button only, same glass-card language as the public site header */}
+      {/* Top bar — same shape as the public site header: player + logo left, nav centered, menu right */}
       <header className="fixed top-0 left-0 right-0 z-40 pt-3 px-4 sm:px-6 lg:px-8">
         <div className="backdrop-blur-xl bg-black/30 border border-white/[0.08] rounded-2xl overflow-hidden">
           <div className="flex items-center justify-between px-4 sm:px-6 h-16 md:h-20">
 
-            {/* Left: logo, same size as the public site's header */}
-            <div className="flex items-center gap-2 flex-shrink-0">
+            {/* Left: player button + logo (+ back button when not on dashboard) */}
+            <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+              <button
+                onClick={() => openPlayerModal()}
+                onMouseEnter={() => setPlayerButtonHovered(true)}
+                onMouseLeave={() => setPlayerButtonHovered(false)}
+                className="flex items-center justify-center w-14 h-9 rounded-lg hover:bg-white/[0.08] transition-colors text-white/60 hover:text-white flex-shrink-0 overflow-hidden relative"
+                title="Player"
+              >
+                <span className="absolute inset-0 flex items-center justify-center transition-all duration-300">
+                  <Play size={18} className={`transition-all duration-300 ${playerButtonHovered ? 'opacity-0 scale-75' : 'opacity-100 scale-100'}`} />
+                </span>
+                <span className="absolute inset-0 flex items-center justify-center transition-all duration-300">
+                  <span className={`text-[9px] font-black uppercase tracking-widest transition-all duration-300 ${playerButtonHovered ? 'opacity-100' : 'opacity-0'}`}>Player</span>
+                </span>
+              </button>
+
               <Link to="/admin/dashboard" className="flex items-center justify-center w-14 h-14 md:w-24 md:h-24">
                 <img src="/Jonna Rincon Logo WH.png" alt="JR" className="w-full h-full object-contain opacity-80 hover:opacity-100 transition-opacity" />
               </Link>
+
               {!isOnDashboard && (
                 <button
                   onClick={goBack}
@@ -174,6 +156,34 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                 </button>
               )}
             </div>
+
+            {/* Center: the 4 pages, direct links, no dropdowns — desktop only */}
+            <nav className="hidden md:flex items-center justify-center flex-1 px-6">
+              <div className="flex items-center gap-6 lg:gap-8">
+                {menuItems.map((item) => {
+                  const active = isActive(item.href);
+                  return (
+                    <Link
+                      key={item.label}
+                      to={item.href}
+                      className={`text-xs font-black uppercase tracking-widest transition-all duration-200 relative group whitespace-nowrap ${
+                        active ? 'text-white' : 'text-white/50 hover:text-white/80'
+                      }`}
+                    >
+                      {item.label}
+                      {item.badge > 0 && (
+                        <span className="ml-1.5 inline-flex items-center justify-center min-w-[16px] h-[16px] px-1 rounded-full bg-amber-500 text-[9px] font-bold text-black leading-none align-middle">
+                          {item.badge > 99 ? '99+' : item.badge}
+                        </span>
+                      )}
+                      <span className={`absolute -bottom-1.5 left-0 w-full h-0.5 bg-red-500 transition-all duration-200 ${
+                        active ? 'opacity-100' : 'opacity-0 group-hover:opacity-50'
+                      }`} />
+                    </Link>
+                  );
+                })}
+              </div>
+            </nav>
 
             {/* Right: menu button — same hover icon-to-label swap as the public header's hamburger */}
             <button
@@ -195,7 +205,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
         </div>
       </header>
 
-      {/* Slide-in menu panel — same mechanics as the public site's Navigation.tsx panel */}
+      {/* Slide-in menu panel — same "Martin Garrix style" big menu as the public site's Navigation.tsx */}
       {menuVisible && (
         <>
           <div
@@ -208,100 +218,80 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
               isMenuClosing ? 'animate-admin-panel-slide-out' : 'animate-admin-panel-slide-in'
             }`}
           >
-            <div className="absolute inset-0 bg-black/80 backdrop-blur-2xl" style={{ WebkitBackdropFilter: 'blur(40px)' }} />
-            <div className="relative z-10 h-full flex flex-col px-6 md:px-10" onClick={(e) => e.stopPropagation()}>
+            <div className="absolute inset-0 bg-black/70 backdrop-blur-2xl" style={{ WebkitBackdropFilter: 'blur(40px)' }} />
+            <div className="relative z-10 h-full flex flex-col px-8 md:px-12" onClick={(e) => e.stopPropagation()}>
 
-              {/* Top bar */}
+              {/* Top bar — logo left, X right, same as Navigation.tsx */}
               <div className="flex items-center justify-between py-5 md:py-6 flex-shrink-0">
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-red-600 to-orange-600 flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
-                    {user?.displayName?.[0] || user?.email?.[0] || 'A'}
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-sm font-semibold text-white truncate">{user?.displayName || 'Admin'}</p>
-                    <p className="text-[11px] text-white/30 truncate">{user?.email}</p>
-                  </div>
-                </div>
+                <button onClick={() => { closeMenu(); navigate('/admin/dashboard'); }} className="block flex-shrink-0 cursor-pointer">
+                  <img
+                    src="/Jonna Rincon Logo WH.png"
+                    alt="Jonna Rincon"
+                    className="h-[100px] md:h-[110px] w-auto opacity-50 hover:opacity-100 transition-opacity duration-300"
+                  />
+                </button>
                 <button
                   onClick={closeMenu}
-                  className="p-2 rounded-full border border-white/10 hover:border-white/20 hover:bg-white/5 transition-all flex-shrink-0"
+                  className="p-2 rounded-full border border-white/10 hover:border-white/20 hover:bg-white/5 transition-all duration-300 cursor-pointer group"
                 >
-                  <X className="w-5 h-5 text-white/60 hover:text-white transition-colors" />
+                  <X className="w-5 h-5 text-white/60 group-hover:text-white group-hover:rotate-90 transition-all duration-300" />
                 </button>
               </div>
 
-              <div className="w-full h-px bg-white/[0.06] mb-2 flex-shrink-0" />
+              <div className="w-full h-px bg-white/[0.06] mb-4" />
 
-              {/* Nav groups — every page listed flat, no further click-to-expand */}
-              <div className="flex-1 overflow-y-auto pr-1 pb-6">
-                {menuItems.map((item) => {
-                  const Icon = item.icon;
-                  const active = isItemActive(item);
-                  return (
-                    <div key={item.label} className="py-4 border-b border-white/[0.04]">
-                      <Link
-                        to={getPrimaryHref(item)}
-                        onClick={closeMenu}
-                        className={`group flex items-center justify-between gap-3 ${active ? 'text-white' : 'text-white/80 hover:text-white'}`}
-                      >
-                        <span className="flex items-center gap-2.5">
-                          <Icon size={16} className={active ? 'text-red-400' : 'text-white/30 group-hover:text-white/60'} />
-                          <span className="text-sm font-bold uppercase tracking-wider">{item.label}</span>
-                          {item.badge > 0 && (
-                            <span className="inline-flex items-center justify-center min-w-[16px] h-[16px] px-1 rounded-full bg-amber-500 text-[9px] font-bold text-black leading-none">
-                              {item.badge > 99 ? '99+' : item.badge}
-                            </span>
-                          )}
-                        </span>
-                        <ArrowUpRight size={15} className="text-white/15 group-hover:text-red-400/60 transition-colors flex-shrink-0" />
-                      </Link>
-                      {item.submenu.length > 1 && (
-                        <div className="mt-2.5 ml-[26px] space-y-2">
-                          {item.submenu.map((sub) => (
-                            <Link
-                              key={sub.href}
-                              to={sub.href}
-                              onClick={closeMenu}
-                              className={`group/sub flex items-center justify-between gap-2 ${isSubActive(sub.href) ? 'text-white' : 'text-white/40 hover:text-white/70'}`}
-                            >
-                              <span className="text-xs font-semibold">{sub.label}</span>
-                              {!!sub.badge && sub.badge > 0 && (
-                                <span className="inline-flex items-center justify-center min-w-[15px] h-[15px] px-1 rounded-full bg-amber-500/20 text-[9px] font-bold text-amber-400 leading-none flex-shrink-0">
-                                  {sub.badge > 99 ? '99+' : sub.badge}
-                                </span>
-                              )}
-                            </Link>
-                          ))}
-                        </div>
-                      )}
+              {/* Menu items — same big typography as the public menu */}
+              <div className="flex-1 flex flex-col overflow-y-auto pr-2 pb-12">
+                <button
+                  onClick={() => { closeMenu(); navigate('/admin/dashboard'); }}
+                  className="group w-full text-left py-4 md:py-5 cursor-pointer border-b border-white/[0.04]"
+                >
+                  <div className="flex items-center justify-between transition-transform duration-300 group-hover:translate-x-2">
+                    <div>
+                      <span className="block text-3xl md:text-4xl font-semibold text-white/90 group-hover:text-white transition-colors duration-300 tracking-tight">
+                        Dashboard
+                      </span>
+                      <span className="block text-xs text-white/25 mt-1 uppercase tracking-widest font-medium group-hover:text-red-400/60 transition-colors duration-300">
+                        Overview & stats
+                      </span>
                     </div>
-                  );
-                })}
+                    <ArrowUpRight className="w-5 h-5 text-white/10 group-hover:text-red-400/50 transition-all duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                  </div>
+                </button>
 
-                {/* Quick actions — moved in from the old top-bar icon cluster */}
-                <div className="pt-4 flex flex-col gap-1">
-                  <button
-                    onClick={() => { closeMenu(); navigate('/admin/dashboard'); }}
-                    className="flex items-center gap-2.5 py-2.5 text-white/60 hover:text-white transition-colors"
-                  >
-                    <LayoutDashboard size={16} className="text-white/30" />
-                    <span className="text-xs font-semibold uppercase tracking-wider">Dashboard</span>
-                  </button>
-                  <button
-                    onClick={() => { closeMenu(); navigate('/admin/settings'); }}
-                    className="flex items-center gap-2.5 py-2.5 text-white/60 hover:text-white transition-colors"
-                  >
-                    <Settings size={16} className="text-white/30" />
-                    <span className="text-xs font-semibold uppercase tracking-wider">Settings</span>
-                  </button>
-                  <button
-                    onClick={handleSignOut}
-                    className="flex items-center gap-2.5 py-2.5 text-white/60 hover:text-red-400 transition-colors"
-                  >
-                    <LogOut size={16} className="text-white/30" />
-                    <span className="text-xs font-semibold uppercase tracking-wider">Sign Out</span>
-                  </button>
-                </div>
+                <button
+                  onClick={() => { closeMenu(); navigate('/admin/settings'); }}
+                  className="group w-full text-left py-4 md:py-5 cursor-pointer border-b border-white/[0.04]"
+                >
+                  <div className="flex items-center justify-between transition-transform duration-300 group-hover:translate-x-2">
+                    <div>
+                      <span className="block text-3xl md:text-4xl font-semibold text-white/90 group-hover:text-white transition-colors duration-300 tracking-tight">
+                        Settings
+                      </span>
+                      <span className="block text-xs text-white/25 mt-1 uppercase tracking-widest font-medium group-hover:text-red-400/60 transition-colors duration-300">
+                        Account & preferences
+                      </span>
+                    </div>
+                    <ArrowUpRight className="w-5 h-5 text-white/10 group-hover:text-red-400/50 transition-all duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => { closeMenu(); handleSignOut(); }}
+                  className="group w-full text-left py-4 md:py-5 cursor-pointer"
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="block text-3xl md:text-4xl font-semibold text-white/90 group-hover:text-white transition-colors duration-300 tracking-tight">
+                        Sign Out
+                      </span>
+                      <span className="block text-xs text-white/25 mt-1 uppercase tracking-widest font-medium">
+                        {user?.displayName || user?.email}
+                      </span>
+                    </div>
+                    <ArrowUpRight className="w-5 h-5 text-white/10 group-hover:text-white/50 transition-all duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                  </div>
+                </button>
               </div>
             </div>
           </div>
@@ -317,11 +307,11 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
           <div className="flex items-stretch justify-around">
             {menuItems.map((item) => {
               const Icon = item.icon;
-              const active = isItemActive(item);
+              const active = isActive(item.href);
               return (
                 <Link
                   key={item.label}
-                  to={getPrimaryHref(item)}
+                  to={item.href}
                   className={`relative flex-1 flex flex-col items-center justify-center gap-1 py-2.5 transition-colors ${
                     active ? 'text-white' : 'text-white/40 hover:text-white/70'
                   }`}

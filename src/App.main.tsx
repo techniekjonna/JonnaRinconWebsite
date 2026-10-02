@@ -68,17 +68,14 @@ import ArtistSettings from './pages/artist/SettingsPage';
 // Admin pages (protected - admin role)
 import AdminDashboard from './pages/admin/DashboardPage';
 import AdminRemixes from './pages/admin/RemixesPage';
-import AdminOrders from './pages/admin/OrdersPage';
-import AdminProductManagement from './pages/admin/ProductManagementPage';
+import AdminOrdersStats from './pages/admin/OrdersStatsPage';
 import AdminContent from './pages/admin/ContentPage';
-import AdminAnalytics from './pages/admin/AnalyticsPage';
 import AdminCollaborations from './pages/admin/CollaborationsPage';
 import AdminCollabRequests from './pages/admin/CollabRequestsPage';
 import AdminArtistRoleRequests from './pages/admin/ArtistRoleRequestsPage';
 import AdminBoard from './pages/admin/AdminBoardPage';
 import AdminSettings from './pages/admin/SettingsPage';
 import AdminChat from './pages/admin/ChatPage';
-import AdminDiscountCodes from './pages/admin/DiscountCodesPage';
 import AdminManagement from './pages/admin/ManagementPage';
 import AdminAgenda from './pages/admin/AgendaPage';
 import AdminProjects from './pages/admin/ProjectsAdminPage';
@@ -444,21 +441,17 @@ const MainApp: React.FC = () => {
             }
           />
           <Route
-            path="/admin/orders"
+            path="/admin/orders-stats"
             element={
               <ProtectedRoute allowedRoles={['admin']}>
-                <AdminOrders />
+                <AdminOrdersStats />
               </ProtectedRoute>
             }
           />
-          <Route
-            path="/admin/product-management"
-            element={
-              <ProtectedRoute allowedRoles={['admin']}>
-                <AdminProductManagement />
-              </ProtectedRoute>
-            }
-          />
+          {/* Old Orders/Products/Discounts routes now redirect into the unified Orders and Stats page */}
+          <Route path="/admin/orders" element={<Navigate to="/admin/orders-stats?tab=orders" replace />} />
+          <Route path="/admin/product-management" element={<Navigate to="/admin/orders-stats?tab=products" replace />} />
+          <Route path="/admin/discount-codes" element={<Navigate to="/admin/orders-stats?tab=discounts" replace />} />
           <Route
             path="/admin/content"
             element={
@@ -467,14 +460,8 @@ const MainApp: React.FC = () => {
               </ProtectedRoute>
             }
           />
-          <Route
-            path="/admin/analytics"
-            element={
-              <ProtectedRoute allowedRoles={['admin']}>
-                <AdminAnalytics />
-              </ProtectedRoute>
-            }
-          />
+          {/* Analytics is now a tab inside the Jonna Rincon Panel */}
+          <Route path="/admin/analytics" element={<Navigate to="/admin/jonna-rincon-panel" replace />} />
           <Route
             path="/admin/collaborations"
             element={
@@ -520,14 +507,6 @@ const MainApp: React.FC = () => {
             element={
               <ProtectedRoute allowedRoles={['admin']}>
                 <AdminChat />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/discount-codes"
-            element={
-              <ProtectedRoute allowedRoles={['admin']}>
-                <AdminDiscountCodes />
               </ProtectedRoute>
             }
           />

@@ -31,7 +31,7 @@ import {
   ChevronDown,
 } from 'lucide-react';
 
-const AnalyticsPage: React.FC = () => {
+export const AnalyticsContent: React.FC = () => {
   const { beats, loading: beatsLoading } = useBeats();
   const { tracks, loading: tracksLoading } = useTracks({ status: 'published' });
   const { remixes, loading: remixesLoading } = useRemixes({ status: 'published' });
@@ -296,7 +296,6 @@ const AnalyticsPage: React.FC = () => {
   const isLoading = beatsLoading || tracksLoading || remixesLoading;
 
   return (
-    <AdminLayout>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -829,8 +828,13 @@ const AnalyticsPage: React.FC = () => {
           </div>
         </div>
       </div>
-    </AdminLayout>
   );
 };
+
+const AnalyticsPage: React.FC = () => (
+  <AdminLayout>
+    <AnalyticsContent />
+  </AdminLayout>
+);
 
 export default AnalyticsPage;
