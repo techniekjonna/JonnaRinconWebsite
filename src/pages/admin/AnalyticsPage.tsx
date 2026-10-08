@@ -11,7 +11,7 @@ import { usePlaylists } from '../../hooks/usePlaylists';
 import { useEdits } from '../../hooks/useEdits';
 import { useDiscountCodes } from '../../hooks/useDiscountCodes';
 import { db } from '../../lib/firebase/config';
-import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
+import { collection, query, where, orderBy, onSnapshot } from 'firebase/firestore';
 import {
   TrendingUp,
   DollarSign,
@@ -65,11 +65,24 @@ export const AnalyticsContent: React.FC = () => {
     return () => unsub();
   }, []);
 
-  // Collaboration requests
+  // Collaboration requests now live as 'Collaboration' category conversations
+  // in supportMessages (handled from the Contact chat), not a separate
+  // collection — group by sender so a thread with staff replies still counts
+  // as one request, and read its resolved collabStatus if it has one.
   useEffect(() => {
-    const q = query(collection(db, 'collabRequests'), orderBy('createdAt', 'desc'));
+    const q = query(collection(db, 'supportMessages'), where('category', '==', 'Collaboration'));
     const unsub = onSnapshot(q, (snap) => {
-      setCollabRequests(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+      const bySender = new Map<string, { id: string; status: string }>();
+      snap.docs.forEach((d) => {
+        const data: any = d.data();
+        if (data.senderRole === 'admin' || data.senderRole === 'manager') return;
+        const status = data.collabStatus || 'pending';
+        const existing = bySender.get(data.senderId);
+        if (!existing || (existing.status === 'pending' && status !== 'pending')) {
+          bySender.set(data.senderId, { id: d.id, status });
+        }
+      });
+      setCollabRequests(Array.from(bySender.values()));
     });
     return () => unsub();
   }, []);

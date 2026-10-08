@@ -68,7 +68,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     },
     {
       label: 'Artist Support',
-      subtitle: 'Artist Requests, Collab Requests, Chat',
+      subtitle: 'Artist Requests & Chat',
       href: '/admin/board',
       badge: 0,
       icon: Users,

@@ -683,10 +683,19 @@ const timestampToDateInput = (ts?: Timestamp): string => {
   return ts.toDate().toISOString().slice(0, 10);
 };
 
+type TrackFormTab = 'basis' | 'media' | 'extra';
+
+const TRACK_FORM_TABS: { id: TrackFormTab; label: string }[] = [
+  { id: 'basis', label: 'Basis' },
+  { id: 'media', label: 'Media' },
+  { id: 'extra', label: 'Tags & Opties' },
+];
+
 const TrackFormModal: React.FC<TrackFormModalProps> = ({ track, onClose, onSave, onDelete }) => {
   const currentYear = new Date().getFullYear();
   const isEditing = !!track;
   const isEditingAlbum = isEditing && (track?.type === 'Album' || track?.type === 'EP');
+  const [activeTab, setActiveTab] = useState<TrackFormTab>('basis');
 
   const [formData, setFormData] = useState({
     title: isEditingAlbum ? (track?.album || track?.title || '') : (track?.title || ''),
@@ -760,6 +769,13 @@ const TrackFormModal: React.FC<TrackFormModalProps> = ({ track, onClose, onSave,
     setSaving(true);
 
     try {
+      if (!formData.title.trim() || !formData.artist.trim() || !formData.genre.trim() || !formData.year) {
+        alert('Vul de verplichte velden in op het tabblad Basis (titel, artiest, genre, jaar)');
+        setActiveTab('basis');
+        setSaving(false);
+        return;
+      }
+
       const baseTrackData: any = {
         title: formData.title,
         artist: formData.artist,
@@ -903,199 +919,229 @@ const TrackFormModal: React.FC<TrackFormModalProps> = ({ track, onClose, onSave,
           </div>
         </div>
 
+        {/* Tab bar */}
+        <div className="px-6 py-3 border-b border-white/[0.06] bg-white/[0.03] flex-shrink-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            {TRACK_FORM_TABS.map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTab(tab.id)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
+                  activeTab === tab.id
+                    ? 'bg-purple-600 text-white'
+                    : 'bg-white/[0.06] text-white/60 hover:bg-white/[0.12]'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
         <form onSubmit={handleSubmit} className="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">
-                {isAlbumOrEP ? 'Album Naam' : 'Titel'} <span className="text-red-400">*</span>
-              </label>
-              <input
-                type="text"
-                value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white"
-                placeholder={isAlbumOrEP ? 'bv. "IF Album"' : 'Track titel'}
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Artiest <span className="text-red-400">*</span></label>
-              <input type="text" value={formData.artist} onChange={(e) => setFormData({ ...formData, artist: e.target.value })} className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white" required />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Type <span className="text-red-400">*</span></label>
-              <select value={formData.type} onChange={(e) => setFormData({ ...formData, type: e.target.value as Track['type'] })} className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white" required>
-                <option value="Single">Single</option>
-                <option value="EP">EP</option>
-                <option value="Album">Album</option>
-                <option value="Exclusive">Exclusive</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Jaar <span className="text-red-400">*</span></label>
-              <input type="number" value={formData.year} onChange={(e) => setFormData({ ...formData, year: parseInt(e.target.value) })} className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white" required />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Releasedatum</label>
-              <input type="date" value={formData.releaseDate} onChange={(e) => setFormData({ ...formData, releaseDate: e.target.value })} className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white" />
-              <p className="text-xs text-white/30 mt-1">Bepaalt de volgorde op de Music-pagina (nieuw → oud). Leeg = valt terug op jaar.</p>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Collab <span className="text-red-400">*</span></label>
-              <select value={formData.collab} onChange={(e) => setFormData({ ...formData, collab: e.target.value as 'Solo' | 'Collab' })} className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white" required>
-                <option value="Solo">Solo</option>
-                <option value="Collab">Collab</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Genre <span className="text-red-400">*</span></label>
-              <input type="text" value={formData.genre} onChange={(e) => setFormData({ ...formData, genre: e.target.value })} className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white" required />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Duur</label>
-              <input type="text" value={formData.duration} onChange={(e) => setFormData({ ...formData, duration: e.target.value })} className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white" placeholder="bv. 3:45" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Status</label>
-              <select value={formData.status} onChange={(e) => setFormData({ ...formData, status: e.target.value as Track['status'] })} className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white">
-                <option value="draft">Draft</option>
-                <option value="published">Published</option>
-                <option value="archived">Archived</option>
-              </select>
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-white/60 mb-2">Tags (komma-gescheiden)</label>
-            <input type="text" value={formData.tags} onChange={(e) => setFormData({ ...formData, tags: e.target.value })} className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white" placeholder="electronic, remix, bootleg" />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-white/60 mb-2">Slug</label>
-            <input type="text" value={formData.slug} onChange={(e) => setFormData({ ...formData, slug: e.target.value })} className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white" placeholder="auto-gegenereerd van titel" />
-          </div>
-
-          {/* Audio + Artwork for single tracks */}
-          {!isAlbumOrEP && (
+          {activeTab === 'basis' && (
             <div className="grid grid-cols-2 gap-4">
-              <LinkInput label="Audio URL" name="audioUrl" type="audio" onChange={(url) => setFormData({ ...formData, audioUrl: url })} defaultValue={formData.audioUrl} placeholder="https://nextcloud.example.com/..." />
-              <LinkInput label="Artwork URL" name="artworkUrl" type="image" onChange={(url) => setFormData({ ...formData, artworkUrl: url })} defaultValue={formData.artworkUrl} placeholder="https://example.com/image.jpg" />
+              <div>
+                <label className="block text-sm font-medium text-white/60 mb-2">
+                  {isAlbumOrEP ? 'Album Naam' : 'Titel'} <span className="text-red-400">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={formData.title}
+                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white"
+                  placeholder={isAlbumOrEP ? 'bv. "IF Album"' : 'Track titel'}
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-white/60 mb-2">Artiest <span className="text-red-400">*</span></label>
+                <input type="text" value={formData.artist} onChange={(e) => setFormData({ ...formData, artist: e.target.value })} className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white" required />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-white/60 mb-2">Type <span className="text-red-400">*</span></label>
+                <select value={formData.type} onChange={(e) => setFormData({ ...formData, type: e.target.value as Track['type'] })} className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white" required>
+                  <option value="Single">Single</option>
+                  <option value="EP">EP</option>
+                  <option value="Album">Album</option>
+                  <option value="Exclusive">Exclusive</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-white/60 mb-2">Jaar <span className="text-red-400">*</span></label>
+                <input type="number" value={formData.year} onChange={(e) => setFormData({ ...formData, year: parseInt(e.target.value) })} className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white" required />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-white/60 mb-2">Releasedatum</label>
+                <input type="date" value={formData.releaseDate} onChange={(e) => setFormData({ ...formData, releaseDate: e.target.value })} className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white" />
+                <p className="text-xs text-white/30 mt-1">Bepaalt de volgorde op de Music-pagina (nieuw → oud). Leeg = valt terug op jaar.</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-white/60 mb-2">Collab <span className="text-red-400">*</span></label>
+                <select value={formData.collab} onChange={(e) => setFormData({ ...formData, collab: e.target.value as 'Solo' | 'Collab' })} className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white" required>
+                  <option value="Solo">Solo</option>
+                  <option value="Collab">Collab</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-white/60 mb-2">Genre <span className="text-red-400">*</span></label>
+                <input type="text" value={formData.genre} onChange={(e) => setFormData({ ...formData, genre: e.target.value })} className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white" required />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-white/60 mb-2">Duur</label>
+                <input type="text" value={formData.duration} onChange={(e) => setFormData({ ...formData, duration: e.target.value })} className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white" placeholder="bv. 3:45" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-white/60 mb-2">Status</label>
+                <select value={formData.status} onChange={(e) => setFormData({ ...formData, status: e.target.value as Track['status'] })} className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white">
+                  <option value="draft">Draft</option>
+                  <option value="published">Published</option>
+                  <option value="archived">Archived</option>
+                </select>
+              </div>
             </div>
           )}
 
-          {/* Artwork for albums */}
-          {isAlbumOrEP && (
-            <LinkInput label="Album Cover URL" name="artworkUrl" type="image" onChange={(url) => setFormData({ ...formData, artworkUrl: url })} defaultValue={formData.artworkUrl} placeholder="https://example.com/image.jpg" />
-          )}
-
-          {/* Tracklist for albums */}
-          {isAlbumOrEP && (
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <label className="text-sm font-medium text-white/60">Tracks</label>
-                <button
-                  type="button"
-                  onClick={addTrackToList}
-                  disabled={!formData.title.trim()}
-                  className="px-3 py-1 bg-white/[0.10] hover:bg-white/[0.15] disabled:opacity-50 text-white/70 text-sm rounded transition-all"
-                >
-                  + Track toevoegen
-                </button>
-              </div>
-              {!formData.title.trim() && (
-                <p className="text-xs text-red-400/60">Voer eerst de album naam in</p>
+          {activeTab === 'media' && (
+            <>
+              {/* Audio + Artwork for single tracks */}
+              {!isAlbumOrEP && (
+                <div className="grid grid-cols-2 gap-4">
+                  <LinkInput label="Audio URL" name="audioUrl" type="audio" onChange={(url) => setFormData({ ...formData, audioUrl: url })} defaultValue={formData.audioUrl} placeholder="https://nextcloud.example.com/..." />
+                  <LinkInput label="Artwork URL" name="artworkUrl" type="image" onChange={(url) => setFormData({ ...formData, artworkUrl: url })} defaultValue={formData.artworkUrl} placeholder="https://example.com/image.jpg" />
+                </div>
               )}
-              <div className="space-y-3 bg-white/[0.03] rounded-lg p-3 border border-white/[0.06]">
-                {tracklist.length === 0 ? (
-                  <p className="text-white/40 text-sm">Nog geen tracks toegevoegd</p>
-                ) : (
-                  tracklist.map((item, index) => {
-                    const transformedUrl = toDirectUrl(item.audioUrl);
-                    const wasTransformed = item.audioUrl && item.audioUrl !== transformedUrl;
-                    const isValidAudioUrl = !item.audioUrl || isValidUrl(item.audioUrl);
-                    const urlType = detectUrlType(item.audioUrl);
 
-                    const getUrlTypeLabel = () => {
-                      if (!item.audioUrl) return '';
-                      switch (urlType) {
-                        case 'nextcloud': return 'Nextcloud/ownCloud';
-                        case 'firebase': return 'Firebase Storage';
-                        default: return 'Direct URL';
-                      }
-                    };
+              {/* Artwork for albums */}
+              {isAlbumOrEP && (
+                <LinkInput label="Album Cover URL" name="artworkUrl" type="image" onChange={(url) => setFormData({ ...formData, artworkUrl: url })} defaultValue={formData.artworkUrl} placeholder="https://example.com/image.jpg" />
+              )}
 
-                    return (
-                      <div key={item.id} className="space-y-2 p-3 bg-white/[0.05] rounded border border-white/[0.06]">
-                        <div className="flex items-center justify-between gap-2">
-                          <div className="flex items-center gap-2">
-                            <GripVertical size={16} className="text-white/30 flex-shrink-0" />
-                            <label className="text-sm text-white/40">Track {index + 1}</label>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <button type="button" onClick={() => moveTrackUp(item.id)} disabled={index === 0} className="p-1 text-white/40 hover:text-white disabled:opacity-30 transition-colors"><ArrowUp size={16} /></button>
-                            <button type="button" onClick={() => moveTrackDown(item.id)} disabled={index === tracklist.length - 1} className="p-1 text-white/40 hover:text-white disabled:opacity-30 transition-colors"><ArrowDown size={16} /></button>
-                            <button type="button" onClick={() => removeTrackFromList(item.id)} className="p-1 text-red-400 hover:text-red-300 transition-colors"><Trash2 size={16} /></button>
-                          </div>
-                        </div>
-                        <input
-                          type="text"
-                          placeholder="Track Titel"
-                          value={item.title}
-                          onChange={(e) => updateTrackInList(item.id, 'title', e.target.value)}
-                          className="w-full px-3 py-2 bg-white/[0.06] border border-white/[0.08] rounded text-white text-sm"
-                        />
-                        <div className="space-y-2">
-                          <input
-                            type="text"
-                            placeholder="Audio URL"
-                            value={item.audioUrl}
-                            onChange={(e) => updateTrackInList(item.id, 'audioUrl', e.target.value)}
-                            className="w-full px-3 py-2 bg-white/[0.06] border border-white/[0.08] rounded text-white text-sm"
-                          />
-                          {item.audioUrl && isValidAudioUrl && (
-                            <div className="flex flex-col gap-2">
+              {/* Tracklist for albums */}
+              {isAlbumOrEP && (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-medium text-white/60">Tracks</label>
+                    <button
+                      type="button"
+                      onClick={addTrackToList}
+                      disabled={!formData.title.trim()}
+                      className="px-3 py-1 bg-white/[0.10] hover:bg-white/[0.15] disabled:opacity-50 text-white/70 text-sm rounded transition-all"
+                    >
+                      + Track toevoegen
+                    </button>
+                  </div>
+                  {!formData.title.trim() && (
+                    <p className="text-xs text-red-400/60">Voer eerst de album naam in</p>
+                  )}
+                  <div className="space-y-3 bg-white/[0.03] rounded-lg p-3 border border-white/[0.06]">
+                    {tracklist.length === 0 ? (
+                      <p className="text-white/40 text-sm">Nog geen tracks toegevoegd</p>
+                    ) : (
+                      tracklist.map((item, index) => {
+                        const transformedUrl = toDirectUrl(item.audioUrl);
+                        const wasTransformed = item.audioUrl && item.audioUrl !== transformedUrl;
+                        const isValidAudioUrl = !item.audioUrl || isValidUrl(item.audioUrl);
+                        const urlType = detectUrlType(item.audioUrl);
+
+                        const getUrlTypeLabel = () => {
+                          if (!item.audioUrl) return '';
+                          switch (urlType) {
+                            case 'nextcloud': return 'Nextcloud/ownCloud';
+                            case 'firebase': return 'Firebase Storage';
+                            default: return 'Direct URL';
+                          }
+                        };
+
+                        return (
+                          <div key={item.id} className="space-y-2 p-3 bg-white/[0.05] rounded border border-white/[0.06]">
+                            <div className="flex items-center justify-between gap-2">
                               <div className="flex items-center gap-2">
-                                <span className="text-xs text-white/40">Type:</span>
-                                <span className="text-xs bg-white/[0.08] text-white/60 px-2 py-1 rounded">{getUrlTypeLabel()}</span>
+                                <GripVertical size={16} className="text-white/30 flex-shrink-0" />
+                                <label className="text-sm text-white/40">Track {index + 1}</label>
                               </div>
-                              {wasTransformed && (
-                                <div className="flex items-start gap-2 bg-amber-500/10 border border-amber-500/30 rounded px-3 py-2">
-                                  <AlertCircle size={14} className="text-amber-400 flex-shrink-0 mt-0.5" />
-                                  <p className="text-xs text-amber-400">
-                                    Ontbrekende <code className="bg-black/30 px-1 rounded">/download</code> — wordt automatisch toegevoegd
-                                  </p>
-                                </div>
-                              )}
-                              <div className="bg-white/[0.04] border border-white/[0.08] rounded px-3 py-2">
-                                <p className="text-xs text-white/40 mb-1">Uiteindelijke URL:</p>
-                                <p className="text-xs text-white break-all font-mono">{transformedUrl}</p>
+                              <div className="flex items-center gap-1">
+                                <button type="button" onClick={() => moveTrackUp(item.id)} disabled={index === 0} className="p-1 text-white/40 hover:text-white disabled:opacity-30 transition-colors"><ArrowUp size={16} /></button>
+                                <button type="button" onClick={() => moveTrackDown(item.id)} disabled={index === tracklist.length - 1} className="p-1 text-white/40 hover:text-white disabled:opacity-30 transition-colors"><ArrowDown size={16} /></button>
+                                <button type="button" onClick={() => removeTrackFromList(item.id)} className="p-1 text-red-400 hover:text-red-300 transition-colors"><Trash2 size={16} /></button>
                               </div>
                             </div>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-            </div>
+                            <input
+                              type="text"
+                              placeholder="Track Titel"
+                              value={item.title}
+                              onChange={(e) => updateTrackInList(item.id, 'title', e.target.value)}
+                              className="w-full px-3 py-2 bg-white/[0.06] border border-white/[0.08] rounded text-white text-sm"
+                            />
+                            <div className="space-y-2">
+                              <input
+                                type="text"
+                                placeholder="Audio URL"
+                                value={item.audioUrl}
+                                onChange={(e) => updateTrackInList(item.id, 'audioUrl', e.target.value)}
+                                className="w-full px-3 py-2 bg-white/[0.06] border border-white/[0.08] rounded text-white text-sm"
+                              />
+                              {item.audioUrl && isValidAudioUrl && (
+                                <div className="flex flex-col gap-2">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-xs text-white/40">Type:</span>
+                                    <span className="text-xs bg-white/[0.08] text-white/60 px-2 py-1 rounded">{getUrlTypeLabel()}</span>
+                                  </div>
+                                  {wasTransformed && (
+                                    <div className="flex items-start gap-2 bg-amber-500/10 border border-amber-500/30 rounded px-3 py-2">
+                                      <AlertCircle size={14} className="text-amber-400 flex-shrink-0 mt-0.5" />
+                                      <p className="text-xs text-amber-400">
+                                        Ontbrekende <code className="bg-black/30 px-1 rounded">/download</code> — wordt automatisch toegevoegd
+                                      </p>
+                                    </div>
+                                  )}
+                                  <div className="bg-white/[0.04] border border-white/[0.08] rounded px-3 py-2">
+                                    <p className="text-xs text-white/40 mb-1">Uiteindelijke URL:</p>
+                                    <p className="text-xs text-white break-all font-mono">{transformedUrl}</p>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+              )}
+            </>
           )}
 
-          <div>
-            <label className="block text-sm font-medium text-white/60 mb-2">Beschrijving (optioneel)</label>
-            <textarea value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} className="w-full px-3 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white placeholder-white/30 focus:outline-none focus:border-white/[0.2]" rows={3} placeholder="Beschrijving..." />
-          </div>
+          {activeTab === 'extra' && (
+            <>
+              <div>
+                <label className="block text-sm font-medium text-white/60 mb-2">Tags (komma-gescheiden)</label>
+                <input type="text" value={formData.tags} onChange={(e) => setFormData({ ...formData, tags: e.target.value })} className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white" placeholder="electronic, remix, bootleg" />
+              </div>
 
-          <div className="flex flex-wrap gap-4">
-            <label className="flex items-center space-x-2 cursor-pointer">
-              <input type="checkbox" checked={formData.featured} onChange={(e) => setFormData({ ...formData, featured: e.target.checked })} className="w-4 h-4" />
-              <span className="text-sm text-white/60">Featured</span>
-            </label>
-            <label className="flex items-center space-x-2 cursor-pointer">
-              <input type="checkbox" checked={formData.isFree} onChange={(e) => setFormData({ ...formData, isFree: e.target.checked })} className="w-4 h-4" />
-              <span className="text-sm text-white/60">Gratis download</span>
-            </label>
-          </div>
+              <div>
+                <label className="block text-sm font-medium text-white/60 mb-2">Slug</label>
+                <input type="text" value={formData.slug} onChange={(e) => setFormData({ ...formData, slug: e.target.value })} className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white" placeholder="auto-gegenereerd van titel" />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-white/60 mb-2">Beschrijving (optioneel)</label>
+                <textarea value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} className="w-full px-3 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white placeholder-white/30 focus:outline-none focus:border-white/[0.2]" rows={3} placeholder="Beschrijving..." />
+              </div>
+
+              <div className="flex flex-wrap gap-4">
+                <label className="flex items-center space-x-2 cursor-pointer">
+                  <input type="checkbox" checked={formData.featured} onChange={(e) => setFormData({ ...formData, featured: e.target.checked })} className="w-4 h-4" />
+                  <span className="text-sm text-white/60">Featured</span>
+                </label>
+                <label className="flex items-center space-x-2 cursor-pointer">
+                  <input type="checkbox" checked={formData.isFree} onChange={(e) => setFormData({ ...formData, isFree: e.target.checked })} className="w-4 h-4" />
+                  <span className="text-sm text-white/60">Gratis download</span>
+                </label>
+              </div>
+            </>
+          )}
 
           <div className="flex items-center justify-end space-x-4 pt-4 border-t border-white/[0.06]">
             <button type="button" onClick={onClose} className="px-6 py-2 text-white/40 hover:text-white transition-colors">
@@ -1128,8 +1174,17 @@ interface RemixFormModalProps {
   onDelete?: () => void;
 }
 
+type RemixFormTab = 'basis' | 'metadata' | 'media';
+
+const REMIX_FORM_TABS: { id: RemixFormTab; label: string }[] = [
+  { id: 'basis', label: 'Basis' },
+  { id: 'metadata', label: 'Metadata' },
+  { id: 'media', label: 'Media & Opties' },
+];
+
 const RemixFormModal: React.FC<RemixFormModalProps> = ({ remix, onClose, onSave, onDelete }) => {
   const currentYear = new Date().getFullYear();
+  const [activeTab, setActiveTab] = useState<RemixFormTab>('basis');
   const [formData, setFormData] = useState({
     title: remix?.title || '',
     remixArtist: remix?.remixArtist || 'Jonna Rincon',
@@ -1181,6 +1236,20 @@ const RemixFormModal: React.FC<RemixFormModalProps> = ({ remix, onClose, onSave,
     e.preventDefault();
     setSaving(true);
     try {
+      if (!formData.title.trim() || !formData.remixArtist.trim() || !formData.originalArtist.trim() || !formData.genre.trim()) {
+        alert('Vul de verplichte velden in op het tabblad Basis (titel, remix artiest, originele artiest, genre)');
+        setActiveTab('basis');
+        setSaving(false);
+        return;
+      }
+
+      if (!formData.year) {
+        alert('Vul een geldig jaar in op het tabblad Metadata');
+        setActiveTab('metadata');
+        setSaving(false);
+        return;
+      }
+
       const remixData: any = {
         title: formData.title,
         remixArtist: formData.remixArtist,
@@ -1257,86 +1326,119 @@ const RemixFormModal: React.FC<RemixFormModalProps> = ({ remix, onClose, onSave,
           </div>
         </div>
 
+        {/* Tab bar */}
+        <div className="px-6 py-3 border-b border-white/[0.06] bg-white/[0.03] flex-shrink-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            {REMIX_FORM_TABS.map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTab(tab.id)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
+                  activeTab === tab.id
+                    ? 'bg-purple-600 text-white'
+                    : 'bg-white/[0.06] text-white/60 hover:bg-white/[0.12]'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
         <form onSubmit={handleSubmit} className="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Titel <span className="text-red-400">*</span></label>
-              <input type="text" value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white" required />
+          {activeTab === 'basis' && (
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-white/60 mb-2">Titel <span className="text-red-400">*</span></label>
+                <input type="text" value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white" required />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-white/60 mb-2">Remix Artiest <span className="text-red-400">*</span></label>
+                <input type="text" value={formData.remixArtist} onChange={(e) => setFormData({ ...formData, remixArtist: e.target.value })} className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white" required />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-white/60 mb-2">Originele Artiest <span className="text-red-400">*</span></label>
+                <input type="text" value={formData.originalArtist} onChange={(e) => setFormData({ ...formData, originalArtist: e.target.value })} className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white" required />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-white/60 mb-2">Originele Track Titel</label>
+                <input type="text" value={formData.originalTrackTitle} onChange={(e) => setFormData({ ...formData, originalTrackTitle: e.target.value })} className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-white/60 mb-2">Type <span className="text-red-400">*</span></label>
+                <select value={formData.remixType} onChange={(e) => setFormData({ ...formData, remixType: e.target.value as 'Remix' | 'Edit' | 'Bootleg' })} className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white" required>
+                  <option value="Remix">Remix</option>
+                  <option value="Edit">Edit</option>
+                  <option value="Bootleg">Bootleg</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-white/60 mb-2">Genre <span className="text-red-400">*</span></label>
+                <input type="text" value={formData.genre} onChange={(e) => setFormData({ ...formData, genre: e.target.value })} className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white" required />
+              </div>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Remix Artiest <span className="text-red-400">*</span></label>
-              <input type="text" value={formData.remixArtist} onChange={(e) => setFormData({ ...formData, remixArtist: e.target.value })} className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white" required />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Originele Artiest <span className="text-red-400">*</span></label>
-              <input type="text" value={formData.originalArtist} onChange={(e) => setFormData({ ...formData, originalArtist: e.target.value })} className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white" required />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Originele Track Titel</label>
-              <input type="text" value={formData.originalTrackTitle} onChange={(e) => setFormData({ ...formData, originalTrackTitle: e.target.value })} className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Type <span className="text-red-400">*</span></label>
-              <select value={formData.remixType} onChange={(e) => setFormData({ ...formData, remixType: e.target.value as 'Remix' | 'Edit' | 'Bootleg' })} className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white" required>
-                <option value="Remix">Remix</option>
-                <option value="Edit">Edit</option>
-                <option value="Bootleg">Bootleg</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Jaar <span className="text-red-400">*</span></label>
-              <input type="number" value={formData.year} onChange={(e) => setFormData({ ...formData, year: parseInt(e.target.value) })} className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white" required />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Collab <span className="text-red-400">*</span></label>
-              <select value={formData.collab} onChange={(e) => setFormData({ ...formData, collab: e.target.value as 'Solo' | 'Collab' })} className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white" required>
-                <option value="Solo">Solo</option>
-                <option value="Collab">Collab</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Genre <span className="text-red-400">*</span></label>
-              <input type="text" value={formData.genre} onChange={(e) => setFormData({ ...formData, genre: e.target.value })} className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white" required />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Duur</label>
-              <input type="text" value={formData.duration} onChange={(e) => setFormData({ ...formData, duration: e.target.value })} className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white" placeholder="bv. 3:45" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Status</label>
-              <select value={formData.status} onChange={(e) => setFormData({ ...formData, status: e.target.value as Remix['status'] })} className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white">
-                <option value="draft">Draft</option>
-                <option value="published">Published</option>
-                <option value="archived">Archived</option>
-              </select>
-            </div>
-          </div>
+          )}
 
-          <div>
-            <label className="block text-sm font-medium text-white/60 mb-2">Tags (komma-gescheiden)</label>
-            <input type="text" value={formData.tags} onChange={(e) => setFormData({ ...formData, tags: e.target.value })} className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white" placeholder="electronic, remix, bootleg" />
-          </div>
+          {activeTab === 'metadata' && (
+            <>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-white/60 mb-2">Jaar <span className="text-red-400">*</span></label>
+                  <input type="number" value={formData.year} onChange={(e) => setFormData({ ...formData, year: parseInt(e.target.value) })} className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white" required />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-white/60 mb-2">Collab <span className="text-red-400">*</span></label>
+                  <select value={formData.collab} onChange={(e) => setFormData({ ...formData, collab: e.target.value as 'Solo' | 'Collab' })} className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white" required>
+                    <option value="Solo">Solo</option>
+                    <option value="Collab">Collab</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-white/60 mb-2">Duur</label>
+                  <input type="text" value={formData.duration} onChange={(e) => setFormData({ ...formData, duration: e.target.value })} className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white" placeholder="bv. 3:45" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-white/60 mb-2">Status</label>
+                  <select value={formData.status} onChange={(e) => setFormData({ ...formData, status: e.target.value as Remix['status'] })} className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white">
+                    <option value="draft">Draft</option>
+                    <option value="published">Published</option>
+                    <option value="archived">Archived</option>
+                  </select>
+                </div>
+              </div>
 
-          <div>
-            <label className="block text-sm font-medium text-white/60 mb-2">Slug</label>
-            <input type="text" value={formData.slug} onChange={(e) => setFormData({ ...formData, slug: e.target.value })} className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white" placeholder="auto-gegenereerd van titel" />
-          </div>
+              <div>
+                <label className="block text-sm font-medium text-white/60 mb-2">Tags (komma-gescheiden)</label>
+                <input type="text" value={formData.tags} onChange={(e) => setFormData({ ...formData, tags: e.target.value })} className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white" placeholder="electronic, remix, bootleg" />
+              </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <LinkInput label="Audio URL" name="audioUrl" type="audio" onChange={(url) => setFormData({ ...formData, audioUrl: url })} defaultValue={formData.audioUrl} placeholder="https://nextcloud.example.com/..." />
-            <LinkInput label="Artwork URL" name="artworkUrl" type="image" onChange={(url) => setFormData({ ...formData, artworkUrl: url })} defaultValue={formData.artworkUrl} placeholder="https://example.com/image.jpg" />
-          </div>
+              <div>
+                <label className="block text-sm font-medium text-white/60 mb-2">Slug</label>
+                <input type="text" value={formData.slug} onChange={(e) => setFormData({ ...formData, slug: e.target.value })} className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white" placeholder="auto-gegenereerd van titel" />
+              </div>
+            </>
+          )}
 
-          <div className="flex flex-wrap gap-4">
-            <label className="flex items-center space-x-2 cursor-pointer">
-              <input type="checkbox" checked={formData.featured} onChange={(e) => setFormData({ ...formData, featured: e.target.checked })} className="w-4 h-4" />
-              <span className="text-sm text-white/60">Featured</span>
-            </label>
-            <label className="flex items-center space-x-2 cursor-pointer">
-              <input type="checkbox" checked={formData.isFree} onChange={(e) => setFormData({ ...formData, isFree: e.target.checked })} className="w-4 h-4" />
-              <span className="text-sm text-white/60">Gratis download</span>
-            </label>
-          </div>
+          {activeTab === 'media' && (
+            <>
+              <div className="grid grid-cols-2 gap-4">
+                <LinkInput label="Audio URL" name="audioUrl" type="audio" onChange={(url) => setFormData({ ...formData, audioUrl: url })} defaultValue={formData.audioUrl} placeholder="https://nextcloud.example.com/..." />
+                <LinkInput label="Artwork URL" name="artworkUrl" type="image" onChange={(url) => setFormData({ ...formData, artworkUrl: url })} defaultValue={formData.artworkUrl} placeholder="https://example.com/image.jpg" />
+              </div>
+
+              <div className="flex flex-wrap gap-4">
+                <label className="flex items-center space-x-2 cursor-pointer">
+                  <input type="checkbox" checked={formData.featured} onChange={(e) => setFormData({ ...formData, featured: e.target.checked })} className="w-4 h-4" />
+                  <span className="text-sm text-white/60">Featured</span>
+                </label>
+                <label className="flex items-center space-x-2 cursor-pointer">
+                  <input type="checkbox" checked={formData.isFree} onChange={(e) => setFormData({ ...formData, isFree: e.target.checked })} className="w-4 h-4" />
+                  <span className="text-sm text-white/60">Gratis download</span>
+                </label>
+              </div>
+            </>
+          )}
 
           <div className="flex items-center justify-end space-x-4 pt-4 border-t border-white/[0.06]">
             <button type="button" onClick={onClose} className="px-6 py-2 text-white/40 hover:text-white transition-colors">

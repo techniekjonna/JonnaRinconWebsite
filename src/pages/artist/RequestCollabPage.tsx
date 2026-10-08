@@ -25,22 +25,32 @@ const RequestCollabPage: React.FC = () => {
 
     setLoading(true);
     try {
-      await addDoc(collection(db, 'collabRequests'), {
-        artistId: user.uid,
-        artistName: user.displayName || 'Unknown Artist',
-        artistEmail: user.email,
-        title: formData.title,
-        type: formData.type,
-        description: formData.description,
-        budget: formData.budget ? parseFloat(formData.budget) : null,
-        preferredStartDate: formData.preferredStartDate || null,
-        message: formData.message,
-        status: 'pending',
+      // Collaboration requests live in the same supportMessages collection
+      // as every other chat, as a 'Collaboration' category conversation —
+      // the admin/manager Contact chat picks it up and shows the details
+      // below plus Approve/Reject right there. The project title has no
+      // dedicated field on a chat message, so it leads the message text.
+      const messageParts = [formData.title.trim(), formData.description.trim()];
+      if (formData.message.trim()) messageParts.push(formData.message.trim());
+
+      await addDoc(collection(db, 'supportMessages'), {
+        senderId: user.uid,
+        senderName: user.displayName || 'Unknown Artist',
+        senderEmail: user.email,
+        senderRole: 'artist',
+        recipientGroup: 'support',
+        category: 'Collaboration',
+        collabType: formData.type,
+        collabBudget: formData.budget ? parseFloat(formData.budget) : null,
+        collabPreferredStartDate: formData.preferredStartDate || null,
+        collabStatus: 'pending',
+        message: messageParts.filter(Boolean).join('\n\n'),
         createdAt: serverTimestamp(),
+        status: 'sent',
       });
 
-      alert('✅ Collaboration request submitted! Admin will review it soon.');
-      navigate('/artist/collaborations');
+      alert('✅ Collaboration request submitted! The team will review it soon.');
+      navigate('/artist/board');
     } catch (error) {
       console.error('Failed to submit collab request:', error);
       alert('❌ Failed to submit request. Please try again.');
