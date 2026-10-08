@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
   ArrowLeft, ShoppingCart, Play, Pause, Zap, Download, Globe, Disc3,
@@ -73,7 +73,6 @@ const BeatDetailPage: React.FC = () => {
   const [duration, setDuration] = useState(0);
 
   // Per-beat accent color, sampled from the hero artwork once it loads.
-  const heroImgRef = useRef<HTMLImageElement>(null);
   const [accentColor, setAccentColor] = useState<ExtractedColor | null>(null);
 
   // Similar Beats — scored pool + how much of it is currently revealed.
@@ -163,16 +162,28 @@ const BeatDetailPage: React.FC = () => {
     return () => { cancelled = true; };
   }, [beat?.id]);
 
-  const handleHeroImageLoad = () => {
-    const img = heroImgRef.current;
-    if (!img) return;
-    extractAccentColor(img).then((color) => {
-      if (color) setAccentColor(color);
-    }).catch(() => {
-      // Extraction failure (e.g. blocked cross-origin canvas read) just keeps
-      // the default accent — never blocks rendering.
-    });
-  };
+  // Sample the accent color from a separate, invisible Image() rather than
+  // the hero <img> itself. The hero image must render with a plain (no
+  // crossOrigin) request, since most artwork is hosted on a self-hosted
+  // Nextcloud share link (see urlUtils.ts) that sends no CORS headers — a
+  // crossOrigin="anonymous" request to that host would simply fail to load,
+  // breaking the hero banner. This sampler image can safely fail/taint on
+  // its own; extractAccentColor already falls back to null on any error.
+  useEffect(() => {
+    const src = beat?.artworkUrl;
+    if (!src) return;
+    let cancelled = false;
+    const sampler = new Image();
+    sampler.crossOrigin = 'anonymous';
+    sampler.onload = () => {
+      if (cancelled) return;
+      extractAccentColor(sampler).then((color) => {
+        if (!cancelled && color) setAccentColor(color);
+      }).catch(() => {});
+    };
+    sampler.src = src;
+    return () => { cancelled = true; };
+  }, [beat?.artworkUrl]);
 
   const handlePlay = () => {
     if (!beat) return;
@@ -411,11 +422,8 @@ const BeatDetailPage: React.FC = () => {
             dot and a glow under the title — never as a wholesale re-theme. */}
         <div className="relative w-full aspect-[16/9] md:aspect-[3/1] overflow-hidden rounded-2xl mb-6">
           <img
-            ref={heroImgRef}
             src={beat.artworkUrl || '/JEIGHTENESIS.jpg'}
             alt={beat.title}
-            crossOrigin="anonymous"
-            onLoad={handleHeroImageLoad}
             className="absolute inset-0 w-full h-full object-cover"
             style={{ filter: 'contrast(1.1) brightness(0.55)' }}
           />
