@@ -193,7 +193,17 @@ interface ServiceFormModalProps {
   onSave: () => void;
 }
 
+type ServiceFormTab = 'basics' | 'pricing' | 'media' | 'visibility';
+
+const SERVICE_FORM_TABS: { id: ServiceFormTab; label: string }[] = [
+  { id: 'basics', label: 'Basics' },
+  { id: 'pricing', label: 'Pricing' },
+  { id: 'media', label: 'Media' },
+  { id: 'visibility', label: 'Visibility & SEO' },
+];
+
 const ServiceFormModal: React.FC<ServiceFormModalProps> = ({ service, onClose, onSave }) => {
+  const [activeTab, setActiveTab] = useState<ServiceFormTab>('basics');
   const [formData, setFormData] = useState({
     name: service?.name || '',
     description: service?.description || '',
@@ -249,7 +259,15 @@ const ServiceFormModal: React.FC<ServiceFormModalProps> = ({ service, onClose, o
         : formData.rate;
 
       if (isNaN(rate) || rate < 0) {
-        alert('Please enter a valid rate');
+        alert('Please enter a valid rate in the Pricing tab');
+        setActiveTab('pricing');
+        setSaving(false);
+        return;
+      }
+
+      if (!formData.name.trim() || !formData.cta.trim() || !formData.description.trim()) {
+        alert('Please fill in all required fields in the Basics tab (name, description, CTA text)');
+        setActiveTab('basics');
         setSaving(false);
         return;
       }
@@ -298,220 +316,254 @@ const ServiceFormModal: React.FC<ServiceFormModalProps> = ({ service, onClose, o
           </h2>
         </div>
 
+        {/* Tab bar */}
+        <div className="px-6 py-3 border-b border-white/[0.06] bg-white/[0.03] flex-shrink-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            {SERVICE_FORM_TABS.map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTab(tab.id)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
+                  activeTab === tab.id
+                    ? 'bg-purple-600 text-white'
+                    : 'bg-white/[0.06] text-white/60 hover:bg-white/[0.12]'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
         <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto flex-1">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Name <span className="text-red-400">*</span></label>
-              <input
-                type="text"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white"
-                required
-              />
-            </div>
+          {activeTab === 'basics' && (
+            <>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-white/60 mb-2">Name <span className="text-red-400">*</span></label>
+                  <input
+                    type="text"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white"
+                    required
+                  />
+                </div>
 
-            <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Rate (€) <span className="text-red-400">*</span></label>
-              <input
-                type="number"
-                step="0.01"
-                min="0"
-                value={formData.rate}
-                onChange={(e) => setFormData({ ...formData, rate: parseFloat(e.target.value) || 0 })}
-                className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white"
-                required
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">48H Price (€)</label>
-              <input
-                type="number"
-                step="0.01"
-                min="0"
-                value={formData.price48h || ''}
-                onChange={(e) => setFormData({ ...formData, price48h: e.target.value ? parseFloat(e.target.value) : undefined })}
-                className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white"
-                placeholder="Optional"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">72H Price (€)</label>
-              <input
-                type="number"
-                step="0.01"
-                min="0"
-                value={formData.price72h || ''}
-                onChange={(e) => setFormData({ ...formData, price72h: e.target.value ? parseFloat(e.target.value) : undefined })}
-                className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white"
-                placeholder="Optional"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">7 Days Price (€)</label>
-              <input
-                type="number"
-                step="0.01"
-                min="0"
-                value={formData.price7days || ''}
-                onChange={(e) => setFormData({ ...formData, price7days: e.target.value ? parseFloat(e.target.value) : undefined })}
-                className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white"
-                placeholder="Optional"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-white/60 mb-2">Description <span className="text-red-400">*</span></label>
-            <textarea
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white min-h-[100px] resize-none"
-              required
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">CTA Button Text <span className="text-red-400">*</span></label>
-              <input
-                type="text"
-                value={formData.cta}
-                onChange={(e) => setFormData({ ...formData, cta: e.target.value })}
-                className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white"
-                placeholder="Get Started"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Icon</label>
-              <select
-                value={formData.icon}
-                onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
-                className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white"
-              >
-                {iconOptions.map((icon) => (
-                  <option key={icon} value={icon}>
-                    {icon}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-white/60 mb-2">Gradient</label>
-            <select
-              value={formData.gradient}
-              onChange={(e) => setFormData({ ...formData, gradient: e.target.value })}
-              className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white"
-            >
-              <option value="from-red-600 to-orange-600">Red to Orange</option>
-              <option value="from-blue-600 to-cyan-600">Blue to Cyan</option>
-              <option value="from-orange-600 to-red-600">Orange to Red</option>
-              <option value="from-green-600 to-emerald-600">Green to Emerald</option>
-              <option value="from-indigo-600 to-purple-600">Indigo to Purple</option>
-            </select>
-          </div>
-
-          <div>
-            <LinkInput
-              label="Cover Image (optional)"
-              name="coverUrl"
-              type="image"
-              defaultValue={formData.coverUrl}
-              onChange={(url) => setFormData((prev) => ({ ...prev, coverUrl: url }))}
-              placeholder="https://cloud.internedata.nl/index.php/s/..."
-            />
-            {formData.coverUrl && (
-              <div className="mt-2 flex items-center gap-3">
-                <img
-                  src={formData.coverUrl}
-                  alt="Cover preview"
-                  className="w-16 h-16 rounded-xl object-cover border border-white/[0.1]"
-                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                />
-                <p className="text-xs text-white/40">Cover preview</p>
+                <div>
+                  <label className="block text-sm font-medium text-white/60 mb-2">CTA Button Text <span className="text-red-400">*</span></label>
+                  <input
+                    type="text"
+                    value={formData.cta}
+                    onChange={(e) => setFormData({ ...formData, cta: e.target.value })}
+                    className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white"
+                    placeholder="Get Started"
+                    required
+                  />
+                </div>
               </div>
-            )}
-          </div>
 
-          <div>
-            <LinkInput
-              label="Download Link (optional)"
-              name="downloadUrl"
-              type="link"
-              defaultValue={formData.downloadUrl}
-              onChange={(url) => setFormData((prev) => ({ ...prev, downloadUrl: url }))}
-              placeholder="https://cloud.internedata.nl/index.php/s/... (add /download for internedata.nl links)"
-            />
-            <p className="text-xs text-white/40 mt-2">For internedata.nl links, add '/download' at the end</p>
-          </div>
+              <div>
+                <label className="block text-sm font-medium text-white/60 mb-2">Icon</label>
+                <select
+                  value={formData.icon}
+                  onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
+                  className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white"
+                >
+                  {iconOptions.map((icon) => (
+                    <option key={icon} value={icon}>
+                      {icon}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Status</label>
-              <select
-                value={formData.status}
-                onChange={(e) => setFormData({ ...formData, status: e.target.value as Service['status'] })}
-                className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white"
-              >
-                <option value="draft">Draft</option>
-                <option value="published">Published</option>
-                <option value="archived">Archived</option>
-              </select>
-            </div>
+              <div>
+                <label className="block text-sm font-medium text-white/60 mb-2">Description <span className="text-red-400">*</span></label>
+                <textarea
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white min-h-[100px] resize-none"
+                  required
+                />
+              </div>
+            </>
+          )}
 
-            <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Slug</label>
-              <input
-                type="text"
-                value={formData.slug}
-                onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white"
-                placeholder="auto-generated from name"
-              />
-            </div>
-          </div>
+          {activeTab === 'pricing' && (
+            <>
+              <div>
+                <label className="block text-sm font-medium text-white/60 mb-2">Rate (€) <span className="text-red-400">*</span></label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={formData.rate}
+                  onChange={(e) => setFormData({ ...formData, rate: parseFloat(e.target.value) || 0 })}
+                  className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white"
+                  required
+                />
+              </div>
 
-          <div>
-            <label className="block text-sm font-medium text-white/60 mb-2">Meta Title (SEO)</label>
-            <input
-              type="text"
-              value={formData.metaTitle}
-              onChange={(e) => setFormData({ ...formData, metaTitle: e.target.value })}
-              className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white"
-              placeholder="Optional"
-            />
-          </div>
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-white/60 mb-2">48H Price (€)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={formData.price48h || ''}
+                    onChange={(e) => setFormData({ ...formData, price48h: e.target.value ? parseFloat(e.target.value) : undefined })}
+                    className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white"
+                    placeholder="Optional"
+                  />
+                </div>
 
-          <div>
-            <label className="block text-sm font-medium text-white/60 mb-2">Meta Description (SEO)</label>
-            <textarea
-              value={formData.metaDescription}
-              onChange={(e) => setFormData({ ...formData, metaDescription: e.target.value })}
-              className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white min-h-[80px] resize-none"
-              placeholder="Optional"
-            />
-          </div>
+                <div>
+                  <label className="block text-sm font-medium text-white/60 mb-2">72H Price (€)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={formData.price72h || ''}
+                    onChange={(e) => setFormData({ ...formData, price72h: e.target.value ? parseFloat(e.target.value) : undefined })}
+                    className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white"
+                    placeholder="Optional"
+                  />
+                </div>
 
-          <div>
-            <label className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                checked={formData.featured}
-                onChange={(e) => setFormData({ ...formData, featured: e.target.checked })}
-                className="w-4 h-4"
-              />
-              <span className="text-sm text-white/60">Featured Service</span>
-            </label>
-          </div>
+                <div>
+                  <label className="block text-sm font-medium text-white/60 mb-2">7 Days Price (€)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={formData.price7days || ''}
+                    onChange={(e) => setFormData({ ...formData, price7days: e.target.value ? parseFloat(e.target.value) : undefined })}
+                    className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white"
+                    placeholder="Optional"
+                  />
+                </div>
+              </div>
+            </>
+          )}
+
+          {activeTab === 'media' && (
+            <>
+              <div>
+                <label className="block text-sm font-medium text-white/60 mb-2">Gradient</label>
+                <select
+                  value={formData.gradient}
+                  onChange={(e) => setFormData({ ...formData, gradient: e.target.value })}
+                  className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white"
+                >
+                  <option value="from-red-600 to-orange-600">Red to Orange</option>
+                  <option value="from-blue-600 to-cyan-600">Blue to Cyan</option>
+                  <option value="from-orange-600 to-red-600">Orange to Red</option>
+                  <option value="from-green-600 to-emerald-600">Green to Emerald</option>
+                  <option value="from-indigo-600 to-purple-600">Indigo to Purple</option>
+                </select>
+              </div>
+
+              <div>
+                <LinkInput
+                  label="Cover Image (optional)"
+                  name="coverUrl"
+                  type="image"
+                  defaultValue={formData.coverUrl}
+                  onChange={(url) => setFormData((prev) => ({ ...prev, coverUrl: url }))}
+                  placeholder="https://cloud.internedata.nl/index.php/s/..."
+                />
+                {formData.coverUrl && (
+                  <div className="mt-2 flex items-center gap-3">
+                    <img
+                      src={formData.coverUrl}
+                      alt="Cover preview"
+                      className="w-16 h-16 rounded-xl object-cover border border-white/[0.1]"
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                    />
+                    <p className="text-xs text-white/40">Cover preview</p>
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <LinkInput
+                  label="Download Link (optional)"
+                  name="downloadUrl"
+                  type="link"
+                  defaultValue={formData.downloadUrl}
+                  onChange={(url) => setFormData((prev) => ({ ...prev, downloadUrl: url }))}
+                  placeholder="https://cloud.internedata.nl/index.php/s/... (add /download for internedata.nl links)"
+                />
+                <p className="text-xs text-white/40 mt-2">For internedata.nl links, add '/download' at the end</p>
+              </div>
+            </>
+          )}
+
+          {activeTab === 'visibility' && (
+            <>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-white/60 mb-2">Status</label>
+                  <select
+                    value={formData.status}
+                    onChange={(e) => setFormData({ ...formData, status: e.target.value as Service['status'] })}
+                    className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white"
+                  >
+                    <option value="draft">Draft</option>
+                    <option value="published">Published</option>
+                    <option value="archived">Archived</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-white/60 mb-2">Slug</label>
+                  <input
+                    type="text"
+                    value={formData.slug}
+                    onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
+                    className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white"
+                    placeholder="auto-generated from name"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-white/60 mb-2">Meta Title (SEO)</label>
+                <input
+                  type="text"
+                  value={formData.metaTitle}
+                  onChange={(e) => setFormData({ ...formData, metaTitle: e.target.value })}
+                  className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white"
+                  placeholder="Optional"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-white/60 mb-2">Meta Description (SEO)</label>
+                <textarea
+                  value={formData.metaDescription}
+                  onChange={(e) => setFormData({ ...formData, metaDescription: e.target.value })}
+                  className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white min-h-[80px] resize-none"
+                  placeholder="Optional"
+                />
+              </div>
+
+              <div>
+                <label className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    checked={formData.featured}
+                    onChange={(e) => setFormData({ ...formData, featured: e.target.checked })}
+                    className="w-4 h-4"
+                  />
+                  <span className="text-sm text-white/60">Featured Service</span>
+                </label>
+              </div>
+            </>
+          )}
 
           <div className="flex items-center justify-end space-x-4 pt-4 border-t border-white/[0.06] bg-white/[0.10] -mx-6 px-6 py-4 flex-shrink-0">
             <button
