@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useOrderNotifications } from '../../hooks/useOrderNotifications';
-import { openPlayerModal } from '../GlobalAudioPlayer';
+import { openPlayerModal, subscribeToPlayerState } from '../GlobalAudioPlayer';
 import {
   ArrowLeft,
   ArrowUpRight,
@@ -34,6 +34,13 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const [isMenuClosing, setIsMenuClosing] = useState(false);
   const [menuButtonHovered, setMenuButtonHovered] = useState(false);
   const [playerButtonHovered, setPlayerButtonHovered] = useState(false);
+  const [isPlayingNow, setIsPlayingNow] = useState(false);
+
+  useEffect(() => {
+    return subscribeToPlayerState((store) => {
+      setIsPlayingNow(store.isPlaying && !!store.currentTrack);
+    });
+  }, []);
   const recentlyClosedRef = useRef(false);
   const closeTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { user, signOut } = useAuth();
@@ -135,7 +142,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                 title="Player"
               >
                 <span className="absolute inset-0 flex items-center justify-center transition-all duration-300">
-                  <Play size={18} className={`transition-all duration-300 ${playerButtonHovered ? 'opacity-0 scale-75' : 'opacity-100 scale-100'}`} />
+                  <Play size={18} className={`text-white transition-all duration-300 ${playerButtonHovered ? 'opacity-0 scale-75' : 'opacity-100 scale-100'} ${isPlayingNow ? 'animate-player-glow' : ''}`} />
                 </span>
                 <span className="absolute inset-0 flex items-center justify-center transition-all duration-300">
                   <span className={`text-[9px] font-black uppercase tracking-widest transition-all duration-300 ${playerButtonHovered ? 'opacity-100' : 'opacity-0'}`}>Player</span>
@@ -339,6 +346,13 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       </div>
 
       <style>{`
+        @keyframes player-glow {
+          0%, 100% { filter: drop-shadow(0 0 2px rgba(255,255,255,0.6)); }
+          50% { filter: drop-shadow(0 0 7px rgba(255,255,255,0.95)); }
+        }
+        .animate-player-glow {
+          animation: player-glow 1.8s ease-in-out infinite;
+        }
         @keyframes admin-panel-slide-in {
           from { transform: translateX(100%); }
           to { transform: translateX(0); }

@@ -1,13 +1,10 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, Play, ShoppingBag } from 'lucide-react';
 import { useCartContext } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage, useT } from '../contexts/LanguageContext';
 import { subscribeToPlayerState, openPlayerModal } from './GlobalAudioPlayer';
-
-const WAVEFORM_HEIGHTS = [5, 10, 14, 8, 16, 11, 14, 9, 16, 12, 8, 14, 10, 6, 12];
-const CYCLE_MS = 2500;
 
 const Header: React.FC = () => {
   const [hamburgerHovered, setHamburgerHovered] = useState(false);
@@ -18,42 +15,14 @@ const Header: React.FC = () => {
   const { language, toggleLanguage } = useLanguage();
   const t = useT();
 
-  // Player state for waveform banner
+  // Drives the subtle glow on the player button — the only "now playing" indicator
   const [isPlayingNow, setIsPlayingNow] = useState(false);
-  const [bannerTrack, setBannerTrack] = useState<{ title: string; artist: string } | null>(null);
-  const [cyclePhase, setCyclePhase] = useState<0 | 1 | 2 | 3>(0); // 0=click-hint, 1=label, 2=title, 3=artist
-  const [textVisible, setTextVisible] = useState(true);
-  const cycleRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     return subscribeToPlayerState((store) => {
-      const playing = store.isPlaying && !!store.currentTrack;
-      setIsPlayingNow(playing);
-      setBannerTrack(store.currentTrack ? { title: store.currentTrack.title, artist: store.currentTrack.artist } : null);
+      setIsPlayingNow(store.isPlaying && !!store.currentTrack);
     });
   }, []);
-
-  // Cycle "Now playing" / title / artist
-  useEffect(() => {
-    if (cycleRef.current) clearInterval(cycleRef.current);
-    if (!isPlayingNow) { setCyclePhase(0); setTextVisible(true); return; }
-    cycleRef.current = setInterval(() => {
-      setTextVisible(false);
-      setTimeout(() => {
-        setCyclePhase(p => ((p + 1) % 4) as 0 | 1 | 2 | 3);
-        setTextVisible(true);
-      }, 350);
-    }, CYCLE_MS);
-    return () => { if (cycleRef.current) clearInterval(cycleRef.current); };
-  }, [isPlayingNow]);
-
-  const nowPlayingText = cyclePhase === 0
-    ? 'Click here for more info'
-    : cyclePhase === 1
-    ? 'Now Playing'
-    : cyclePhase === 2
-    ? (bannerTrack?.title ?? '')
-    : (bannerTrack?.artist ?? '');
 
   const openNavPanel = () => {
     window.dispatchEvent(new CustomEvent('open-nav-panel'));
@@ -102,7 +71,10 @@ const Header: React.FC = () => {
       <span
         className="absolute inset-0 flex items-center justify-center transition-all duration-300"
       >
-        <Play size={18} className={`transition-all duration-300 ${playerButtonHovered ? 'opacity-0 scale-75' : 'opacity-100 scale-100'}`} />
+        <Play
+          size={18}
+          className={`text-white transition-all duration-300 ${playerButtonHovered ? 'opacity-0 scale-75' : 'opacity-100 scale-100'} ${isPlayingNow ? 'animate-player-glow' : ''}`}
+        />
       </span>
       <span
         className="absolute inset-0 flex items-center justify-center transition-all duration-300"
@@ -170,59 +142,12 @@ const Header: React.FC = () => {
                 ))}
               </div>
 
-              {/* Center brand — now playing above, logo middle, waveform below */}
+              {/* Center brand — plain, static; the player button's glow is
+                  the only "now playing" indicator */}
               <div className="text-center px-6 border-x border-white/[0.08] flex-shrink-0 flex flex-col items-center justify-center gap-1 self-stretch overflow-hidden">
-
-                {/* "Now playing" cycling text — above logo, visible when playing */}
-                {isPlayingNow && bannerTrack && (
-                  <button
-                    onClick={() => openPlayerModal()}
-                    className="group"
-                    title={`Now playing: ${bannerTrack.title}`}
-                  >
-                    <span
-                      className="text-[9px] font-bold uppercase tracking-[0.18em] text-white/40 group-hover:text-white/70 transition-colors"
-                      style={{ opacity: textVisible ? 1 : 0, transition: 'opacity 0.35s ease' }}
-                    >
-                      {nowPlayingText}
-                    </span>
-                  </button>
-                )}
-
-                {/* Logo — clickable to player when playing, no action when not */}
-                {isPlayingNow ? (
-                  <button onClick={() => openPlayerModal()} className="group">
-                    <h1 className="text-lg font-black text-white tracking-tighter group-hover:text-white/80 transition-colors">
-                      JONNA RINCON
-                    </h1>
-                  </button>
-                ) : (
-                  <h1 className="text-lg font-black text-white tracking-tighter">
-                    JONNA RINCON
-                  </h1>
-                )}
-
-                {/* Waveform — below logo, visible when playing */}
-                {isPlayingNow && bannerTrack && (
-                  <button
-                    onClick={() => openPlayerModal()}
-                    className="group flex items-end gap-[2px] px-1"
-                    title={`Now playing: ${bannerTrack.title}`}
-                  >
-                    {WAVEFORM_HEIGHTS.map((h, i) => (
-                      <div
-                        key={i}
-                        className="w-[2px] rounded-full bg-white animate-waveform-bar group-hover:bg-red-200 transition-colors"
-                        style={{
-                          height: `${h}px`,
-                          boxShadow: '0 0 5px rgba(255,255,255,0.7)',
-                          animationDuration: `${0.55 + (i % 5) * 0.1}s`,
-                          animationDelay: `${i * 55}ms`,
-                        }}
-                      />
-                    ))}
-                  </button>
-                )}
+                <h1 className="text-lg font-black text-white tracking-tighter">
+                  JONNA RINCON
+                </h1>
               </div>
 
               <div className="flex gap-8">
@@ -244,55 +169,10 @@ const Header: React.FC = () => {
             </div>
           </nav>
 
-          {/* Mobile: now playing above, brand middle, waveform below */}
+          {/* Mobile: plain, static brand — the player button's glow is the
+              only "now playing" indicator */}
           <div className="md:hidden flex-1 flex flex-col items-center justify-center gap-0.5">
-
-            {/* "Now playing" text — above logo */}
-            <div className="h-3.5 flex items-center justify-center">
-              {isPlayingNow && bannerTrack ? (
-                <button onClick={() => openPlayerModal()} className="group">
-                  <span
-                    className="text-[8px] font-bold uppercase tracking-[0.18em] text-white/40 group-hover:text-white/70 transition-colors"
-                    style={{ opacity: textVisible ? 1 : 0, transition: 'opacity 0.35s ease' }}
-                  >
-                    {nowPlayingText}
-                  </span>
-                </button>
-              ) : null}
-            </div>
-
-            {/* Logo — opens player when playing, no action when not */}
-            {isPlayingNow ? (
-              <button onClick={() => openPlayerModal()} className="group">
-                <span className="text-sm font-black text-white tracking-tighter group-hover:text-white/80 transition-colors">JONNA RINCON</span>
-              </button>
-            ) : (
-              <span className="text-sm font-black text-white tracking-tighter">JONNA RINCON</span>
-            )}
-
-            {/* Waveform — below logo */}
-            <div className="h-3.5 flex items-center justify-center">
-              {isPlayingNow && bannerTrack ? (
-                <button
-                  onClick={() => openPlayerModal()}
-                  className="group flex items-end gap-[2px]"
-                  title={`Now playing: ${bannerTrack.title}`}
-                >
-                  {WAVEFORM_HEIGHTS.slice(0, 9).map((h, i) => (
-                    <div
-                      key={i}
-                      className="w-[2px] rounded-full bg-white animate-waveform-bar group-hover:bg-red-200 transition-colors"
-                      style={{
-                        height: `${Math.max(3, Math.round(h * 0.6))}px`,
-                        boxShadow: '0 0 4px rgba(255,255,255,0.6)',
-                        animationDuration: `${0.55 + (i % 5) * 0.1}s`,
-                        animationDelay: `${i * 60}ms`,
-                      }}
-                    />
-                  ))}
-                </button>
-              ) : null}
-            </div>
+            <span className="text-sm font-black text-white tracking-tighter">JONNA RINCON</span>
           </div>
 
           {/* Right: Cart + Hamburger */}
@@ -315,6 +195,16 @@ const Header: React.FC = () => {
 
         </div>
       </div>
+
+      <style>{`
+        @keyframes player-glow {
+          0%, 100% { filter: drop-shadow(0 0 2px rgba(255,255,255,0.6)); }
+          50% { filter: drop-shadow(0 0 7px rgba(255,255,255,0.95)); }
+        }
+        .animate-player-glow {
+          animation: player-glow 1.8s ease-in-out infinite;
+        }
+      `}</style>
     </header>
   );
 };
