@@ -17,12 +17,17 @@
     @apply text-white font-sans overflow-x-hidden;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    /* Stop the pull-to-refresh/rubber-band bounce at the top and bottom of
+       the page so the site feels like a fixed, native app rather than a
+       browser tab you can drag past its own edges. */
+    overscroll-behavior-y: none;
   }
 
   html {
     background-color: #0a0a0a;
     image-rendering: -webkit-optimize-contrast;
     min-height: 100vh;
+    overscroll-behavior-y: none;
   }
 
   /* FOUC Prevention - Background Container States */
