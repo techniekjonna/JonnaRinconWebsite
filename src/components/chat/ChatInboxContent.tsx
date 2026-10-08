@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { MessageSquare, Send, Check, CheckCheck, Mail, Users as UsersIcon, ArrowLeft, Search, Plus, X, ChevronDown, ChevronUp, Handshake } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { MessageSquare, Send, Check, CheckCheck, Mail, Users as UsersIcon, ArrowLeft, Search, Plus, X, ChevronDown, ChevronUp, Handshake, Disc3 } from 'lucide-react';
 import { db } from '../../lib/firebase/config';
 import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, Timestamp, updateDoc, doc } from 'firebase/firestore';
 import { useAuth } from '../../contexts/AuthContext';
@@ -26,6 +27,13 @@ interface ChatMessage {
   collabBudget?: number | null;
   collabPreferredStartDate?: string | null;
   collabStatus?: 'pending' | 'approved' | 'rejected';
+  // Beat-inquiry details — only ever present on the message that started a
+  // 'Beat' category conversation (from a beat detail page's inline contact
+  // form). Optional and additive, same pattern as the collab fields above.
+  relatedBeatId?: string;
+  relatedBeatTitle?: string;
+  relatedBeatGenre?: string;
+  relatedBeatBpm?: number;
 }
 
 interface Conversation {
@@ -37,6 +45,11 @@ interface Conversation {
   lastMessageTime: Timestamp;
   unreadCount: number;
   category: string;
+  // Present only when category === 'Beat' (see ChatMessage above).
+  relatedBeatId?: string;
+  relatedBeatTitle?: string;
+  relatedBeatGenre?: string;
+  relatedBeatBpm?: number;
 }
 
 interface ChatInboxContentProps {
@@ -128,6 +141,10 @@ export const ChatInboxContent: React.FC<ChatInboxContentProps> = ({ role }) => {
         lastMessageTime: allForSender[allForSender.length - 1]?.createdAt || last.createdAt,
         unreadCount,
         category: last.category,
+        relatedBeatId: last.relatedBeatId,
+        relatedBeatTitle: last.relatedBeatTitle,
+        relatedBeatGenre: last.relatedBeatGenre,
+        relatedBeatBpm: last.relatedBeatBpm,
       };
       // Contact section = a visitor's own contact-form thread, OR any
       // thread whose latest message is a Collaboration request — whether
@@ -181,6 +198,14 @@ export const ChatInboxContent: React.FC<ChatInboxContentProps> = ({ role }) => {
   }, [selectedConversation, threadMessages]);
 
   const collabStatus: 'pending' | 'approved' | 'rejected' = collabSourceMessage?.collabStatus || 'pending';
+
+  // The message that carries this conversation's related-beat details — same
+  // fallback shape as collabSourceMessage above, for a 'Beat' category thread.
+  const beatSourceMessage = useMemo(() => {
+    if (!selectedConversation || selectedConversation.category !== 'Beat') return null;
+    const withDetails = threadMessages.find((m) => !isStaffRole(m.senderRole) && m.relatedBeatId);
+    return withDetails || threadMessages.find((m) => !isStaffRole(m.senderRole)) || null;
+  }, [selectedConversation, threadMessages]);
 
   const handleApproveCollab = async () => {
     if (!selectedConversation || !collabSourceMessage) return;
@@ -378,10 +403,13 @@ export const ChatInboxContent: React.FC<ChatInboxContentProps> = ({ role }) => {
                     <p className="px-3 py-4 text-xs text-white/25">No contact messages</p>
                   ) : (
                     filteredContactConversations.map((c) => (
-                      <button
+                      <div
                         key={c.id}
+                        role="button"
+                        tabIndex={0}
                         onClick={() => handleSelectConversation(c.id)}
-                        className={`w-full px-3 py-2.5 text-left transition-all border-b border-white/[0.04] flex items-center gap-3 ${
+                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleSelectConversation(c.id); }}
+                        className={`w-full px-3 py-2.5 text-left transition-all border-b border-white/[0.04] flex items-center gap-3 cursor-pointer ${
                           selectedId === c.id ? 'bg-white/[0.08]' : 'hover:bg-white/[0.04]'
                         }`}
                       >
@@ -390,17 +418,34 @@ export const ChatInboxContent: React.FC<ChatInboxContentProps> = ({ role }) => {
                           <div className="flex items-center justify-between gap-2">
                             <p className="text-xs font-semibold text-white truncate">{c.name}</p>
                             {c.category && (
-                              <span className="text-[9px] px-1.5 py-0.5 bg-white/[0.06] border border-white/[0.08] rounded-full text-white/40 uppercase tracking-wide flex-shrink-0">{c.category}</span>
+                              <span className="text-[9px] px-1.5 py-0.5 bg-white/[0.06] border border-white/[0.08] rounded-full text-white/40 uppercase tracking-wide flex-shrink-0">
+                                {c.category === 'Beat' ? 'Beat' : c.category}
+                              </span>
                             )}
                           </div>
-                          <p className="text-[10px] text-white/40 truncate mt-0.5">{c.lastMessage || 'No messages yet'}</p>
+                          {c.category === 'Beat' && c.relatedBeatTitle ? (
+                            <p className="text-[10px] text-white/40 truncate mt-0.5">
+                              {t('Beat', 'Beat')}:{' '}
+                              <Link
+                                to={`/shop/beats/${c.relatedBeatId}`}
+                                onClick={(e) => e.stopPropagation()}
+                                className="text-white/70 font-semibold hover:text-red-400 transition-colors"
+                              >
+                                {c.relatedBeatTitle}
+                              </Link>
+                              {c.relatedBeatGenre && <> · {c.relatedBeatGenre}</>}
+                              {c.relatedBeatBpm != null && <> · {c.relatedBeatBpm} BPM</>}
+                            </p>
+                          ) : (
+                            <p className="text-[10px] text-white/40 truncate mt-0.5">{c.lastMessage || 'No messages yet'}</p>
+                          )}
                         </div>
                         {c.unreadCount > 0 && (
                           <div className="w-5 h-5 rounded-full bg-red-600 flex items-center justify-center flex-shrink-0">
                             <span className="text-[10px] text-white font-bold">{c.unreadCount}</span>
                           </div>
                         )}
-                      </button>
+                      </div>
                     ))
                   )}
                 </div>
@@ -539,6 +584,32 @@ export const ChatInboxContent: React.FC<ChatInboxContentProps> = ({ role }) => {
                     {collabStatus === 'approved' ? t('Approved', 'Goedgekeurd') : t('Rejected', 'Afgewezen')}
                   </span>
                 )}
+              </div>
+            )}
+
+            {/* Beat details — only for a Beat-category thread (the inline
+                "ask about this beat" form on a beat's detail page). Shows
+                the badge/label plus the beat's title as a clickable link,
+                followed by its genre and BPM. */}
+            {selectedConversation.category === 'Beat' && beatSourceMessage?.relatedBeatId && (
+              <div className="px-4 py-3 border-b border-white/[0.08] bg-gradient-to-br from-red-500/[0.1] to-orange-500/[0.04] flex-shrink-0">
+                <div className="flex items-center gap-2 flex-wrap text-xs">
+                  <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-red-600/20 border border-red-600/30 text-red-300 font-bold uppercase tracking-wide text-[10px]">
+                    <Disc3 size={11} /> {t('Beat', 'Beat')}
+                  </span>
+                  <Link
+                    to={`/shop/beats/${beatSourceMessage.relatedBeatId}`}
+                    className="text-white font-semibold hover:text-red-400 transition-colors"
+                  >
+                    {beatSourceMessage.relatedBeatTitle}
+                  </Link>
+                  {beatSourceMessage.relatedBeatGenre && (
+                    <span className="text-white/50">· {beatSourceMessage.relatedBeatGenre}</span>
+                  )}
+                  {beatSourceMessage.relatedBeatBpm != null && (
+                    <span className="text-white/50">· {beatSourceMessage.relatedBeatBpm} BPM</span>
+                  )}
+                </div>
               </div>
             )}
 

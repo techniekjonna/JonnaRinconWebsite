@@ -65,6 +65,32 @@ function notifySubscribers() {
   subscribers.forEach(cb => cb({ ...playerStore }));
 }
 
+// Subscribers for live playback progress (current time / duration), e.g. an
+// inline seek bar rendered on a product detail page rather than the global
+// player UI itself.
+const progressSubscribers: ((currentTime: number, duration: number) => void)[] = [];
+
+export function subscribeToProgress(callback: (currentTime: number, duration: number) => void) {
+  progressSubscribers.push(callback);
+  return () => {
+    const index = progressSubscribers.indexOf(callback);
+    if (index > -1) progressSubscribers.splice(index, 1);
+  };
+}
+
+function notifyProgressSubscribers(currentTime: number, duration: number) {
+  progressSubscribers.forEach(cb => cb(currentTime, duration));
+}
+
+// Lets an external component (e.g. an inline seek bar) move playback on the
+// single shared <audio> element this component owns, without rendering its
+// own audio element. Registered once the player mounts; a no-op before then.
+let seekToFn: ((time: number) => void) | null = null;
+
+export function seekTo(time: number) {
+  seekToFn?.(time);
+}
+
 export function setCurrentTrack(track: Track, queue: Track[] = []) {
   playerStore.currentTrack = track;
   playerStore.queue = queue.length > 0 ? queue : [track];
@@ -205,6 +231,13 @@ export default function GlobalAudioPlayer({ onCoverClick }: { onCoverClick?: () 
       setIsVisible(!isVisible);
     };
     openPlayerModalFn = () => setIsPlayerModalOpen(true);
+    seekToFn = (time: number) => {
+      if (audioRef.current) {
+        audioRef.current.currentTime = time;
+      }
+      setCurrentTime(time);
+      notifyProgressSubscribers(time, audioRef.current?.duration || 0);
+    };
   }, [isVisible]);
 
   const handlePlayerInfoClick = () => {
@@ -241,6 +274,7 @@ export default function GlobalAudioPlayer({ onCoverClick }: { onCoverClick?: () 
     };
     const handleTimeUpdate = () => {
       setCurrentTime(audio.currentTime);
+      notifyProgressSubscribers(audio.currentTime, audio.duration || 0);
       // Track play after 15 seconds
       if (audio.currentTime >= 15 && store.currentTrack && !playTrackedRef.current.has(store.currentTrack.id)) {
         playTrackedRef.current.add(store.currentTrack.id);
@@ -250,7 +284,10 @@ export default function GlobalAudioPlayer({ onCoverClick }: { onCoverClick?: () 
         }).catch(err => console.error('Error recording play:', err));
       }
     };
-    const handleLoadedMetadata = () => setDuration(audio.duration);
+    const handleLoadedMetadata = () => {
+      setDuration(audio.duration);
+      notifyProgressSubscribers(audio.currentTime, audio.duration || 0);
+    };
     const handleEnded = () => {
       if (repeat === 'one') {
         // Repeat 1x: restart the same track and play it again
