@@ -60,6 +60,8 @@ export const ChatInboxContent: React.FC<ChatInboxContentProps> = ({ role }) => {
   const [newMessage, setNewMessage] = useState('');
   const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' && window.innerWidth < 900);
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isContactCollapsed, setIsContactCollapsed] = useState(false);
+  const [isUsersCollapsed, setIsUsersCollapsed] = useState(false);
 
   const [showNewMessageModal, setShowNewMessageModal] = useState(false);
   const [allUsers, setAllUsers] = useState<User[]>([]);
@@ -273,8 +275,8 @@ export const ChatInboxContent: React.FC<ChatInboxContentProps> = ({ role }) => {
         {/* Left: Contact + Users sections — full width until a chat is
             opened, then halves to make room for the thread pane */}
         {showListPane && (
-          <div className={`${hasSelection ? 'md:col-span-6' : 'md:col-span-12'} backdrop-blur-xl bg-gradient-to-b from-white/[0.08] to-white/[0.03] border border-white/[0.12] rounded-xl overflow-hidden flex flex-col`}>
-            <div className="px-3 py-3 border-b border-white/[0.08] flex-shrink-0">
+          <div className={`${hasSelection ? 'md:col-span-6' : 'md:col-span-12'} flex flex-col gap-3 overflow-hidden`}>
+            <div className="px-3 py-3 backdrop-blur-xl bg-gradient-to-b from-white/[0.08] to-white/[0.03] border border-white/[0.12] rounded-xl flex-shrink-0">
               <div className="relative">
                 <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" />
                 <input
@@ -287,54 +289,69 @@ export const ChatInboxContent: React.FC<ChatInboxContentProps> = ({ role }) => {
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto">
-              {/* Contact section */}
-              <div className="px-3 pt-4 pb-2.5 flex items-center gap-2.5 sticky top-0 bg-black/70 backdrop-blur-md z-10">
+            {/* Contact — its own independently collapsible panel */}
+            <div className={`backdrop-blur-xl bg-gradient-to-b from-white/[0.08] to-white/[0.03] border border-white/[0.12] rounded-xl overflow-hidden flex flex-col ${isContactCollapsed ? 'flex-shrink-0' : 'flex-1 min-h-0'}`}>
+              <button
+                onClick={() => setIsContactCollapsed((v) => !v)}
+                className="w-full px-3 py-3 flex items-center gap-2.5 flex-shrink-0 hover:bg-white/[0.03] transition-colors"
+              >
                 <Mail size={16} className="text-red-400" />
-                <p className="text-xs font-bold uppercase tracking-wider text-white/60">{t('Contact', 'Contact')}</p>
+                <p className="text-xs font-bold uppercase tracking-wider text-white/60 flex-1 text-left">{t('Contact', 'Contact')}</p>
                 {contactConversations.some((c) => c.unreadCount > 0) && (
                   <span className="w-1.5 h-1.5 rounded-full bg-red-400" />
                 )}
-              </div>
-              {filteredContactConversations.length === 0 ? (
-                <p className="px-3 pb-4 text-xs text-white/25">No contact messages</p>
-              ) : (
-                filteredContactConversations.map((c) => (
-                  <button
-                    key={c.id}
-                    onClick={() => handleSelectConversation(c.id)}
-                    className={`w-full px-3 py-2.5 text-left transition-all border-b border-white/[0.04] flex items-center gap-3 ${
-                      selectedId === c.id ? 'bg-white/[0.08]' : 'hover:bg-white/[0.04]'
-                    }`}
-                  >
-                    <Avatar name={c.name} role={c.role} size="sm" />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-2">
-                        <p className="text-xs font-semibold text-white truncate">{c.name}</p>
-                        {c.category && (
-                          <span className="text-[9px] px-1.5 py-0.5 bg-white/[0.06] border border-white/[0.08] rounded-full text-white/40 uppercase tracking-wide flex-shrink-0">{c.category}</span>
+                {isContactCollapsed ? <ChevronDown size={14} className="text-white/40" /> : <ChevronUp size={14} className="text-white/40" />}
+              </button>
+              {!isContactCollapsed && (
+                <div className="flex-1 overflow-y-auto border-t border-white/[0.06]">
+                  {filteredContactConversations.length === 0 ? (
+                    <p className="px-3 py-4 text-xs text-white/25">No contact messages</p>
+                  ) : (
+                    filteredContactConversations.map((c) => (
+                      <button
+                        key={c.id}
+                        onClick={() => handleSelectConversation(c.id)}
+                        className={`w-full px-3 py-2.5 text-left transition-all border-b border-white/[0.04] flex items-center gap-3 ${
+                          selectedId === c.id ? 'bg-white/[0.08]' : 'hover:bg-white/[0.04]'
+                        }`}
+                      >
+                        <Avatar name={c.name} role={c.role} size="sm" />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between gap-2">
+                            <p className="text-xs font-semibold text-white truncate">{c.name}</p>
+                            {c.category && (
+                              <span className="text-[9px] px-1.5 py-0.5 bg-white/[0.06] border border-white/[0.08] rounded-full text-white/40 uppercase tracking-wide flex-shrink-0">{c.category}</span>
+                            )}
+                          </div>
+                          <p className="text-[10px] text-white/40 truncate mt-0.5">{c.lastMessage || 'No messages yet'}</p>
+                        </div>
+                        {c.unreadCount > 0 && (
+                          <div className="w-5 h-5 rounded-full bg-red-600 flex items-center justify-center flex-shrink-0">
+                            <span className="text-[10px] text-white font-bold">{c.unreadCount}</span>
+                          </div>
                         )}
-                      </div>
-                      <p className="text-[10px] text-white/40 truncate mt-0.5">{c.lastMessage || 'No messages yet'}</p>
-                    </div>
-                    {c.unreadCount > 0 && (
-                      <div className="w-5 h-5 rounded-full bg-red-600 flex items-center justify-center flex-shrink-0">
-                        <span className="text-[10px] text-white font-bold">{c.unreadCount}</span>
-                      </div>
-                    )}
-                  </button>
-                ))
+                      </button>
+                    ))
+                  )}
+                </div>
               )}
+            </div>
 
-              {/* Users section — plain chat with staff, no topics, so no
-                  category badge here (unlike the Contact section, which
-                  still carries the picker's real topics). */}
-              <div className="px-3 pt-5 pb-2.5 flex items-center gap-2.5 sticky top-0 bg-black/70 backdrop-blur-md z-10">
-                <UsersIcon size={16} className="text-blue-400" />
-                <p className="text-xs font-bold uppercase tracking-wider text-white/60 flex-1">{t('Users', 'Gebruikers')}</p>
-                {userConversations.some((c) => c.unreadCount > 0) && (
-                  <span className="w-1.5 h-1.5 rounded-full bg-red-400" />
-                )}
+            {/* Users — plain chat with staff, no topics, so no category
+                badge here (unlike Contact, which carries the picker's
+                real topics). Its own independently collapsible panel. */}
+            <div className={`backdrop-blur-xl bg-gradient-to-b from-white/[0.08] to-white/[0.03] border border-white/[0.12] rounded-xl overflow-hidden flex flex-col ${isUsersCollapsed ? 'flex-shrink-0' : 'flex-1 min-h-0'}`}>
+              <div className="w-full px-3 py-3 flex items-center gap-2.5 flex-shrink-0">
+                <button
+                  onClick={() => setIsUsersCollapsed((v) => !v)}
+                  className="flex items-center gap-2.5 flex-1 hover:opacity-80 transition-opacity"
+                >
+                  <UsersIcon size={16} className="text-blue-400" />
+                  <p className="text-xs font-bold uppercase tracking-wider text-white/60 flex-1 text-left">{t('Users', 'Gebruikers')}</p>
+                  {userConversations.some((c) => c.unreadCount > 0) && (
+                    <span className="w-1.5 h-1.5 rounded-full bg-red-400" />
+                  )}
+                </button>
                 <button
                   onClick={openNewMessageModal}
                   title="New message"
@@ -342,30 +359,40 @@ export const ChatInboxContent: React.FC<ChatInboxContentProps> = ({ role }) => {
                 >
                   <Plus size={13} />
                 </button>
+                <button
+                  onClick={() => setIsUsersCollapsed((v) => !v)}
+                  className="text-white/40 flex-shrink-0"
+                >
+                  {isUsersCollapsed ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
+                </button>
               </div>
-              {filteredUserConversations.length === 0 ? (
-                <p className="px-3 pb-4 text-xs text-white/25">No user messages</p>
-              ) : (
-                filteredUserConversations.map((c) => (
-                  <button
-                    key={c.id}
-                    onClick={() => handleSelectConversation(c.id)}
-                    className={`w-full px-3 py-2.5 text-left transition-all border-b border-white/[0.04] flex items-center gap-3 ${
-                      selectedId === c.id ? 'bg-white/[0.08]' : 'hover:bg-white/[0.04]'
-                    }`}
-                  >
-                    <Avatar name={c.name} role={c.role} size="sm" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-semibold text-white truncate">{c.name}</p>
-                      <p className="text-[10px] text-white/40 truncate mt-0.5">{c.lastMessage || 'No messages yet'}</p>
-                    </div>
-                    {c.unreadCount > 0 && (
-                      <div className="w-5 h-5 rounded-full bg-red-600 flex items-center justify-center flex-shrink-0">
-                        <span className="text-[10px] text-white font-bold">{c.unreadCount}</span>
-                      </div>
-                    )}
-                  </button>
-                ))
+              {!isUsersCollapsed && (
+                <div className="flex-1 overflow-y-auto border-t border-white/[0.06]">
+                  {filteredUserConversations.length === 0 ? (
+                    <p className="px-3 py-4 text-xs text-white/25">No user messages</p>
+                  ) : (
+                    filteredUserConversations.map((c) => (
+                      <button
+                        key={c.id}
+                        onClick={() => handleSelectConversation(c.id)}
+                        className={`w-full px-3 py-2.5 text-left transition-all border-b border-white/[0.04] flex items-center gap-3 ${
+                          selectedId === c.id ? 'bg-white/[0.08]' : 'hover:bg-white/[0.04]'
+                        }`}
+                      >
+                        <Avatar name={c.name} role={c.role} size="sm" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-semibold text-white truncate">{c.name}</p>
+                          <p className="text-[10px] text-white/40 truncate mt-0.5">{c.lastMessage || 'No messages yet'}</p>
+                        </div>
+                        {c.unreadCount > 0 && (
+                          <div className="w-5 h-5 rounded-full bg-red-600 flex items-center justify-center flex-shrink-0">
+                            <span className="text-[10px] text-white font-bold">{c.unreadCount}</span>
+                          </div>
+                        )}
+                      </button>
+                    ))
+                  )}
+                </div>
               )}
             </div>
           </div>
