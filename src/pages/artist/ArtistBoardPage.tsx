@@ -222,16 +222,26 @@ const RequestsSection: React.FC = () => {
     if (!user) return;
     setLoading(true);
     try {
-      await addDoc(collection(db, 'collabRequests'), {
-        artistId: user.uid,
-        artistName: user.displayName || 'Unknown Artist',
-        artistEmail: user.email,
-        title: form.title, type: form.type, description: form.description,
-        budget: form.budget ? parseFloat(form.budget) : null,
-        preferredStartDate: form.preferredStartDate || null,
-        message: form.message,
-        status: 'pending',
+      // Same unified path as the dedicated Request Collaboration page: lands
+      // in supportMessages as a 'Collaboration' category conversation, which
+      // the admin/manager Contact chat shows with Approve/Reject built in.
+      const messageParts = [form.title.trim(), form.description.trim()];
+      if (form.message.trim()) messageParts.push(form.message.trim());
+
+      await addDoc(collection(db, 'supportMessages'), {
+        senderId: user.uid,
+        senderName: user.displayName || 'Unknown Artist',
+        senderEmail: user.email,
+        senderRole: 'artist',
+        recipientGroup: 'support',
+        category: 'Collaboration',
+        collabType: form.type,
+        collabBudget: form.budget ? parseFloat(form.budget) : null,
+        collabPreferredStartDate: form.preferredStartDate || null,
+        collabStatus: 'pending',
+        message: messageParts.filter(Boolean).join('\n\n'),
         createdAt: serverTimestamp(),
+        status: 'sent',
       });
       setSubmitted(true);
       setForm({ title: '', type: 'music_video', description: '', budget: '', preferredStartDate: '', message: '' });
