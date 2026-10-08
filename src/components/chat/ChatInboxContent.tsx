@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { MessageSquare, Send, Check, CheckCheck, Mail, Users as UsersIcon, ArrowLeft, Search, Plus, X, ChevronDown, ChevronUp } from 'lucide-react';
+import { MessageSquare, Send, Check, CheckCheck, Mail, Users as UsersIcon, ArrowLeft, Search, Plus, X, ChevronDown, ChevronUp, Handshake } from 'lucide-react';
 import { db } from '../../lib/firebase/config';
 import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, Timestamp, updateDoc, doc } from 'firebase/firestore';
 import { useAuth } from '../../contexts/AuthContext';
@@ -18,6 +18,14 @@ interface ChatMessage {
   message: string;
   createdAt: Timestamp;
   status: 'sent' | 'delivered' | 'read';
+  // Collaboration-request details — only ever present on the message that
+  // started a 'Collaboration' category conversation (from the artist's
+  // request form). Optional and additive: every other supportMessages use
+  // (contact form, plain staff chat) never sets these.
+  collabType?: string;
+  collabBudget?: number | null;
+  collabPreferredStartDate?: string | null;
+  collabStatus?: 'pending' | 'approved' | 'rejected';
 }
 
 interface Conversation {
@@ -121,7 +129,12 @@ export const ChatInboxContent: React.FC<ChatInboxContentProps> = ({ role }) => {
         unreadCount,
         category: last.category,
       };
-      if (last.senderRole === 'contact') contact.push(entry);
+      // Contact section = a visitor's own contact-form thread, OR any
+      // thread whose latest message is a Collaboration request — whether
+      // that came from the anonymous contact form or a logged-in artist's
+      // dedicated request form. Everything else (plain chat with staff)
+      // goes to Users, unaffected.
+      if (last.senderRole === 'contact' || last.category === 'Collaboration') contact.push(entry);
       else users.push(entry);
     });
 
@@ -153,6 +166,63 @@ export const ChatInboxContent: React.FC<ChatInboxContentProps> = ({ role }) => {
       if (m.id) updateDoc(doc(db, 'supportMessages', m.id), { status: 'read' }).catch((err) => console.error(err));
     });
   }, [selectedId, threadMessages]);
+
+  // The message that carries this conversation's collab-request details —
+  // prefer the one with actual collabType/collabBudget/collabPreferredStartDate
+  // (the artist request form), falling back to the first non-staff message
+  // (a plain visitor who picked "Collaboration" in the public contact form
+  // never has those fields, but their original message is still "the request").
+  const collabSourceMessage = useMemo(() => {
+    if (!selectedConversation || selectedConversation.category !== 'Collaboration') return null;
+    const withDetails = threadMessages.find(
+      (m) => !isStaffRole(m.senderRole) && (m.collabType !== undefined || m.collabBudget !== undefined || m.collabPreferredStartDate !== undefined)
+    );
+    return withDetails || threadMessages.find((m) => !isStaffRole(m.senderRole)) || null;
+  }, [selectedConversation, threadMessages]);
+
+  const collabStatus: 'pending' | 'approved' | 'rejected' = collabSourceMessage?.collabStatus || 'pending';
+
+  const handleApproveCollab = async () => {
+    if (!selectedConversation || !collabSourceMessage) return;
+    try {
+      const firstLine = (collabSourceMessage.message || '').split('\n')[0].trim();
+      await addDoc(collection(db, 'collaborations'), {
+        clientName: selectedConversation.name,
+        clientEmail: selectedConversation.email,
+        assignedTo: selectedConversation.id,
+        title: firstLine || `Collaboration — ${selectedConversation.name}`,
+        type: collabSourceMessage.collabType || 'other',
+        description: collabSourceMessage.message || '',
+        budget: collabSourceMessage.collabBudget || 0,
+        paidAmount: 0,
+        paymentStatus: 'unpaid',
+        status: 'inquiry',
+        startDate: collabSourceMessage.collabPreferredStartDate ? new Date(collabSourceMessage.collabPreferredStartDate) : null,
+        deadline: null,
+        endDate: null,
+        contractPDF: null,
+        attachments: [],
+        notes: '',
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
+      if (collabSourceMessage.id) {
+        await updateDoc(doc(db, 'supportMessages', collabSourceMessage.id), { collabStatus: 'approved' });
+      }
+    } catch (err) {
+      console.error('Failed to approve collaboration request:', err);
+    }
+  };
+
+  const handleRejectCollab = async () => {
+    if (!collabSourceMessage?.id) return;
+    if (!confirm('Are you sure you want to reject this collaboration request?')) return;
+    try {
+      await updateDoc(doc(db, 'supportMessages', collabSourceMessage.id), { collabStatus: 'rejected' });
+    } catch (err) {
+      console.error('Failed to reject collaboration request:', err);
+    }
+  };
 
   const handleSelectConversation = (id: string) => setSelectedId(id);
 
@@ -414,6 +484,64 @@ export const ChatInboxContent: React.FC<ChatInboxContentProps> = ({ role }) => {
                 <p className="text-[11px] text-white/40 truncate">{selectedConversation.email}</p>
               </div>
             </div>
+
+            {/* Collaboration details — only for a Collaboration-category
+                thread, whether it came from the public contact form or the
+                artist's dedicated request form. Shows whichever of
+                type/budget/preferred-start are present, plus approve/reject
+                (or the resulting status once handled). */}
+            {selectedConversation.category === 'Collaboration' && (
+              <div className="px-4 py-3 border-b border-white/[0.08] bg-gradient-to-br from-purple-500/[0.1] to-pink-500/[0.04] flex-shrink-0">
+                <div className="flex items-center gap-2 mb-2">
+                  <Handshake size={14} className="text-purple-300" />
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-purple-200">{t('Collaboration Request', 'Samenwerkingsverzoek')}</p>
+                </div>
+                {(collabSourceMessage?.collabType || collabSourceMessage?.collabBudget != null || collabSourceMessage?.collabPreferredStartDate) && (
+                  <div className="flex flex-wrap gap-x-5 gap-y-1 text-xs text-white/70 mb-3">
+                    {collabSourceMessage?.collabType && (
+                      <span>
+                        <span className="text-white/40">{t('Type', 'Type')}: </span>
+                        <span className="text-white font-medium capitalize">{collabSourceMessage.collabType.replace(/_/g, ' ')}</span>
+                      </span>
+                    )}
+                    {collabSourceMessage?.collabBudget != null && (
+                      <span>
+                        <span className="text-white/40">{t('Budget', 'Budget')}: </span>
+                        <span className="text-white font-medium">€{collabSourceMessage.collabBudget.toFixed(2)}</span>
+                      </span>
+                    )}
+                    {collabSourceMessage?.collabPreferredStartDate && (
+                      <span>
+                        <span className="text-white/40">{t('Preferred start', 'Gewenste startdatum')}: </span>
+                        <span className="text-white font-medium">{new Date(collabSourceMessage.collabPreferredStartDate).toLocaleDateString()}</span>
+                      </span>
+                    )}
+                  </div>
+                )}
+                {collabStatus === 'pending' ? (
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handleApproveCollab}
+                      className="px-3 py-1.5 rounded-lg bg-green-600/20 border border-green-600/30 text-green-400 hover:bg-green-600/30 text-xs font-semibold flex items-center gap-1.5 transition"
+                    >
+                      <Check size={12} /> {t('Approve', 'Goedkeuren')}
+                    </button>
+                    <button
+                      onClick={handleRejectCollab}
+                      className="px-3 py-1.5 rounded-lg bg-red-600/20 border border-red-600/30 text-red-400 hover:bg-red-600/30 text-xs font-semibold flex items-center gap-1.5 transition"
+                    >
+                      <X size={12} /> {t('Reject', 'Afwijzen')}
+                    </button>
+                  </div>
+                ) : (
+                  <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold ${collabStatus === 'approved' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
+                    {collabStatus === 'approved' ? <Check size={12} /> : <X size={12} />}
+                    {collabStatus === 'approved' ? t('Approved', 'Goedgekeurd') : t('Rejected', 'Afgewezen')}
+                  </span>
+                )}
+              </div>
+            )}
+
             <div className="flex-1 overflow-y-auto px-4 py-4 space-y-2">
               {threadMessages.filter((m) => m.message).length === 0 ? (
                 <div className="text-center text-white/30 py-16"><MessageSquare size={32} className="mx-auto mb-3 opacity-30" /><p className="text-sm">No messages yet</p></div>
