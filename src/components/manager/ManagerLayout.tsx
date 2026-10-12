@@ -120,7 +120,7 @@ const ManagerLayout: React.FC<ManagerLayoutProps> = ({ children }) => {
                 </span>
               </button>
 
-              <Link to="/manager/dashboard" className="flex items-center justify-center w-14 h-14 md:w-24 md:h-24">
+              <Link to={isOnDashboard ? '/' : '/manager/dashboard'} aria-label={isOnDashboard ? 'Naar de homepagina' : 'Naar het dashboard'} title={isOnDashboard ? 'Naar de homepagina' : 'Naar het dashboard'} className="flex items-center justify-center w-14 h-14 md:w-24 md:h-24">
                 <img src="/Jonna Rincon Logo WH.png" alt="JR" className="w-full h-full object-contain opacity-80 hover:opacity-100 transition-opacity" />
               </Link>
 
@@ -196,7 +196,7 @@ const ManagerLayout: React.FC<ManagerLayoutProps> = ({ children }) => {
 
               {/* Top bar — logo left, X right, same as Navigation.tsx */}
               <div className="flex items-center justify-between py-5 md:py-6 flex-shrink-0">
-                <button onClick={() => { closeMenu(); navigate('/manager/dashboard'); }} className="block flex-shrink-0 cursor-pointer">
+                <button onClick={() => { closeMenu(); navigate(isOnDashboard ? '/' : '/manager/dashboard'); }} aria-label={isOnDashboard ? 'Naar de homepagina' : 'Naar het dashboard'} title={isOnDashboard ? 'Naar de homepagina' : 'Naar het dashboard'} className="block flex-shrink-0 cursor-pointer">
                   <img
                     src="/Jonna Rincon Logo WH.png"
                     alt="Jonna Rincon"
