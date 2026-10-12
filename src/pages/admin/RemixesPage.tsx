@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import AdminLayout from '../../components/admin/AdminLayout';
 import LinkInput from '../../components/admin/LinkInput';
+import { CLOUD_FOLDERS } from '../../lib/cloudUpload';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { useRemixes } from '../../hooks/useRemixes';
 import { remixService } from '../../lib/firebase/services';
@@ -461,6 +462,8 @@ const RemixFormModal: React.FC<RemixFormModalProps> = ({ remix, onClose, onSave 
             <LinkInput
               label="Audio URL"
               name="audioUrl"
+              folder={CLOUD_FOLDERS.remixesEdits}
+              baseName={formData.title || undefined}
               type="audio"
               onChange={(url) => setFormData({ ...formData, audioUrl: url })}
               defaultValue={formData.audioUrl}
@@ -469,6 +472,8 @@ const RemixFormModal: React.FC<RemixFormModalProps> = ({ remix, onClose, onSave 
             <LinkInput
               label="Artwork URL"
               name="artworkUrl"
+              folder={CLOUD_FOLDERS.remixesEdits}
+              baseName={formData.title || undefined}
               type="image"
               onChange={(url) => setFormData({ ...formData, artworkUrl: url })}
               defaultValue={formData.artworkUrl}

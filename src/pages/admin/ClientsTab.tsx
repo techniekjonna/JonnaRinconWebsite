@@ -4,7 +4,8 @@ import {
   Users, Plus, X, Link2, Unlink, Search, Download,
   ChevronDown, ChevronUp, FileAudio, FileText, Loader2, Trash2,
 } from 'lucide-react';
-import { deliverableService, fileUploadService, authService } from '../../lib/firebase/services';
+import { deliverableService, authService } from '../../lib/firebase/services';
+import { uploadToCloud, CLOUD_FOLDERS } from '../../lib/cloudUpload';
 import { ClientDeliverable, DeliverableFile, DeliverableType, User } from '../../lib/firebase/types';
 import { useAuth } from '../../contexts/AuthContext';
 import { useT } from '../../contexts/LanguageContext';
@@ -435,29 +436,14 @@ function AddDeliverableModal({
         prev.map((p) => (p.file === entry.file ? { ...p, status: 'uploading' } : p))
       );
       try {
-        const uploadType = entry.file.type.startsWith('audio/')
-          ? 'audio'
-          : entry.file.type.startsWith('video/')
-          ? 'video'
-          : 'document';
-        const res = await fileUploadService.uploadFile({
-          file: entry.file,
-          type: uploadType,
-          folder: 'deliverables',
-        });
-        if (res.success && res.url) {
-          setPendingFiles((prev) =>
-            prev.map((p) =>
-              p.file === entry.file
-                ? { ...p, status: 'done', result: { name: entry.file.name, url: res.url!, sizeBytes: entry.file.size } }
-                : p
-            )
-          );
-        } else {
-          setPendingFiles((prev) =>
-            prev.map((p) => (p.file === entry.file ? { ...p, status: 'error', error: res.error || 'Upload failed' } : p))
-          );
-        }
+        const res = await uploadToCloud(entry.file, { folder: CLOUD_FOLDERS.clients(clientName) });
+        setPendingFiles((prev) =>
+          prev.map((p) =>
+            p.file === entry.file
+              ? { ...p, status: 'done', result: { name: res.name, url: res.url, sizeBytes: entry.file.size } }
+              : p
+          )
+        );
       } catch (e: any) {
         setPendingFiles((prev) =>
           prev.map((p) => (p.file === entry.file ? { ...p, status: 'error', error: e.message || 'Upload failed' } : p))

@@ -3,7 +3,7 @@ import AdminLayout from '../../components/admin/AdminLayout';
 import { settingsService } from '../../lib/firebase/services';
 import { SiteBackground } from '../../lib/firebase/types';
 import { toDirectUrl } from '../../lib/utils/urlUtils';
-import { Trash2, Check, Image } from 'lucide-react';
+import { Trash2, Check, Image as PhotoIcon } from 'lucide-react';
 
 // Background management tool - allows admins to change site background
 const BackgroundToolPage: React.FC = () => {
@@ -248,7 +248,7 @@ const BackgroundToolPage: React.FC = () => {
               </div>
             ) : backgrounds.length === 0 ? (
               <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-12 text-center">
-                <Image size={48} className="mx-auto text-white/20 mb-4" />
+                <PhotoIcon aria-hidden="true" size={48} className="mx-auto text-white/20 mb-4" />
                 <p className="text-white/40">No backgrounds added yet</p>
                 <p className="text-white/30 text-sm mt-1">
                   Use the "Set Background" tab to add your first background

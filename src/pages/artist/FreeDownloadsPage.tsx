@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import ArtistLayout from '../../components/artist/ArtistLayout';
-import { Download, Music, Disc, ImageIcon } from 'lucide-react';
+import { Download, Music, Disc, ImageIcon as PhotoIcon } from 'lucide-react';
 
 interface FreeDownload {
   id: string;
@@ -61,7 +61,7 @@ const ArtistFreeDownloads: React.FC = () => {
     switch (category) {
       case 'remix': return <Music size={20} />;
       case 'beat': return <Disc size={20} />;
-      case 'wallpaper': return <ImageIcon size={20} />;
+      case 'wallpaper': return <PhotoIcon aria-hidden="true" size={20} />;
       default: return <Download size={20} />;
     }
   };
@@ -134,7 +134,7 @@ const ArtistFreeDownloads: React.FC = () => {
                 : 'bg-white/[0.08] text-white/40 hover:bg-white/[0.06]'
             }`}
           >
-            <ImageIcon size={16} />
+            <PhotoIcon aria-hidden="true" size={16} />
             Wallpapers
           </button>
         </div>

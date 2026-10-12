@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import AdminLayout from '../../components/admin/AdminLayout';
 import LinkInput from '../../components/admin/LinkInput';
+import { CLOUD_FOLDERS } from '../../lib/cloudUpload';
 import { useAlbums } from '../../hooks/useAlbums';
 import { useTracks } from '../../hooks/useTracks';
 import { albumService, trackService } from '../../lib/firebase/services';
@@ -404,6 +405,8 @@ const AlbumsPage: React.FC = () => {
                 <LinkInput
                   label="Cover Image URL"
                   name="coverImageUrl"
+                  folder={CLOUD_FOLDERS.album(formData.title)}
+                  baseName={formData.title ? `${formData.title} - Cover` : undefined}
                   type="image"
                   onChange={(url) => setFormData({ ...formData, coverImageUrl: url })}
                   defaultValue={formData.coverImageUrl || ''}

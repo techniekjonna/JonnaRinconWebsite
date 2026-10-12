@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import AdminLayout from '../../components/admin/AdminLayout';
 import LinkInput from '../../components/admin/LinkInput';
+import { CLOUD_FOLDERS } from '../../lib/cloudUpload';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { useBeats } from '../../hooks/useBeats';
 import { beatService, beatPackService, authService } from '../../lib/firebase/services';
@@ -99,22 +100,26 @@ export const BeatsContent: React.FC = () => {
     <>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-white">Beats Management</h1>
-            <p className="text-white/40 mt-2">Manage your beat catalog</p>
+            <h2 className="text-xl sm:text-2xl font-bold text-white">Beats</h2>
+            <p className="text-white/50 mt-1 text-sm">
+              {loading
+                ? 'Manage your beat catalog'
+                : `${beats.length} beat${beats.length !== 1 ? 's' : ''} · ${beats.filter(b => b.status === 'published').length} published${packs.length ? ` · ${packs.length} pack${packs.length !== 1 ? 's' : ''}` : ''}`}
+            </p>
           </div>
           <div className="flex items-center gap-3">
             <button
               onClick={handleCreatePack}
-              className="bg-gradient-to-r from-orange-600 to-red-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-orange-700 hover:to-red-700 transition-all flex items-center space-x-2"
+              className="flex-1 sm:flex-none bg-gradient-to-r from-orange-600 to-red-600 text-white px-4 sm:px-6 py-3 rounded-lg font-semibold hover:from-orange-700 hover:to-red-700 transition-all flex items-center justify-center space-x-2"
             >
               <Package size={20} />
               <span>Add Pack</span>
             </button>
             <button
               onClick={handleCreate}
-              className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-purple-700 hover:to-pink-700 transition-all flex items-center space-x-2"
+              className="flex-1 sm:flex-none bg-gradient-to-r from-purple-600 to-pink-600 text-white px-4 sm:px-6 py-3 rounded-lg font-semibold hover:from-purple-700 hover:to-pink-700 transition-all flex items-center justify-center space-x-2"
             >
               <Plus size={20} />
               <span>Add Beat</span>
@@ -142,16 +147,107 @@ export const BeatsContent: React.FC = () => {
                   <span className={`px-2 py-1 rounded text-sm ${pack.status === 'published' ? 'bg-green-500/20 text-green-400' : 'bg-yellow-500/20 text-yellow-400'}`}>
                     {pack.status}
                   </span>
-                  <button onClick={() => handleEditPack(pack)} className="p-2 text-white/40 hover:text-blue-400 transition-colors"><Edit size={18} /></button>
-                  <button onClick={() => handleDeletePack(pack.id)} className="p-2 text-white/40 hover:text-red-400 transition-colors"><Trash2 size={18} /></button>
+                  <button onClick={() => handleEditPack(pack)} aria-label="Edit pack" className="p-2 text-white/40 hover:text-blue-400 transition-colors"><Edit size={18} /></button>
+                  <button onClick={() => handleDeletePack(pack.id)} aria-label="Delete pack" className="p-2 text-white/40 hover:text-red-400 transition-colors"><Trash2 size={18} /></button>
                 </div>
               ))}
             </div>
           </div>
         )}
 
-        {/* Beats Table */}
-        <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl overflow-hidden">
+        {/* Beats List (mobile cards) */}
+        <div className="sm:hidden bg-white/[0.08] border border-white/[0.06] rounded-xl overflow-hidden">
+          {loading ? (
+            <div className="px-6 py-12">
+              <LoadingSpinner text="Loading beats..." />
+            </div>
+          ) : beats.length === 0 ? (
+            <div className="px-6 py-12 text-center text-white/40">No beats yet. Create your first beat!</div>
+          ) : (
+            <div className="divide-y divide-white/[0.06]">
+              {beats.map((beat) => (
+                <div key={beat.id} className="px-4 py-4">
+                  <div className="flex items-center gap-3">
+                    <img src={beat.artworkUrl} alt={beat.title} className="w-14 h-14 rounded object-cover flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-white truncate">{beat.title}</p>
+                      <p className="text-sm text-white/40 truncate">{beat.artist}</p>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2 mt-3">
+                    <span className="px-2 py-1 bg-purple-500/20 text-purple-400 rounded text-xs">{beat.genre}</span>
+                    <span className="text-xs text-white/60">{beat.bpm} BPM / {beat.key}</span>
+                    <span
+                      className={`px-2 py-1 rounded text-xs ${
+                        beat.status === 'published'
+                          ? 'bg-green-500/20 text-green-400'
+                          : beat.status === 'draft'
+                          ? 'bg-yellow-500/20 text-yellow-400'
+                          : 'bg-white/[0.06] text-white/40'
+                      }`}
+                    >
+                      {beat.status}
+                    </span>
+                    <span
+                      className={`px-2 py-1 rounded text-xs capitalize ${
+                        beat.beatType === 'free'
+                          ? 'bg-green-500/20 text-green-400'
+                          : beat.beatType === 'exclusive'
+                          ? 'bg-orange-500/20 text-orange-400'
+                          : 'bg-gray-500/20 text-gray-400'
+                      }`}
+                    >
+                      {beat.beatType || 'free'}
+                    </span>
+                    <span className="text-xs text-white/40">{beat.plays} plays</span>
+                  </div>
+                  <div className="flex items-center justify-end gap-1 mt-3 border-t border-white/[0.06] pt-1">
+                    <button
+                      onClick={() => moveBeatUp(beat.id)}
+                      disabled={beats.findIndex(b => b.id === beat.id) === 0}
+                      className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-white/60 hover:bg-white/[0.06] hover:text-white disabled:opacity-30 transition-colors"
+                      title="Move up" aria-label="Move up"
+                    >
+                      <ArrowUp size={18} />
+                    </button>
+                    <button
+                      onClick={() => moveBeatDown(beat.id)}
+                      disabled={beats.findIndex(b => b.id === beat.id) === beats.length - 1}
+                      className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-white/60 hover:bg-white/[0.06] hover:text-white disabled:opacity-30 transition-colors"
+                      title="Move down" aria-label="Move down"
+                    >
+                      <ArrowDown size={18} />
+                    </button>
+                    <button
+                      onClick={() => togglePlay(beat.id)}
+                      className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-white/60 hover:bg-white/[0.06] hover:text-purple-400 transition-colors"
+                      title="Play preview" aria-label="Play preview"
+                    >
+                      {currentlyPlaying === beat.id ? <Pause size={18} /> : <Play size={18} />}
+                    </button>
+                    <button
+                      onClick={() => handleEdit(beat)}
+                      className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-white/60 hover:bg-white/[0.06] hover:text-blue-400 transition-colors"
+                      title="Edit" aria-label="Edit"
+                    >
+                      <Edit size={18} />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(beat.id)}
+                      className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-white/60 hover:bg-white/[0.06] hover:text-red-400 transition-colors"
+                      title="Delete" aria-label="Delete"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Beats Table (desktop) */}
+        <div className="hidden sm:block bg-white/[0.08] border border-white/[0.06] rounded-xl overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-white/[0.06]">
@@ -249,7 +345,7 @@ export const BeatsContent: React.FC = () => {
                             onClick={() => moveBeatUp(beat.id)}
                             disabled={beats.findIndex(b => b.id === beat.id) === 0}
                             className="p-2 text-white/40 hover:text-white disabled:opacity-30 transition-colors"
-                            title="Move up"
+                            title="Move up" aria-label="Move up"
                           >
                             <ArrowUp size={18} />
                           </button>
@@ -257,28 +353,28 @@ export const BeatsContent: React.FC = () => {
                             onClick={() => moveBeatDown(beat.id)}
                             disabled={beats.findIndex(b => b.id === beat.id) === beats.length - 1}
                             className="p-2 text-white/40 hover:text-white disabled:opacity-30 transition-colors"
-                            title="Move down"
+                            title="Move down" aria-label="Move down"
                           >
                             <ArrowDown size={18} />
                           </button>
                           <button
                             onClick={() => togglePlay(beat.id)}
                             className="p-2 text-white/40 hover:text-purple-400 transition-colors"
-                            title="Play preview"
+                            title="Play preview" aria-label="Play preview"
                           >
                             {currentlyPlaying === beat.id ? <Pause size={18} /> : <Play size={18} />}
                           </button>
                           <button
                             onClick={() => handleEdit(beat)}
                             className="p-2 text-white/40 hover:text-blue-400 transition-colors"
-                            title="Edit"
+                            title="Edit" aria-label="Edit"
                           >
                             <Edit size={18} />
                           </button>
                           <button
                             onClick={() => handleDelete(beat.id)}
                             className="p-2 text-white/40 hover:text-red-400 transition-colors"
-                            title="Delete"
+                            title="Delete" aria-label="Delete"
                           >
                             <Trash2 size={18} />
                           </button>
@@ -701,6 +797,8 @@ const BeatFormModal: React.FC<BeatFormModalProps> = ({ beat, onClose, onSave }) 
                   label="Audio URL"
                   name="audioUrl"
                   type="audio"
+                  folder={CLOUD_FOLDERS.beat(formData.title)}
+                  baseName={formData.title}
                   onChange={handleAudioUrlChange}
                   defaultValue={formData.audioUrl}
                   placeholder="https://nextcloud.example.com/index.php/s/abc123"
@@ -710,6 +808,8 @@ const BeatFormModal: React.FC<BeatFormModalProps> = ({ beat, onClose, onSave }) 
                   label="Artwork URL"
                   name="artworkUrl"
                   type="image"
+                  folder={CLOUD_FOLDERS.beat(formData.title)}
+                  baseName={formData.title}
                   onChange={(url) => setFormData({ ...formData, artworkUrl: url })}
                   defaultValue={formData.artworkUrl}
                   placeholder="https://example.com/image.jpg"
@@ -721,7 +821,9 @@ const BeatFormModal: React.FC<BeatFormModalProps> = ({ beat, onClose, onSave }) 
                 <LinkInput
                   label="Stems URL (Zip File)"
                   name="stemsUrl"
-                  type="audio"
+                  type="any"
+                  folder={CLOUD_FOLDERS.beat(formData.title)}
+                  baseName="Stems"
                   onChange={(url) => setFormData({ ...formData, stemsUrl: url })}
                   defaultValue={formData.stemsUrl}
                   placeholder="https://nextcloud.example.com/index.php/s/xyz789"
@@ -1105,6 +1207,8 @@ const BeatPackFormModal: React.FC<BeatPackFormModalProps> = ({ pack, onClose, on
                 label="Cover Image"
                 name="coverUrl"
                 type="image"
+                folder={CLOUD_FOLDERS.beatPack(title)}
+                baseName={title ? `${title} - Cover` : undefined}
                 onChange={setCoverUrl}
                 defaultValue={coverUrl}
                 placeholder="https://example.com/cover.jpg"
@@ -1184,7 +1288,8 @@ const BeatPackFormModal: React.FC<BeatPackFormModalProps> = ({ pack, onClose, on
                       <button onClick={() => { if (beats.length > 1) setBeats(beats.filter((_, i) => i !== idx)); }}
                         className="text-red-400 hover:text-red-300 transition"><Trash2 size={16} /></button>
                     </div>
-                    <LinkInput label="Download Link" name={`dl-${idx}`} type="audio"
+                    <LinkInput label="Download Link" name={`dl-${idx}`} type="any"
+                      folder={CLOUD_FOLDERS.beatPack(title)} baseName={beat.title || undefined}
                       onChange={(url) => updateBeat(idx, 'downloadUrl', url)}
                       defaultValue={beat.downloadUrl}
                       placeholder="https://example.com/beat-download" />

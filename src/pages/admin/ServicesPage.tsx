@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import AdminLayout from '../../components/admin/AdminLayout';
 import LinkInput from '../../components/admin/LinkInput';
+import { CLOUD_FOLDERS } from '../../lib/cloudUpload';
 import { useServices } from '../../hooks/useServices';
 import { serviceService } from '../../lib/firebase/services';
 import { Service } from '../../lib/firebase/types';
@@ -470,6 +471,8 @@ const ServiceFormModal: React.FC<ServiceFormModalProps> = ({ service, onClose, o
                 <LinkInput
                   label="Cover Image (optional)"
                   name="coverUrl"
+                  folder={CLOUD_FOLDERS.services(formData.name)}
+                  baseName={formData.name ? `${formData.name} - Cover` : undefined}
                   type="image"
                   defaultValue={formData.coverUrl}
                   onChange={(url) => setFormData((prev) => ({ ...prev, coverUrl: url }))}
@@ -492,6 +495,7 @@ const ServiceFormModal: React.FC<ServiceFormModalProps> = ({ service, onClose, o
                 <LinkInput
                   label="Download Link (optional)"
                   name="downloadUrl"
+                  folder={CLOUD_FOLDERS.services(formData.name)}
                   type="link"
                   defaultValue={formData.downloadUrl}
                   onChange={(url) => setFormData((prev) => ({ ...prev, downloadUrl: url }))}

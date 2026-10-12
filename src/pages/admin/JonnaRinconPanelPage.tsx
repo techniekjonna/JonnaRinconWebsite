@@ -4,16 +4,14 @@ import ManagerLayout from '../../components/manager/ManagerLayout';
 import { AgendaContent } from './AgendaPage';
 import { SocialPlannerContent } from './ContentPage';
 import ComingUpTab from '../../components/admin/ComingUpTab';
-import { ClientsContent } from './ClientsTab';
 import { AnalyticsContent } from './AnalyticsPage';
 import { useAuth } from '../../contexts/AuthContext';
-import { useT } from '../../contexts/LanguageContext';
 import {
-  LayoutDashboard, Clock, Users,
+  LayoutDashboard, Clock,
   Calendar, Instagram, Star, BarChart3,
 } from 'lucide-react';
 
-type MainTab = 'overview' | 'agenda' | 'clients' | 'analytics';
+type MainTab = 'overview' | 'agenda' | 'analytics';
 type AgendaSub = 'calendar' | 'social' | 'coming-up';
 
 interface SubSectionDef {
@@ -89,11 +87,9 @@ function SubNav({ sections, activeId, onSelect }: {
 }
 
 function OverviewContent({ onNavigate, showAnalytics }: { onNavigate: (s: MainTab) => void; showAnalytics: boolean }) {
-  const t = useT();
   const groups: { id: MainTab; label: string; sublabel: string; icon: React.ReactNode }[] = [
     { id: 'agenda', label: 'TIME', sublabel: 'Agenda, Social, Coming Up', icon: <Clock size={16} /> },
-    { id: 'clients', label: t('Users', 'Users'), sublabel: t('Client deliverable archive', 'Klanten leveringen archief'), icon: <Users size={16} /> },
-    ...(showAnalytics ? [{ id: 'analytics' as MainTab, label: 'Analytics', sublabel: 'Dashboard analytics', icon: <BarChart3 size={16} /> }] : []),
+    ...(showAnalytics ? [{ id: 'analytics' as MainTab, label: 'Analytics', sublabel: 'Omzet, bestellingen & prestaties', icon: <BarChart3 size={16} /> }] : []),
   ];
   return (
     <div className="space-y-8">
@@ -152,11 +148,9 @@ export function JonnaRinconPanelContent() {
     );
   }
 
-  const t = useT();
   const mainTabs: { id: MainTab; label: string; icon: React.ReactNode }[] = [
     { id: 'overview', label: 'Overzicht', icon: <LayoutDashboard size={15} /> },
     { id: 'agenda',   label: 'TIME',      icon: <Clock size={15} /> },
-    { id: 'clients',  label: t('Users', 'Users'), icon: <Users size={15} /> },
     ...(isAdmin ? [{ id: 'analytics' as MainTab, label: 'Analytics', icon: <BarChart3 size={15} /> }] : []),
   ];
 
@@ -190,7 +184,6 @@ export function JonnaRinconPanelContent() {
       <main className="flex-1 min-w-0">
         {activeMain === 'overview' && <OverviewContent onNavigate={handleMainTab} showAnalytics={isAdmin} />}
         {activeMain === 'agenda'   && renderAgenda()}
-        {activeMain === 'clients'  && <ClientsContent />}
         {activeMain === 'analytics' && isAdmin && <AnalyticsContent />}
       </main>
     </div>

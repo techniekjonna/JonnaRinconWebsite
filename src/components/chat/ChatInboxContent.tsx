@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { MessageSquare, Send, Check, CheckCheck, Mail, Users as UsersIcon, ArrowLeft, Search, Plus, X, ChevronDown, ChevronUp, Handshake } from 'lucide-react';
+import { MessageSquare, Send, Check, CheckCheck, Mail, Users as UsersIcon, ArrowLeft, Search, Plus, X, Handshake } from 'lucide-react';
 import { db } from '../../lib/firebase/config';
 import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, Timestamp, updateDoc, doc } from 'firebase/firestore';
 import { useAuth } from '../../contexts/AuthContext';
@@ -67,9 +67,7 @@ export const ChatInboxContent: React.FC<ChatInboxContentProps> = ({ role }) => {
   const [search, setSearch] = useState('');
   const [newMessage, setNewMessage] = useState('');
   const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' && window.innerWidth < 900);
-  const [isCollapsed, setIsCollapsed] = useState(false);
-  const [isContactCollapsed, setIsContactCollapsed] = useState(false);
-  const [isUsersCollapsed, setIsUsersCollapsed] = useState(false);
+  const [listFilter, setListFilter] = useState<'all' | 'contact' | 'users'>('all');
 
   const [showNewMessageModal, setShowNewMessageModal] = useState(false);
   const [allUsers, setAllUsers] = useState<User[]>([]);
@@ -314,273 +312,237 @@ export const ChatInboxContent: React.FC<ChatInboxContentProps> = ({ role }) => {
 
   const hasSelection = !!selectedConversation;
   const showListPane = !isMobile || !hasSelection;
-  const showThreadPane = hasSelection;
+  const showThreadPane = !isMobile || hasSelection;
 
   const filteredNewMsgUsers = allUsers.filter((u) =>
     (u.displayName || '').toLowerCase().includes(newMsgSearch.toLowerCase()) ||
     u.email.toLowerCase().includes(newMsgSearch.toLowerCase())
   );
 
+  const contactUnread = contactConversations.reduce((n, c) => n + c.unreadCount, 0);
+  const usersUnread = userConversations.reduce((n, c) => n + c.unreadCount, 0);
+
+  const listItems = useMemo(() => {
+    const items: (Conversation & { kind: 'contact' | 'users' })[] = [];
+    if (listFilter !== 'users') filteredContactConversations.forEach((c) => items.push({ ...c, kind: 'contact' }));
+    if (listFilter !== 'contact') filteredUserConversations.forEach((c) => items.push({ ...c, kind: 'users' }));
+    return items.sort((a, b) => (b.lastMessageTime?.toMillis?.() || 0) - (a.lastMessageTime?.toMillis?.() || 0));
+  }, [listFilter, filteredContactConversations, filteredUserConversations]);
+
+  const formatListTime = (ts?: Timestamp) => {
+    const d = ts?.toDate?.();
+    if (!d) return '';
+    const now = new Date();
+    if (d.toDateString() === now.toDateString()) return d.toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' });
+    return d.toLocaleDateString('nl-NL', { day: 'numeric', month: 'short' });
+  };
+
+  const filterTabs: { key: 'all' | 'contact' | 'users'; label: string; unread: number }[] = [
+    { key: 'all', label: t('All', 'Alles'), unread: contactUnread + usersUnread },
+    { key: 'contact', label: t('Contact', 'Contact'), unread: contactUnread },
+    { key: 'users', label: t('Users', 'Gebruikers'), unread: usersUnread },
+  ];
+
   return (
     <>
-      {/* Panel top bar — always visible; the collapse toggle shrinks the
-          whole inbox down to just this slim bar and back */}
-      <div className="flex items-center justify-between px-4 py-2.5 mb-3 backdrop-blur-xl bg-gradient-to-b from-white/[0.08] to-white/[0.03] border border-white/[0.12] rounded-xl">
-        <div className="flex items-center gap-2">
-          <MessageSquare size={16} className="text-white/50" />
-          <p className="text-sm font-semibold text-white">{t('Chat Inbox', 'Chat Inbox')}</p>
-        </div>
-        <button
-          onClick={() => setIsCollapsed((v) => !v)}
-          title={isCollapsed ? t('Expand', 'Uitklappen') : t('Collapse', 'Inklappen')}
-          className="p-1.5 bg-white/[0.06] hover:bg-white/[0.12] rounded-md text-white/60 hover:text-white transition-colors flex-shrink-0"
-        >
-          {isCollapsed ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
-        </button>
-      </div>
+      <div className="flex rounded-2xl border border-white/[0.1] bg-white/[0.03] overflow-hidden h-[calc(100dvh-220px)] min-h-[460px]">
 
-      {!isCollapsed && (
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-3 overflow-hidden" style={{ height: 'calc(100dvh - 232px)', maxHeight: 'calc(100dvh - 232px)' }}>
-
-        {/* Left: Contact + Users sections — full width until a chat is
-            opened, then halves to make room for the thread pane */}
+        {/* Conversation list */}
         {showListPane && (
-          <div className={`${hasSelection ? 'md:col-span-6' : 'md:col-span-12'} flex flex-col gap-3 overflow-hidden`}>
-            <div className="px-3 py-3 backdrop-blur-xl bg-gradient-to-b from-white/[0.08] to-white/[0.03] border border-white/[0.12] rounded-xl flex-shrink-0">
-              <div className="relative">
-                <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" />
-                <input
-                  type="text"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search..."
-                  className="w-full pl-8 pr-3 py-1.5 bg-white/[0.06] border border-white/[0.1] rounded-lg text-xs text-white placeholder-white/30 focus:outline-none focus:border-white/[0.2]"
-                />
-              </div>
-            </div>
-
-            {/* Contact — its own independently collapsible panel */}
-            <div className={`backdrop-blur-xl bg-gradient-to-b from-white/[0.08] to-white/[0.03] border border-white/[0.12] rounded-xl overflow-hidden flex flex-col ${isContactCollapsed ? 'flex-shrink-0' : 'flex-1 min-h-0'}`}>
-              <button
-                onClick={() => setIsContactCollapsed((v) => !v)}
-                className="w-full px-3 py-3 flex items-center gap-2.5 flex-shrink-0 hover:bg-white/[0.03] transition-colors"
-              >
-                <Mail size={16} className="text-red-400" />
-                <p className="text-xs font-bold uppercase tracking-wider text-white/60 flex-1 text-left">{t('Contact', 'Contact')}</p>
-                {contactConversations.some((c) => c.unreadCount > 0) && (
-                  <span className="w-1.5 h-1.5 rounded-full bg-red-400" />
-                )}
-                {isContactCollapsed ? <ChevronDown size={14} className="text-white/40" /> : <ChevronUp size={14} className="text-white/40" />}
-              </button>
-              {!isContactCollapsed && (
-                <div className="flex-1 overflow-y-auto border-t border-white/[0.06]">
-                  {filteredContactConversations.length === 0 ? (
-                    <p className="px-3 py-4 text-xs text-white/25">No contact messages</p>
-                  ) : (
-                    filteredContactConversations.map((c) => (
-                      <button
-                        key={c.id}
-                        onClick={() => handleSelectConversation(c.id)}
-                        className={`w-full px-3 py-2.5 text-left transition-all border-b border-white/[0.04] flex items-center gap-3 ${
-                          selectedId === c.id ? 'bg-white/[0.08]' : 'hover:bg-white/[0.04]'
-                        }`}
-                      >
-                        <Avatar name={c.name} role={c.role} size="sm" />
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between gap-2">
-                            <p className="text-xs font-semibold text-white truncate">{c.name}</p>
-                            {c.category && (
-                              <span className="text-[9px] px-1.5 py-0.5 bg-white/[0.06] border border-white/[0.08] rounded-full text-white/40 uppercase tracking-wide flex-shrink-0">{c.category}</span>
-                            )}
-                          </div>
-                          <p className="text-[10px] text-white/40 truncate mt-0.5">{c.lastMessage || 'No messages yet'}</p>
-                        </div>
-                        {c.unreadCount > 0 && (
-                          <div className="w-5 h-5 rounded-full bg-red-600 flex items-center justify-center flex-shrink-0">
-                            <span className="text-[10px] text-white font-bold">{c.unreadCount}</span>
-                          </div>
-                        )}
-                      </button>
-                    ))
-                  )}
+          <aside className="w-full md:w-[320px] lg:w-[340px] md:flex-shrink-0 md:border-r border-white/[0.08] flex flex-col min-h-0">
+            <div className="p-3 space-y-3 border-b border-white/[0.08] flex-shrink-0">
+              <div className="flex items-center gap-2">
+                <div className="relative flex-1">
+                  <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" />
+                  <input
+                    type="text"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder={t('Search conversations', 'Zoek gesprekken')}
+                    className="w-full h-10 pl-9 pr-3 bg-white/[0.06] border border-white/[0.08] rounded-xl text-sm text-white placeholder-white/30 focus:outline-none focus:border-white/[0.2]"
+                  />
                 </div>
-              )}
-            </div>
-
-            {/* Users — plain chat with staff, no topics, so no category
-                badge here (unlike Contact, which carries the picker's
-                real topics). Its own independently collapsible panel. */}
-            <div className={`backdrop-blur-xl bg-gradient-to-b from-white/[0.08] to-white/[0.03] border border-white/[0.12] rounded-xl overflow-hidden flex flex-col ${isUsersCollapsed ? 'flex-shrink-0' : 'flex-1 min-h-0'}`}>
-              <div className="w-full px-3 py-3 flex items-center gap-2.5 flex-shrink-0">
-                <button
-                  onClick={() => setIsUsersCollapsed((v) => !v)}
-                  className="flex items-center gap-2.5 flex-1 hover:opacity-80 transition-opacity"
-                >
-                  <UsersIcon size={16} className="text-blue-400" />
-                  <p className="text-xs font-bold uppercase tracking-wider text-white/60 flex-1 text-left">{t('Users', 'Gebruikers')}</p>
-                  {userConversations.some((c) => c.unreadCount > 0) && (
-                    <span className="w-1.5 h-1.5 rounded-full bg-red-400" />
-                  )}
-                </button>
                 <button
                   onClick={openNewMessageModal}
-                  title="New message"
-                  className="p-1 bg-white/[0.06] hover:bg-white/[0.12] rounded-md text-white/60 hover:text-white transition-colors flex-shrink-0"
+                  title={t('New message', 'Nieuw bericht')}
+                  aria-label={t('New message', 'Nieuw bericht')}
+                  className="w-10 h-10 rounded-xl bg-red-600 hover:bg-red-500 text-white flex items-center justify-center flex-shrink-0 transition-colors"
                 >
-                  <Plus size={13} />
-                </button>
-                <button
-                  onClick={() => setIsUsersCollapsed((v) => !v)}
-                  className="text-white/40 flex-shrink-0"
-                >
-                  {isUsersCollapsed ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
+                  <Plus size={18} />
                 </button>
               </div>
-              {!isUsersCollapsed && (
-                <div className="flex-1 overflow-y-auto border-t border-white/[0.06]">
-                  {filteredUserConversations.length === 0 ? (
-                    <p className="px-3 py-4 text-xs text-white/25">No user messages</p>
-                  ) : (
-                    filteredUserConversations.map((c) => (
-                      <button
-                        key={c.id}
-                        onClick={() => handleSelectConversation(c.id)}
-                        className={`w-full px-3 py-2.5 text-left transition-all border-b border-white/[0.04] flex items-center gap-3 ${
-                          selectedId === c.id ? 'bg-white/[0.08]' : 'hover:bg-white/[0.04]'
-                        }`}
-                      >
-                        <Avatar name={c.name} role={c.role} size="sm" />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-xs font-semibold text-white truncate">{c.name}</p>
-                          <p className="text-[10px] text-white/40 truncate mt-0.5">{c.lastMessage || 'No messages yet'}</p>
+              <div className="flex gap-1 p-1 bg-white/[0.04] rounded-xl">
+                {filterTabs.map((f) => (
+                  <button
+                    key={f.key}
+                    onClick={() => setListFilter(f.key)}
+                    className={`flex-1 h-8 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors ${
+                      listFilter === f.key ? 'bg-white/[0.12] text-white' : 'text-white/45 hover:text-white/80'
+                    }`}
+                  >
+                    {f.label}
+                    {f.unread > 0 && (
+                      <span className="min-w-[18px] h-[18px] px-1 rounded-full bg-red-600 text-[10px] text-white flex items-center justify-center">{f.unread}</span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-y-auto min-h-0">
+              {listItems.length === 0 ? (
+                <div className="px-6 py-12 text-center">
+                  <MessageSquare size={28} className="mx-auto mb-3 text-white/15" />
+                  <p className="text-sm text-white/35">{search ? t('No results', 'Geen resultaten') : t('No conversations yet', 'Nog geen gesprekken')}</p>
+                </div>
+              ) : (
+                listItems.map((c) => {
+                  const active = selectedId === c.id;
+                  return (
+                    <button
+                      key={c.id}
+                      onClick={() => handleSelectConversation(c.id)}
+                      className={`relative w-full px-3 py-3 text-left flex items-center gap-3 border-b border-white/[0.04] transition-colors ${
+                        active ? 'bg-white/[0.08]' : 'hover:bg-white/[0.04]'
+                      }`}
+                    >
+                      {active && <span className="absolute left-0 top-2 bottom-2 w-0.5 rounded-full bg-red-500" />}
+                      <Avatar name={c.name} role={c.role} />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <p className={`text-sm truncate flex-1 ${c.unreadCount > 0 ? 'font-bold text-white' : 'font-semibold text-white/90'}`}>{c.name}</p>
+                          <span className="text-[11px] text-white/35 flex-shrink-0">{formatListTime(c.lastMessageTime)}</span>
                         </div>
-                        {c.unreadCount > 0 && (
-                          <div className="w-5 h-5 rounded-full bg-red-600 flex items-center justify-center flex-shrink-0">
-                            <span className="text-[10px] text-white font-bold">{c.unreadCount}</span>
-                          </div>
-                        )}
-                      </button>
-                    ))
+                        <div className="flex items-center gap-2 mt-0.5">
+                          {c.kind === 'contact' ? (
+                            c.category === 'Collaboration'
+                              ? <Handshake size={12} className="text-purple-300 flex-shrink-0" />
+                              : <Mail size={12} className="text-red-400 flex-shrink-0" />
+                          ) : (
+                            <UsersIcon size={12} className="text-blue-400 flex-shrink-0" />
+                          )}
+                          <p className={`text-xs truncate flex-1 ${c.unreadCount > 0 ? 'text-white/75' : 'text-white/40'}`}>{c.lastMessage || t('No messages yet', 'Nog geen berichten')}</p>
+                          {c.unreadCount > 0 && (
+                            <span className="min-w-[20px] h-5 px-1.5 rounded-full bg-red-600 text-[10px] font-bold text-white flex items-center justify-center flex-shrink-0">{c.unreadCount}</span>
+                          )}
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })
+              )}
+            </div>
+          </aside>
+        )}
+
+        {/* Thread */}
+        {showThreadPane && (
+          <section className="flex-1 min-w-0 flex flex-col min-h-0">
+            {!selectedConversation ? (
+              <div className="flex-1 flex flex-col items-center justify-center text-center px-6">
+                <div className="w-14 h-14 rounded-2xl bg-white/[0.05] border border-white/[0.08] flex items-center justify-center mb-4">
+                  <MessageSquare size={24} className="text-white/30" />
+                </div>
+                <p className="text-sm font-semibold text-white/70">{t('Pick a conversation', 'Kies een gesprek')}</p>
+                <p className="text-xs text-white/35 mt-1">{t('Or start a new one with the + button', 'Of begin een nieuw gesprek met de + knop')}</p>
+              </div>
+            ) : (
+              <>
+                <div className="px-4 py-3 border-b border-white/[0.08] flex items-center gap-3 flex-shrink-0">
+                  {isMobile && (
+                    <button onClick={() => setSelectedId(null)} aria-label={t('Back', 'Terug')} className="w-10 h-10 -ml-2 flex items-center justify-center text-white/50 hover:text-white transition-colors">
+                      <ArrowLeft size={18} />
+                    </button>
+                  )}
+                  <Avatar name={selectedConversation.name} role={selectedConversation.role} />
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-white text-sm truncate">{selectedConversation.name}</p>
+                    <p className="text-xs text-white/40 truncate">{selectedConversation.email}</p>
+                  </div>
+                  {selectedConversation.category && selectedConversation.category !== 'General' && (
+                    <span className="hidden sm:inline text-[10px] px-2 py-1 bg-white/[0.06] border border-white/[0.08] rounded-full text-white/50 uppercase tracking-wide">{selectedConversation.category}</span>
                   )}
                 </div>
-              )}
-            </div>
-          </div>
-        )}
 
-        {/* Right: thread — only rendered once a conversation is picked, so
-            the list gets the full frame instead of an empty pane next to it */}
-        {showThreadPane && selectedConversation && (
-          <div className="md:col-span-6 backdrop-blur-xl bg-gradient-to-br from-white/[0.08] to-white/[0.03] border border-white/[0.12] rounded-xl overflow-hidden flex flex-col">
-            <div className="px-4 py-3 border-b border-white/[0.08] flex items-center gap-3 flex-shrink-0 bg-white/[0.04]">
-              {isMobile && (
-                <button onClick={() => setSelectedId(null)} className="text-white/40 hover:text-white transition-colors">
-                  <ArrowLeft size={18} />
-                </button>
-              )}
-              <Avatar name={selectedConversation.name} role={selectedConversation.role} size="sm" />
-              <div className="flex-1 min-w-0">
-                <p className="font-semibold text-white text-sm truncate">{selectedConversation.name}</p>
-                <p className="text-[11px] text-white/40 truncate">{selectedConversation.email}</p>
-              </div>
-            </div>
-
-            {/* Collaboration details — only for a Collaboration-category
-                thread, whether it came from the public contact form or the
-                artist's dedicated request form. Shows whichever of
-                type/budget/preferred-start are present, plus approve/reject
-                (or the resulting status once handled). */}
-            {selectedConversation.category === 'Collaboration' && (
-              <div className="px-4 py-3 border-b border-white/[0.08] bg-gradient-to-br from-purple-500/[0.1] to-pink-500/[0.04] flex-shrink-0">
-                <div className="flex items-center gap-2 mb-2">
-                  <Handshake size={14} className="text-purple-300" />
-                  <p className="text-[11px] font-bold uppercase tracking-wider text-purple-200">{t('Collaboration Request', 'Samenwerkingsverzoek')}</p>
-                </div>
-                {(collabSourceMessage?.collabType || collabSourceMessage?.collabBudget != null || collabSourceMessage?.collabPreferredStartDate) && (
-                  <div className="flex flex-wrap gap-x-5 gap-y-1 text-xs text-white/70 mb-3">
+                {selectedConversation.category === 'Collaboration' && (
+                  <div className="px-4 py-3 border-b border-white/[0.08] bg-gradient-to-br from-purple-500/[0.1] to-pink-500/[0.04] flex-shrink-0 flex flex-wrap items-center gap-x-5 gap-y-2">
+                    <div className="flex items-center gap-2">
+                      <Handshake size={14} className="text-purple-300" />
+                      <p className="text-[11px] font-bold uppercase tracking-wider text-purple-200">{t('Collaboration Request', 'Samenwerkingsverzoek')}</p>
+                    </div>
                     {collabSourceMessage?.collabType && (
-                      <span>
-                        <span className="text-white/40">{t('Type', 'Type')}: </span>
-                        <span className="text-white font-medium capitalize">{collabSourceMessage.collabType.replace(/_/g, ' ')}</span>
-                      </span>
+                      <span className="text-xs"><span className="text-white/40">{t('Type', 'Type')}: </span><span className="text-white font-medium capitalize">{collabSourceMessage.collabType.replace(/_/g, ' ')}</span></span>
                     )}
                     {collabSourceMessage?.collabBudget != null && (
-                      <span>
-                        <span className="text-white/40">{t('Budget', 'Budget')}: </span>
-                        <span className="text-white font-medium">€{collabSourceMessage.collabBudget.toFixed(2)}</span>
-                      </span>
+                      <span className="text-xs"><span className="text-white/40">{t('Budget', 'Budget')}: </span><span className="text-white font-medium">€{collabSourceMessage.collabBudget.toFixed(2)}</span></span>
                     )}
                     {collabSourceMessage?.collabPreferredStartDate && (
-                      <span>
-                        <span className="text-white/40">{t('Preferred start', 'Gewenste startdatum')}: </span>
-                        <span className="text-white font-medium">{new Date(collabSourceMessage.collabPreferredStartDate).toLocaleDateString()}</span>
-                      </span>
+                      <span className="text-xs"><span className="text-white/40">{t('Preferred start', 'Gewenste start')}: </span><span className="text-white font-medium">{new Date(collabSourceMessage.collabPreferredStartDate).toLocaleDateString('nl-NL')}</span></span>
                     )}
-                  </div>
-                )}
-                {collabStatus === 'pending' ? (
-                  <div className="flex gap-2">
-                    <button
-                      onClick={handleApproveCollab}
-                      className="px-3 py-1.5 rounded-lg bg-green-600/20 border border-green-600/30 text-green-400 hover:bg-green-600/30 text-xs font-semibold flex items-center gap-1.5 transition"
-                    >
-                      <Check size={12} /> {t('Approve', 'Goedkeuren')}
-                    </button>
-                    <button
-                      onClick={handleRejectCollab}
-                      className="px-3 py-1.5 rounded-lg bg-red-600/20 border border-red-600/30 text-red-400 hover:bg-red-600/30 text-xs font-semibold flex items-center gap-1.5 transition"
-                    >
-                      <X size={12} /> {t('Reject', 'Afwijzen')}
-                    </button>
-                  </div>
-                ) : (
-                  <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold ${collabStatus === 'approved' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
-                    {collabStatus === 'approved' ? <Check size={12} /> : <X size={12} />}
-                    {collabStatus === 'approved' ? t('Approved', 'Goedgekeurd') : t('Rejected', 'Afgewezen')}
-                  </span>
-                )}
-              </div>
-            )}
-
-            <div className="flex-1 overflow-y-auto px-4 py-4 space-y-2">
-              {threadMessages.filter((m) => m.message).length === 0 ? (
-                <div className="text-center text-white/30 py-16"><MessageSquare size={32} className="mx-auto mb-3 opacity-30" /><p className="text-sm">No messages yet</p></div>
-              ) : threadMessages.filter((m) => m.message).map((msg) => (
-                <div key={msg.id} className={`flex ${isStaffRole(msg.senderRole) ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`max-w-sm px-3 py-2 rounded-xl text-sm ${isStaffRole(msg.senderRole) ? 'bg-red-600 text-white rounded-br-sm' : 'bg-white/[0.1] text-white rounded-bl-sm border border-white/[0.1]'}`}>
-                    {!isStaffRole(msg.senderRole) && <p className="text-[10px] font-semibold text-white/60 mb-1">{msg.senderName}</p>}
-                    <p className="break-words leading-relaxed whitespace-pre-wrap">{msg.message}</p>
-                    <div className="flex items-center gap-1 mt-1 justify-end">
-                      <span className="text-[10px] opacity-60">{msg.createdAt?.toDate?.()?.toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' })}</span>
-                      {isStaffRole(msg.senderRole) && getStatusIcon(msg.status)}
+                    <div className="ml-auto flex gap-2">
+                      {collabStatus === 'pending' ? (
+                        <>
+                          <button onClick={handleApproveCollab} className="h-8 px-3 rounded-lg bg-green-600/20 border border-green-600/30 text-green-400 hover:bg-green-600/30 text-xs font-semibold flex items-center gap-1.5 transition">
+                            <Check size={12} /> {t('Approve', 'Goedkeuren')}
+                          </button>
+                          <button onClick={handleRejectCollab} className="h-8 px-3 rounded-lg bg-red-600/20 border border-red-600/30 text-red-400 hover:bg-red-600/30 text-xs font-semibold flex items-center gap-1.5 transition">
+                            <X size={12} /> {t('Reject', 'Afwijzen')}
+                          </button>
+                        </>
+                      ) : (
+                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold ${collabStatus === 'approved' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
+                          {collabStatus === 'approved' ? <Check size={12} /> : <X size={12} />}
+                          {collabStatus === 'approved' ? t('Approved', 'Goedgekeurd') : t('Rejected', 'Afgewezen')}
+                        </span>
+                      )}
                     </div>
                   </div>
+                )}
+
+                <div className="flex-1 overflow-y-auto px-4 py-4 space-y-2 min-h-0">
+                  {threadMessages.filter((m) => m.message).length === 0 ? (
+                    <div className="text-center text-white/30 py-16"><MessageSquare size={28} className="mx-auto mb-3 opacity-30" /><p className="text-sm">{t('No messages yet', 'Nog geen berichten')}</p></div>
+                  ) : threadMessages.filter((m) => m.message).map((msg) => {
+                    const mine = isStaffRole(msg.senderRole);
+                    return (
+                      <div key={msg.id} className={`flex ${mine ? 'justify-end' : 'justify-start'}`}>
+                        <div className={`max-w-[85%] sm:max-w-md px-3.5 py-2 rounded-2xl text-sm ${mine ? 'bg-red-600 text-white rounded-br-md' : 'bg-white/[0.08] text-white rounded-bl-md border border-white/[0.08]'}`}>
+                          <p className="break-words leading-relaxed whitespace-pre-wrap">{msg.message}</p>
+                          <div className="flex items-center gap-1 mt-1 justify-end">
+                            <span className="text-[10px] opacity-60">{msg.createdAt?.toDate?.()?.toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' })}</span>
+                            {mine && getStatusIcon(msg.status)}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                  <div ref={messagesEndRef} />
                 </div>
-              ))}
-              <div ref={messagesEndRef} />
-            </div>
-            <form onSubmit={handleSendReply} className="px-4 py-3 border-t border-white/[0.08] bg-white/[0.03] flex-shrink-0">
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  placeholder={`Reply to ${selectedConversation.name}...`}
-                  className="flex-1 bg-white/[0.06] border border-white/[0.12] rounded-full px-4 py-2 text-white placeholder-white/30 focus:outline-none focus:border-white/[0.25] text-sm"
-                />
-                <button
-                  type="submit"
-                  disabled={!newMessage.trim()}
-                  className="w-9 h-9 bg-red-600 hover:bg-red-700 disabled:bg-white/[0.06] text-white rounded-full transition flex items-center justify-center flex-shrink-0"
-                >
-                  <Send size={16} />
-                </button>
-              </div>
-            </form>
-          </div>
+
+                <form onSubmit={handleSendReply} className="px-3 py-3 border-t border-white/[0.08] flex-shrink-0">
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={newMessage}
+                      onChange={(e) => setNewMessage(e.target.value)}
+                      placeholder={t(`Reply to ${selectedConversation.name}...`, `Antwoord aan ${selectedConversation.name}...`)}
+                      className="flex-1 min-w-0 h-11 bg-white/[0.06] border border-white/[0.1] rounded-full px-4 text-white placeholder-white/30 focus:outline-none focus:border-white/[0.25] text-base sm:text-sm"
+                    />
+                    <button
+                      type="submit"
+                      disabled={!newMessage.trim()}
+                      aria-label={t('Send', 'Versturen')}
+                      className="w-11 h-11 bg-red-600 hover:bg-red-500 disabled:bg-white/[0.06] disabled:text-white/30 text-white rounded-full transition flex items-center justify-center flex-shrink-0"
+                    >
+                      <Send size={16} />
+                    </button>
+                  </div>
+                </form>
+              </>
+            )}
+          </section>
         )}
       </div>
-      )}
 
       {/* New Message Modal */}
       {showNewMessageModal && (

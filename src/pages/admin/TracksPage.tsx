@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import AdminLayout from '../../components/admin/AdminLayout';
 import LinkInput from '../../components/admin/LinkInput';
+import { CLOUD_FOLDERS } from '../../lib/cloudUpload';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { useTracks } from '../../hooks/useTracks';
 import { useRemixes } from '../../hooks/useRemixes';
@@ -877,6 +878,11 @@ const TrackFormModal: React.FC<TrackFormModalProps> = ({ track, onClose, onSave,
   };
 
   const isAlbumOrEP = formData.type === 'Album' || formData.type === 'EP';
+  const trackFolder =
+    formData.type === 'Album' ? CLOUD_FOLDERS.album(formData.title)
+    : formData.type === 'EP' ? CLOUD_FOLDERS.ep(formData.title)
+    : CLOUD_FOLDERS.single;
+  const trackName = formData.title ? `${formData.artist || 'Jonna Rincon'} - ${formData.title}` : undefined;
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-xl z-50 flex items-start justify-center pt-8 pb-8 overflow-y-auto p-4">
@@ -1008,14 +1014,14 @@ const TrackFormModal: React.FC<TrackFormModalProps> = ({ track, onClose, onSave,
               {/* Audio + Artwork for single tracks */}
               {!isAlbumOrEP && (
                 <div className="grid grid-cols-2 gap-4">
-                  <LinkInput label="Audio URL" name="audioUrl" type="audio" onChange={(url) => setFormData({ ...formData, audioUrl: url })} defaultValue={formData.audioUrl} placeholder="https://nextcloud.example.com/..." />
-                  <LinkInput label="Artwork URL" name="artworkUrl" type="image" onChange={(url) => setFormData({ ...formData, artworkUrl: url })} defaultValue={formData.artworkUrl} placeholder="https://example.com/image.jpg" />
+                  <LinkInput label="Audio URL" name="audioUrl" type="audio" folder={trackFolder} baseName={trackName} onChange={(url) => setFormData({ ...formData, audioUrl: url })} defaultValue={formData.audioUrl} placeholder="https://nextcloud.example.com/..." />
+                  <LinkInput label="Artwork URL" name="artworkUrl" type="image" folder={trackFolder} baseName={trackName} onChange={(url) => setFormData({ ...formData, artworkUrl: url })} defaultValue={formData.artworkUrl} placeholder="https://example.com/image.jpg" />
                 </div>
               )}
 
               {/* Artwork for albums */}
               {isAlbumOrEP && (
-                <LinkInput label="Album Cover URL" name="artworkUrl" type="image" onChange={(url) => setFormData({ ...formData, artworkUrl: url })} defaultValue={formData.artworkUrl} placeholder="https://example.com/image.jpg" />
+                <LinkInput label="Album Cover URL" name="artworkUrl" type="image" folder={trackFolder} baseName={formData.title ? `${formData.title} - Cover` : undefined} onChange={(url) => setFormData({ ...formData, artworkUrl: url })} defaultValue={formData.artworkUrl} placeholder="https://example.com/image.jpg" />
               )}
 
               {/* Tracklist for albums */}
@@ -1423,8 +1429,8 @@ const RemixFormModal: React.FC<RemixFormModalProps> = ({ remix, onClose, onSave,
           {activeTab === 'media' && (
             <>
               <div className="grid grid-cols-2 gap-4">
-                <LinkInput label="Audio URL" name="audioUrl" type="audio" onChange={(url) => setFormData({ ...formData, audioUrl: url })} defaultValue={formData.audioUrl} placeholder="https://nextcloud.example.com/..." />
-                <LinkInput label="Artwork URL" name="artworkUrl" type="image" onChange={(url) => setFormData({ ...formData, artworkUrl: url })} defaultValue={formData.artworkUrl} placeholder="https://example.com/image.jpg" />
+                <LinkInput label="Audio URL" name="audioUrl" type="audio" folder={CLOUD_FOLDERS.remixesEdits} baseName={formData.title || undefined} onChange={(url) => setFormData({ ...formData, audioUrl: url })} defaultValue={formData.audioUrl} placeholder="https://nextcloud.example.com/..." />
+                <LinkInput label="Artwork URL" name="artworkUrl" type="image" folder={CLOUD_FOLDERS.remixesEdits} baseName={formData.title || undefined} onChange={(url) => setFormData({ ...formData, artworkUrl: url })} defaultValue={formData.artworkUrl} placeholder="https://example.com/image.jpg" />
               </div>
 
               <div className="flex flex-wrap gap-4">

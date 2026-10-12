@@ -5,14 +5,12 @@ import { useOrderNotifications } from '../../hooks/useOrderNotifications';
 import { orderService } from '../../lib/firebase/services';
 import { Order, OrderStatus, ProductCategory } from '../../lib/firebase/types';
 import {
-  Eye, EyeOff, ChevronDown, ChevronUp, Music, Wrench,
-  CheckCircle2, Circle, AlertCircle, Clock, TrendingUp, ShoppingBag,
-  DollarSign, Filter, Search, StickyNote, Check,
+  ChevronDown, ChevronUp, Music, Wrench, CheckCircle2, Circle, Search, Check,
 } from 'lucide-react';
 
 // ─── helpers ───────────────────────────────────────────────────────────────
 
-type Tab = 'overview' | 'all' | 'action';
+type Tab = 'all' | 'action';
 
 const STATUS_COLORS: Record<OrderStatus, string> = {
   pending:    'bg-amber-500/20 text-amber-400',
@@ -87,14 +85,6 @@ const needsAction = (order: Order) =>
 
 // ─── sub-components ─────────────────────────────────────────────────────────
 
-interface StatCardProps { label: string; value: string | number; sub?: string; accent?: string }
-const StatCard: React.FC<StatCardProps> = ({ label, value, sub, accent = 'text-white' }) => (
-  <div className="bg-white/[0.06] border border-white/[0.06] rounded-2xl p-4">
-    <p className="text-[11px] text-white/30 uppercase tracking-widest mb-1">{label}</p>
-    <p className={`text-2xl font-bold ${accent}`}>{value}</p>
-    {sub && <p className="text-xs text-white/25 mt-1">{sub}</p>}
-  </div>
-);
 
 interface FulfillmentChecklistProps {
   order: Order;
@@ -277,7 +267,7 @@ export const OrdersContent: React.FC = () => {
   const { orders, loading } = useOrders();
   const { markOrdersSeen } = useOrderNotifications();
 
-  const [activeTab, setActiveTab] = useState<Tab>('overview');
+  const [activeTab, setActiveTab] = useState<Tab>('all');
   const [filterStatus, setFilterStatus] = useState<OrderStatus | 'all'>('all');
   const [filterType, setFilterType] = useState<ProductCategory | 'all'>('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -286,39 +276,6 @@ export const OrdersContent: React.FC = () => {
 
   // Mark orders as seen when page loads
   useEffect(() => { markOrdersSeen(); }, []);
-
-  // ── derived stats ──────────────────────────────────────────────────────────
-  const stats = useMemo(() => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const todayMs = today.getTime();
-
-    let revenue = 0;
-    let revenueToday = 0;
-    let todayCount = 0;
-    let pendingCount = 0;
-    let processingCount = 0;
-    const byType: Record<string, { total: number; pending: number }> = {};
-
-    orders.forEach((o) => {
-      if (o.status === 'completed') revenue += o.total;
-      const createdMs = (o.createdAt as any)?.seconds ? (o.createdAt as any).seconds * 1000 : 0;
-      if (createdMs >= todayMs) {
-        todayCount++;
-        if (o.status === 'completed') revenueToday += o.total;
-      }
-      if (o.status === 'pending') pendingCount++;
-      if (o.status === 'processing') processingCount++;
-
-      o.items?.forEach((item) => {
-        if (!byType[item.productType]) byType[item.productType] = { total: 0, pending: 0 };
-        byType[item.productType].total++;
-        if (needsAction(o)) byType[item.productType].pending++;
-      });
-    });
-
-    return { revenue, revenueToday, todayCount, pendingCount, processingCount, byType };
-  }, [orders]);
 
   const actionOrders = useMemo(
     () => orders.filter(needsAction).sort((a, b) => {
@@ -451,106 +408,6 @@ export const OrdersContent: React.FC = () => {
       </React.Fragment>
     );
   };
-
-  // ── overview tab ───────────────────────────────────────────────────────────
-  const renderOverview = () => (
-    <div className="space-y-6">
-      {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <StatCard
-          label="Actie vereist"
-          value={stats.pendingCount + stats.processingCount}
-          sub="pending + processing"
-          accent={stats.pendingCount + stats.processingCount > 0 ? 'text-amber-400' : 'text-white'}
-        />
-        <StatCard label="Vandaag" value={stats.todayCount} sub="nieuwe bestellingen" />
-        <StatCard label="Omzet vandaag" value={`€${stats.revenueToday.toFixed(2)}`} accent="text-emerald-400" />
-        <StatCard label="Totale omzet" value={`€${stats.revenue.toFixed(2)}`} sub="voltooide orders" />
-      </div>
-
-      {/* Type breakdown */}
-      <div>
-        <h3 className="text-sm font-semibold text-white/60 uppercase tracking-widest mb-3">Per producttype</h3>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
-          {(Object.keys(TYPE_CONFIG) as ProductCategory[]).map((type) => {
-            const tc = TYPE_CONFIG[type];
-            const Icon = tc.icon;
-            const data = stats.byType[type];
-            if (!data) return null;
-            return (
-              <div key={type} className="bg-white/[0.04] border border-white/[0.06] rounded-xl p-3 flex items-center gap-3">
-                <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${tc.color}`}>
-                  <Icon size={14} />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-xs font-medium text-white">{tc.label}</p>
-                  <p className="text-[11px] text-white/30">{data.total} orders</p>
-                  {data.pending > 0 && (
-                    <p className="text-[11px] text-amber-400">{data.pending} wacht</p>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Action needed list */}
-      {actionOrders.length > 0 && (
-        <div>
-          <h3 className="text-sm font-semibold text-white/60 uppercase tracking-widest mb-3">
-            Actie vereist ({actionOrders.length})
-          </h3>
-          <div className="space-y-2">
-            {actionOrders.slice(0, 8).map((order) => {
-              const type = getPrimaryType(order);
-              const tc = TYPE_CONFIG[type];
-              const Icon = tc.icon;
-              return (
-                <div
-                  key={order.id}
-                  onClick={() => { setActiveTab('all'); setTimeout(() => setExpandedId(order.id), 50); }}
-                  className="flex items-center gap-3 p-3.5 bg-white/[0.04] hover:bg-white/[0.07] border border-white/[0.06] rounded-xl cursor-pointer transition-all"
-                >
-                  <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${tc.color}`}>
-                    <Icon size={13} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <p className="text-sm text-white font-medium">{order.orderNumber}</p>
-                      <span className={`text-[10px] px-2 py-0.5 rounded-full ${STATUS_COLORS[order.status]}`}>
-                        {order.status}
-                      </span>
-                    </div>
-                    <p className="text-xs text-white/40 truncate">{order.customerEmail}</p>
-                  </div>
-                  <div className="text-right flex-shrink-0">
-                    <p className="text-sm font-semibold text-white">€{order.total.toFixed(2)}</p>
-                    <p className="text-[11px] text-amber-400">{getActionLabel(type)}</p>
-                  </div>
-                </div>
-              );
-            })}
-            {actionOrders.length > 8 && (
-              <button
-                onClick={() => setActiveTab('action')}
-                className="w-full text-center text-xs text-white/30 hover:text-white/60 py-2 transition-colors"
-              >
-                + {actionOrders.length - 8} meer bekijken
-              </button>
-            )}
-          </div>
-        </div>
-      )}
-
-      {actionOrders.length === 0 && !loading && (
-        <div className="flex items-center gap-3 p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
-          <CheckCircle2 size={20} className="text-emerald-400 flex-shrink-0" />
-          <p className="text-sm text-emerald-300">Alles afgehandeld! Geen openstaande bestellingen.</p>
-        </div>
-      )}
-    </div>
-  );
 
   // ── all orders tab ─────────────────────────────────────────────────────────
   const renderAllOrders = () => (
@@ -713,7 +570,6 @@ export const OrdersContent: React.FC = () => {
 
   // ── main render ────────────────────────────────────────────────────────────
   const tabs: { key: Tab; label: string; count?: number }[] = [
-    { key: 'overview', label: 'Overzicht' },
     { key: 'all', label: 'Alle Bestellingen', count: orders.length },
     { key: 'action', label: 'Actie Vereist', count: actionOrders.length },
   ];
@@ -753,7 +609,6 @@ export const OrdersContent: React.FC = () => {
         </div>
 
         {/* Tab content */}
-        {activeTab === 'overview' && renderOverview()}
         {activeTab === 'all' && renderAllOrders()}
         {activeTab === 'action' && renderActionTab()}
       </div>

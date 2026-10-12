@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Loader2 } from 'lucide-react';
 
-interface ImageWithLoaderProps {
+interface LoaderImageProps {
   src: string;
   alt: string;
   className?: string;
@@ -10,7 +10,7 @@ interface ImageWithLoaderProps {
   onError?: () => void;
 }
 
-const ImageWithLoader: React.FC<ImageWithLoaderProps> = ({
+const ImageWithLoader: React.FC<LoaderImageProps> = ({
   src,
   alt,
   className = 'w-full h-full object-cover',

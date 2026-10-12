@@ -6,7 +6,7 @@ import {
   collection, query, orderBy, onSnapshot, doc, updateDoc,
   deleteDoc, Timestamp,
 } from 'firebase/firestore';
-import { Check, X, Clock, UserPlus } from 'lucide-react';
+import { Check, X, Clock, UserPlus, ChevronDown, ChevronUp, Trash2 } from 'lucide-react';
 import LoadingSpinner from '../../components/LoadingSpinner';
 
 type BoardTab = 'artist-requests' | 'chat';
@@ -32,6 +32,7 @@ const ArtistRequestsSection: React.FC = () => {
   const [requests, setRequests] = useState<ArtistRoleRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('pending');
+  const [openId, setOpenId] = useState<string | null>(null);
 
   useEffect(() => {
     const q = query(collection(db, 'artistRoleRequests'), orderBy('createdAt', 'desc'));
@@ -66,69 +67,94 @@ const ArtistRequestsSection: React.FC = () => {
 
   const filtered = requests.filter((r) => filter === 'all' || r.status === filter);
 
+  const statusPill = (status: ArtistRoleRequest['status']) =>
+    status === 'pending' ? 'bg-yellow-500/15 text-yellow-400' :
+    status === 'approved' ? 'bg-green-500/15 text-green-400' : 'bg-red-500/15 text-red-400';
+
+  const statusLabel = (status: ArtistRoleRequest['status']) =>
+    status === 'pending' ? 'Open' : status === 'approved' ? 'Goedgekeurd' : 'Afgewezen';
+
+  const filterLabels: Record<typeof filter, string> = { pending: 'Open', all: 'Alles', approved: 'Goedgekeurd', rejected: 'Afgewezen' };
+
   return (
-    <div className="space-y-4">
-      <div className="flex gap-1 border-b border-white/[0.06]">
-        {(['pending', 'all', 'approved', 'rejected'] as const).map((s) => (
-          <button key={s} onClick={() => setFilter(s)}
-            className={`px-4 py-2 text-xs font-semibold capitalize transition-all relative ${filter === s ? 'text-white' : 'text-white/40 hover:text-white'}`}>
-            {s} ({s === 'all' ? requests.length : requests.filter((r) => r.status === s).length})
-            {filter === s && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-white/40" />}
-          </button>
-        ))}
+    <div className="space-y-3">
+      <div className="flex gap-1 p-1 bg-white/[0.04] border border-white/[0.06] rounded-xl w-full sm:w-fit overflow-x-auto">
+        {(['pending', 'all', 'approved', 'rejected'] as const).map((s) => {
+          const count = s === 'all' ? requests.length : requests.filter((r) => r.status === s).length;
+          return (
+            <button key={s} onClick={() => setFilter(s)}
+              className={`h-8 px-3 rounded-lg text-xs font-semibold whitespace-nowrap flex items-center gap-1.5 transition-colors ${filter === s ? 'bg-white/[0.12] text-white' : 'text-white/45 hover:text-white/80'}`}>
+              {filterLabels[s]}
+              <span className={`text-[10px] px-1.5 rounded-full ${s === 'pending' && count > 0 ? 'bg-yellow-500/20 text-yellow-400' : 'bg-white/[0.08] text-white/40'}`}>{count}</span>
+            </button>
+          );
+        })}
       </div>
 
-      {loading ? <LoadingSpinner text="Loading requests..." /> :
+      {loading ? <LoadingSpinner text="Aanvragen laden..." /> :
        filtered.length === 0 ? (
-        <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-8 text-center">
-          <UserPlus size={32} className="mx-auto mb-3 text-white/20" />
-          <p className="text-white/40 text-sm">No {filter !== 'all' ? filter : ''} artist requests</p>
+        <div className="border border-dashed border-white/[0.1] rounded-xl py-8 text-center">
+          <UserPlus size={24} className="mx-auto mb-2 text-white/20" />
+          <p className="text-white/40 text-sm">Geen aanvragen{filter !== 'all' ? ` (${filterLabels[filter].toLowerCase()})` : ''}</p>
         </div>
       ) : (
-        <div className="space-y-3">
-          {filtered.map((req) => (
-            <div key={req.id} className={`bg-white/[0.05] border rounded-xl p-4 ${
-              req.status === 'pending' ? 'border-yellow-600/40' :
-              req.status === 'approved' ? 'border-green-600/40' : 'border-red-600/40'
-            }`}>
-              <div className="flex items-start justify-between mb-3">
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <h3 className="font-bold text-white">{req.artistName}</h3>
-                    <span className={`text-xs px-2 py-0.5 rounded-full ${
-                      req.status === 'pending' ? 'bg-yellow-500/20 text-yellow-400' :
-                      req.status === 'approved' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
-                    }`}>
-                      {req.status === 'pending' && <Clock size={10} className="inline mr-1" />}{req.status}
-                    </span>
+        <div className="rounded-xl border border-white/[0.08] bg-white/[0.03] divide-y divide-white/[0.06] overflow-hidden">
+          {filtered.map((req) => {
+            const open = openId === req.id;
+            const hasDetails = !!req.additionalInfo || !!req.spotify;
+            return (
+              <div key={req.id} className="px-3 py-2.5 sm:px-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-orange-600 to-red-700 flex items-center justify-center text-sm font-bold text-white flex-shrink-0">
+                    {req.artistName?.[0]?.toUpperCase() || '?'}
                   </div>
-                  <p className="text-sm text-white">{req.userName}</p>
-                  <p className="text-xs text-white/40">{req.userEmail}</p>
-                  <p className="text-xs text-white/30 mt-0.5">{req.createdAt?.toDate?.()?.toLocaleString()}</p>
+                  <button
+                    onClick={() => hasDetails && setOpenId(open ? null : req.id)}
+                    className={`flex-1 min-w-0 text-left ${hasDetails ? 'cursor-pointer' : 'cursor-default'}`}
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <p className="text-sm font-semibold text-white truncate">{req.artistName}</p>
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded-full flex-shrink-0 inline-flex items-center gap-1 ${statusPill(req.status)}`}>
+                        {req.status === 'pending' && <Clock size={9} />}{statusLabel(req.status)}
+                      </span>
+                      {hasDetails && (open ? <ChevronUp size={14} className="text-white/30 flex-shrink-0" /> : <ChevronDown size={14} className="text-white/30 flex-shrink-0" />)}
+                    </div>
+                    <p className="text-xs text-white/40 truncate">
+                      {[req.userName, req.city && req.region ? `${req.city}, ${req.region}` : req.city || req.region, req.instagram, req.createdAt?.toDate?.()?.toLocaleDateString('nl-NL', { day: 'numeric', month: 'short' })].filter(Boolean).join(' · ')}
+                    </p>
+                    {req.roles?.length > 0 && (
+                      <div className="hidden md:flex flex-wrap gap-1 mt-1">
+                        {req.roles.map((role) => (
+                          <span key={role} className="px-1.5 py-0.5 bg-purple-600/15 text-purple-300 rounded text-[10px]">{role}</span>
+                        ))}
+                      </div>
+                    )}
+                  </button>
+                  <div className="flex gap-1.5 flex-shrink-0">
+                    {req.status === 'pending' ? <>
+                      <button onClick={() => handleApprove(req)} title="Goedkeuren" aria-label="Goedkeuren" className="w-10 h-10 sm:w-auto sm:px-3 sm:h-9 rounded-lg bg-green-600/15 border border-green-600/30 text-green-400 hover:bg-green-600/25 text-xs font-semibold flex items-center justify-center gap-1 transition"><Check size={14} /><span className="hidden sm:inline">Goedkeuren</span></button>
+                      <button onClick={() => handleReject(req.id)} title="Afwijzen" aria-label="Afwijzen" className="w-10 h-10 sm:w-auto sm:px-3 sm:h-9 rounded-lg bg-red-600/15 border border-red-600/30 text-red-400 hover:bg-red-600/25 text-xs font-semibold flex items-center justify-center gap-1 transition"><X size={14} /><span className="hidden sm:inline">Afwijzen</span></button>
+                    </> : (
+                      <button onClick={() => handleDelete(req.id)} title="Verwijderen" aria-label="Verwijderen" className="w-10 h-10 sm:h-9 sm:w-9 rounded-lg bg-white/[0.05] text-white/40 hover:text-white hover:bg-white/[0.1] flex items-center justify-center transition"><Trash2 size={14} /></button>
+                    )}
+                  </div>
                 </div>
-                <div className="flex gap-2 flex-shrink-0">
-                  {req.status === 'pending' && <>
-                    <button onClick={() => handleApprove(req)} className="px-3 py-1.5 rounded-lg bg-green-600/20 border border-green-600/30 text-green-400 hover:bg-green-600/30 text-xs flex items-center gap-1 transition"><Check size={12} />Approve</button>
-                    <button onClick={() => handleReject(req.id)} className="px-3 py-1.5 rounded-lg bg-red-600/20 border border-red-600/30 text-red-400 hover:bg-red-600/30 text-xs flex items-center gap-1 transition"><X size={12} />Reject</button>
-                  </>}
-                  {req.status !== 'pending' && <button onClick={() => handleDelete(req.id)} className="px-3 py-1.5 rounded-lg bg-white/[0.06] text-white/40 hover:text-white text-xs transition">Delete</button>}
-                </div>
+                {open && (
+                  <div className="mt-2 ml-12 space-y-2 text-xs">
+                    {req.roles?.length > 0 && (
+                      <div className="flex md:hidden flex-wrap gap-1">
+                        {req.roles.map((role) => (
+                          <span key={role} className="px-1.5 py-0.5 bg-purple-600/15 text-purple-300 rounded text-[10px]">{role}</span>
+                        ))}
+                      </div>
+                    )}
+                    <p className="text-white/40">{req.userEmail}{req.spotify ? <> · <a href={req.spotify} target="_blank" rel="noreferrer" className="text-green-400 hover:underline">Spotify</a></> : null}</p>
+                    {req.additionalInfo && <p className="text-white/65 bg-black/30 rounded-lg p-2.5 whitespace-pre-wrap">{req.additionalInfo}</p>}
+                  </div>
+                )}
               </div>
-              <div className="grid grid-cols-3 gap-3 text-xs mb-3">
-                <div><span className="text-white/40">Location:</span><p className="text-white">{req.city}, {req.region}</p></div>
-                <div><span className="text-white/40">Instagram:</span><p className="text-white">{req.instagram || 'N/A'}</p></div>
-                <div><span className="text-white/40">Spotify:</span><p className="text-white">{req.spotify ? 'Yes' : 'N/A'}</p></div>
-              </div>
-              {req.roles?.length > 0 && (
-                <div className="flex flex-wrap gap-1.5 mb-3">
-                  {req.roles.map((role) => (
-                    <span key={role} className="px-2 py-0.5 bg-purple-600/20 text-purple-300 rounded-full text-xs">{role}</span>
-                  ))}
-                </div>
-              )}
-              {req.additionalInfo && <p className="text-xs text-white/60 bg-black/30 rounded-lg p-3">{req.additionalInfo}</p>}
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

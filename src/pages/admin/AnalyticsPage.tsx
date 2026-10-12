@@ -305,15 +305,37 @@ export const AnalyticsContent: React.FC = () => {
   ).length;
   const completedCollaborations = collaborations.filter((c) => c.status === 'completed').length;
 
+  // Order insights (all time, independent of the date filter)
+  const orderInsights = React.useMemo(() => {
+    const start = new Date(); start.setHours(0, 0, 0, 0);
+    const todayMs = start.getTime();
+    let revenue = 0, revenueToday = 0, todayCount = 0, actionCount = 0;
+    const byType: Record<string, { total: number; pending: number }> = {};
+    orders.forEach((o: any) => {
+      const ms = o.createdAt?.seconds ? o.createdAt.seconds * 1000 : 0;
+      const open = o.status === 'pending' || o.status === 'processing';
+      if (o.status === 'completed') revenue += o.total || 0;
+      if (ms >= todayMs) { todayCount++; if (o.status === 'completed') revenueToday += o.total || 0; }
+      if (open) actionCount++;
+      o.items?.forEach((i: any) => {
+        const k = i.productType || 'overig';
+        if (!byType[k]) byType[k] = { total: 0, pending: 0 };
+        byType[k].total++;
+        if (open) byType[k].pending++;
+      });
+    });
+    return { revenue, revenueToday, todayCount, actionCount, byType };
+  }, [orders]);
+
   // Loading states
   const isLoading = beatsLoading || tracksLoading || remixesLoading;
 
   return (
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-white">Analytics Dashboard</h1>
+            <h2 className="text-2xl sm:text-3xl font-bold text-white">Analytics</h2>
             <p className="text-white/40 mt-2">Overview of your platform performance</p>
           </div>
           <div>
@@ -566,6 +588,42 @@ export const AnalyticsContent: React.FC = () => {
               </p>
             </div>
           </div>
+        </div>
+
+        {/* Orders — moved here from the orders page */}
+        <div>
+          <h2 className="text-xl font-semibold text-white mb-3">Bestellingen</h2>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-5">
+              <p className="text-white/40 text-sm mb-1">Actie vereist</p>
+              <p className={`text-2xl font-bold ${orderInsights.actionCount > 0 ? 'text-amber-400' : 'text-white'}`}>{orderInsights.actionCount}</p>
+              <p className="text-xs text-white/40 mt-1">pending + processing</p>
+            </div>
+            <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-5">
+              <p className="text-white/40 text-sm mb-1">Vandaag</p>
+              <p className="text-2xl font-bold text-white">{orderInsights.todayCount}</p>
+              <p className="text-xs text-white/40 mt-1">nieuwe bestellingen</p>
+            </div>
+            <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-5">
+              <p className="text-white/40 text-sm mb-1">Omzet vandaag</p>
+              <p className="text-2xl font-bold text-emerald-400">€{orderInsights.revenueToday.toFixed(2)}</p>
+            </div>
+            <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-5">
+              <p className="text-white/40 text-sm mb-1">Totale omzet</p>
+              <p className="text-2xl font-bold text-white">€{orderInsights.revenue.toFixed(2)}</p>
+              <p className="text-xs text-white/40 mt-1">voltooide orders, alle tijd</p>
+            </div>
+          </div>
+          {Object.keys(orderInsights.byType).length > 0 && (
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 mt-3">
+              {Object.entries(orderInsights.byType).map(([type, d]) => (
+                <div key={type} className="bg-white/[0.04] border border-white/[0.06] rounded-xl px-3 py-2.5">
+                  <p className="text-xs font-medium text-white capitalize">{type}</p>
+                  <p className="text-[11px] text-white/40">{d.total} orders{d.pending > 0 && <span className="text-amber-400"> · {d.pending} wacht</span>}</p>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Operations Overview — orders, requests, collaborations */}

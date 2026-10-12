@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import AdminLayout from '../../components/admin/AdminLayout';
-import { Store, Bell, Shield, Save, Megaphone, Eye, EyeOff, Plus, Trash2, Music2, X, ChevronUp, ChevronDown, Image, MessageCircle } from 'lucide-react';
+import { Store, Bell, Shield, Save, Megaphone, Eye, EyeOff, Plus, Trash2, Music2, X, ChevronUp, ChevronDown, Image as PhotoIcon, MessageCircle } from 'lucide-react';
 import { settingsService, ShopSettings, GeneralSettings, NotificationSettings, SecuritySettings, DEFAULT_CONTACT_CATEGORIES } from '../../lib/firebase/services/settingsService';
 import { promoSectionService, PromoSectionData, PromoButton } from '../../lib/firebase/services/promoSectionService';
 import { useTracks } from '../../hooks/useTracks';
-import { fileUploadService } from '../../lib/firebase/services';
+import { uploadToCloud, CLOUD_FOLDERS } from '../../lib/cloudUpload';
 
 const AdminSettings: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'shop' | 'notifications' | 'security' | 'promo' | 'contact'>('shop');
@@ -203,14 +203,10 @@ const AdminSettings: React.FC = () => {
     if (!file) return;
     setPromoImageUploading(true);
     try {
-      const res = await fileUploadService.uploadImage(file, 'promo');
-      if (res.success && res.url) {
-        setPromoSettings((p) => ({ ...p, images: [...(p.images ?? []), res.url!] }));
-      } else {
-        setMessage({ type: 'error', text: res.error || 'Image upload failed' });
-      }
-    } catch {
-      setMessage({ type: 'error', text: 'Image upload failed' });
+      const res = await uploadToCloud(file, { folder: CLOUD_FOLDERS.promo });
+      setPromoSettings((p) => ({ ...p, images: [...(p.images ?? []), res.url] }));
+    } catch (err: any) {
+      setMessage({ type: 'error', text: err?.message || 'Image upload failed' });
     } finally {
       setPromoImageUploading(false);
       e.target.value = '';
@@ -886,7 +882,7 @@ const AdminSettings: React.FC = () => {
             {/* Images */}
             <div className="bg-white/[0.08] border border-white/[0.06] rounded-xl p-6 space-y-4">
               <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                <Image size={18} className="text-white/50" />
+                <PhotoIcon aria-hidden="true" size={18} className="text-white/50" />
                 Images
                 <span className="text-xs text-white/25 font-normal">— shown as carousel if multiple</span>
               </h3>
@@ -942,7 +938,7 @@ const AdminSettings: React.FC = () => {
               <div>
                 <label className="block text-sm font-medium text-white/60 mb-2">Or upload a file</label>
                 <label className="flex items-center gap-3 cursor-pointer px-4 py-3 bg-white/[0.04] border border-dashed border-white/[0.15] hover:border-white/30 rounded-lg transition-colors">
-                  <Image size={16} className="text-white/40 flex-shrink-0" />
+                  <PhotoIcon aria-hidden="true" size={16} className="text-white/40 flex-shrink-0" />
                   <span className="text-white/40 text-sm">
                     {promoImageUploading ? 'Uploading...' : 'Click to upload (PNG, JPG, WebP — max 10MB)'}
                   </span>

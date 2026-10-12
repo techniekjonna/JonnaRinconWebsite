@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Copy, Check, AlertCircle, X, Upload } from 'lucide-react';
+import { Copy, Check, AlertCircle, X, Upload, Loader2 } from 'lucide-react';
+import { uploadToCloud } from '../../lib/cloudUpload';
 import { toDirectUrl, detectUrlType, isValidUrl } from '../../lib/utils/urlUtils';
 
 interface LinkInputProps {
@@ -11,11 +12,13 @@ interface LinkInputProps {
   required?: boolean;
   placeholder?: string;
   /**
-   * Optional file-upload handler. Wiring comes later — for now the button
-   * opens a native file picker and, if a handler is provided, forwards
-   * the selected File. If omitted, the click still works visually but
-   * the selected file is ignored.
+   * Cloud folder (relative to "J18/Media Website") the Upload button sends the
+   * file to. Created when missing. Defaults to "Uploads".
    */
+  folder?: string;
+  /** Optional file name (without extension) for the uploaded file. */
+  baseName?: string;
+  /** Optional custom upload handler; replaces the cloud upload. */
   onUpload?: (file: File) => void;
 }
 
@@ -27,8 +30,13 @@ export default function LinkInput({
   type = 'any',
   required = false,
   placeholder,
+  folder,
+  baseName,
   onUpload,
 }: LinkInputProps) {
+  const [uploading, setUploading] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [uploadedTo, setUploadedTo] = useState('');
   const [value, setValue] = useState(defaultValue);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState('');
@@ -99,13 +107,29 @@ export default function LinkInput({
     fileInputRef.current?.click();
   };
 
-  const handleFilePicked = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFilePicked = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file && onUpload) {
-      onUpload(file);
-    }
     // Reset so picking the same file twice still fires onChange
     if (fileInputRef.current) fileInputRef.current.value = '';
+    if (!file) return;
+    if (onUpload) {
+      onUpload(file);
+      return;
+    }
+    setUploading(true);
+    setProgress(0);
+    setError('');
+    setUploadedTo('');
+    try {
+      const res = await uploadToCloud(file, { folder: folder || 'Uploads', baseName, onProgress: setProgress });
+      setValue(res.url);
+      onChange(res.url);
+      setUploadedTo(res.path);
+    } catch (err: any) {
+      setError(err?.message || 'Upload failed');
+    } finally {
+      setUploading(false);
+    }
   };
 
   return (
@@ -148,12 +172,14 @@ export default function LinkInput({
           <button
             type="button"
             onClick={handleUploadClick}
-            className="flex-shrink-0 inline-flex items-center gap-2 px-4 py-2 rounded bg-white/[0.08] border border-white/[0.1] text-white/80 hover:bg-white/[0.12] hover:text-white transition"
-            title="Upload file"
+            disabled={uploading}
+            className="flex-shrink-0 inline-flex items-center gap-2 px-4 py-2 min-h-[44px] rounded bg-white/[0.08] border border-white/[0.1] text-white/80 hover:bg-white/[0.12] hover:text-white transition disabled:opacity-60 disabled:cursor-wait"
+            title={`Upload to cloud: ${folder || 'Uploads'}`}
+            aria-label="Upload file"
           >
-            <Upload size={14} />
+            {uploading ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
             <span className="text-xs font-semibold uppercase tracking-wider hidden sm:inline">
-              Upload
+              {uploading ? `${Math.round(progress * 100)}%` : 'Upload'}
             </span>
           </button>
 
@@ -165,6 +191,17 @@ export default function LinkInput({
             className="hidden"
           />
         </div>
+
+        {uploading && (
+          <div className="h-1 w-full rounded bg-white/[0.08] overflow-hidden" role="progressbar" aria-valuenow={Math.round(progress * 100)} aria-valuemin={0} aria-valuemax={100}>
+            <div className="h-full bg-white/60 transition-all" style={{ width: `${Math.max(4, progress * 100)}%` }} />
+          </div>
+        )}
+        {uploadedTo && !uploading && (
+          <p className="text-xs text-green-400 flex items-center gap-1.5">
+            <Check size={12} /> Uploaded to cloud: {uploadedTo}
+          </p>
+        )}
 
         {/* URL Info */}
         {value && isValid && (

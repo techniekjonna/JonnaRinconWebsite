@@ -3,7 +3,7 @@ import AdminLayout from '../../components/admin/AdminLayout';
 import {
   Plus, ChevronLeft, ChevronRight, X, Upload, Clock,
   Instagram, Youtube, Calendar as CalendarIcon, Send, Trash2,
-  Eye, RefreshCw, Image, Film, Type, Edit, CheckCircle, AlertCircle,
+  Eye, RefreshCw, Image as PhotoIcon, Film, Type, Edit, CheckCircle, AlertCircle,
   Settings,
 } from 'lucide-react';
 
@@ -425,7 +425,7 @@ export const SocialPlannerContent: React.FC = () => {
                     <div className="flex items-center gap-3 flex-1 min-w-0">
                       <div className="w-8 h-8 rounded-lg bg-white/[0.06] flex items-center justify-center flex-shrink-0">
                         {post.mediaType === 'video' ? <Film size={16} className="text-red-400" /> :
-                         post.mediaType === 'photo' ? <Image size={16} className="text-blue-400" /> :
+                         post.mediaType === 'photo' ? <PhotoIcon aria-hidden="true" size={16} className="text-blue-400" /> :
                          <Type size={16} className="text-green-400" />}
                       </div>
                       <div className="min-w-0 flex-1">
@@ -802,7 +802,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ profileUsername, onCl
                   postType === 'photo' ? 'bg-blue-600 text-white' : 'bg-white/[0.06] text-white/40 hover:bg-white/[0.08]'
                 }`}
               >
-                <Image size={18} /> Photo
+                <PhotoIcon aria-hidden="true" size={18} /> Photo
               </button>
               <button
                 type="button"
