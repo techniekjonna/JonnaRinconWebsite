@@ -20,6 +20,11 @@ interface LinkInputProps {
   baseName?: string;
   /** Optional custom upload handler; replaces the cloud upload. */
   onUpload?: (file: File) => void;
+  /**
+   * Called with the file before it is uploaded (e.g. to fill the form from its
+   * tags). May return a folder and/or file name to use instead of the props.
+   */
+  onFile?: (file: File) => Promise<{ folder?: string; baseName?: string } | void> | { folder?: string; baseName?: string } | void;
 }
 
 export default function LinkInput({
@@ -33,6 +38,7 @@ export default function LinkInput({
   folder,
   baseName,
   onUpload,
+  onFile,
 }: LinkInputProps) {
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -41,6 +47,8 @@ export default function LinkInput({
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [dragOver, setDragOver] = useState(false);
+  const dragDepth = useRef(0);
 
   // Update value when defaultValue prop changes (e.g., when editing a beat)
   useEffect(() => {
@@ -107,11 +115,54 @@ export default function LinkInput({
     fileInputRef.current?.click();
   };
 
+  const fileMatchesType = (file: File) => {
+    if (type === 'audio') return file.type.startsWith('audio/') || /\.(wav|mp3|aiff?|flac|m4a|ogg|aac)$/i.test(file.name);
+    if (type === 'image') return file.type.startsWith('image/') || /\.(png|jpe?g|webp|gif|avif)$/i.test(file.name);
+    return true;
+  };
+
   const handleFilePicked = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     // Reset so picking the same file twice still fires onChange
     if (fileInputRef.current) fileInputRef.current.value = '';
     if (!file) return;
+    await uploadFile(file);
+  };
+
+  // Drag & drop: drop a file anywhere on the field + Upload button
+  const hasFiles = (e: React.DragEvent) => Array.from(e.dataTransfer?.types || []).includes('Files');
+  const onDragEnter = (e: React.DragEvent) => {
+    if (!hasFiles(e) || uploading) return;
+    e.preventDefault();
+    dragDepth.current += 1;
+    setDragOver(true);
+  };
+  const onDragOver = (e: React.DragEvent) => {
+    if (!hasFiles(e) || uploading) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
+  };
+  const onDragLeave = (e: React.DragEvent) => {
+    if (!hasFiles(e)) return;
+    dragDepth.current = Math.max(0, dragDepth.current - 1);
+    if (dragDepth.current === 0) setDragOver(false);
+  };
+  const onDrop = async (e: React.DragEvent) => {
+    if (!hasFiles(e)) return;
+    e.preventDefault();
+    dragDepth.current = 0;
+    setDragOver(false);
+    if (uploading) return;
+    const file = e.dataTransfer.files?.[0];
+    if (!file) return;
+    if (!fileMatchesType(file)) {
+      setError(type === 'audio' ? 'Dit is geen audiobestand. Sleep een audiobestand (wav, mp3, ...).' : 'Dit is geen afbeelding. Sleep een afbeelding (png, jpg, webp).');
+      return;
+    }
+    await uploadFile(file);
+  };
+
+  const uploadFile = async (file: File) => {
     if (onUpload) {
       onUpload(file);
       return;
@@ -121,7 +172,15 @@ export default function LinkInput({
     setError('');
     setUploadedTo('');
     try {
-      const res = await uploadToCloud(file, { folder: folder || 'Uploads', baseName, onProgress: setProgress });
+      let target: { folder?: string; baseName?: string } | void = undefined;
+      if (onFile) {
+        try { target = await onFile(file); } catch (e) { console.warn(e); }
+      }
+      const res = await uploadToCloud(file, {
+        folder: target?.folder || folder || 'Uploads',
+        baseName: target?.baseName ?? baseName,
+        onProgress: setProgress,
+      });
       setValue(res.url);
       onChange(res.url);
       setUploadedTo(res.path);
@@ -140,7 +199,18 @@ export default function LinkInput({
       </label>
 
       <div className="space-y-2">
-        <div className="flex gap-2">
+        <div
+          className={`relative flex gap-2 rounded transition ${dragOver ? 'ring-2 ring-white/60 ring-offset-2 ring-offset-black bg-white/[0.04]' : ''}`}
+          onDragEnter={onDragEnter}
+          onDragOver={onDragOver}
+          onDragLeave={onDragLeave}
+          onDrop={onDrop}
+        >
+          {dragOver && (
+            <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center gap-2 rounded border-2 border-dashed border-white/50 bg-black/70 text-white text-xs font-semibold uppercase tracking-wider">
+              <Upload size={14} aria-hidden="true" /> Laat los om te uploaden
+            </div>
+          )}
           <div className="relative flex-1 min-w-0">
             <input
               type="text"
@@ -253,10 +323,10 @@ export default function LinkInput({
         {!value && (
           <p className="text-xs text-white/30">
             {type === 'audio'
-              ? 'Paste your audio URL from Nextcloud, Firebase Storage, or any other server'
+              ? 'Plak een link, klik op Upload of sleep een audiobestand hierheen'
               : type === 'image'
-                ? 'Paste your cover art URL from Nextcloud, Firebase Storage, or any other server'
-                : 'Paste the URL to your file'}
+                ? 'Plak een link, klik op Upload of sleep een afbeelding hierheen'
+                : 'Plak een link, klik op Upload of sleep een bestand hierheen'}
           </p>
         )}
       </div>

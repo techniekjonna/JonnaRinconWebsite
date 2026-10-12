@@ -172,7 +172,7 @@ const Header: React.FC = () => {
           {/* Mobile: plain, static brand — the player button's glow is the
               only "now playing" indicator */}
           <div className="md:hidden flex-1 flex flex-col items-center justify-center gap-0.5">
-            <span className="text-sm font-black text-white tracking-tighter">JONNA RINCON</span>
+            <span className="text-sm font-black text-white tracking-tighter whitespace-nowrap">JONNA RINCON</span>
           </div>
 
           {/* Right: Cart + Hamburger */}

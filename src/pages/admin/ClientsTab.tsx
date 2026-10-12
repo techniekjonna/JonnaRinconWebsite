@@ -662,9 +662,14 @@ function AddDeliverableModal({
 
           <div>
             <label className="block text-sm font-medium text-white/60 mb-2">{t('Files', 'Bestanden')}</label>
-            <label className="flex items-center justify-center gap-2 w-full px-4 py-4 border-2 border-dashed border-white/[0.15] rounded-lg text-white/50 hover:text-white/70 hover:border-white/[0.25] cursor-pointer transition-colors text-sm">
+            <label
+              className="flex items-center justify-center gap-2 w-full px-4 py-4 min-h-[56px] border-2 border-dashed border-white/[0.15] rounded-lg text-white/50 hover:text-white/70 hover:border-white/[0.25] cursor-pointer transition-colors text-sm data-[drag=true]:border-white/60 data-[drag=true]:bg-white/[0.06] data-[drag=true]:text-white"
+              onDragOver={(e) => { if (!Array.from(e.dataTransfer.types).includes('Files')) return; e.preventDefault(); e.currentTarget.dataset.drag = 'true'; }}
+              onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) e.currentTarget.dataset.drag = 'false'; }}
+              onDrop={(e) => { if (!e.dataTransfer.files?.length) return; e.preventDefault(); e.currentTarget.dataset.drag = 'false'; handleFilesSelected(e.dataTransfer.files); }}
+            >
               <FileAudio size={16} />
-              {t('Click to select files to upload', 'Klik om bestanden te selecteren')}
+              {t('Click or drag files here to upload', 'Klik of sleep bestanden hierheen')}
               <input
                 type="file"
                 multiple

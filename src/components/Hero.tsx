@@ -13,7 +13,7 @@ export default function Hero() {
 
   useEffect(() => {
     if (hasHomeIntroPlayed()) return;
-    const t = setTimeout(() => setVisible(true), 1200);
+    const t = setTimeout(() => setVisible(true), 600);
     return () => clearTimeout(t);
   }, []);
 
@@ -30,8 +30,14 @@ export default function Hero() {
           transition: 'opacity 0.8s ease, transform 0.8s ease',
         }}
       >
+        {/* Headline */}
+        <h2 className="text-white font-black uppercase tracking-tighter leading-[0.95] mb-5" style={{ fontSize: 'clamp(2.4rem, 8vw, 5.5rem)' }}>
+          {t('Beats that hit.', 'Beats die raken.')}<br />
+          <span className="text-red-600">{t('Sound that lasts.', 'Sound die blijft.')}</span>
+        </h2>
+
         {/* Subtitle */}
-        <p className="text-white/50 text-base md:text-lg uppercase tracking-widest mb-10">
+        <p className="text-white/50 text-sm md:text-lg uppercase tracking-widest mb-10">
           {t('Music Producer', 'Muziekproducent')} <span className="text-white/25">|</span> {t('Audio Engineer', 'Audio-engineer')}
         </p>
 

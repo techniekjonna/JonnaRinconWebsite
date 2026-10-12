@@ -937,10 +937,22 @@ const AdminSettings: React.FC = () => {
               {/* Upload file */}
               <div>
                 <label className="block text-sm font-medium text-white/60 mb-2">Or upload a file</label>
-                <label className="flex items-center gap-3 cursor-pointer px-4 py-3 bg-white/[0.04] border border-dashed border-white/[0.15] hover:border-white/30 rounded-lg transition-colors">
+                <label
+                  className="flex items-center gap-3 cursor-pointer px-4 py-3 min-h-[48px] bg-white/[0.04] border border-dashed border-white/[0.15] hover:border-white/30 rounded-lg transition-colors data-[drag=true]:border-white/60 data-[drag=true]:bg-white/[0.08]"
+                  onDragOver={(e) => { if (promoImageUploading || !Array.from(e.dataTransfer.types).includes('Files')) return; e.preventDefault(); e.currentTarget.dataset.drag = 'true'; }}
+                  onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) e.currentTarget.dataset.drag = 'false'; }}
+                  onDrop={(e) => {
+                    const file = e.dataTransfer.files?.[0];
+                    if (!file) return;
+                    e.preventDefault();
+                    e.currentTarget.dataset.drag = 'false';
+                    if (promoImageUploading || !file.type.startsWith('image/')) return;
+                    handlePromoImageFileChange({ target: { files: e.dataTransfer.files } } as unknown as React.ChangeEvent<HTMLInputElement>);
+                  }}
+                >
                   <PhotoIcon aria-hidden="true" size={16} className="text-white/40 flex-shrink-0" />
                   <span className="text-white/40 text-sm">
-                    {promoImageUploading ? 'Uploading...' : 'Click to upload (PNG, JPG, WebP — max 10MB)'}
+                    {promoImageUploading ? 'Uploading...' : 'Klik of sleep een afbeelding hierheen (PNG, JPG, WebP, max 10MB)'}
                   </span>
                   <input
                     type="file"

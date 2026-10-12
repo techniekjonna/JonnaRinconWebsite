@@ -160,7 +160,7 @@ const ScrollFadeObserver = () => {
             }
           });
         },
-        { threshold: 0.08 }
+        { threshold: 0.08, rootMargin: '0px 0px 120px 0px' }
       );
       sections.forEach((section) => {
         section.classList.add('scroll-fade');

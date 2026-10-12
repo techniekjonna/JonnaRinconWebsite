@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import AdminLayout from '../../components/admin/AdminLayout';
 import LinkInput from '../../components/admin/LinkInput';
-import { CLOUD_FOLDERS } from '../../lib/cloudUpload';
+import { CLOUD_FOLDERS, uploadToCloud } from '../../lib/cloudUpload';
+import AutoFillDrop, { AutoFillStatus } from '../../components/admin/AutoFillDrop';
+import { readAudioMeta, parseName, isAudioFile, pickCover, PickedFiles, AudioMeta } from '../../lib/audioMeta';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { useTracks } from '../../hooks/useTracks';
 import { useRemixes } from '../../hooks/useRemixes';
@@ -684,12 +686,11 @@ const timestampToDateInput = (ts?: Timestamp): string => {
   return ts.toDate().toISOString().slice(0, 10);
 };
 
-type TrackFormTab = 'basis' | 'media' | 'extra';
+type TrackFormTab = 'basis' | 'media';
 
 const TRACK_FORM_TABS: { id: TrackFormTab; label: string }[] = [
   { id: 'basis', label: 'Basis' },
-  { id: 'media', label: 'Media' },
-  { id: 'extra', label: 'Tags & Opties' },
+  { id: 'media', label: 'Media & opties' },
 ];
 
 const TrackFormModal: React.FC<TrackFormModalProps> = ({ track, onClose, onSave, onDelete }) => {
@@ -723,6 +724,119 @@ const TrackFormModal: React.FC<TrackFormModalProps> = ({ track, onClose, onSave,
   const [previewPlaying, setPreviewPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const { tracks: allTracks } = useTracks();
+  const [autoStatus, setAutoStatus] = useState<AutoFillStatus>({ kind: 'idle' });
+  const [audioKey, setAudioKey] = useState(0);
+
+  // Details from one audio file (tags first, then file name, then folder name)
+  const detailsFrom = (file: File, meta: AudioMeta, folderName?: string) => {
+    const fromName = parseName(file.name, 'track');
+    const fromFolder = folderName ? parseName(folderName, 'track') : {};
+    return {
+      title: meta.title || fromName.title || fromFolder.title,
+      artist: meta.artist || fromName.artist || fromFolder.artist,
+      genre: meta.genre || fromName.genre || fromFolder.genre,
+      year: meta.year || fromName.year || fromFolder.year,
+      date: meta.date,
+      duration: meta.duration,
+      trackNumber: meta.trackNumber || fromName.trackNumber,
+    };
+  };
+
+  // Puts the found details in the form; only overwrites with values that were found
+  const applyDetails = (d: ReturnType<typeof detailsFrom>, opts: { asAlbumTitle?: string } = {}) => {
+    const merge = (prev: typeof formData) => ({
+        ...prev,
+        title: opts.asAlbumTitle || d.title || prev.title,
+        artist: d.artist || prev.artist,
+        genre: d.genre || prev.genre,
+        year: d.year || prev.year,
+        releaseDate: d.date || prev.releaseDate,
+        duration: opts.asAlbumTitle ? prev.duration : d.duration || prev.duration,
+        tags: prev.tags || (d.genre || ''),
+    });
+    setFormData(merge);
+    return merge(formData);
+  };
+
+  // Audio file dropped on the Audio field in Media: fill the form, upload under the right name
+  const handleAudioFieldFile = async (file: File) => {
+    const meta = await readAudioMeta(file);
+    const d = detailsFrom(file, meta);
+    const title = d.title || formData.title;
+    const artist = d.artist || formData.artist || 'Jonna Rincon';
+    applyDetails(d);
+    if (meta.picture && !formData.artworkUrl) {
+      uploadToCloud(meta.picture, { folder: CLOUD_FOLDERS.single, baseName: `${artist} - ${title}` })
+        .then((r) => setFormData((prev) => ({ ...prev, artworkUrl: prev.artworkUrl || r.url })))
+        .catch(() => {});
+    }
+    return { folder: CLOUD_FOLDERS.single, baseName: title ? `${artist} - ${title}` : undefined };
+  };
+
+  // Track or folder dropped in the fill zone on Basis
+  const handleAutoFill = async ({ folderName, files }: PickedFiles) => {
+    const audio = files.filter(isAudioFile).sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
+    if (!audio.length) {
+      setAutoStatus({ kind: 'error', text: 'Geen audiobestand gevonden. Sleep een wav of mp3, of een map met tracks.' });
+      return;
+    }
+    setAutoStatus({ kind: 'busy', text: audio.length > 1 ? `${audio.length} tracks uitlezen...` : 'Gegevens uitlezen...' });
+    const metas = await Promise.all(audio.map((f) => readAudioMeta(f)));
+    const details = audio.map((f, i) => detailsFrom(f, metas[i], folderName));
+    const coverFile = pickCover(files) || metas.find((m) => m.picture)?.picture;
+    const multi = audio.length > 1 || formData.type === 'Album' || formData.type === 'EP';
+
+    const uploads: { file: File; folder: string; baseName: string; apply: (url: string) => void }[] = [];
+    let summary: string;
+
+    if (!multi) {
+      const d = details[0];
+      const next = applyDetails(d);
+      const name = `${next.artist || 'Jonna Rincon'} - ${next.title}`;
+      uploads.push({ file: audio[0], folder: CLOUD_FOLDERS.single, baseName: name, apply: (url) => { setFormData((p) => ({ ...p, audioUrl: url })); setAudioKey((k) => k + 1); } });
+      if (coverFile && !formData.artworkUrl) uploads.push({ file: coverFile, folder: CLOUD_FOLDERS.single, baseName: name, apply: (url) => setFormData((p) => ({ ...p, artworkUrl: url })) });
+      summary = `Ingevuld: ${[d.title && 'titel', d.artist && 'artiest', d.year && 'jaar', d.genre && 'genre', d.duration && 'duur', coverFile && 'cover'].filter(Boolean).join(', ') || 'niets gevonden in het bestand'}.`;
+    } else {
+      const fromFolder = folderName ? parseName(folderName, 'track') : {};
+      const albumTitle = metas.find((m) => m.album)?.album || fromFolder.title || folderName || formData.title;
+      const type: Track['type'] = formData.type === 'Album' || formData.type === 'EP' ? formData.type : audio.length >= 7 ? 'Album' : 'EP';
+      const firstWithArtist = details.find((d) => d.artist);
+      applyDetails({ ...details[0], artist: firstWithArtist?.artist || details[0].artist }, { asAlbumTitle: albumTitle });
+      setFormData((p) => ({ ...p, type }));
+      const order = audio.map((f, i) => ({ f, d: details[i], i }))
+        .sort((a, b) => (a.d.trackNumber || 999) - (b.d.trackNumber || 999) || a.i - b.i);
+      const startAt = formData.type === 'Album' || formData.type === 'EP' ? tracklist.length : 0;
+      const items: TracklistItem[] = order.map(({ d, f }, n) => ({
+        id: `${Date.now()}-${n}`,
+        title: d.title || f.name.replace(/\.[^.]+$/, ''),
+        audioUrl: '',
+      }));
+      setTracklist((prev) => (startAt ? [...prev, ...items] : items));
+      const folder = type === 'Album' ? CLOUD_FOLDERS.album(albumTitle) : CLOUD_FOLDERS.ep(albumTitle);
+      order.forEach(({ f }, n) => {
+        const id = items[n].id;
+        uploads.push({ file: f, folder, baseName: items[n].title, apply: (url) => setTracklist((prev) => prev.map((t) => (t.id === id ? { ...t, audioUrl: url } : t))) });
+      });
+      if (coverFile && !formData.artworkUrl) uploads.push({ file: coverFile, folder, baseName: `${albumTitle} - Cover`, apply: (url) => setFormData((p) => ({ ...p, artworkUrl: url })) });
+      summary = `${type} "${albumTitle}" ingevuld met ${items.length} tracks${coverFile ? ' en cover' : ''}.`;
+    }
+
+    for (let i = 0; i < uploads.length; i++) {
+      const u = uploads[i];
+      try {
+        const res = await uploadToCloud(u.file, {
+          folder: u.folder,
+          baseName: u.baseName,
+          onProgress: (f) => setAutoStatus({ kind: 'busy', text: `${summary} Uploaden ${i + 1}/${uploads.length}: ${u.file.name} ${Math.round(f * 100)}%` }),
+        });
+        u.apply(res.url);
+      } catch (err: any) {
+        setAutoStatus({ kind: 'error', text: `${summary} Uploaden lukte niet: ${err?.message || 'onbekende fout'}` });
+        return;
+      }
+    }
+    setAutoStatus({ kind: 'done', text: `${summary} Alles staat in de cloud.` });
+  };
 
   useEffect(() => {
     if (isEditingAlbum && track) {
@@ -786,7 +900,7 @@ const TrackFormModal: React.FC<TrackFormModalProps> = ({ track, onClose, onSave,
         releaseDate: formData.releaseDate ? Timestamp.fromDate(new Date(formData.releaseDate)) : undefined,
         collab: formData.collab,
         duration: formData.duration,
-        tags: formData.tags.split(',').map((t) => t.trim()),
+        tags: (formData.tags.trim() ? formData.tags : formData.genre).split(',').map((t) => t.trim()).filter(Boolean),
         artworkUrl: formData.artworkUrl,
         slug: formData.slug || formData.title.toLowerCase().replace(/\s+/g, '-'),
         status: formData.status,
@@ -947,6 +1061,13 @@ const TrackFormModal: React.FC<TrackFormModalProps> = ({ track, onClose, onSave,
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
           {activeTab === 'basis' && (
+            <>
+            <AutoFillDrop
+              title={isAlbumOrEP ? 'Sleep je map met tracks hierheen' : 'Sleep je track of map hierheen'}
+              hint="Titel, artiest, jaar, genre, duur en cover worden uit het bestand en de naam gehaald en meteen geüpload. Een map met meerdere tracks wordt een EP of album."
+              status={autoStatus}
+              onFiles={handleAutoFill}
+            />
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-white/60 mb-2">
@@ -975,13 +1096,31 @@ const TrackFormModal: React.FC<TrackFormModalProps> = ({ track, onClose, onSave,
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-white/60 mb-2">Jaar <span className="text-red-400">*</span></label>
-                <input type="number" value={formData.year} onChange={(e) => setFormData({ ...formData, year: parseInt(e.target.value) })} className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white" required />
+                <label className="block text-sm font-medium text-white/60 mb-2">Releasedatum</label>
+                <input
+                  type="date"
+                  value={formData.releaseDate}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    const y = parseInt(v.slice(0, 4), 10);
+                    setFormData({ ...formData, releaseDate: v, year: v && y > 1900 ? y : formData.year });
+                  }}
+                  className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white"
+                />
+                <p className="text-xs text-white/30 mt-1">Het jaar wordt hier automatisch uit gehaald.</p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-white/60 mb-2">Releasedatum</label>
-                <input type="date" value={formData.releaseDate} onChange={(e) => setFormData({ ...formData, releaseDate: e.target.value })} className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white" />
-                <p className="text-xs text-white/30 mt-1">Bepaalt de volgorde op de Music-pagina (nieuw → oud). Leeg = valt terug op jaar.</p>
+                <label className="block text-sm font-medium text-white/60 mb-2">Jaar <span className="text-red-400">*</span></label>
+                <input
+                  type="number"
+                  value={formData.year}
+                  onChange={(e) => setFormData({ ...formData, year: parseInt(e.target.value) })}
+                  disabled={!!formData.releaseDate}
+                  title={formData.releaseDate ? 'Komt uit de releasedatum' : undefined}
+                  className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white disabled:opacity-60"
+                  required
+                />
+                <p className="text-xs text-white/30 mt-1">{formData.releaseDate ? 'Komt uit de releasedatum.' : 'Alleen nodig zonder releasedatum.'}</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-white/60 mb-2">Collab <span className="text-red-400">*</span></label>
@@ -1007,6 +1146,7 @@ const TrackFormModal: React.FC<TrackFormModalProps> = ({ track, onClose, onSave,
                 </select>
               </div>
             </div>
+            </>
           )}
 
           {activeTab === 'media' && (
@@ -1014,14 +1154,14 @@ const TrackFormModal: React.FC<TrackFormModalProps> = ({ track, onClose, onSave,
               {/* Audio + Artwork for single tracks */}
               {!isAlbumOrEP && (
                 <div className="grid grid-cols-2 gap-4">
-                  <LinkInput label="Audio URL" name="audioUrl" type="audio" folder={trackFolder} baseName={trackName} onChange={(url) => setFormData({ ...formData, audioUrl: url })} defaultValue={formData.audioUrl} placeholder="https://nextcloud.example.com/..." />
-                  <LinkInput label="Artwork URL" name="artworkUrl" type="image" folder={trackFolder} baseName={trackName} onChange={(url) => setFormData({ ...formData, artworkUrl: url })} defaultValue={formData.artworkUrl} placeholder="https://example.com/image.jpg" />
+                  <LinkInput key={`audio-${audioKey}`} label="Audio URL" name="audioUrl" type="audio" folder={trackFolder} baseName={trackName} onFile={isEditing ? undefined : handleAudioFieldFile} onChange={(url) => setFormData((p) => ({ ...p, audioUrl: url }))} defaultValue={formData.audioUrl} placeholder="https://nextcloud.example.com/..." />
+                  <LinkInput label="Artwork URL" name="artworkUrl" type="image" folder={trackFolder} baseName={trackName} onChange={(url) => setFormData((p) => ({ ...p, artworkUrl: url }))} defaultValue={formData.artworkUrl} placeholder="https://example.com/image.jpg" />
                 </div>
               )}
 
               {/* Artwork for albums */}
               {isAlbumOrEP && (
-                <LinkInput label="Album Cover URL" name="artworkUrl" type="image" folder={trackFolder} baseName={formData.title ? `${formData.title} - Cover` : undefined} onChange={(url) => setFormData({ ...formData, artworkUrl: url })} defaultValue={formData.artworkUrl} placeholder="https://example.com/image.jpg" />
+                <LinkInput label="Album Cover URL" name="artworkUrl" type="image" folder={trackFolder} baseName={formData.title ? `${formData.title} - Cover` : undefined} onChange={(url) => setFormData((p) => ({ ...p, artworkUrl: url }))} defaultValue={formData.artworkUrl} placeholder="https://example.com/image.jpg" />
               )}
 
               {/* Tracklist for albums */}
@@ -1116,14 +1256,26 @@ const TrackFormModal: React.FC<TrackFormModalProps> = ({ track, onClose, onSave,
                   </div>
                 </div>
               )}
-            </>
-          )}
 
-          {activeTab === 'extra' && (
-            <>
+              <div className="flex flex-wrap gap-4 pt-2">
+                <label className="flex items-center space-x-2 cursor-pointer min-h-[44px]">
+                  <input type="checkbox" checked={formData.featured} onChange={(e) => setFormData({ ...formData, featured: e.target.checked })} className="w-4 h-4" />
+                  <span className="text-sm text-white/60">Featured</span>
+                </label>
+                <label className="flex items-center space-x-2 cursor-pointer min-h-[44px]">
+                  <input type="checkbox" checked={formData.isFree} onChange={(e) => setFormData({ ...formData, isFree: e.target.checked })} className="w-4 h-4" />
+                  <span className="text-sm text-white/60">Gratis download</span>
+                </label>
+              </div>
+
+              <details className="rounded-lg border border-white/[0.06] bg-white/[0.02] group">
+                <summary className="cursor-pointer select-none px-4 min-h-[44px] flex items-center text-sm text-white/60 hover:text-white">
+                  Meer opties (tags, slug, beschrijving)
+                </summary>
+                <div className="px-4 pb-4 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-white/60 mb-2">Tags (komma-gescheiden)</label>
-                <input type="text" value={formData.tags} onChange={(e) => setFormData({ ...formData, tags: e.target.value })} className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white" placeholder="electronic, remix, bootleg" />
+                <input type="text" value={formData.tags} onChange={(e) => setFormData({ ...formData, tags: e.target.value })} className="w-full px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white" placeholder="leeg = genre wordt gebruikt" />
               </div>
 
               <div>
@@ -1135,17 +1287,8 @@ const TrackFormModal: React.FC<TrackFormModalProps> = ({ track, onClose, onSave,
                 <label className="block text-sm font-medium text-white/60 mb-2">Beschrijving (optioneel)</label>
                 <textarea value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} className="w-full px-3 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white placeholder-white/30 focus:outline-none focus:border-white/[0.2]" rows={3} placeholder="Beschrijving..." />
               </div>
-
-              <div className="flex flex-wrap gap-4">
-                <label className="flex items-center space-x-2 cursor-pointer">
-                  <input type="checkbox" checked={formData.featured} onChange={(e) => setFormData({ ...formData, featured: e.target.checked })} className="w-4 h-4" />
-                  <span className="text-sm text-white/60">Featured</span>
-                </label>
-                <label className="flex items-center space-x-2 cursor-pointer">
-                  <input type="checkbox" checked={formData.isFree} onChange={(e) => setFormData({ ...formData, isFree: e.target.checked })} className="w-4 h-4" />
-                  <span className="text-sm text-white/60">Gratis download</span>
-                </label>
-              </div>
+                </div>
+              </details>
             </>
           )}
 
@@ -1430,7 +1573,7 @@ const RemixFormModal: React.FC<RemixFormModalProps> = ({ remix, onClose, onSave,
             <>
               <div className="grid grid-cols-2 gap-4">
                 <LinkInput label="Audio URL" name="audioUrl" type="audio" folder={CLOUD_FOLDERS.remixesEdits} baseName={formData.title || undefined} onChange={(url) => setFormData({ ...formData, audioUrl: url })} defaultValue={formData.audioUrl} placeholder="https://nextcloud.example.com/..." />
-                <LinkInput label="Artwork URL" name="artworkUrl" type="image" folder={CLOUD_FOLDERS.remixesEdits} baseName={formData.title || undefined} onChange={(url) => setFormData({ ...formData, artworkUrl: url })} defaultValue={formData.artworkUrl} placeholder="https://example.com/image.jpg" />
+                <LinkInput label="Artwork URL" name="artworkUrl" type="image" folder={CLOUD_FOLDERS.remixesEdits} baseName={formData.title || undefined} onChange={(url) => setFormData((p) => ({ ...p, artworkUrl: url }))} defaultValue={formData.artworkUrl} placeholder="https://example.com/image.jpg" />
               </div>
 
               <div className="flex flex-wrap gap-4">

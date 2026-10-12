@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import AdminLayout from '../../components/admin/AdminLayout';
 import LinkInput from '../../components/admin/LinkInput';
-import { CLOUD_FOLDERS } from '../../lib/cloudUpload';
+import { CLOUD_FOLDERS, uploadToCloud } from '../../lib/cloudUpload';
+import AutoFillDrop, { AutoFillStatus } from '../../components/admin/AutoFillDrop';
+import { readAudioMeta, parseName, isAudioFile, pickCover, pickMainAudio, pickStemsZip, PickedFiles, AudioMeta } from '../../lib/audioMeta';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { useBeats } from '../../hooks/useBeats';
 import { beatService, beatPackService, authService } from '../../lib/firebase/services';
@@ -545,7 +547,7 @@ const BeatFormModal: React.FC<BeatFormModalProps> = ({ beat, onClose, onSave }) 
   };
 
   const handleAudioUrlChange = (url: string) => {
-    setFormData({ ...formData, audioUrl: url });
+    setFormData((prev) => ({ ...prev, audioUrl: url }));
 
     // Auto-fill fields if parsing succeeds
     const parsed = parseAudioUrl(url);
@@ -560,6 +562,97 @@ const BeatFormModal: React.FC<BeatFormModalProps> = ({ beat, onClose, onSave }) 
         tags: parsed.tags,
       }));
     }
+  };
+
+  const [autoStatus, setAutoStatus] = useState<AutoFillStatus>({ kind: 'idle' });
+  const [mediaKey, setMediaKey] = useState(0);
+
+  // Beat details: folder name first, then file name, then the tags in the file
+  const beatDetails = (audio?: File, meta: AudioMeta = {}, folderName?: string) => {
+    const f = folderName ? parseName(folderName, 'beat') : {};
+    const n = audio ? parseName(audio.name, 'beat') : {};
+    return {
+      title: f.title || n.title || meta.title,
+      artist: f.artist || n.artist || meta.artist,
+      bpm: f.bpm || n.bpm || meta.bpm,
+      key: f.key || n.key || meta.key,
+      genre: f.genre || n.genre || meta.genre,
+      duration: meta.duration,
+    };
+  };
+
+  const applyBeatDetails = (d: ReturnType<typeof beatDetails>) => {
+    const merge = (prev: typeof formData) => ({
+      ...prev,
+      title: d.title || prev.title,
+      artist: d.artist || prev.artist,
+      bpm: d.bpm || prev.bpm,
+      key: d.key || prev.key,
+      genre: d.genre || prev.genre,
+      duration: d.duration || prev.duration,
+      tags: prev.tags || d.genre || '',
+    });
+    setFormData(merge);
+    return merge(formData);
+  };
+
+  const foundList = (d: ReturnType<typeof beatDetails>, extra: (string | false | undefined)[] = []) =>
+    [d.title && 'titel', d.bpm && 'BPM', d.key && 'key', d.genre && 'genre', d.artist && 'artiest', d.duration && 'duur', ...extra]
+      .filter(Boolean).join(', ') || 'niets gevonden in de naam of het bestand';
+
+  // Audio dropped on the Audio field in Media
+  const handleAudioFieldFile = async (file: File) => {
+    const meta = await readAudioMeta(file);
+    const next = applyBeatDetails(beatDetails(file, meta));
+    const folder = CLOUD_FOLDERS.beat(next.title);
+    if (meta.picture && !formData.artworkUrl) {
+      uploadToCloud(meta.picture, { folder, baseName: next.title })
+        .then((r) => setFormData((p) => ({ ...p, artworkUrl: p.artworkUrl || r.url })))
+        .catch(() => {});
+    }
+    return { folder, baseName: next.title || undefined };
+  };
+
+  // Beat file or beat folder dropped in the fill zone
+  const handleAutoFill = async ({ folderName, files }: PickedFiles) => {
+    const audio = pickMainAudio(files);
+    if (!audio && !folderName) {
+      setAutoStatus({ kind: 'error', text: 'Geen audiobestand gevonden. Sleep een beat (wav of mp3) of de map van de beat.' });
+      return;
+    }
+    setAutoStatus({ kind: 'busy', text: 'Gegevens uitlezen...' });
+    const meta = audio ? await readAudioMeta(audio) : {};
+    const d = beatDetails(audio, meta, folderName);
+    const next = applyBeatDetails(d);
+    const folder = CLOUD_FOLDERS.beat(next.title);
+    const cover = pickCover(files) || meta.picture;
+    const stems = pickStemsZip(files);
+    const looseStems = !stems && files.filter(isAudioFile).length > 1;
+
+    const uploads: { file: File; baseName: string; field: 'audioUrl' | 'artworkUrl' | 'stemsUrl' }[] = [];
+    if (audio) uploads.push({ file: audio, baseName: next.title, field: 'audioUrl' });
+    if (cover && !formData.artworkUrl) uploads.push({ file: cover, baseName: next.title, field: 'artworkUrl' });
+    if (stems && !formData.stemsUrl) uploads.push({ file: stems, baseName: 'Stems', field: 'stemsUrl' });
+
+    const summary = `Ingevuld: ${foundList(d, [cover && 'cover', stems && 'stems'])}.`;
+    const stemsNote = looseStems ? ' Losse stems gevonden maar geen zip: zet ze in een zip en sleep die bij Media naar Stems.' : '';
+
+    for (let i = 0; i < uploads.length; i++) {
+      const u = uploads[i];
+      try {
+        const res = await uploadToCloud(u.file, {
+          folder,
+          baseName: u.baseName,
+          onProgress: (f) => setAutoStatus({ kind: 'busy', text: `${summary} Uploaden ${i + 1}/${uploads.length}: ${u.file.name} ${Math.round(f * 100)}%` }),
+        });
+        setFormData((p) => ({ ...p, [u.field]: res.url }));
+        setMediaKey((k) => k + 1);
+      } catch (err: any) {
+        setAutoStatus({ kind: 'error', text: `${summary} Uploaden lukte niet: ${err?.message || 'onbekende fout'}${stemsNote}` });
+        return;
+      }
+    }
+    setAutoStatus({ kind: uploads.length ? 'done' : 'idle', text: `${summary}${uploads.length ? ' Alles staat in de cloud.' : ''}${stemsNote}` });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -606,7 +699,7 @@ const BeatFormModal: React.FC<BeatFormModalProps> = ({ beat, onClose, onSave }) 
         key: formData.key,
         genre: formData.genre,
         duration: formData.duration,
-        tags: formData.tags.split(',').map((t) => t.trim()),
+        tags: (formData.tags.trim() ? formData.tags : formData.genre).split(',').map((t) => t.trim()).filter(Boolean),
         audioUrl: formData.audioUrl,
         artworkUrl: formData.artworkUrl,
         stemsUrl: formData.stemsUrl || undefined,
@@ -692,6 +785,13 @@ const BeatFormModal: React.FC<BeatFormModalProps> = ({ beat, onClose, onSave }) 
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto flex-1">
           {activeTab === 'basics' && (
+            <>
+            <AutoFillDrop
+              title="Sleep je beat of beatmap hierheen"
+              hint="Titel, BPM, key, genre en producer komen uit de map- of bestandsnaam (bv. GUITTARA - 118 BPM - A Minor - Urban, Rap - Prod by Jonna Rincon). Beat, cover en stems-zip worden meteen geüpload."
+              status={autoStatus}
+              onFiles={handleAutoFill}
+            />
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-white/60 mb-2">Title <span className="text-red-400">*</span></label>
@@ -787,6 +887,7 @@ const BeatFormModal: React.FC<BeatFormModalProps> = ({ beat, onClose, onSave }) 
                 </p>
               </div>
             </div>
+            </>
           )}
 
           {activeTab === 'media' && (
@@ -794,11 +895,13 @@ const BeatFormModal: React.FC<BeatFormModalProps> = ({ beat, onClose, onSave }) 
               {/* Audio and Artwork URLs */}
               <div className="grid grid-cols-2 gap-4">
                 <LinkInput
+                  key={`audio-${mediaKey}`}
                   label="Audio URL"
                   name="audioUrl"
                   type="audio"
                   folder={CLOUD_FOLDERS.beat(formData.title)}
                   baseName={formData.title}
+                  onFile={beat ? undefined : handleAudioFieldFile}
                   onChange={handleAudioUrlChange}
                   defaultValue={formData.audioUrl}
                   placeholder="https://nextcloud.example.com/index.php/s/abc123"
@@ -810,7 +913,7 @@ const BeatFormModal: React.FC<BeatFormModalProps> = ({ beat, onClose, onSave }) 
                   type="image"
                   folder={CLOUD_FOLDERS.beat(formData.title)}
                   baseName={formData.title}
-                  onChange={(url) => setFormData({ ...formData, artworkUrl: url })}
+                  onChange={(url) => setFormData((p) => ({ ...p, artworkUrl: url }))}
                   defaultValue={formData.artworkUrl}
                   placeholder="https://example.com/image.jpg"
                   required
@@ -824,7 +927,7 @@ const BeatFormModal: React.FC<BeatFormModalProps> = ({ beat, onClose, onSave }) 
                   type="any"
                   folder={CLOUD_FOLDERS.beat(formData.title)}
                   baseName="Stems"
-                  onChange={(url) => setFormData({ ...formData, stemsUrl: url })}
+                  onChange={(url) => setFormData((p) => ({ ...p, stemsUrl: url }))}
                   defaultValue={formData.stemsUrl}
                   placeholder="https://nextcloud.example.com/index.php/s/xyz789"
                 />
