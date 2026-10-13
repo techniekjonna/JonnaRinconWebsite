@@ -163,6 +163,23 @@ export function getCurrentIndex() {
   return playerStore.currentIndex;
 }
 
+// Live position of the site-wide player, so other players on a page
+// (like the beat page) can show the same progress and control it.
+export interface PlayerTime { trackId: string | null; currentTime: number; duration: number; playing: boolean }
+let playerTime: PlayerTime = { trackId: null, currentTime: 0, duration: 0, playing: false };
+const timeSubscribers = new Set<(t: PlayerTime) => void>();
+export function subscribeToPlayerTime(cb: (t: PlayerTime) => void) {
+  timeSubscribers.add(cb);
+  cb(playerTime);
+  return () => { timeSubscribers.delete(cb); };
+}
+function emitPlayerTime(patch: Partial<PlayerTime>) {
+  playerTime = { ...playerTime, ...patch };
+  timeSubscribers.forEach(cb => cb(playerTime));
+}
+let seekFn: ((time: number) => void) | null = null;
+export function seekPlayer(time: number) { seekFn?.(time); }
+
 export function togglePlayPause() {
   playerStore.isPlaying = !playerStore.isPlaying;
   if (setPlayerUI) setPlayerUI({ ...playerStore });
@@ -238,9 +255,11 @@ export default function GlobalAudioPlayer({ onCoverClick }: { onCoverClick?: () 
 
     const handlePlayPause = () => {
       setIsPlaying(!audio.paused);
+      emitPlayerTime({ playing: !audio.paused, trackId: store.currentTrack?.id ?? null });
     };
     const handleTimeUpdate = () => {
       setCurrentTime(audio.currentTime);
+      emitPlayerTime({ currentTime: audio.currentTime, trackId: store.currentTrack?.id ?? null });
       // Track play after 15 seconds
       if (audio.currentTime >= 15 && store.currentTrack && !playTrackedRef.current.has(store.currentTrack.id)) {
         playTrackedRef.current.add(store.currentTrack.id);
@@ -250,7 +269,10 @@ export default function GlobalAudioPlayer({ onCoverClick }: { onCoverClick?: () 
         }).catch(err => console.error('Error recording play:', err));
       }
     };
-    const handleLoadedMetadata = () => setDuration(audio.duration);
+    const handleLoadedMetadata = () => {
+      setDuration(audio.duration);
+      emitPlayerTime({ duration: audio.duration, trackId: store.currentTrack?.id ?? null });
+    };
     const handleEnded = () => {
       if (repeat === 'one') {
         // Repeat 1x: restart the same track and play it again
@@ -292,8 +314,21 @@ export default function GlobalAudioPlayer({ onCoverClick }: { onCoverClick?: () 
     }
   }, [store.isPlaying]);
 
+  // Let other players jump to a position in the current track
+  useEffect(() => {
+    seekFn = (time: number) => {
+      const a = audioRef.current;
+      if (!a) return;
+      a.currentTime = time;
+      setCurrentTime(time);
+      emitPlayerTime({ currentTime: time });
+    };
+    return () => { seekFn = null; emitPlayerTime({ playing: false }); };
+  }, []);
+
   // Sync when current track changes
   useEffect(() => {
+    emitPlayerTime({ trackId: store.currentTrack?.id ?? null, currentTime: 0, duration: 0 });
     if (audioRef.current && store.currentTrack) {
       audioRef.current.src = store.currentTrack.audioUrl || '';
       if (store.isPlaying) {

@@ -4,15 +4,16 @@ import { useInView } from '../hooks/useInView';
 import { useT } from '../contexts/LanguageContext';
 
 export default function About() {
-  const [ref, inView] = useInView({ threshold: 0.1 });
+  const [ref, inView] = useInView({ threshold: 0.15, rootMargin: '0px 0px -80px 0px' });
   const t = useT();
 
   return (
     <section
       ref={ref as React.RefObject<HTMLElement>}
       id="about"
-      className={`py-12 md:py-20 px-4 bg-transparent transition-all duration-700 ${
-        inView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+      data-no-fade
+      className={`py-12 md:py-20 px-4 bg-transparent transition-[opacity,transform] duration-700 ease-out motion-reduce:transition-none ${
+        inView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6 motion-reduce:opacity-100 motion-reduce:translate-y-0'
       }`}
     >
       <div className="max-w-[1100px] mx-auto grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-14 items-center">
@@ -45,9 +46,7 @@ export default function About() {
           </Link>
         </div>
 
-        {/* Photo — desaturated and darkened so it reads as part of the dark
-            page rather than a pasted-in snapshot; edges fade out via mask
-            instead of sitting in a hard rectangle */}
+        {/* Photo: in colour, edges fade softly into the page with the original grey/dark filter */}
         <div className="relative aspect-[4/5] lg:aspect-square w-full">
           <div
             className="absolute inset-0"
@@ -62,7 +61,6 @@ export default function About() {
               className="w-full h-full object-cover"
               style={{ filter: 'grayscale(1) contrast(1.25) brightness(0.4)' }}
             />
-            <div className="absolute inset-0 bg-gradient-to-b from-red-950/25 via-transparent to-black/50" />
           </div>
         </div>
       </div>

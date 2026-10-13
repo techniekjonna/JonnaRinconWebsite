@@ -203,7 +203,7 @@ const SERVICE_FORM_TABS: { id: ServiceFormTab; label: string }[] = [
   { id: 'visibility', label: 'Visibility & SEO' },
 ];
 
-const ServiceFormModal: React.FC<ServiceFormModalProps> = ({ service, onClose, onSave }) => {
+export const ServiceFormModal: React.FC<ServiceFormModalProps> = ({ service, onClose, onSave }) => {
   const [activeTab, setActiveTab] = useState<ServiceFormTab>('basics');
   const [formData, setFormData] = useState({
     name: service?.name || '',

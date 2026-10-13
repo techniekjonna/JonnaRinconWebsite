@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, Filter, Grid3x3, List, Play, Pause, ShoppingCart, X, Sliders, ChevronLeft, ChevronRight, Package } from 'lucide-react';
+import { Search, Filter, Grid3x3, List, Play, Pause, ShoppingCart, X, Sliders, ChevronLeft, ChevronRight, Package, Lock } from 'lucide-react';
 import { Beat, BeatPack } from '../../lib/firebase/types';
 import Footer from '../../components/Footer';
 import { useCyberDecodeInView } from '../../hooks/useCyberDecode';
@@ -189,6 +189,13 @@ const BeatsShop: React.FC = () => {
         <p className="text-white/70 text-base md:text-lg max-w-xl mx-auto">
           {t('High-quality instrumentals across every genre. Find your sound and elevate your music.', 'Hoogwaardige instrumentals in elk genre. Vind jouw sound en til je muziek naar een hoger niveau.')}
         </p>
+        <div className="mt-6 inline-flex items-center gap-3 px-5 py-3 rounded-2xl border border-red-500/40 bg-red-600/10 backdrop-blur-sm max-w-xl text-left">
+          <Lock size={18} className="text-red-500 flex-shrink-0" aria-hidden="true" />
+          <p className="text-white/85 text-sm leading-snug">
+            <span className="font-black uppercase tracking-wider text-white">{t('Every beat is exclusive.', 'Alle beats zijn exclusief.')}</span>{' '}
+            {t('There is only 1 of each beat: once sold, it is yours alone and leaves the store.', 'Er is maar 1 van elke beat: na verkoop is hij alleen van jou en verdwijnt hij uit de shop.')}
+          </p>
+        </div>
       </section>
 
       {/* Filter Modal */}

@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useOrderNotifications } from '../../hooks/useOrderNotifications';
+import { useLanguage, useT } from '../../contexts/LanguageContext';
 import { openPlayerModal, subscribeToPlayerState } from '../GlobalAudioPlayer';
 import {
   ArrowLeft,
@@ -12,7 +13,7 @@ import {
   LayoutGrid,
   Users,
   Receipt,
-  Sparkles,
+  Mic2,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -47,6 +48,8 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const { pendingCount, newSinceLastSeen } = useOrderNotifications();
   const navigate = useNavigate();
   const location = useLocation();
+  const { language, toggleLanguage } = useLanguage();
+  const t = useT();
 
   const isOnDashboard = location.pathname === '/admin/dashboard' || location.pathname === '/admin';
 
@@ -55,20 +58,32 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     navigate('/admin/login');
   };
 
-  const goBack = () => { try { navigate(-1); } catch { navigate('/admin/dashboard'); } };
+  // Back: previous page in this visit; without history: dashboard -> site, subpage -> dashboard
+  const goBack = () => {
+    if (location.key !== 'default' && window.history.length > 1) navigate(-1);
+    else navigate(isOnDashboard ? '/' : '/admin/dashboard');
+  };
 
   const menuItems: MenuItem[] = [
     {
       label: 'Management',
-      subtitle: 'Beats, Services, Tracks & Mix Masters',
+      subtitle: t('Beats, Tracks & Mix Masters', 'Beats, Tracks en Mix Masters'),
       href: '/admin/management',
       badge: 0,
       icon: LayoutGrid,
       mobileLabel: 'Manage',
     },
     {
+      label: 'Services',
+      subtitle: t('Your services, studio agenda', 'Je services, studio-agenda'),
+      href: '/admin/services',
+      badge: 0,
+      icon: Mic2,
+      mobileLabel: 'Services',
+    },
+    {
       label: 'Artist Support',
-      subtitle: 'Artist Requests & Chat',
+      subtitle: t('Artist Requests & Chat', 'Artist Requests en Chat'),
       href: '/admin/board',
       badge: 0,
       icon: Users,
@@ -76,19 +91,11 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     },
     {
       label: 'Orders and Stats',
-      subtitle: 'Bestellingen, Producten, Kortingscodes',
+      subtitle: t('Orders, Products, Discount codes', 'Bestellingen, Producten, Kortingscodes'),
       href: '/admin/orders-stats',
       badge: newSinceLastSeen > 0 ? newSinceLastSeen : (pendingCount > 0 ? pendingCount : 0),
       icon: Receipt,
       mobileLabel: 'Orders',
-    },
-    {
-      label: 'Jonna Rincon Panel',
-      subtitle: 'Agenda, Analytics & More',
-      href: '/admin/jonna-rincon-panel',
-      badge: 0,
-      icon: Sparkles,
-      mobileLabel: 'Panel',
     },
   ];
 
@@ -132,8 +139,16 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
         <div className="backdrop-blur-xl bg-black/30 border border-white/[0.08] rounded-2xl overflow-hidden">
           <div className="flex items-center justify-between px-4 sm:px-6 h-16 md:h-20">
 
-            {/* Left: player button + logo (+ back button when not on dashboard) */}
+            {/* Left: back button (when not on dashboard) + player button + logo */}
             <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+              <button
+                onClick={goBack}
+                className="w-10 h-9 rounded-lg hover:bg-white/[0.08] transition-colors flex items-center justify-center flex-shrink-0"
+                title={t('Back', 'Terug')}
+                aria-label={t('Back', 'Terug')}
+              >
+                <ArrowLeft size={18} className="text-white" />
+              </button>
               <button
                 onClick={() => openPlayerModal()}
                 onMouseEnter={() => setPlayerButtonHovered(true)}
@@ -149,32 +164,23 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                 </span>
               </button>
 
-              <Link to={isOnDashboard ? '/' : '/admin/dashboard'} aria-label={isOnDashboard ? 'Naar de homepagina' : 'Naar het dashboard'} title={isOnDashboard ? 'Naar de homepagina' : 'Naar het dashboard'} className="flex items-center justify-center w-14 h-14 md:w-24 md:h-24">
+              <Link to={isOnDashboard ? '/' : '/admin/dashboard'} aria-label={isOnDashboard ? 'Naar de homepagina' : 'Naar het dashboard'} title={isOnDashboard ? 'Naar de homepagina' : 'Naar het dashboard'} className="adm-jr-touch items-center justify-center w-14 h-14 md:w-24 md:h-24">
                 <img src="/Jonna Rincon Logo WH.png" alt="JR" className="w-full h-full object-contain opacity-80 hover:opacity-100 transition-opacity" />
               </Link>
 
-              {!isOnDashboard && (
-                <button
-                  onClick={goBack}
-                  className="w-9 h-9 rounded-full border border-white/10 hover:border-white/20 hover:bg-white/5 transition-all flex items-center justify-center flex-shrink-0"
-                  title="Terug"
-                >
-                  <ArrowLeft size={16} className="text-white/60" />
-                </button>
-              )}
             </div>
 
-            {/* Center: the 4 pages, direct links, no dropdowns — desktop only */}
-            <nav className="hidden md:flex items-center justify-center flex-1 px-6">
-              <div className="flex items-center gap-6 lg:gap-8">
-                {menuItems.map((item) => {
-                  const active = isActive(item.href);
-                  return (
+            {/* Center: two pages left, the brand in the middle, two pages right (same as the site header).
+                Brand: JONNA RINCON when wide, JR logo in the app layout on a computer. */}
+            <nav className="hidden md:flex items-center justify-center flex-1 px-4 self-stretch">
+              <div className="flex items-center gap-6 lg:gap-10 self-stretch">
+                <div className="flex gap-5 lg:gap-8">
+                  {menuItems.slice(0, 2).map((item) => (
                     <Link
                       key={item.label}
                       to={item.href}
                       className={`text-xs font-black uppercase tracking-widest transition-all duration-200 relative group whitespace-nowrap ${
-                        active ? 'text-white' : 'text-white/50 hover:text-white/80'
+                        isActive(item.href) ? 'text-white' : 'text-white/50 hover:text-white/80'
                       }`}
                     >
                       {item.label}
@@ -184,15 +190,65 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                         </span>
                       )}
                       <span className={`absolute -bottom-1.5 left-0 w-full h-0.5 bg-red-500 transition-all duration-200 ${
-                        active ? 'opacity-100' : 'opacity-0 group-hover:opacity-50'
+                        isActive(item.href) ? 'opacity-100' : 'opacity-0 group-hover:opacity-50'
                       }`} />
                     </Link>
-                  );
-                })}
+                  ))}
+                </div>
+
+                <Link
+                  to={isOnDashboard ? '/' : '/admin/dashboard'}
+                  aria-label={isOnDashboard ? 'Naar de homepagina' : 'Naar het dashboard'}
+                  title={isOnDashboard ? 'Naar de homepagina' : 'Naar het dashboard'}
+                  className="px-4 lg:px-6 flex-shrink-0 flex items-center justify-center self-stretch overflow-hidden hover:opacity-80 transition-opacity"
+                >
+                  <img src="/Jonna Rincon Logo WH.png" alt="JR" className="adm-jr-narrow h-14 w-14 object-contain" />
+                  <span className="adm-jr-wide text-base lg:text-lg font-black text-white tracking-tighter whitespace-nowrap">JONNA RINCON</span>
+                </Link>
+
+                <div className="flex gap-5 lg:gap-8">
+                  {menuItems.slice(2).map((item) => (
+                    <Link
+                      key={item.label}
+                      to={item.href}
+                      className={`text-xs font-black uppercase tracking-widest transition-all duration-200 relative group whitespace-nowrap ${
+                        isActive(item.href) ? 'text-white' : 'text-white/50 hover:text-white/80'
+                      }`}
+                    >
+                      {item.label}
+                      {item.badge > 0 && (
+                        <span className="ml-1.5 inline-flex items-center justify-center min-w-[16px] h-[16px] px-1 rounded-full bg-amber-500 text-[9px] font-bold text-black leading-none align-middle">
+                          {item.badge > 99 ? '99+' : item.badge}
+                        </span>
+                      )}
+                      <span className={`absolute -bottom-1.5 left-0 w-full h-0.5 bg-red-500 transition-all duration-200 ${
+                        isActive(item.href) ? 'opacity-100' : 'opacity-0 group-hover:opacity-50'
+                      }`} />
+                    </Link>
+                  ))}
+                </div>
               </div>
             </nav>
 
-            {/* Right: menu button — same hover icon-to-label swap as the public header's hamburger */}
+            {/* Small width: phone shows JONNA RINCON, a narrowed computer window (app layout) the JR logo */}
+            <div className="md:hidden flex-1 flex items-center justify-center">
+              <span className="adm-jr-wide text-sm font-black text-white tracking-tighter whitespace-nowrap">JONNA RINCON</span>
+              <Link to={isOnDashboard ? '/' : '/admin/dashboard'} aria-label={isOnDashboard ? 'Naar de homepagina' : 'Naar het dashboard'} title={isOnDashboard ? 'Naar de homepagina' : 'Naar het dashboard'} className="adm-jr-narrow items-center justify-center w-14 h-14">
+                <img src="/Jonna Rincon Logo WH.png" alt="JR" className="w-full h-full object-contain" />
+              </Link>
+            </div>
+
+            {/* Right: language (EN/NL, same as the public site) + menu button */}
+            <div className="flex items-center gap-1 flex-shrink-0">
+            <button
+              onClick={toggleLanguage}
+              title={language === 'en' ? 'View in English' : 'Bekijk in het Nederlands'}
+              aria-label={language === 'en' ? 'Taal: Engels' : 'Taal: Nederlands'}
+              className="flex items-center justify-center flex-shrink-0 w-10 h-10 rounded-lg hover:bg-white/[0.08] transition-colors text-xs font-black tracking-widest text-white/70 hover:text-white"
+            >
+              {language === 'en' ? 'EN' : 'NL'}
+            </button>
+            {/* menu button — same hover icon-to-label swap as the public header's hamburger */}
             <button
               onClick={openMenu}
               onMouseEnter={() => setMenuButtonHovered(true)}
@@ -201,12 +257,13 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
               title="Menu"
             >
               <span className="absolute inset-0 flex items-center justify-center transition-all duration-300">
-                <Menu size={20} className={`transition-all duration-300 ${menuButtonHovered ? 'opacity-0 scale-75' : 'opacity-100 scale-100'}`} />
+                <Menu size={20} className={`text-white transition-all duration-300 ${menuButtonHovered ? 'opacity-0 scale-75' : 'opacity-100 scale-100'}`} />
               </span>
               <span className="absolute inset-0 flex items-center justify-center transition-all duration-300">
                 <span className={`text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${menuButtonHovered ? 'opacity-100' : 'opacity-0'}`}>Menu</span>
               </span>
             </button>
+            </div>
 
           </div>
         </div>
@@ -259,7 +316,24 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                         Dashboard
                       </span>
                       <span className="block text-xs text-white/25 mt-1 uppercase tracking-widest font-medium group-hover:text-red-400/60 transition-colors duration-300">
-                        Overview & stats
+                        {t('Overview & stats', 'Overzicht en cijfers')}
+                      </span>
+                    </div>
+                    <ArrowUpRight className="w-5 h-5 text-white/10 group-hover:text-red-400/50 transition-all duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => { closeMenu(); navigate('/admin/social'); }}
+                  className="group w-full text-left py-4 md:py-5 cursor-pointer border-b border-white/[0.04]"
+                >
+                  <div className="flex items-center justify-between transition-transform duration-300 group-hover:translate-x-2">
+                    <div>
+                      <span className="block text-3xl md:text-4xl font-semibold text-white/90 group-hover:text-white transition-colors duration-300 tracking-tight">
+                        Social
+                      </span>
+                      <span className="block text-xs text-white/25 mt-1 uppercase tracking-widest font-medium group-hover:text-red-400/60 transition-colors duration-300">
+                        {t('Planner, analytics & accounts', 'Planner, analytics en accounts')}
                       </span>
                     </div>
                     <ArrowUpRight className="w-5 h-5 text-white/10 group-hover:text-red-400/50 transition-all duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
@@ -276,7 +350,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                         Settings
                       </span>
                       <span className="block text-xs text-white/25 mt-1 uppercase tracking-widest font-medium group-hover:text-red-400/60 transition-colors duration-300">
-                        Account & preferences
+                        {t('Account & preferences', 'Account en voorkeuren')}
                       </span>
                     </div>
                     <ArrowUpRight className="w-5 h-5 text-white/10 group-hover:text-red-400/50 transition-all duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
@@ -290,7 +364,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                   <div className="flex items-center justify-between">
                     <div>
                       <span className="block text-3xl md:text-4xl font-semibold text-white/90 group-hover:text-white transition-colors duration-300 tracking-tight">
-                        Sign Out
+                        {t('Sign Out', 'Uitloggen')}
                       </span>
                       <span className="block text-xs text-white/25 mt-1 uppercase tracking-widest font-medium">
                         {user?.displayName || user?.email}
@@ -346,6 +420,16 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       </div>
 
       <style>{`
+        .adm-jr-wide { display: flex; }
+        .adm-jr-narrow { display: none; }
+        .adm-jr-touch { display: flex; }
+        @media (hover: hover) and (pointer: fine) {
+          .adm-jr-touch { display: none; }
+        }
+        @media (hover: hover) and (pointer: fine) and (max-width: 767.98px) {
+          .adm-jr-wide { display: none; }
+          .adm-jr-narrow { display: flex; }
+        }
         @keyframes player-glow {
           0%, 100% { filter: drop-shadow(0 0 2px rgba(255,255,255,0.6)); }
           50% { filter: drop-shadow(0 0 7px rgba(255,255,255,0.95)); }

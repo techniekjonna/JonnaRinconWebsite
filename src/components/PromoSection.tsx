@@ -154,14 +154,12 @@ export default function PromoSection() {
                     key={i}
                     src={src}
                     alt=""
-                    className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${
+                    className={`absolute inset-0 w-full h-full object-contain transition-opacity duration-700 ${
                       i === carouselIdx ? 'opacity-100' : 'opacity-0 pointer-events-none'
                     }`}
                   />
                 ))}
 
-                {/* Gradient overlay at bottom */}
-                <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-black/60 to-transparent pointer-events-none" />
 
                 {/* Arrow controls */}
                 {images.length > 1 && (

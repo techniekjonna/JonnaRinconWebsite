@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { MessageSquare, Send, Check, CheckCheck, Mail, Users as UsersIcon, ArrowLeft, Search, Plus, X, Handshake } from 'lucide-react';
+import { MessageSquare, Send, Check, CheckCheck, Mail, Users as UsersIcon, ArrowLeft, Search, Plus, X, Handshake, Music } from 'lucide-react';
 import { db } from '../../lib/firebase/config';
 import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, Timestamp, updateDoc, doc } from 'firebase/firestore';
 import { useAuth } from '../../contexts/AuthContext';
@@ -26,6 +26,11 @@ interface ChatMessage {
   collabBudget?: number | null;
   collabPreferredStartDate?: string | null;
   collabStatus?: 'pending' | 'approved' | 'rejected';
+  // Set by the question form on a beat page: links the message to that beat
+  beatId?: string;
+  beatTitle?: string;
+  beatGenre?: string;
+  beatBpm?: number | null;
 }
 
 interface Conversation {
@@ -507,6 +512,20 @@ export const ChatInboxContent: React.FC<ChatInboxContentProps> = ({ role }) => {
                     return (
                       <div key={msg.id} className={`flex ${mine ? 'justify-end' : 'justify-start'}`}>
                         <div className={`max-w-[85%] sm:max-w-md px-3.5 py-2 rounded-2xl text-sm ${mine ? 'bg-red-600 text-white rounded-br-md' : 'bg-white/[0.08] text-white rounded-bl-md border border-white/[0.08]'}`}>
+                          {msg.beatId && (
+                            <a
+                              href={`/shop/beats/${msg.beatId}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-1.5 mb-1.5 pb-1.5 border-b border-white/10 text-xs font-bold uppercase tracking-wide hover:underline"
+                            >
+                              <Music size={12} className="flex-shrink-0" />
+                              <span>Beat</span>
+                              <span className="text-red-300 truncate">{msg.beatTitle}</span>
+                              {msg.beatGenre && <span className="opacity-60 truncate">({msg.beatGenre})</span>}
+                              {msg.beatBpm ? <span className="opacity-60 flex-shrink-0">({msg.beatBpm} BPM)</span> : null}
+                            </a>
+                          )}
                           <p className="break-words leading-relaxed whitespace-pre-wrap">{msg.message}</p>
                           <div className="flex items-center gap-1 mt-1 justify-end">
                             <span className="text-[10px] opacity-60">{msg.createdAt?.toDate?.()?.toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' })}</span>

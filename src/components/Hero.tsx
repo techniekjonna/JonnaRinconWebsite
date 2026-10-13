@@ -7,39 +7,58 @@ import { useT } from '../contexts/LanguageContext';
 export default function Hero() {
   const navigate = useNavigate();
   const t = useT();
-  // Delayed so background is fully visible before content appears (intro animation) —
-  // only on a real first load, not when navigating back to "/" mid-session
-  const [visible, setVisible] = useState(hasHomeIntroPlayed());
+  // On a first load the text stays hidden while the loading screen is up
+  // and fades in right after it is gone (fallback after 4 s so it never
+  // stays hidden). When navigating back to "/" it shows straight away.
+  const [animate] = useState(!hasHomeIntroPlayed());
+  const [ready, setReady] = useState<boolean>(
+    () => !animate || !!(window as unknown as { __pageLoaderDone?: boolean }).__pageLoaderDone
+  );
 
   useEffect(() => {
-    if (hasHomeIntroPlayed()) return;
-    const t = setTimeout(() => setVisible(true), 600);
-    return () => clearTimeout(t);
-  }, []);
+    if (ready) return;
+    let t: ReturnType<typeof setTimeout> | undefined;
+    const show = () => { t = setTimeout(() => setReady(true), 150); };
+    window.addEventListener('page-loader-done', show);
+    const fallback = setTimeout(() => setReady(true), 4000);
+    return () => {
+      window.removeEventListener('page-loader-done', show);
+      clearTimeout(fallback);
+      if (t) clearTimeout(t);
+    };
+  }, [ready]);
 
   return (
     <section
+      data-no-fade
       className="relative w-full flex flex-col items-center justify-center"
       style={{ minHeight: '68vh' }}
     >
       <div
-        className="relative z-10 flex flex-col items-center text-center px-6 max-w-4xl mx-auto"
-        style={{
-          opacity: visible ? 1 : 0,
-          transform: visible ? 'translateY(0)' : 'translateY(16px)',
-          transition: 'opacity 0.8s ease, transform 0.8s ease',
-        }}
+        className={`relative z-10 flex flex-col items-center text-center px-6 max-w-4xl mx-auto ${animate ? (ready ? 'hero-in' : 'opacity-0') : ''}`}
       >
         {/* Headline */}
         <h2 className="text-white font-black uppercase tracking-tighter leading-[0.95] mb-5" style={{ fontSize: 'clamp(2.4rem, 8vw, 5.5rem)' }}>
           {t('Beats that hit.', 'Beats die raken.')}<br />
-          <span className="text-red-600">{t('Sound that lasts.', 'Sound die blijft.')}</span>
+          <span className="block text-red-600 whitespace-nowrap mt-1" style={{ fontSize: 'clamp(1.05rem, 4.4vw, 2.6rem)' }}>Prod by Jonna Rincon</span>
         </h2>
 
         {/* Subtitle */}
-        <p className="text-white/50 text-sm md:text-lg uppercase tracking-widest mb-10">
+        <p className="text-white/50 text-sm md:text-lg uppercase tracking-widest mb-2">
           {t('Music Producer', 'Muziekproducent')} <span className="text-white/25">|</span> {t('Audio Engineer', 'Audio-engineer')}
         </p>
+
+        {/* Studio session */}
+        <div className="mb-8">
+          <Link to="/studio-session" className="group flex flex-wrap items-center justify-center gap-x-2 min-h-[44px] px-2">
+            <span className="text-white/35 text-xs uppercase tracking-widest group-hover:text-red-500 transition-colors duration-300">
+              {t('Studio session with Jonna?', 'Studiosessie met Jonna?')}
+            </span>
+            <span className="text-white/70 text-xs font-bold uppercase tracking-widest group-hover:text-white group-hover:[text-shadow:0_0_12px_rgba(255,255,255,0.6)] transition-all duration-300">
+              {t('Book here', 'Boek hier')} →
+            </span>
+          </Link>
+        </div>
 
         {/* CTAs */}
         <div className="flex flex-col sm:flex-row gap-3">
@@ -64,24 +83,16 @@ export default function Hero() {
           </button>
         </div>
 
-        {/* Contact + studio session */}
+        {/* Contact */}
         <div className="mt-6 flex flex-col items-center gap-4">
           <button
             onClick={() => navigate('/contact')}
-            className="flex items-center gap-2 px-6 py-2.5 border border-white/20 text-white/70 font-bold text-xs uppercase tracking-widest hover:text-white hover:border-white/40 hover:bg-white/5 transition-all duration-300 rounded-full"
+            className="flex items-center gap-2 px-6 min-h-[44px] border border-white/20 text-white/70 font-bold text-xs uppercase tracking-widest hover:text-white hover:border-white/40 hover:bg-white/5 transition-all duration-300 rounded-full"
           >
             <Mail size={14} className="flex-shrink-0" />
             {t('Contact', 'Contact')}
           </button>
 
-          <Link to="/studio-session" className="group flex items-center gap-2">
-            <span className="text-white/35 text-xs uppercase tracking-widest group-hover:text-red-500 transition-colors duration-300">
-              {t('Studio session with Jonna?', 'Studiosessie met Jonna?')}
-            </span>
-            <span className="text-white/70 text-xs font-bold uppercase tracking-widest group-hover:text-white group-hover:[text-shadow:0_0_12px_rgba(255,255,255,0.6)] transition-all duration-300">
-              {t('Book here', 'Boek hier')} →
-            </span>
-          </Link>
         </div>
       </div>
     </section>

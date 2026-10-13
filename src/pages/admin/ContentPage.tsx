@@ -7,13 +7,13 @@ import {
   Settings,
 } from 'lucide-react';
 
-// Upload-Post API configuration
-const API_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InRlY2huaWVrQGpvbm5hcmluY29uLm5sIiwiZXhwIjo0OTI0NDk3Nzc0LCJqdGkiOiIwZjY2YjZmNS01OTg2LTRmMzYtYTVlMy01Yzc4MTFhYjJiOGUifQ.o_SjqVg7uIvu5TL9hsjkPD6_Io5CODTMi9XY7kM-f-0';
-const API_BASE = '/api/upload-post';
+import { upCall, UploadPostError, PLATFORMS, platformInfo, getProfileName, setProfileName } from '../../lib/uploadPost';
+import { uploadToCloud } from '../../lib/cloudUpload';
 
-// Get username from localStorage or use default
-const getStoredUsername = () => localStorage.getItem('uploadpost_username') || '';
-const setStoredUsername = (username: string) => localStorage.setItem('uploadpost_username', username);
+// Upload-Post runs through our own /api/upload-post server function: the API key
+// stays on the server (UPLOAD_POST_API_KEY), never in this browser code.
+const getStoredUsername = getProfileName;
+const setStoredUsername = setProfileName;
 
 // Types
 interface ScheduledPost {
@@ -46,20 +46,7 @@ interface CalendarDay {
 }
 
 // API helper
-const apiCall = async (endpoint: string, options?: RequestInit) => {
-  const res = await fetch(`${API_BASE}${endpoint}`, {
-    ...options,
-    headers: {
-      'Authorization': `Apikey ${API_KEY}`,
-      ...(options?.headers || {}),
-    },
-  });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ message: 'Request failed' }));
-    throw new Error(err.message || `API error ${res.status}`);
-  }
-  return res.json();
-};
+const apiCall = (endpoint: string, options?: RequestInit) => upCall(endpoint, options);
 
 // ======================= MAIN COMPONENT =======================
 export const SocialPlannerContent: React.FC = () => {
@@ -73,6 +60,7 @@ export const SocialPlannerContent: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [profileUsername, setProfileUsername] = useState(getStoredUsername());
+  const [setupError, setSetupError] = useState('');
 
   // Fetch data
   const fetchData = useCallback(async () => {
@@ -80,7 +68,11 @@ export const SocialPlannerContent: React.FC = () => {
       setRefreshing(true);
 
       // Fetch scheduled posts
-      const scheduledRes = await apiCall('/uploadposts/schedule').catch(() => ({ scheduled: [] }));
+      setSetupError('');
+      const keep = (e: unknown) => {
+        if (e instanceof UploadPostError && (e.code === 'niet_ingesteld' || e.code === 'preview' || e.status === 401)) setSetupError(e.message);
+      };
+      const scheduledRes = await apiCall('/uploadposts/schedule').catch((e) => { keep(e); return { scheduled: [] }; });
       const scheduled: ScheduledPost[] = (scheduledRes.scheduled || scheduledRes.data || []).map((item: any) => ({
         id: item.id || item.job_id || item._id || String(Math.random()),
         jobId: item.job_id || item.id || item._id,
@@ -95,7 +87,7 @@ export const SocialPlannerContent: React.FC = () => {
       setScheduledPosts(scheduled);
 
       // Fetch upload history
-      const historyRes = await apiCall('/uploadposts/history?limit=50').catch(() => ({ uploads: [] }));
+      const historyRes = await apiCall('/uploadposts/history?limit=50').catch((e) => { keep(e); return { uploads: [] }; });
       const history: HistoryPost[] = (historyRes.uploads || historyRes.data || []).map((item: any) => ({
         id: item.id || item.request_id || item._id || String(Math.random()),
         title: item.title || item.caption || 'Untitled',
@@ -198,7 +190,7 @@ export const SocialPlannerContent: React.FC = () => {
     switch (platform.toLowerCase()) {
       case 'instagram': return <Instagram size={14} className="text-pink-400" />;
       case 'youtube': return <Youtube size={14} className="text-red-400" />;
-      default: return <Send size={14} className="text-white/40" />;
+      default: return <span className="inline-block w-2.5 h-2.5 rounded-full" style={{ backgroundColor: platformInfo(platform.toLowerCase()).color }} />;
     }
   };
 
@@ -221,6 +213,12 @@ export const SocialPlannerContent: React.FC = () => {
   return (
     <>
       <div className="space-y-4">
+        {setupError && (
+          <div className="flex items-start gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
+            <AlertCircle size={16} className="mt-0.5 flex-shrink-0" />
+            <span>{setupError}</span>
+          </div>
+        )}
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
@@ -690,7 +688,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ profileUsername, onCl
       const formData = new FormData();
       formData.append('user', profileUsername);
       formData.append('title', title);
-      platforms.forEach(p => formData.append('platform[]', p));
+      platforms.filter(p => filteredPlatforms.some(f => f.id === p)).forEach(p => formData.append('platform[]', p));
 
       if (description) formData.append('description', description);
 
@@ -717,40 +715,32 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ profileUsername, onCl
         if (description) formData.append('youtube_description', description);
       }
 
+      // Files go to the cloud first (no size limit there); Upload-Post then fetches
+      // them by link. That keeps big videos away from the 4.5 MB server limit.
+      let media = mediaUrl;
+      if (postType !== 'text' && mediaFile) {
+        setUploadStatus('Bestand naar de cloud...');
+        const up = await uploadToCloud(mediaFile, {
+          folder: 'Social',
+          onProgress: (f) => setUploadStatus(`Bestand naar de cloud... ${Math.round(f * 100)}%`),
+        });
+        media = up.url;
+      }
+
       let endpoint = '/upload';
       if (postType === 'photo') {
         endpoint = '/upload_photos';
-        if (mediaFile) {
-          formData.append('photos[]', mediaFile);
-        } else if (mediaUrl) {
-          formData.append('photos[]', mediaUrl);
-        }
+        formData.append('photos[]', media);
       } else if (postType === 'video') {
         endpoint = '/upload';
-        if (mediaFile) {
-          formData.append('video', mediaFile);
-        } else if (mediaUrl) {
-          formData.append('video', mediaUrl);
-        }
+        formData.append('video', media);
       } else {
         endpoint = '/upload_text';
       }
 
-      setUploadStatus('Uploading to platforms...');
+      setUploadStatus('Naar de platforms...');
 
-      const res = await fetch(`${API_BASE}${endpoint}`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Apikey ${API_KEY}`,
-        },
-        body: formData,
-      });
-
-      const result = await res.json();
-
-      if (!res.ok) {
-        throw new Error(result.message || `Upload failed (${res.status})`);
-      }
+      const result = await upCall(endpoint, { method: 'POST', body: formData });
 
       if (result.success === false) {
         throw new Error(result.message || 'Upload failed');
@@ -768,16 +758,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ profileUsername, onCl
     }
   };
 
-  const availablePlatforms = postType === 'text'
-    ? [{ id: 'instagram', label: 'Instagram', icon: Instagram, color: 'pink' }]
-    : [
-        { id: 'instagram', label: 'Instagram', icon: Instagram, color: 'pink' },
-        { id: 'youtube', label: 'YouTube', icon: Youtube, color: 'red' },
-      ];
-
-  const filteredPlatforms = postType === 'photo'
-    ? availablePlatforms.filter(p => p.id !== 'youtube')
-    : availablePlatforms;
+  const filteredPlatforms = PLATFORMS.filter((p) => (postType === 'text' ? p.text : postType === 'video' ? p.video : p.photo));
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-xl z-50 flex items-center justify-center p-4 overflow-y-auto">
@@ -827,27 +808,21 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ profileUsername, onCl
 
           <div>
             <label className="block text-sm font-medium text-white/60 mb-2">Post to Platforms</label>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               {filteredPlatforms.map(p => {
-                const Icon = p.icon;
                 const isActive = platforms.includes(p.id);
                 return (
                   <button
                     key={p.id}
                     type="button"
                     onClick={() => togglePlatform(p.id)}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition border ${
-                      isActive
-                        ? `bg-${p.color}-600/20 border-${p.color}-500 text-${p.color}-400`
-                        : 'bg-white/[0.06] border-white/[0.08] text-white/40 hover:bg-white/[0.08]'
+                    aria-pressed={isActive}
+                    className={`flex items-center gap-2 px-3.5 min-h-[40px] rounded-lg text-sm font-medium transition border ${
+                      isActive ? 'text-white' : 'bg-white/[0.06] border-white/[0.08] text-white/45 hover:bg-white/[0.08]'
                     }`}
-                    style={isActive ? {
-                      backgroundColor: p.color === 'pink' ? 'rgba(236,72,153,0.2)' : 'rgba(239,68,68,0.2)',
-                      borderColor: p.color === 'pink' ? '#ec4899' : '#ef4444',
-                      color: p.color === 'pink' ? '#f472b6' : '#f87171',
-                    } : {}}
+                    style={isActive ? { backgroundColor: `${p.color}26`, borderColor: p.color } : {}}
                   >
-                    <Icon size={18} />
+                    <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: p.color }} />
                     {p.label}
                   </button>
                 );

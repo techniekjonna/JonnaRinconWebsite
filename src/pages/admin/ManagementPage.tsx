@@ -1,25 +1,25 @@
 import React from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Navigate, useSearchParams } from 'react-router-dom';
 import AdminLayout from '../../components/admin/AdminLayout';
+import { useT } from '../../contexts/LanguageContext';
 import { BeatsContent } from './BeatsPage';
-import { ServicesContent } from './ServicesPage';
 import { TracksContent } from './TracksPage';
 import { ClientsContent } from './ClientsTab';
 
-type ManagementTab = 'beats' | 'services' | 'tracks' | 'mixmasters';
+type ManagementTab = 'beats' | 'tracks' | 'mixmasters';
 
 const TABS: { id: ManagementTab; label: string }[] = [
   { id: 'beats', label: 'Beats' },
-  { id: 'services', label: 'Services' },
   { id: 'tracks', label: 'Tracks' },
   { id: 'mixmasters', label: 'Mix Masters' },
 ];
 
 const ManagementPage: React.FC = () => {
+  const t = useT();
   const [searchParams, setSearchParams] = useSearchParams();
   const tabParam = searchParams.get('tab');
   const activeTab: ManagementTab =
-    tabParam === 'services' || tabParam === 'tracks' || tabParam === 'mixmasters' ? tabParam : 'beats';
+    tabParam === 'tracks' || tabParam === 'mixmasters' ? tabParam : 'beats';
 
   const setActiveTab = (tab: ManagementTab) => {
     setSearchParams((prev) => {
@@ -29,12 +29,15 @@ const ManagementPage: React.FC = () => {
     });
   };
 
+  // Services moved to their own page next to Management
+  if (tabParam === 'services') return <Navigate to="/admin/services" replace />;
+
   return (
     <AdminLayout>
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold text-white">Management</h1>
-          <p className="text-white/40 mt-2">Beats, services, tracks & mix masters in one place</p>
+          <p className="text-white/40 mt-2">{t('Beats, tracks & mix masters in one place', 'Beats, tracks en mix masters op één plek')}</p>
         </div>
 
         {/* Top-level tab navigation */}
@@ -59,7 +62,6 @@ const ManagementPage: React.FC = () => {
         </div>
 
         {activeTab === 'beats' && <BeatsContent />}
-        {activeTab === 'services' && <ServicesContent />}
         {activeTab === 'tracks' && <TracksContent />}
         {activeTab === 'mixmasters' && <ClientsContent filterType="mix-master" />}
       </div>

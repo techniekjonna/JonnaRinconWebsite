@@ -72,7 +72,14 @@
         var loader = document.getElementById('page-loader');
         if (loader) {
           loader.classList.add('fade-out');
-          setTimeout(function() { loader.style.display = 'none'; }, 450);
+          setTimeout(function() {
+            loader.style.display = 'none';
+            window.__pageLoaderDone = true;
+            window.dispatchEvent(new Event('page-loader-done'));
+          }, 450);
+        } else {
+          window.__pageLoaderDone = true;
+          window.dispatchEvent(new Event('page-loader-done'));
         }
       });
     </script>

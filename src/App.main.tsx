@@ -76,9 +76,12 @@ import AdminBoard from './pages/admin/AdminBoardPage';
 import AdminSettings from './pages/admin/SettingsPage';
 import AdminChat from './pages/admin/ChatPage';
 import AdminManagement from './pages/admin/ManagementPage';
+import AdminServicesPage from './pages/admin/ServicesAdminPage';
+import AdminAnalyticsPage from './pages/admin/AnalyticsPage';
+import AdminSocialPage from './pages/admin/SocialPage';
 import AdminAgenda from './pages/admin/AgendaPage';
 import AdminProjects from './pages/admin/ProjectsAdminPage';
-import AdminJonnaRinconPanel, { ManagerJonnaRinconPanelPage as ManagerJonnaRinconPanel } from './pages/admin/JonnaRinconPanelPage';
+import { ManagerJonnaRinconPanelPage as ManagerJonnaRinconPanel } from './pages/admin/JonnaRinconPanelPage';
 
 // Manager pages (protected - manager role)
 import ManagerDashboard from './pages/manager/DashboardPage';
@@ -162,7 +165,12 @@ const ScrollFadeObserver = () => {
         },
         { threshold: 0.08, rootMargin: '0px 0px 120px 0px' }
       );
+      const fold = window.innerHeight;
       sections.forEach((section) => {
+        // Never hide what is already on screen (or opted out): only sections
+        // below the fold fade in when they scroll into view.
+        if (section.hasAttribute('data-no-fade')) return;
+        if (section.getBoundingClientRect().top < fold) return;
         section.classList.add('scroll-fade');
         observer.observe(section);
       });
@@ -405,7 +413,14 @@ const MainApp: React.FC = () => {
           />
           {/* Old Beats/Services/Tracks routes now redirect into the unified Management page */}
           <Route path="/admin/beats" element={<Navigate to="/admin/management?tab=beats" replace />} />
-          <Route path="/admin/services" element={<Navigate to="/admin/management?tab=services" replace />} />
+          <Route
+            path="/admin/services"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <AdminServicesPage />
+              </ProtectedRoute>
+            }
+          />
           <Route path="/admin/tracks" element={<Navigate to="/admin/management?tab=tracks" replace />} />
           <Route
             path="/admin/remixes"
@@ -431,14 +446,8 @@ const MainApp: React.FC = () => {
               </ProtectedRoute>
             }
           />
-          <Route
-            path="/admin/jonna-rincon-panel"
-            element={
-              <ProtectedRoute allowedRoles={['admin']}>
-                <AdminJonnaRinconPanel />
-              </ProtectedRoute>
-            }
-          />
+          {/* Jonna Rincon Panel is gone: TIME (agenda, social, coming up) now lives in Services > Studio session */}
+          <Route path="/admin/jonna-rincon-panel" element={<Navigate to="/admin/services?tijd=agenda" replace />} />
           <Route
             path="/admin/orders-stats"
             element={
@@ -459,8 +468,22 @@ const MainApp: React.FC = () => {
               </ProtectedRoute>
             }
           />
-          {/* Analytics is now a tab inside the Jonna Rincon Panel */}
-          <Route path="/admin/analytics" element={<Navigate to="/admin/jonna-rincon-panel" replace />} />
+          <Route
+            path="/admin/social"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <AdminSocialPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/analytics"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <AdminAnalyticsPage />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/admin/collaborations"
             element={

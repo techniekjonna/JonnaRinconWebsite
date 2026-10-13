@@ -92,26 +92,17 @@ function SectionRow({ section, reverse }: { section: Section; reverse: boolean }
         </Link>
       </div>
 
-      {/* Image — kept in color, darkened with a soft radial mask (tuned
-          for the 4:3 box so top/bottom fade as gradually as left/right)
-          so it blends into the page instead of sitting in a hard box */}
+      {/* Image: sharp edges, rounded corners, original dark filter (soft edges only at Get to know) */}
       <div className={`relative aspect-[4/3] ${reverse ? 'lg:order-1' : ''}`}>
-        <div
-          className="absolute inset-0"
-          style={{
-            maskImage: 'radial-gradient(ellipse 52% 70% at 50% 45%, black 8%, transparent 96%)',
-            WebkitMaskImage: 'radial-gradient(ellipse 52% 70% at 50% 45%, black 8%, transparent 96%)',
-          }}
-        >
+        <div className="absolute inset-0 overflow-hidden rounded-2xl">
           <img
             src={section.image}
             alt={section.title}
             className="w-full h-full object-cover"
+            style={{ filter: 'contrast(1.1) brightness(0.7)' }}
             loading="lazy"
             decoding="async"
-            style={{ filter: 'contrast(1.1) brightness(0.7)' }}
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-red-950/20 via-transparent to-black/50" />
         </div>
       </div>
     </div>
@@ -122,7 +113,7 @@ export default function SectionCards() {
   const t = useT();
   const sections = getSections(t);
   return (
-    <section className="relative z-20 py-12 md:py-20 px-4">
+    <section data-no-fade className="relative z-20 py-12 md:py-20 px-4">
       <div className="max-w-7xl mx-auto mb-12 md:mb-16 flex items-center gap-4">
         <div className="h-px flex-1 bg-white/10" />
         <span className="text-white/30 text-xs uppercase tracking-widest">{t('Explore', 'Verkennen')}</span>
